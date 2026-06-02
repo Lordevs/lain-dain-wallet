@@ -12,6 +12,7 @@ import ProfileForm from './profile-form'
 
 // Import store
 import { useAuthStore } from '@/store/use-auth-store'
+import { ROUTES } from '@/constants/routes'
 
 type AuthStep = 'signin' | 'signup_phone' | 'otp' | 'success' | 'profile'
 
@@ -49,7 +50,7 @@ export default function AuthScreen() {
   const handleProfileSubmit = (profileData: any) => {
     setProfile(profileData)
     setIsAuthenticated(true)
-    navigate({ to: '/' })
+    navigate({ to: ROUTES.DASHBOARD })
   }
 
   const fadeSlideProps = {
@@ -83,7 +84,7 @@ export default function AuthScreen() {
               <LoginForm
                 onSuccess={() => {
                   setIsAuthenticated(true)
-                  navigate({ to: '/' })
+                  navigate({ to: ROUTES.DASHBOARD })
                 }}
                 onGoToSignUp={() => setStep('signup_phone')}
               />
