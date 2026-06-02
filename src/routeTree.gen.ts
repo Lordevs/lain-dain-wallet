@@ -14,8 +14,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as TransactionsIndexRouteImport } from './routes/transactions/index'
 import { Route as ContactsIndexRouteImport } from './routes/contacts/index'
 import { Route as AuthIndexRouteImport } from './routes/auth/index'
-import { Route as TransactionsNewRouteImport } from './routes/transactions/new'
 import { Route as TransactionsIdRouteImport } from './routes/transactions/$id'
+import { Route as ContactsNewRouteImport } from './routes/contacts/new'
 import { Route as ContactsIdRouteImport } from './routes/contacts/$id'
 
 const SettingsRoute = SettingsRouteImport.update({
@@ -43,14 +43,14 @@ const AuthIndexRoute = AuthIndexRouteImport.update({
   path: '/auth/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TransactionsNewRoute = TransactionsNewRouteImport.update({
-  id: '/transactions/new',
-  path: '/transactions/new',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const TransactionsIdRoute = TransactionsIdRouteImport.update({
   id: '/transactions/$id',
   path: '/transactions/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactsNewRoute = ContactsNewRouteImport.update({
+  id: '/contacts/new',
+  path: '/contacts/new',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactsIdRoute = ContactsIdRouteImport.update({
@@ -63,8 +63,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRoute
   '/contacts/$id': typeof ContactsIdRoute
+  '/contacts/new': typeof ContactsNewRoute
   '/transactions/$id': typeof TransactionsIdRoute
-  '/transactions/new': typeof TransactionsNewRoute
   '/auth/': typeof AuthIndexRoute
   '/contacts/': typeof ContactsIndexRoute
   '/transactions/': typeof TransactionsIndexRoute
@@ -73,8 +73,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRoute
   '/contacts/$id': typeof ContactsIdRoute
+  '/contacts/new': typeof ContactsNewRoute
   '/transactions/$id': typeof TransactionsIdRoute
-  '/transactions/new': typeof TransactionsNewRoute
   '/auth': typeof AuthIndexRoute
   '/contacts': typeof ContactsIndexRoute
   '/transactions': typeof TransactionsIndexRoute
@@ -84,8 +84,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRoute
   '/contacts/$id': typeof ContactsIdRoute
+  '/contacts/new': typeof ContactsNewRoute
   '/transactions/$id': typeof TransactionsIdRoute
-  '/transactions/new': typeof TransactionsNewRoute
   '/auth/': typeof AuthIndexRoute
   '/contacts/': typeof ContactsIndexRoute
   '/transactions/': typeof TransactionsIndexRoute
@@ -96,8 +96,8 @@ export interface FileRouteTypes {
     | '/'
     | '/settings'
     | '/contacts/$id'
+    | '/contacts/new'
     | '/transactions/$id'
-    | '/transactions/new'
     | '/auth/'
     | '/contacts/'
     | '/transactions/'
@@ -106,8 +106,8 @@ export interface FileRouteTypes {
     | '/'
     | '/settings'
     | '/contacts/$id'
+    | '/contacts/new'
     | '/transactions/$id'
-    | '/transactions/new'
     | '/auth'
     | '/contacts'
     | '/transactions'
@@ -116,8 +116,8 @@ export interface FileRouteTypes {
     | '/'
     | '/settings'
     | '/contacts/$id'
+    | '/contacts/new'
     | '/transactions/$id'
-    | '/transactions/new'
     | '/auth/'
     | '/contacts/'
     | '/transactions/'
@@ -127,8 +127,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SettingsRoute: typeof SettingsRoute
   ContactsIdRoute: typeof ContactsIdRoute
+  ContactsNewRoute: typeof ContactsNewRoute
   TransactionsIdRoute: typeof TransactionsIdRoute
-  TransactionsNewRoute: typeof TransactionsNewRoute
   AuthIndexRoute: typeof AuthIndexRoute
   ContactsIndexRoute: typeof ContactsIndexRoute
   TransactionsIndexRoute: typeof TransactionsIndexRoute
@@ -171,18 +171,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/transactions/new': {
-      id: '/transactions/new'
-      path: '/transactions/new'
-      fullPath: '/transactions/new'
-      preLoaderRoute: typeof TransactionsNewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/transactions/$id': {
       id: '/transactions/$id'
       path: '/transactions/$id'
       fullPath: '/transactions/$id'
       preLoaderRoute: typeof TransactionsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contacts/new': {
+      id: '/contacts/new'
+      path: '/contacts/new'
+      fullPath: '/contacts/new'
+      preLoaderRoute: typeof ContactsNewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contacts/$id': {
@@ -199,8 +199,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SettingsRoute: SettingsRoute,
   ContactsIdRoute: ContactsIdRoute,
+  ContactsNewRoute: ContactsNewRoute,
   TransactionsIdRoute: TransactionsIdRoute,
-  TransactionsNewRoute: TransactionsNewRoute,
   AuthIndexRoute: AuthIndexRoute,
   ContactsIndexRoute: ContactsIndexRoute,
   TransactionsIndexRoute: TransactionsIndexRoute,

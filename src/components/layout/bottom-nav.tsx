@@ -1,29 +1,46 @@
 import React from 'react'
 import { Home, Bell, User } from 'lucide-react'
-import { Link, useMatchRoute } from '@tanstack/react-router'
+import { Link, useRouterState } from '@tanstack/react-router'
 import { Separator } from '@/components/ui/separator'
 import { ROUTES } from '@/constants/routes'
 import { cn } from '@/lib/utils'
 
+// ─── Nav Items ────────────────────────────────────────────────────────────────
+
 const NAV_ITEMS = [
-  { label: 'Home', icon: Home, to: ROUTES.DASHBOARD as any },
-  { label: 'Notifications', icon: Bell, to: ROUTES.NOTIFICATIONS as any },
-  { label: 'Profile', icon: User, to: ROUTES.PROFILE as any },
+  { label: 'Home', icon: Home, to: ROUTES.DASHBOARD },
+  { label: 'Notifications', icon: Bell, to: ROUTES.NOTIFICATIONS },
+  { label: 'Profile', icon: User, to: ROUTES.PROFILE },
 ] as const
 
+// ─── Active matching ──────────────────────────────────────────────────────────
+
 /**
- * BottomNav — fixed tab bar at the bottom of every main screen.
- * Links: Home (Dashboard), Notifications, Profile.
+ * Returns true when `pathname` belongs to the nav item's section.
+ * Dashboard (/) is only active on exact "/" match.
+ * All others use a prefix match so nested routes stay highlighted.
+ */
+function isNavItemActive(to: string, pathname: string): boolean {
+  if (to === ROUTES.DASHBOARD) return pathname === ROUTES.DASHBOARD
+  return pathname === to || pathname.startsWith(to + '/')
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+/**
+ * BottomNav — fixed tab bar rendered on all main screens.
+ * Hidden automatically by AppShell on flow/detail routes.
  */
 export default function BottomNav() {
-  const matchRoute = useMatchRoute()
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t-[1.08px] border-[#EFE7DD] h-[76px] flex items-center justify-between px-6 shadow-[0px_4.03px_18.83px_0px_#00000012] select-none">
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t-[1.08px] border-[#EFE7DD] h-[76px] flex items-center justify-between px-6 shadow-[0px_4.03px_18.83px_0px_#00000012] select-none"
+      aria-label="Main navigation"
+    >
       {NAV_ITEMS.map(({ label, icon: Icon, to }, idx) => {
-        // Fallback to active = true for Home if no route matches or it's root
-        const isMatch = !!matchRoute({ to: to as any, fuzzy: to !== ROUTES.DASHBOARD })
-        const isActive = to === ROUTES.DASHBOARD ? (!matchRoute({ to: ROUTES.NOTIFICATIONS as any }) && !matchRoute({ to: ROUTES.PROFILE as any })) : isMatch
+        const isActive = isNavItemActive(to, pathname)
 
         return (
           <React.Fragment key={to}>
@@ -34,13 +51,15 @@ export default function BottomNav() {
               />
             )}
             <Link
-              to={to}
+              to={to as any}
+              aria-label={label}
+              aria-current={isActive ? 'page' : undefined}
               className="flex flex-col items-center justify-center gap-1 flex-1 py-1 cursor-pointer"
             >
               <div
                 className={cn(
                   'w-12 h-9 rounded-sm flex items-center justify-center transition-all duration-200',
-                  isActive ? 'bg-[#DCEFE4]' : 'bg-transparent'
+                  isActive ? 'bg-[#DCEFE4]' : 'bg-transparent',
                 )}
               >
                 <Icon
@@ -52,7 +71,7 @@ export default function BottomNav() {
               <span
                 className={cn(
                   'text-[12px] font-bold tracking-tight transition-colors',
-                  isActive ? 'text-primary' : 'text-[#6B6B6B]'
+                  isActive ? 'text-primary' : 'text-[#6B6B6B]',
                 )}
               >
                 {label}

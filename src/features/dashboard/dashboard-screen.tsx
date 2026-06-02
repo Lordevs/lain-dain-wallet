@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Info } from 'lucide-react'
+import { useNavigate } from '@tanstack/react-router'
+import { ROUTES } from '@/constants/routes'
 import AppHeader from '@/components/layout/app-header'
 import SearchBar from '@/components/shared/search-bar'
 import BalanceSummaryCard from './components/balance-summary-card'
@@ -15,6 +17,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
  * Assembles all reusable dashboard components into the final layout.
  */
 export default function DashboardScreen() {
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<LedgerTab>('receivables')
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'all' | 'people' | 'groups'>('all')
@@ -129,7 +132,7 @@ export default function DashboardScreen() {
       </div>
 
       {/* Floating Action Button */}
-      <Fab onClick={() => console.log('add new')} />
+      <Fab onClick={() => navigate({ to: ROUTES.NEW_CONTACT })} />
     </div>
   )
 }
