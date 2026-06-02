@@ -13,6 +13,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TransactionsIndexRouteImport } from './routes/transactions/index'
 import { Route as ContactsIndexRouteImport } from './routes/contacts/index'
+import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as TransactionsNewRouteImport } from './routes/transactions/new'
 import { Route as TransactionsIdRouteImport } from './routes/transactions/$id'
 import { Route as ContactsIdRouteImport } from './routes/contacts/$id'
@@ -37,6 +38,11 @@ const ContactsIndexRoute = ContactsIndexRouteImport.update({
   path: '/contacts/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthIndexRoute = AuthIndexRouteImport.update({
+  id: '/auth/',
+  path: '/auth/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TransactionsNewRoute = TransactionsNewRouteImport.update({
   id: '/transactions/new',
   path: '/transactions/new',
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/contacts/$id': typeof ContactsIdRoute
   '/transactions/$id': typeof TransactionsIdRoute
   '/transactions/new': typeof TransactionsNewRoute
+  '/auth/': typeof AuthIndexRoute
   '/contacts/': typeof ContactsIndexRoute
   '/transactions/': typeof TransactionsIndexRoute
 }
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/contacts/$id': typeof ContactsIdRoute
   '/transactions/$id': typeof TransactionsIdRoute
   '/transactions/new': typeof TransactionsNewRoute
+  '/auth': typeof AuthIndexRoute
   '/contacts': typeof ContactsIndexRoute
   '/transactions': typeof TransactionsIndexRoute
 }
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/contacts/$id': typeof ContactsIdRoute
   '/transactions/$id': typeof TransactionsIdRoute
   '/transactions/new': typeof TransactionsNewRoute
+  '/auth/': typeof AuthIndexRoute
   '/contacts/': typeof ContactsIndexRoute
   '/transactions/': typeof TransactionsIndexRoute
 }
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | '/contacts/$id'
     | '/transactions/$id'
     | '/transactions/new'
+    | '/auth/'
     | '/contacts/'
     | '/transactions/'
   fileRoutesByTo: FileRoutesByTo
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/contacts/$id'
     | '/transactions/$id'
     | '/transactions/new'
+    | '/auth'
     | '/contacts'
     | '/transactions'
   id:
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/contacts/$id'
     | '/transactions/$id'
     | '/transactions/new'
+    | '/auth/'
     | '/contacts/'
     | '/transactions/'
   fileRoutesById: FileRoutesById
@@ -117,6 +129,7 @@ export interface RootRouteChildren {
   ContactsIdRoute: typeof ContactsIdRoute
   TransactionsIdRoute: typeof TransactionsIdRoute
   TransactionsNewRoute: typeof TransactionsNewRoute
+  AuthIndexRoute: typeof AuthIndexRoute
   ContactsIndexRoute: typeof ContactsIndexRoute
   TransactionsIndexRoute: typeof TransactionsIndexRoute
 }
@@ -151,6 +164,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/': {
+      id: '/auth/'
+      path: '/auth'
+      fullPath: '/auth/'
+      preLoaderRoute: typeof AuthIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/transactions/new': {
       id: '/transactions/new'
       path: '/transactions/new'
@@ -181,6 +201,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactsIdRoute: ContactsIdRoute,
   TransactionsIdRoute: TransactionsIdRoute,
   TransactionsNewRoute: TransactionsNewRoute,
+  AuthIndexRoute: AuthIndexRoute,
   ContactsIndexRoute: ContactsIndexRoute,
   TransactionsIndexRoute: TransactionsIndexRoute,
 }

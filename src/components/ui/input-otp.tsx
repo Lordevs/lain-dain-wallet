@@ -55,12 +55,21 @@ function InputOTPSlot({
       data-slot="input-otp-slot"
       data-active={isActive}
       className={cn(
-        "relative flex size-8 items-center justify-center border-y border-r border-input text-sm transition-all outline-none first:rounded-l-lg first:border-l last:rounded-r-lg aria-invalid:border-destructive data-[active=true]:z-10 data-[active=true]:border-ring data-[active=true]:ring-3 data-[active=true]:ring-ring/50 data-[active=true]:aria-invalid:border-destructive data-[active=true]:aria-invalid:ring-destructive/20 dark:bg-input/30 dark:data-[active=true]:aria-invalid:ring-destructive/40",
+        "relative flex size-12 items-center justify-center text-base transition-all outline-none rounded-xl",
+        // Widths: top is 1.76px, other sides are 1px
+        "border-t-[1.76px] border-x border-b",
+        // State styles for background and colors:
+        // 1. Filled State (has character, not active)
+        char && !isActive && "bg-[#EEFFF6] ring ring-[#01592B] border-[#01592B]",
+        // 2. Selected/Active State
+        isActive && "bg-white ring ring-[#01592B] border-[#01592B] z-10",
+        // 3. Empty State (no character, not active)
+        !char && !isActive && "bg-white ring ring-[#EFE7DD] border-[#EFE7DD]",
         className
       )}
       {...props}
     >
-      {char}
+      {char || <span className="text-[#1A1A1A]/40 font-normal">-</span>}
       {hasFakeCaret && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div className="h-4 w-px animate-caret-blink bg-foreground duration-1000" />

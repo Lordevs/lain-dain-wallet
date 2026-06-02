@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.laindein.wallet',
-  appName: 'Lain Dein Wallet',
+  appId: 'com.laindain.wallet',
+  appName: 'Lain Dain Wallet',
   webDir: 'dist'
 };
 
