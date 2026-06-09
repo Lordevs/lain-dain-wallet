@@ -1,11 +1,12 @@
 import { useParams, useNavigate } from '@tanstack/react-router'
-import { ChevronLeft, ChevronRight, Users, Triangle, Smile, Layers } from 'lucide-react'
+import { ChevronRight, Users, Triangle, Smile, Layers, MoreVertical } from 'lucide-react'
 import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
 import ContactAvatar from '@/components/shared/contact-avatar'
 import NetBalanceCard from './components/net-balance-card'
 import { ROUTES } from '@/constants/routes'
 import { formatCurrency } from '@/lib/currency'
 import { cn } from '@/lib/utils'
+import FlowHeader from '@/components/shared/flow-header'
 
 /**
  * ContactDetailScreen — displays detailed breakdown of ledgers for a selected contact.
@@ -61,32 +62,33 @@ export default function ContactDetailScreen() {
 
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen">
-      {/* Header Back Button */}
-      <div className="px-6 pt-5 pb-3">
-        <button
-          onClick={() => navigate({ to: ROUTES.DASHBOARD })}
-          className="size-10 rounded-full flex items-center justify-center text-foreground hover:bg-[#0000000A] transition-all cursor-pointer border-0 bg-transparent -ml-2.5"
-          aria-label="Go Back"
-        >
-          <ChevronLeft size={28} strokeWidth={2.5} />
-        </button>
-      </div>
-
-      {/* Profile Section */}
-      <div className="flex items-center gap-4 px-6 pt-2 pb-6">
-        <div className="relative shrink-0">
-          <ContactAvatar
-            initials={contact.initials}
-            avatarColor={contact.avatarColor}
-            size="lg"
-            className="size-16 text-lg font-bold"
-          />
-          {contact.isOnline && (
-            <span className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-[#14A558] border-2 border-[#FEFAF1] rounded-full" />
-          )}
-        </div>
-        <h1 className="text-2xl font-bold text-[#1A1A1A]">{contact.name}</h1>
-      </div>
+      {/* Unified Header */}
+      <FlowHeader
+        title={contact.name}
+        subtitle={contact.type === 'group' ? '6 members' : 'Personal Balance'}
+        onBack={() => navigate({ to: ROUTES.DASHBOARD })}
+        backVariant="minimal"
+        avatar={
+          <div className="relative shrink-0 flex items-center">
+            <ContactAvatar
+              initials={contact.initials}
+              avatarColor={contact.avatarColor}
+              size="md"
+              className="size-11 text-sm font-bold"
+            />
+            {contact.isOnline && (
+              <span className="absolute bottom-0.5 right-0.5 w-3 h-3 bg-[#14A558] border border-[#FEFAF1] rounded-full" />
+            )}
+          </div>
+        }
+        rightSlot={
+          contact.type === 'group' ? (
+            <button className="text-[#6B6B6B] cursor-pointer border-0 bg-transparent flex items-center justify-center p-2">
+              <MoreVertical size={20} />
+            </button>
+          ) : undefined
+        }
+      />
 
       {/* Overall Balance Stat Card */}
       <div className="px-6 mb-6">

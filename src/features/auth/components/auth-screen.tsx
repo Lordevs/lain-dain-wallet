@@ -7,7 +7,7 @@ import { useNavigate } from '@tanstack/react-router'
 import LoginForm from './login-form'
 import PhoneForm from './phone-form'
 import OtpForm from './otp-form'
-import SuccessCheck from './success-check'
+import SuccessCheck from '@/components/shared/success-check'
 import ProfileForm from './profile-form'
 
 // Import store

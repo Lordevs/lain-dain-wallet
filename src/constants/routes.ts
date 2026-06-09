@@ -9,4 +9,7 @@ export const ROUTES = {
   TRANSACTION_DETAILS: '/transactions/$id',
   NOTIFICATIONS: '/notifications',
   PROFILE: '/profile',
+  PERSONAL: '/personal',
+  PERSONAL_REPORTS: '/personal/reports',
+  PERSONAL_ADD: '/personal/add',
 } as const

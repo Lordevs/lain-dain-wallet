@@ -1,62 +1,89 @@
 import type { ReactNode } from 'react'
 import { ChevronLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface FlowHeaderProps {
-  /** Page title displayed in the centre */
+  /** Page title */
   title: string
   /** Subtitle text displayed below the title */
   subtitle?: string
   /** Called when the back-chevron button is tapped */
   onBack: () => void
-  /**
-   * Optional element rendered on the right side.
-   * When omitted a blank spacer is used to keep the title centred.
-   */
+  /** Back button style variant: 'circle' (default circular button) or 'minimal' (just the chevron arrow) */
+  backVariant?: 'circle' | 'minimal'
+  /** Optional avatar component (renders between back button and text) */
+  avatar?: ReactNode
+  /** Optional element rendered on the right side */
   rightSlot?: ReactNode
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 /**
- * FlowHeader — the top bar pattern shared by every step in a multi-step flow.
- * Left: circular back button (shadcn Button). Centre: title. Right: optional slot or spacer.
+ * FlowHeader — unified top bar pattern shared by main screens, detail views, and sub-flows.
+ * Left: circular back button (circle) or simple back chevron (minimal).
+ * Centre: title, subtitle, and optional avatar.
+ * Right: optional action slot (dropdown, menu, etc.).
  */
-export default function FlowHeader({ title, subtitle, onBack, rightSlot }: FlowHeaderProps) {
+export default function FlowHeader({
+  title,
+  subtitle,
+  onBack,
+  backVariant = 'circle',
+  avatar,
+  rightSlot,
+}: FlowHeaderProps) {
+  // Check if subtitle contains "selected" to style it green
+  const isSelectedSubtitle = subtitle?.toLowerCase().includes('selected')
+
   return (
-    <header className="flex items-center justify-between px-6 pt-5 pb-3">
-      {/* Back */}
+    <header className="flex items-center justify-between px-6 pt-5 pb-3 shrink-0">
+      {/* Left side actions and details */}
       <div className="flex items-center gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          onClick={onBack}
-          aria-label="Go back"
-          className="size-10 border-0 rounded-full bg-[#0000000A]! text-foreground shrink-0"
-        >
-          <ChevronLeft size={20} strokeWidth={2.5} />
-        </Button>
+        {/* Back Button */}
+        {backVariant === 'circle' ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="size-10 rounded-full border-[0.8px] border-[#EBEBEB] bg-white shadow-[0px_1px_4px_#0000000F] flex items-center justify-center text-foreground transition-all cursor-pointer outline-none shrink-0"
+            aria-label="Go back"
+          >
+            <ChevronLeft size={20} strokeWidth={2.5} />
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex items-center justify-center p-2 text-[#1A1A1A] cursor-pointer bg-transparent border-0 outline-none -ml-2 shrink-0"
+            aria-label="Go back"
+          >
+            <ChevronLeft size={24} strokeWidth={2.5} />
+          </button>
+        )}
+
+        {/* Optional Avatar */}
+        {avatar && <div className="shrink-0 flex items-center">{avatar}</div>}
 
         {/* Title & Subtitle */}
         <div className="flex flex-col text-left">
-          <h1 className="text-lg font-bold text-foreground leading-tight">{title}</h1>
+          <h1 className="text-xl font-extrabold! text-[#1A1A1A] leading-tight select-none">
+            {title}
+          </h1>
           {subtitle && (
-            <span className="text-xs text-muted-foreground font-medium mt-0.5">
+            <span
+              className={`text-xs mt-0.5 font-bold leading-none ${isSelectedSubtitle ? 'text-[#0B683A]' : 'text-[#6B6B6B]'
+                }`}
+            >
               {subtitle}
             </span>
           )}
         </div>
       </div>
 
-      {/* Right slot or blank spacer to keep title centred */}
-      {rightSlot ? (
-        <div className="shrink-0">{rightSlot}</div>
-      ) : (
-        <div className="size-10 shrink-0" aria-hidden />
-      )}
+      {/* Right Slot */}
+      {rightSlot && <div className="shrink-0">{rightSlot}</div>}
     </header>
   )
 }
+

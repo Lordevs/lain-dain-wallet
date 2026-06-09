@@ -10,6 +10,8 @@ const HIDE_NAV_PREFIXES = [
   '/contacts/$',         // Contact detail  (dynamic segment)
   '/transactions/$',     // Transaction detail (dynamic segment)
   '/settings',
+  '/personal/reports',   // Reports page
+  '/personal/add',       // Add personal expense flow
 ]
 
 function shouldShowNav(pathname: string): boolean {

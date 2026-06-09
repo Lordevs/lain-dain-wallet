@@ -10,17 +10,26 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as PersonalRouteImport } from './routes/personal'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TransactionsIndexRouteImport } from './routes/transactions/index'
+import { Route as PersonalIndexRouteImport } from './routes/personal/index'
 import { Route as ContactsIndexRouteImport } from './routes/contacts/index'
 import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as TransactionsIdRouteImport } from './routes/transactions/$id'
+import { Route as PersonalReportsRouteImport } from './routes/personal/reports'
+import { Route as PersonalAddRouteImport } from './routes/personal/add'
 import { Route as ContactsNewRouteImport } from './routes/contacts/new'
 import { Route as ContactsIdRouteImport } from './routes/contacts/$id'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PersonalRoute = PersonalRouteImport.update({
+  id: '/personal',
+  path: '/personal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -32,6 +41,11 @@ const TransactionsIndexRoute = TransactionsIndexRouteImport.update({
   id: '/transactions/',
   path: '/transactions/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PersonalIndexRoute = PersonalIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PersonalRoute,
 } as any)
 const ContactsIndexRoute = ContactsIndexRouteImport.update({
   id: '/contacts/',
@@ -48,6 +62,16 @@ const TransactionsIdRoute = TransactionsIdRouteImport.update({
   path: '/transactions/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PersonalReportsRoute = PersonalReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => PersonalRoute,
+} as any)
+const PersonalAddRoute = PersonalAddRouteImport.update({
+  id: '/add',
+  path: '/add',
+  getParentRoute: () => PersonalRoute,
+} as any)
 const ContactsNewRoute = ContactsNewRouteImport.update({
   id: '/contacts/new',
   path: '/contacts/new',
@@ -61,12 +85,16 @@ const ContactsIdRoute = ContactsIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/personal': typeof PersonalRouteWithChildren
   '/settings': typeof SettingsRoute
   '/contacts/$id': typeof ContactsIdRoute
   '/contacts/new': typeof ContactsNewRoute
+  '/personal/add': typeof PersonalAddRoute
+  '/personal/reports': typeof PersonalReportsRoute
   '/transactions/$id': typeof TransactionsIdRoute
   '/auth/': typeof AuthIndexRoute
   '/contacts/': typeof ContactsIndexRoute
+  '/personal/': typeof PersonalIndexRoute
   '/transactions/': typeof TransactionsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -74,32 +102,43 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/contacts/$id': typeof ContactsIdRoute
   '/contacts/new': typeof ContactsNewRoute
+  '/personal/add': typeof PersonalAddRoute
+  '/personal/reports': typeof PersonalReportsRoute
   '/transactions/$id': typeof TransactionsIdRoute
   '/auth': typeof AuthIndexRoute
   '/contacts': typeof ContactsIndexRoute
+  '/personal': typeof PersonalIndexRoute
   '/transactions': typeof TransactionsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/personal': typeof PersonalRouteWithChildren
   '/settings': typeof SettingsRoute
   '/contacts/$id': typeof ContactsIdRoute
   '/contacts/new': typeof ContactsNewRoute
+  '/personal/add': typeof PersonalAddRoute
+  '/personal/reports': typeof PersonalReportsRoute
   '/transactions/$id': typeof TransactionsIdRoute
   '/auth/': typeof AuthIndexRoute
   '/contacts/': typeof ContactsIndexRoute
+  '/personal/': typeof PersonalIndexRoute
   '/transactions/': typeof TransactionsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/personal'
     | '/settings'
     | '/contacts/$id'
     | '/contacts/new'
+    | '/personal/add'
+    | '/personal/reports'
     | '/transactions/$id'
     | '/auth/'
     | '/contacts/'
+    | '/personal/'
     | '/transactions/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -107,24 +146,32 @@ export interface FileRouteTypes {
     | '/settings'
     | '/contacts/$id'
     | '/contacts/new'
+    | '/personal/add'
+    | '/personal/reports'
     | '/transactions/$id'
     | '/auth'
     | '/contacts'
+    | '/personal'
     | '/transactions'
   id:
     | '__root__'
     | '/'
+    | '/personal'
     | '/settings'
     | '/contacts/$id'
     | '/contacts/new'
+    | '/personal/add'
+    | '/personal/reports'
     | '/transactions/$id'
     | '/auth/'
     | '/contacts/'
+    | '/personal/'
     | '/transactions/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PersonalRoute: typeof PersonalRouteWithChildren
   SettingsRoute: typeof SettingsRoute
   ContactsIdRoute: typeof ContactsIdRoute
   ContactsNewRoute: typeof ContactsNewRoute
@@ -143,6 +190,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/personal': {
+      id: '/personal'
+      path: '/personal'
+      fullPath: '/personal'
+      preLoaderRoute: typeof PersonalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -156,6 +210,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/transactions/'
       preLoaderRoute: typeof TransactionsIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/personal/': {
+      id: '/personal/'
+      path: '/'
+      fullPath: '/personal/'
+      preLoaderRoute: typeof PersonalIndexRouteImport
+      parentRoute: typeof PersonalRoute
     }
     '/contacts/': {
       id: '/contacts/'
@@ -178,6 +239,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TransactionsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/personal/reports': {
+      id: '/personal/reports'
+      path: '/reports'
+      fullPath: '/personal/reports'
+      preLoaderRoute: typeof PersonalReportsRouteImport
+      parentRoute: typeof PersonalRoute
+    }
+    '/personal/add': {
+      id: '/personal/add'
+      path: '/add'
+      fullPath: '/personal/add'
+      preLoaderRoute: typeof PersonalAddRouteImport
+      parentRoute: typeof PersonalRoute
+    }
     '/contacts/new': {
       id: '/contacts/new'
       path: '/contacts/new'
@@ -195,8 +270,25 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface PersonalRouteChildren {
+  PersonalAddRoute: typeof PersonalAddRoute
+  PersonalReportsRoute: typeof PersonalReportsRoute
+  PersonalIndexRoute: typeof PersonalIndexRoute
+}
+
+const PersonalRouteChildren: PersonalRouteChildren = {
+  PersonalAddRoute: PersonalAddRoute,
+  PersonalReportsRoute: PersonalReportsRoute,
+  PersonalIndexRoute: PersonalIndexRoute,
+}
+
+const PersonalRouteWithChildren = PersonalRoute._addFileChildren(
+  PersonalRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PersonalRoute: PersonalRouteWithChildren,
   SettingsRoute: SettingsRoute,
   ContactsIdRoute: ContactsIdRoute,
   ContactsNewRoute: ContactsNewRoute,

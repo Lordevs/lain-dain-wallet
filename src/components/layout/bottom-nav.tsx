@@ -8,9 +8,9 @@ import { cn } from '@/lib/utils'
 // ─── Nav Items ────────────────────────────────────────────────────────────────
 
 const NAV_ITEMS = [
-  { label: 'Home', icon: Home, to: ROUTES.DASHBOARD },
   { label: 'Notifications', icon: Bell, to: ROUTES.NOTIFICATIONS },
-  { label: 'Profile', icon: User, to: ROUTES.PROFILE },
+  { label: 'Home', icon: Home, to: ROUTES.DASHBOARD },
+  { label: 'Personal', icon: User, to: ROUTES.PERSONAL },
 ] as const
 
 // ─── Active matching ──────────────────────────────────────────────────────────
