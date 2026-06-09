@@ -2,7 +2,7 @@ import { SUPPORTED_CURRENCIES, type Currency } from '@/types'
 
 /**
  * Format an amount with the given currency code.
- * e.g. formatCurrency(1500, 'PKR') → "₨ 1,500"
+ * e.g. formatCurrency(1500, 'PKR') → "Rs. 1,500"
  */
 export function formatCurrency(amount: number, currencyCode: string): string {
   const currency = getCurrency(currencyCode)

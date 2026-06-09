@@ -16,7 +16,7 @@ import {
 import { cn } from '@/lib/utils'
 import { SUPPORTED_CURRENCIES } from '@/types'
 
-interface CurrencySelectorProps {
+interface CurrencySelectDrawerProps {
   value: string
   onChange: (value: string) => void
   className?: string
@@ -62,15 +62,15 @@ const CURRENCY_VISUALS: Record<string, CurrencyVisuals> = {
 }
 
 /**
- * CurrencySelector — A reusable dropdown/drawer currency picker.
+ * CurrencySelectDrawer — A reusable dropdown/drawer currency picker.
  * Displays as a full-width pill button. On tap, triggers a Vaul bottom sheet
  * list of supported currencies sorted alphabetically with search filtering.
  */
-export default function CurrencySelector({
+export default function CurrencySelectDrawer({
   value,
   onChange,
   className,
-}: CurrencySelectorProps) {
+}: CurrencySelectDrawerProps) {
   const [currencySearch, setCurrencySearch] = useState('')
   const [isCurrencyOpen, setIsCurrencyOpen] = useState(false)
 
@@ -112,9 +112,6 @@ export default function CurrencySelector({
         </button>
       </DrawerTrigger>
       <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col max-h-[85vh] focus:outline-none overflow-hidden">
-        {/* Custom beige drag handle */}
-        <div className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-[#D4CFC8]" />
-
         {/* Drawer Header */}
         <div className="flex items-center justify-between px-6 pt-4 pb-3">
           <h3 className="text-xl font-bold text-[#2C2C2C]">Currency</h3>

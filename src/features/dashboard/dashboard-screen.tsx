@@ -20,40 +20,51 @@ export default function DashboardScreen() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<LedgerTab>('receivables')
   const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState<'all' | 'people' | 'groups'>('all')
+  const [filterType, setFilterType] = useState<'all' | 'people' | 'groups'>('all')
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest')
 
   const contacts = activeTab === 'receivables' ? MOCK_RECEIVABLES : MOCK_PAYABLES
 
   // Filter based on selected content type (person/group)
   const typedContacts = contacts.filter((c) => {
-    if (filter === 'people') return c.type === 'person'
-    if (filter === 'groups') return c.type === 'group'
+    if (filterType === 'people') return c.type === 'person'
+    if (filterType === 'groups') return c.type === 'group'
     return true
   })
 
+  // Sort contacts based on selected sort order
+  const sortedContacts = [...typedContacts].sort((a, b) => {
+    if (sortBy === 'newest') return Number(b.id) - Number(a.id)
+    if (sortBy === 'oldest') return Number(a.id) - Number(b.id)
+    if (sortBy === 'highest') return Math.abs(b.netAmount) - Math.abs(a.netAmount)
+    if (sortBy === 'lowest') return Math.abs(a.netAmount) - Math.abs(b.netAmount)
+    return 0
+  })
+
   const filteredContacts = search.trim()
-    ? typedContacts.filter((c) =>
+    ? sortedContacts.filter((c) =>
       c.name.toLowerCase().includes(search.toLowerCase())
     )
-    : typedContacts
+    : sortedContacts
 
-  // Title changes based on the selected tab and active filter type
-  const sectionTitle =
-    activeTab === 'receivables'
-      ? filter === 'groups'
-        ? 'Groups who owe you'
-        : 'People who owe you'
-      : filter === 'groups'
-        ? 'Groups you owe'
-        : 'People you owe'
+  // Title changes based on the active filter type and sort order
+  const sectionTitle = (() => {
+    if (filterType === 'people') return 'People'
+    if (filterType === 'groups') return 'Groups'
+    // 'all' filter type case
+    if (sortBy === 'newest') return 'All'
+    if (sortBy === 'oldest') return 'Oldest First'
+    if (sortBy === 'highest') return 'Highest Amount'
+    return 'Lowest Amount'
+  })()
 
   // Wording for the alerts when elements are filtered out
   const searchFilteredAll = search.trim()
     ? contacts.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
     : contacts
 
-  const hasHiddenGroups = filter === 'people' && searchFilteredAll.some((c) => c.type === 'group')
-  const hasHiddenPeople = filter === 'groups' && searchFilteredAll.some((c) => c.type === 'person')
+  const hasHiddenGroups = filterType === 'people' && searchFilteredAll.some((c) => c.type === 'group')
+  const hasHiddenPeople = filterType === 'groups' && searchFilteredAll.some((c) => c.type === 'person')
 
   const hiddenPeopleNames = searchFilteredAll
     .filter((c) => c.type === 'person')
@@ -92,8 +103,10 @@ export default function DashboardScreen() {
       {/* Section Label + Filter */}
       <SectionHeader
         title={sectionTitle}
-        currentFilter={filter}
-        onFilterChange={setFilter}
+        sortBy={sortBy}
+        onSortByChange={setSortBy}
+        filterType={filterType}
+        onFilterTypeChange={setFilterType}
       />
 
       {/* Contact/Group Ledger Cards */}

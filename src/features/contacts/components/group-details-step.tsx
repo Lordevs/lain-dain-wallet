@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import SelectedMembersStrip from '@/components/shared/selected-members-strip'
-import CurrencySelector from '@/components/shared/currency-selector'
+import CurrencySelectDrawer from '@/components/shared/currency-select-drawer'
 import { MOCK_CATEGORIES } from '../data/mock-data'
 import type { NewContactFlowState } from '../hooks/use-new-contact-flow'
 import imagePlaceholder from '@/assets/image-placeholder.svg'
@@ -151,7 +151,7 @@ export default function GroupDetailsStep({ flow }: GroupDetailsStepProps) {
       <h2 className="text-xs font-bold text-[#6B6B6B] uppercase tracking-wider mb-2 shrink-0">
         Currency
       </h2>
-      <CurrencySelector
+      <CurrencySelectDrawer
         value={flow.currency}
         onChange={flow.setCurrency}
       />
