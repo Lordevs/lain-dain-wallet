@@ -1,3 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-// TODO: Replace null with ContactDetailPage component
-export const Route = createFileRoute('/contacts/$id')({ component: () => null })
+import ContactDetailScreen from '@/features/contacts/contact-detail-screen'
+
+export const Route = createFileRoute('/contacts/$id')({
+  component: ContactDetailScreen,
+})

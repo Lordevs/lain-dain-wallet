@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Info } from 'lucide-react'
 import { useNavigate } from '@tanstack/react-router'
 import { ROUTES } from '@/constants/routes'
 import AppHeader from '@/components/layout/app-header'
@@ -10,7 +9,6 @@ import SectionHeader from './components/section-header'
 import ContactLedgerCard from './components/contact-ledger-card'
 import Fab from './components/fab'
 import { MOCK_BALANCE, MOCK_RECEIVABLES, MOCK_PAYABLES } from './data/mock-data'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 
 /**
  * DashboardScreen — the main home screen of the Lain Dain Wallet app.
@@ -58,27 +56,7 @@ export default function DashboardScreen() {
     return 'Lowest Amount'
   })()
 
-  // Wording for the alerts when elements are filtered out
-  const searchFilteredAll = search.trim()
-    ? contacts.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
-    : contacts
 
-  const hasHiddenGroups = filterType === 'people' && searchFilteredAll.some((c) => c.type === 'group')
-  const hasHiddenPeople = filterType === 'groups' && searchFilteredAll.some((c) => c.type === 'person')
-
-  const hiddenPeopleNames = searchFilteredAll
-    .filter((c) => c.type === 'person')
-    .map((p) => p.name.split(' ')[0])
-
-  let seeText = ''
-  if (hiddenPeopleNames.length === 1) {
-    seeText = hiddenPeopleNames[0]
-  } else if (hiddenPeopleNames.length > 1) {
-    seeText =
-      hiddenPeopleNames.slice(0, -1).join(', ') +
-      ' and ' +
-      hiddenPeopleNames[hiddenPeopleNames.length - 1]
-  }
 
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1]">
@@ -116,31 +94,22 @@ export default function DashboardScreen() {
             <ContactLedgerCard
               key={contact.id}
               contact={contact}
-              onClick={() => console.log('open ledger', contact.id)}
+              onClick={() => {
+                if (contact.type === 'person') {
+                  navigate({
+                    to: ROUTES.CONTACT_DETAILS,
+                    params: { id: contact.id },
+                  })
+                } else {
+                  console.log('open group ledger', contact.id)
+                }
+              }}
             />
           ))
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <p className="text-muted-foreground text-sm">No results found</p>
           </div>
-        )}
-
-        {/* Filter warning alerts */}
-        {hasHiddenGroups && (
-          <Alert className="bg-white! border-[1.08px] border-[#EFE7DD] text-[#9A9590] rounded-xl flex items-center gap-3 py-3 px-4">
-            <Info size={16} className="text-[#9C9893] shrink-0" />
-            <AlertDescription className="text-[#9A9590] text-[13px] font-medium leading-none p-0 m-0">
-              Groups are hidden. Switch to All to see them.
-            </AlertDescription>
-          </Alert>
-        )}
-        {hasHiddenPeople && (
-          <Alert className="bg-white! border-[1.08px] border-[#EFE7DD] text-[#9A9590] rounded-xl flex items-center gap-3 py-3 px-4">
-            <Info size={16} className="text-[#9C9893] shrink-0" />
-            <AlertDescription className="text-[#9A9590] text-[13px] font-medium leading-none p-0 m-0">
-              People filtered out. Switch to All to see {seeText}.
-            </AlertDescription>
-          </Alert>
         )}
       </div>
 
