@@ -4,10 +4,13 @@ import { cn } from '@/lib/utils'
 export interface ExpenseListData {
   id: string | number
   name: string
-  subtitle: string
+  subtitle: React.ReactNode
   amount: number
   currency?: string
   category?: ExpenseCategory
+  rightSubtitle?: string
+  showChevron?: boolean
+  className?: string
 }
 
 interface ExpenseListProps {
@@ -43,6 +46,9 @@ export default function ExpenseList({
           currency={expense.currency}
           category={expense.category}
           amountColor={amountColor}
+          rightSubtitle={expense.rightSubtitle}
+          showChevron={expense.showChevron ?? true}
+          className={expense.className}
           onClick={onItemClick ? () => onItemClick(expense.id) : undefined}
         />
       ))}

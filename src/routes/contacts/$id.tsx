@@ -1,6 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router'
-import ContactDetailScreen from '@/features/contacts/contact-detail-screen'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/contacts/$id')({
-  component: ContactDetailScreen,
+  component: () => <Outlet />,
 })

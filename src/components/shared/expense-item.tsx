@@ -1,17 +1,18 @@
-import { Coffee, Fuel, ShoppingCart, Truck, Layers, ChevronRight } from 'lucide-react'
+import { Coffee, Fuel, ShoppingCart, Truck, Handshake, Layers, ChevronRight } from 'lucide-react'
 import { formatCurrency } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 
-export type ExpenseCategory = 'food' | 'fuel' | 'shopping' | 'transport' | 'other'
+export type ExpenseCategory = 'food' | 'fuel' | 'shopping' | 'transport' | 'payment' | 'other'
 
 export interface ExpenseItemProps {
   name: string
-  subtitle: string
+  subtitle: React.ReactNode
   amount: number
   currency?: string
   category?: ExpenseCategory
   amountColor?: 'green' | 'orange' | 'black' | 'default'
   showChevron?: boolean
+  rightSubtitle?: string
   onClick?: () => void
   className?: string
 }
@@ -33,6 +34,10 @@ const CATEGORY_VISUALS = {
     icon: <Truck size={24} className="text-[#1F618D]" />,
     bgClass: 'bg-[#E3F2FD]',
   },
+  payment: {
+    icon: <Handshake size={24} className="text-[#0B683A]" />,
+    bgClass: 'bg-[#ECF6F0]',
+  },
   other: {
     icon: <Layers size={24} className="text-[#9A9590]" />,
     bgClass: 'bg-[#F5F3ED]',
@@ -52,6 +57,7 @@ export default function ExpenseItem({
   category = 'other',
   amountColor = 'default',
   showChevron = true,
+  rightSubtitle,
   onClick,
   className,
 }: ExpenseItemProps) {
@@ -91,17 +97,24 @@ export default function ExpenseItem({
           <p className="font-bold text-[15px] text-[#1A1A1A] leading-tight">
             {name}
           </p>
-          <p className="text-[12px] text-[#6B6B6B] mt-1 font-normal leading-none">
+          <div className="text-[12px] text-[#6B6B6B] mt-1 font-normal leading-normal whitespace-pre-line">
             {subtitle}
-          </p>
+          </div>
         </div>
       </div>
 
       {/* Right side amount + chevron */}
       <div className="flex items-center gap-2">
-        <span className={cn('text-[16px] font-extrabold', colorClass)}>
-          {displayAmount}
-        </span>
+        <div className="flex flex-col items-end text-right">
+          <span className={cn('text-[16px] font-extrabold', colorClass)}>
+            {displayAmount}
+          </span>
+          {rightSubtitle && (
+            <span className="text-[11px] text-[#9A9590] mt-1 font-normal leading-none">
+              {rightSubtitle}
+            </span>
+          )}
+        </div>
         {showChevron && <ChevronRight size={16} className="text-[#EBEBEB]" />}
       </div>
     </div>

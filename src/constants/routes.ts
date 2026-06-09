@@ -12,4 +12,7 @@ export const ROUTES = {
   PERSONAL: '/personal',
   PERSONAL_REPORTS: '/personal/reports',
   PERSONAL_ADD: '/personal/add',
+  CONTACT_ADD_EXPENSE: '/contacts/$id/add-expense',
+  CONTACT_EDIT_EXPENSE: '/contacts/$id/edit-expense',
+  CONTACT_REMINDER: '/contacts/$id/reminder',
 } as const

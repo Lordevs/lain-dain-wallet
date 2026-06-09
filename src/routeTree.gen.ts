@@ -21,6 +21,10 @@ import { Route as PersonalReportsRouteImport } from './routes/personal/reports'
 import { Route as PersonalAddRouteImport } from './routes/personal/add'
 import { Route as ContactsNewRouteImport } from './routes/contacts/new'
 import { Route as ContactsIdRouteImport } from './routes/contacts/$id'
+import { Route as ContactsIdIndexRouteImport } from './routes/contacts/$id.index'
+import { Route as ContactsIdReminderRouteImport } from './routes/contacts/$id.reminder'
+import { Route as ContactsIdEditExpenseRouteImport } from './routes/contacts/$id.edit-expense'
+import { Route as ContactsIdAddExpenseRouteImport } from './routes/contacts/$id.add-expense'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -82,12 +86,32 @@ const ContactsIdRoute = ContactsIdRouteImport.update({
   path: '/contacts/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContactsIdIndexRoute = ContactsIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ContactsIdRoute,
+} as any)
+const ContactsIdReminderRoute = ContactsIdReminderRouteImport.update({
+  id: '/reminder',
+  path: '/reminder',
+  getParentRoute: () => ContactsIdRoute,
+} as any)
+const ContactsIdEditExpenseRoute = ContactsIdEditExpenseRouteImport.update({
+  id: '/edit-expense',
+  path: '/edit-expense',
+  getParentRoute: () => ContactsIdRoute,
+} as any)
+const ContactsIdAddExpenseRoute = ContactsIdAddExpenseRouteImport.update({
+  id: '/add-expense',
+  path: '/add-expense',
+  getParentRoute: () => ContactsIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/personal': typeof PersonalRouteWithChildren
   '/settings': typeof SettingsRoute
-  '/contacts/$id': typeof ContactsIdRoute
+  '/contacts/$id': typeof ContactsIdRouteWithChildren
   '/contacts/new': typeof ContactsNewRoute
   '/personal/add': typeof PersonalAddRoute
   '/personal/reports': typeof PersonalReportsRoute
@@ -96,11 +120,14 @@ export interface FileRoutesByFullPath {
   '/contacts/': typeof ContactsIndexRoute
   '/personal/': typeof PersonalIndexRoute
   '/transactions/': typeof TransactionsIndexRoute
+  '/contacts/$id/add-expense': typeof ContactsIdAddExpenseRoute
+  '/contacts/$id/edit-expense': typeof ContactsIdEditExpenseRoute
+  '/contacts/$id/reminder': typeof ContactsIdReminderRoute
+  '/contacts/$id/': typeof ContactsIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRoute
-  '/contacts/$id': typeof ContactsIdRoute
   '/contacts/new': typeof ContactsNewRoute
   '/personal/add': typeof PersonalAddRoute
   '/personal/reports': typeof PersonalReportsRoute
@@ -109,13 +136,17 @@ export interface FileRoutesByTo {
   '/contacts': typeof ContactsIndexRoute
   '/personal': typeof PersonalIndexRoute
   '/transactions': typeof TransactionsIndexRoute
+  '/contacts/$id/add-expense': typeof ContactsIdAddExpenseRoute
+  '/contacts/$id/edit-expense': typeof ContactsIdEditExpenseRoute
+  '/contacts/$id/reminder': typeof ContactsIdReminderRoute
+  '/contacts/$id': typeof ContactsIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/personal': typeof PersonalRouteWithChildren
   '/settings': typeof SettingsRoute
-  '/contacts/$id': typeof ContactsIdRoute
+  '/contacts/$id': typeof ContactsIdRouteWithChildren
   '/contacts/new': typeof ContactsNewRoute
   '/personal/add': typeof PersonalAddRoute
   '/personal/reports': typeof PersonalReportsRoute
@@ -124,6 +155,10 @@ export interface FileRoutesById {
   '/contacts/': typeof ContactsIndexRoute
   '/personal/': typeof PersonalIndexRoute
   '/transactions/': typeof TransactionsIndexRoute
+  '/contacts/$id/add-expense': typeof ContactsIdAddExpenseRoute
+  '/contacts/$id/edit-expense': typeof ContactsIdEditExpenseRoute
+  '/contacts/$id/reminder': typeof ContactsIdReminderRoute
+  '/contacts/$id/': typeof ContactsIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -140,11 +175,14 @@ export interface FileRouteTypes {
     | '/contacts/'
     | '/personal/'
     | '/transactions/'
+    | '/contacts/$id/add-expense'
+    | '/contacts/$id/edit-expense'
+    | '/contacts/$id/reminder'
+    | '/contacts/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/settings'
-    | '/contacts/$id'
     | '/contacts/new'
     | '/personal/add'
     | '/personal/reports'
@@ -153,6 +191,10 @@ export interface FileRouteTypes {
     | '/contacts'
     | '/personal'
     | '/transactions'
+    | '/contacts/$id/add-expense'
+    | '/contacts/$id/edit-expense'
+    | '/contacts/$id/reminder'
+    | '/contacts/$id'
   id:
     | '__root__'
     | '/'
@@ -167,13 +209,17 @@ export interface FileRouteTypes {
     | '/contacts/'
     | '/personal/'
     | '/transactions/'
+    | '/contacts/$id/add-expense'
+    | '/contacts/$id/edit-expense'
+    | '/contacts/$id/reminder'
+    | '/contacts/$id/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   PersonalRoute: typeof PersonalRouteWithChildren
   SettingsRoute: typeof SettingsRoute
-  ContactsIdRoute: typeof ContactsIdRoute
+  ContactsIdRoute: typeof ContactsIdRouteWithChildren
   ContactsNewRoute: typeof ContactsNewRoute
   TransactionsIdRoute: typeof TransactionsIdRoute
   AuthIndexRoute: typeof AuthIndexRoute
@@ -267,6 +313,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contacts/$id/': {
+      id: '/contacts/$id/'
+      path: '/'
+      fullPath: '/contacts/$id/'
+      preLoaderRoute: typeof ContactsIdIndexRouteImport
+      parentRoute: typeof ContactsIdRoute
+    }
+    '/contacts/$id/reminder': {
+      id: '/contacts/$id/reminder'
+      path: '/reminder'
+      fullPath: '/contacts/$id/reminder'
+      preLoaderRoute: typeof ContactsIdReminderRouteImport
+      parentRoute: typeof ContactsIdRoute
+    }
+    '/contacts/$id/edit-expense': {
+      id: '/contacts/$id/edit-expense'
+      path: '/edit-expense'
+      fullPath: '/contacts/$id/edit-expense'
+      preLoaderRoute: typeof ContactsIdEditExpenseRouteImport
+      parentRoute: typeof ContactsIdRoute
+    }
+    '/contacts/$id/add-expense': {
+      id: '/contacts/$id/add-expense'
+      path: '/add-expense'
+      fullPath: '/contacts/$id/add-expense'
+      preLoaderRoute: typeof ContactsIdAddExpenseRouteImport
+      parentRoute: typeof ContactsIdRoute
+    }
   }
 }
 
@@ -286,11 +360,29 @@ const PersonalRouteWithChildren = PersonalRoute._addFileChildren(
   PersonalRouteChildren,
 )
 
+interface ContactsIdRouteChildren {
+  ContactsIdAddExpenseRoute: typeof ContactsIdAddExpenseRoute
+  ContactsIdEditExpenseRoute: typeof ContactsIdEditExpenseRoute
+  ContactsIdReminderRoute: typeof ContactsIdReminderRoute
+  ContactsIdIndexRoute: typeof ContactsIdIndexRoute
+}
+
+const ContactsIdRouteChildren: ContactsIdRouteChildren = {
+  ContactsIdAddExpenseRoute: ContactsIdAddExpenseRoute,
+  ContactsIdEditExpenseRoute: ContactsIdEditExpenseRoute,
+  ContactsIdReminderRoute: ContactsIdReminderRoute,
+  ContactsIdIndexRoute: ContactsIdIndexRoute,
+}
+
+const ContactsIdRouteWithChildren = ContactsIdRoute._addFileChildren(
+  ContactsIdRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   PersonalRoute: PersonalRouteWithChildren,
   SettingsRoute: SettingsRoute,
-  ContactsIdRoute: ContactsIdRoute,
+  ContactsIdRoute: ContactsIdRouteWithChildren,
   ContactsNewRoute: ContactsNewRoute,
   TransactionsIdRoute: TransactionsIdRoute,
   AuthIndexRoute: AuthIndexRoute,
