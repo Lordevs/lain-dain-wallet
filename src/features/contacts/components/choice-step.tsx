@@ -1,4 +1,4 @@
-import { Check, Users, UserPlus, Shield } from 'lucide-react'
+import { Check, Users, Shield } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import SearchBar from '@/components/shared/search-bar'
 import QuickActionButton from '@/features/contacts/components/quick-action-button'
@@ -49,25 +49,14 @@ export default function ChoiceStep({ flow }: ChoiceStepProps) {
         className="my-3 shrink-0"
       />
 
-      {/* Quick Actions — New Group / New Contact */}
-      <div className="bg-white border-[1.26px] border-[#EFE7DD] rounded-xl shadow-[0px_2px_8px_0px_#00000005] divide-y divide-[#EFE7DD] mb-5 overflow-hidden shrink-0">
+      {/* Quick Actions — New Group */}
+      <div className="bg-white border-[1.26px] border-[#EFE7DD] rounded-xl shadow-[0px_2px_8px_0px_#00000005] mb-5 overflow-hidden shrink-0">
         {/* New Group */}
         <QuickActionButton
           title="New Group"
           description="Split expenses with multiple people"
           icon={<Users strokeWidth={2} className='size-5.5' />}
           onClick={() => flow.setStep('add_members')}
-          className='border-0 border-b-[1.26px] border-[#EFE7DD]'
-        />
-
-        {/* New Contact */}
-        <QuickActionButton
-          title="New Contact"
-          description="Add someone by name or number"
-          icon={<UserPlus strokeWidth={2} className='size-5.5' />}
-          onClick={() => {
-            // Placeholder/Logic for new contact when defined
-          }}
         />
       </div>
 

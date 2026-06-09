@@ -1,7 +1,6 @@
 import {
   Check,
   Plus,
-  Banknote,
   Camera,
   User,
   Users,
@@ -14,17 +13,11 @@ import {
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Avatar, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import SelectedMembersStrip from '@/components/shared/selected-members-strip'
-import { MOCK_CATEGORIES, SUPPORTED_CURRENCIES } from '../data/mock-data'
+import CurrencySelector from '@/components/shared/currency-selector'
+import { MOCK_CATEGORIES } from '../data/mock-data'
 import type { NewContactFlowState } from '../hooks/use-new-contact-flow'
 import imagePlaceholder from '@/assets/image-placeholder.svg'
 
@@ -54,8 +47,6 @@ const CATEGORY_ICON_MAP: Record<string, React.ComponentType<any>> = {
  * category. Members can still be added/removed via the strip.
  */
 export default function GroupDetailsStep({ flow }: GroupDetailsStepProps) {
-  const activeCurrency = SUPPORTED_CURRENCIES.find((c) => c.code === flow.currency.toUpperCase())
-
   return (
     <div className="flex-1 flex flex-col px-6 overflow-hidden">
       {/* Row 1: Group Avatar placeholder + Name Input */}
@@ -160,29 +151,16 @@ export default function GroupDetailsStep({ flow }: GroupDetailsStepProps) {
       <h2 className="text-xs font-bold text-[#6B6B6B] uppercase tracking-wider mb-2 shrink-0">
         Currency
       </h2>
-      <Select value={flow.currency} onValueChange={flow.setCurrency}>
-        <SelectTrigger className="w-full h-12! rounded-full bg-white! border-[1.26px] border-[#EFE7DD] font-semibold text-sm px-5 mb-4 shrink-0 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary transition-all">
-          <div className="flex items-center gap-2">
-            <Banknote className="size-5 text-[#9A9590] shrink-0" />
-            <SelectValue>
-              <span className="text-[#6B6B6B] font-medium">{activeCurrency?.name ?? 'Pakistan Rupee'}</span>
-            </SelectValue>
-          </div>
-        </SelectTrigger>
-        <SelectContent className="bg-white border border-[#EFE7DD] rounded-xl z-50">
-          {SUPPORTED_CURRENCIES.map((cur) => (
-            <SelectItem key={cur.code} value={cur.code.toLowerCase()}>
-              {cur.flag} {cur.name} ({cur.code})
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <CurrencySelector
+        value={flow.currency}
+        onChange={flow.setCurrency}
+      />
 
       {/* Category list */}
       <h2 className="text-xs font-bold text-[#6B6B6B] uppercase tracking-wider mb-2 shrink-0">
         All Categories
       </h2>
-      <div className="border-[0.8] border-[#EBEBEB] rounded-xl bg-white shadow-[0px_2px_10px_0px_#0000000D] divide-y-[0.8px] divide-[#EBEBEB]">
+      <div className="border-[0.8px] border-[#EBEBEB] rounded-xl bg-white shadow-[0px_2px_10px_0px_#0000000D] divide-y-[0.8px] divide-[#EBEBEB]">
         {MOCK_CATEGORIES.map((cat) => {
           const isSelected = flow.selectedCategory === cat.id
           const IconComponent = CATEGORY_ICON_MAP[cat.id] || AlertCircle
