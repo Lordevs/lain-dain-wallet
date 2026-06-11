@@ -1,0 +1,125 @@
+import { useState } from 'react'
+import { Trash2, X, Info } from 'lucide-react'
+import FlowHeader from '@/components/shared/flow-header'
+import OutstandingBalanceDrawer from '@/components/shared/outstanding-balance-drawer'
+import ConfirmActionDrawer from '@/components/shared/confirm-action-drawer'
+
+interface DeleteAccountPanelProps {
+  onClose: () => void
+  onConfirm: () => void
+}
+
+export default function DeleteAccountPanel({ onClose, onConfirm }: DeleteAccountPanelProps) {
+  const [isSettled, setIsSettled] = useState(false)
+  const [isOutstandingOpen, setIsOutstandingOpen] = useState(false)
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+
+  const handleDeleteClick = () => {
+    if (!isSettled) {
+      setIsOutstandingOpen(true)
+    } else {
+      setIsConfirmOpen(true)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-60 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto animate-in fade-in slide-in-from-right duration-200 text-[#1A1A1A]">
+      <FlowHeader
+        title="Delete Account"
+        onBack={onClose}
+      />
+
+      <div className="flex-1 flex flex-col justify-between px-6 pb-10 pt-2">
+        <div className="flex flex-col items-center text-center mt-[76px]">
+          {/* Large Trash Icon circle wrapper with soft glow */}
+          <div className="w-[110px] h-[110px] rounded-full bg-[#FFF0EE] shadow-[0px_6px_20px_0px_#C0392B2E] flex items-center justify-center text-tertiary shrink-0">
+            <Trash2 size={40} strokeWidth={2} />
+          </div>
+
+          <h2 className="text-[22px] font-extrabold! text-[#1A1A1A] mt-8 tracking-tight leading-tight">
+            Delete your account?
+          </h2>
+          <p className="text-[14px] text-[#6B6B6B] mt-3.5 max-w-[320px] leading-relaxed">
+            This action is <span className="font-bold">permanent</span> and cannot be undone. All your data will be erased.
+          </p>
+
+          {/* Warnings List Card */}
+          <div className="w-full bg-[#FFF0EE] border border-tertiary rounded-[14px] p-5 text-left mt-8 shadow-[0px_2px_8px_0px_rgba(200,90,0,0.05)]">
+            <h3 className="text-[12px] font-bold text-tertiary uppercase tracking-widest mb-2">
+              What will be deleted
+            </h3>
+            <ul className="space-y-3.5">
+              <li className="flex items-start gap-3">
+                <X size={16} className="text-tertiary mt-0.5 shrink-0 stroke-[2.5px]" />
+                <span className="text-[13px] text-[#1A1A1A] font-medium leading-snug">
+                  Your profile and account data
+                </span>
+              </li>
+              <li className="flex items-start gap-3">
+                <X size={16} className="text-tertiary mt-0.5 shrink-0 stroke-[2.5px]" />
+                <span className="text-[13px] text-[#1A1A1A] font-medium leading-snug">
+                  All personal ledger entries
+                </span>
+              </li>
+              <li className="flex items-start gap-3">
+                <X size={16} className="text-tertiary mt-0.5 shrink-0 stroke-[2.5px]" />
+                <span className="text-[13px] text-[#1A1A1A] font-medium leading-snug">
+                  Transaction history
+                </span>
+              </li>
+              <li className="flex items-start gap-3">
+                <Info size={16} className="text-tertiary mt-0.5 shrink-0 stroke-[2.2px]" />
+                <span className="text-[13px] text-[#1A1A1A] font-medium leading-snug">
+                  Group expenses will remain visible to other members
+                </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col gap-3.5 mt-8">
+          {/* Permanently Delete Button */}
+          <button
+            type="button"
+            onClick={handleDeleteClick}
+            className="w-full h-14 bg-tertiary text-white rounded-[16px] font-bold text-[17px] flex items-center justify-center gap-2 active:scale-[0.99] transition-all cursor-pointer shadow-[0px_4px_14px_0px_#C0392B4D]"
+          >
+            <Trash2 size={17} strokeWidth={2.5} />
+            Permanently Delete
+          </button>
+
+          {/* Keep My Account Button */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full h-14 bg-white border-[1.6px] border-[#EBEBEB] text-[#6B6B6B] rounded-[16px] font-bold text-[17px] flex items-center justify-center active:scale-[0.99] transition-all cursor-pointer"
+          >
+            Keep My Account
+          </button>
+        </div>
+      </div>
+
+      {/* Reusable drawers connected */}
+      <OutstandingBalanceDrawer
+        isOpen={isOutstandingOpen}
+        onClose={() => setIsOutstandingOpen(false)}
+        title="Permanently delete the Account"
+        warningText="You have pending balance.You can settle first and then delete."
+        onAction={() => {
+          setIsSettled(true)
+          setIsConfirmOpen(true)
+        }}
+      />
+
+      <ConfirmActionDrawer
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        title="Permanently delete the Account"
+        confirmTitle="Delete your account permanently?"
+        confirmDescription="This will erase everything — your profile, all entries, transaction history, and personal balances. This cannot be undone."
+        onConfirm={onConfirm}
+      />
+    </div>
+  )
+}

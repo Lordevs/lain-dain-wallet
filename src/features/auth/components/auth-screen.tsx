@@ -48,7 +48,12 @@ export default function AuthScreen() {
   }
 
   const handleProfileSubmit = (profileData: any) => {
-    setProfile(profileData)
+    const finalProfile = {
+      name: 'Muhammad Huzaifa',
+      phone: useAuthStore.getState().tempCountryCode.code + ' ' + useAuthStore.getState().tempPhoneNumber,
+      ...profileData,
+    }
+    setProfile(finalProfile)
     setIsAuthenticated(true)
     navigate({ to: ROUTES.DASHBOARD })
   }
@@ -67,7 +72,7 @@ export default function AuthScreen() {
         {['signup_phone', 'otp', 'profile'].includes(step) ? (
           <button
             onClick={handleBack}
-            className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-foreground hover:bg-muted/80 active:scale-95 transition-all"
+            className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-foreground active:scale-95 transition-all"
           >
             <ChevronLeft size={20} strokeWidth={2.5} />
           </button>
@@ -83,6 +88,13 @@ export default function AuthScreen() {
               <BrandLogo />
               <LoginForm
                 onSuccess={() => {
+                  setProfile({
+                    name: 'Muhammad Huzaifa',
+                    phone: '+92 300 1234567',
+                    email: 'huzaifa@example.com',
+                    occupation: 'Software Engineer',
+                    avatar: null,
+                  })
                   setIsAuthenticated(true)
                   navigate({ to: ROUTES.DASHBOARD })
                 }}

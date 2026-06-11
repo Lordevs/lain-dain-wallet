@@ -7,6 +7,8 @@ export interface CountryCode {
 }
 
 export interface UserProfile {
+  name?: string
+  phone?: string
   age?: string
   gender?: string
   email?: string

@@ -1,6 +1,8 @@
 import { useAuthStore } from '@/store/use-auth-store'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Status, StatusIndicator } from '@/components/kibo-ui/status'
+import { Link } from '@tanstack/react-router'
+import { ROUTES } from '@/constants/routes'
 
 /**
  * AppHeader — shown at the top of every main app screen.
@@ -11,7 +13,14 @@ export default function AppHeader() {
 
   // Derive initials from profile data
   const initials = (() => {
-    if (!userProfile) return 'LD'
+    if (!userProfile) return 'MH'
+    if (userProfile.name) {
+      return userProfile.name
+        .split(/\s+/)
+        .map((n) => n[0]?.toUpperCase() ?? '')
+        .join('')
+        .slice(0, 2)
+    }
     const parts = [userProfile.occupation, userProfile.email]
       .filter(Boolean)
     if (parts.length === 0) return 'LD'
@@ -35,7 +44,11 @@ export default function AppHeader() {
       </div>
 
       {/* Avatar with online status badge */}
-      <div className="relative">
+      <Link
+        to={ROUTES.SETTINGS}
+        className="relative cursor-pointer active:scale-95 transition-all"
+        aria-label="Settings"
+      >
         <Avatar className="w-11 h-11">
           {userProfile?.avatar ? (
             <AvatarImage src={userProfile.avatar} alt="Profile" className="object-cover" />
@@ -52,7 +65,7 @@ export default function AppHeader() {
         >
           <StatusIndicator />
         </Status>
-      </div>
+      </Link>
     </header>
   )
 }
