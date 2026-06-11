@@ -82,7 +82,7 @@ export default function AddReceiptFlow({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto animate-in fade-in slide-in-from-right duration-200">
+    <div className="fixed inset-0 z-70 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto animate-in fade-in slide-in-from-right duration-200">
       {/* Hidden Native File Input */}
       <input
         type="file"

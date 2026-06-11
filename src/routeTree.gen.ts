@@ -11,9 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PersonalRouteImport } from './routes/personal'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TransactionsIndexRouteImport } from './routes/transactions/index'
 import { Route as PersonalIndexRouteImport } from './routes/personal/index'
+import { Route as NotificationsIndexRouteImport } from './routes/notifications.index'
 import { Route as ContactsIndexRouteImport } from './routes/contacts/index'
 import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as TransactionsIdRouteImport } from './routes/transactions/$id'
@@ -36,6 +38,11 @@ const PersonalRoute = PersonalRouteImport.update({
   path: '/personal',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -50,6 +57,11 @@ const PersonalIndexRoute = PersonalIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => PersonalRoute,
+} as any)
+const NotificationsIndexRoute = NotificationsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => NotificationsRoute,
 } as any)
 const ContactsIndexRoute = ContactsIndexRouteImport.update({
   id: '/contacts/',
@@ -109,6 +121,7 @@ const ContactsIdAddExpenseRoute = ContactsIdAddExpenseRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/notifications': typeof NotificationsRouteWithChildren
   '/personal': typeof PersonalRouteWithChildren
   '/settings': typeof SettingsRoute
   '/contacts/$id': typeof ContactsIdRouteWithChildren
@@ -118,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/transactions/$id': typeof TransactionsIdRoute
   '/auth/': typeof AuthIndexRoute
   '/contacts/': typeof ContactsIndexRoute
+  '/notifications/': typeof NotificationsIndexRoute
   '/personal/': typeof PersonalIndexRoute
   '/transactions/': typeof TransactionsIndexRoute
   '/contacts/$id/add-expense': typeof ContactsIdAddExpenseRoute
@@ -134,6 +148,7 @@ export interface FileRoutesByTo {
   '/transactions/$id': typeof TransactionsIdRoute
   '/auth': typeof AuthIndexRoute
   '/contacts': typeof ContactsIndexRoute
+  '/notifications': typeof NotificationsIndexRoute
   '/personal': typeof PersonalIndexRoute
   '/transactions': typeof TransactionsIndexRoute
   '/contacts/$id/add-expense': typeof ContactsIdAddExpenseRoute
@@ -144,6 +159,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/notifications': typeof NotificationsRouteWithChildren
   '/personal': typeof PersonalRouteWithChildren
   '/settings': typeof SettingsRoute
   '/contacts/$id': typeof ContactsIdRouteWithChildren
@@ -153,6 +169,7 @@ export interface FileRoutesById {
   '/transactions/$id': typeof TransactionsIdRoute
   '/auth/': typeof AuthIndexRoute
   '/contacts/': typeof ContactsIndexRoute
+  '/notifications/': typeof NotificationsIndexRoute
   '/personal/': typeof PersonalIndexRoute
   '/transactions/': typeof TransactionsIndexRoute
   '/contacts/$id/add-expense': typeof ContactsIdAddExpenseRoute
@@ -164,6 +181,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/notifications'
     | '/personal'
     | '/settings'
     | '/contacts/$id'
@@ -173,6 +191,7 @@ export interface FileRouteTypes {
     | '/transactions/$id'
     | '/auth/'
     | '/contacts/'
+    | '/notifications/'
     | '/personal/'
     | '/transactions/'
     | '/contacts/$id/add-expense'
@@ -189,6 +208,7 @@ export interface FileRouteTypes {
     | '/transactions/$id'
     | '/auth'
     | '/contacts'
+    | '/notifications'
     | '/personal'
     | '/transactions'
     | '/contacts/$id/add-expense'
@@ -198,6 +218,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/notifications'
     | '/personal'
     | '/settings'
     | '/contacts/$id'
@@ -207,6 +228,7 @@ export interface FileRouteTypes {
     | '/transactions/$id'
     | '/auth/'
     | '/contacts/'
+    | '/notifications/'
     | '/personal/'
     | '/transactions/'
     | '/contacts/$id/add-expense'
@@ -217,6 +239,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  NotificationsRoute: typeof NotificationsRouteWithChildren
   PersonalRoute: typeof PersonalRouteWithChildren
   SettingsRoute: typeof SettingsRoute
   ContactsIdRoute: typeof ContactsIdRouteWithChildren
@@ -243,6 +266,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PersonalRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -263,6 +293,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/personal/'
       preLoaderRoute: typeof PersonalIndexRouteImport
       parentRoute: typeof PersonalRoute
+    }
+    '/notifications/': {
+      id: '/notifications/'
+      path: '/'
+      fullPath: '/notifications/'
+      preLoaderRoute: typeof NotificationsIndexRouteImport
+      parentRoute: typeof NotificationsRoute
     }
     '/contacts/': {
       id: '/contacts/'
@@ -344,6 +381,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface NotificationsRouteChildren {
+  NotificationsIndexRoute: typeof NotificationsIndexRoute
+}
+
+const NotificationsRouteChildren: NotificationsRouteChildren = {
+  NotificationsIndexRoute: NotificationsIndexRoute,
+}
+
+const NotificationsRouteWithChildren = NotificationsRoute._addFileChildren(
+  NotificationsRouteChildren,
+)
+
 interface PersonalRouteChildren {
   PersonalAddRoute: typeof PersonalAddRoute
   PersonalReportsRoute: typeof PersonalReportsRoute
@@ -380,6 +429,7 @@ const ContactsIdRouteWithChildren = ContactsIdRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  NotificationsRoute: NotificationsRouteWithChildren,
   PersonalRoute: PersonalRouteWithChildren,
   SettingsRoute: SettingsRoute,
   ContactsIdRoute: ContactsIdRouteWithChildren,
