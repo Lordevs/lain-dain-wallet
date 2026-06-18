@@ -8,6 +8,7 @@ import BottomNav from './bottom-nav'
 const HIDE_NAV_PREFIXES = [
   '/contacts/new',       // New contact / group flow
   '/contacts/$',         // Contact detail  (dynamic segment)
+  '/groups/$',           // Group detail (dynamic segment)
   '/transactions/$',     // Transaction detail (dynamic segment)
   '/settings',
   '/personal/reports',   // Reports page

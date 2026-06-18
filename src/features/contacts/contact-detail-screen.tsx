@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
-import { useParams, useNavigate } from '@tanstack/react-router'
-import { MoreVertical, Bell } from 'lucide-react'
+import { useParams, useNavigate, Navigate } from '@tanstack/react-router'
+import { Bell } from 'lucide-react'
 import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
 import ContactAvatar from '@/components/shared/contact-avatar'
 import { ROUTES } from '@/constants/routes'
@@ -92,6 +92,10 @@ export default function ContactDetailScreen() {
     )
   }
 
+  if (contact.type === 'group') {
+    return <Navigate to={ROUTES.GROUP_DETAILS} params={{ id: contact.id }} replace />
+  }
+
   // Resolve the "Personal Balance"
   const personalTag = contact.tags.find(
     (t) => t.name.toLowerCase().includes('1-to-1') || t.name.toLowerCase().includes('personal')
@@ -124,7 +128,7 @@ export default function ContactDetailScreen() {
       {/* Unified Header */}
       <FlowHeader
         title={contact.name}
-        subtitle={contact.type === 'group' ? '6 members' : 'Personal Balance'}
+        subtitle="Personal Balance"
         onBack={() => navigate({ to: ROUTES.DASHBOARD })}
         backVariant="minimal"
         avatar={
@@ -140,13 +144,7 @@ export default function ContactDetailScreen() {
             )}
           </div>
         }
-        rightSlot={
-          contact.type === 'group' ? (
-            <button className="text-[#6B6B6B] cursor-pointer border-0 bg-transparent flex items-center justify-center p-2">
-              <MoreVertical size={20} />
-            </button>
-          ) : undefined
-        }
+        rightSlot={undefined}
       />
 
       {/* Overall Balance Stat Card */}

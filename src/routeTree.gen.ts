@@ -21,9 +21,13 @@ import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as TransactionsIdRouteImport } from './routes/transactions/$id'
 import { Route as PersonalReportsRouteImport } from './routes/personal/reports'
 import { Route as PersonalAddRouteImport } from './routes/personal/add'
+import { Route as GroupsIdRouteImport } from './routes/groups/$id'
 import { Route as ContactsNewRouteImport } from './routes/contacts/new'
 import { Route as ContactsIdRouteImport } from './routes/contacts/$id'
+import { Route as GroupsIdIndexRouteImport } from './routes/groups/$id.index'
 import { Route as ContactsIdIndexRouteImport } from './routes/contacts/$id.index'
+import { Route as GroupsIdReminderRouteImport } from './routes/groups/$id.reminder'
+import { Route as GroupsIdAddExpenseRouteImport } from './routes/groups/$id.add-expense'
 import { Route as ContactsIdReminderRouteImport } from './routes/contacts/$id.reminder'
 import { Route as ContactsIdEditExpenseRouteImport } from './routes/contacts/$id.edit-expense'
 import { Route as ContactsIdBreakdownRouteImport } from './routes/contacts/$id.breakdown'
@@ -89,6 +93,11 @@ const PersonalAddRoute = PersonalAddRouteImport.update({
   path: '/add',
   getParentRoute: () => PersonalRoute,
 } as any)
+const GroupsIdRoute = GroupsIdRouteImport.update({
+  id: '/groups/$id',
+  path: '/groups/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContactsNewRoute = ContactsNewRouteImport.update({
   id: '/contacts/new',
   path: '/contacts/new',
@@ -99,10 +108,25 @@ const ContactsIdRoute = ContactsIdRouteImport.update({
   path: '/contacts/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GroupsIdIndexRoute = GroupsIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => GroupsIdRoute,
+} as any)
 const ContactsIdIndexRoute = ContactsIdIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ContactsIdRoute,
+} as any)
+const GroupsIdReminderRoute = GroupsIdReminderRouteImport.update({
+  id: '/reminder',
+  path: '/reminder',
+  getParentRoute: () => GroupsIdRoute,
+} as any)
+const GroupsIdAddExpenseRoute = GroupsIdAddExpenseRouteImport.update({
+  id: '/add-expense',
+  path: '/add-expense',
+  getParentRoute: () => GroupsIdRoute,
 } as any)
 const ContactsIdReminderRoute = ContactsIdReminderRouteImport.update({
   id: '/reminder',
@@ -132,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/contacts/$id': typeof ContactsIdRouteWithChildren
   '/contacts/new': typeof ContactsNewRoute
+  '/groups/$id': typeof GroupsIdRouteWithChildren
   '/personal/add': typeof PersonalAddRoute
   '/personal/reports': typeof PersonalReportsRoute
   '/transactions/$id': typeof TransactionsIdRoute
@@ -144,7 +169,10 @@ export interface FileRoutesByFullPath {
   '/contacts/$id/breakdown': typeof ContactsIdBreakdownRoute
   '/contacts/$id/edit-expense': typeof ContactsIdEditExpenseRoute
   '/contacts/$id/reminder': typeof ContactsIdReminderRoute
+  '/groups/$id/add-expense': typeof GroupsIdAddExpenseRoute
+  '/groups/$id/reminder': typeof GroupsIdReminderRoute
   '/contacts/$id/': typeof ContactsIdIndexRoute
+  '/groups/$id/': typeof GroupsIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -162,7 +190,10 @@ export interface FileRoutesByTo {
   '/contacts/$id/breakdown': typeof ContactsIdBreakdownRoute
   '/contacts/$id/edit-expense': typeof ContactsIdEditExpenseRoute
   '/contacts/$id/reminder': typeof ContactsIdReminderRoute
+  '/groups/$id/add-expense': typeof GroupsIdAddExpenseRoute
+  '/groups/$id/reminder': typeof GroupsIdReminderRoute
   '/contacts/$id': typeof ContactsIdIndexRoute
+  '/groups/$id': typeof GroupsIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -172,6 +203,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/contacts/$id': typeof ContactsIdRouteWithChildren
   '/contacts/new': typeof ContactsNewRoute
+  '/groups/$id': typeof GroupsIdRouteWithChildren
   '/personal/add': typeof PersonalAddRoute
   '/personal/reports': typeof PersonalReportsRoute
   '/transactions/$id': typeof TransactionsIdRoute
@@ -184,7 +216,10 @@ export interface FileRoutesById {
   '/contacts/$id/breakdown': typeof ContactsIdBreakdownRoute
   '/contacts/$id/edit-expense': typeof ContactsIdEditExpenseRoute
   '/contacts/$id/reminder': typeof ContactsIdReminderRoute
+  '/groups/$id/add-expense': typeof GroupsIdAddExpenseRoute
+  '/groups/$id/reminder': typeof GroupsIdReminderRoute
   '/contacts/$id/': typeof ContactsIdIndexRoute
+  '/groups/$id/': typeof GroupsIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -195,6 +230,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/contacts/$id'
     | '/contacts/new'
+    | '/groups/$id'
     | '/personal/add'
     | '/personal/reports'
     | '/transactions/$id'
@@ -207,7 +243,10 @@ export interface FileRouteTypes {
     | '/contacts/$id/breakdown'
     | '/contacts/$id/edit-expense'
     | '/contacts/$id/reminder'
+    | '/groups/$id/add-expense'
+    | '/groups/$id/reminder'
     | '/contacts/$id/'
+    | '/groups/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -225,7 +264,10 @@ export interface FileRouteTypes {
     | '/contacts/$id/breakdown'
     | '/contacts/$id/edit-expense'
     | '/contacts/$id/reminder'
+    | '/groups/$id/add-expense'
+    | '/groups/$id/reminder'
     | '/contacts/$id'
+    | '/groups/$id'
   id:
     | '__root__'
     | '/'
@@ -234,6 +276,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/contacts/$id'
     | '/contacts/new'
+    | '/groups/$id'
     | '/personal/add'
     | '/personal/reports'
     | '/transactions/$id'
@@ -246,7 +289,10 @@ export interface FileRouteTypes {
     | '/contacts/$id/breakdown'
     | '/contacts/$id/edit-expense'
     | '/contacts/$id/reminder'
+    | '/groups/$id/add-expense'
+    | '/groups/$id/reminder'
     | '/contacts/$id/'
+    | '/groups/$id/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -256,6 +302,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   ContactsIdRoute: typeof ContactsIdRouteWithChildren
   ContactsNewRoute: typeof ContactsNewRoute
+  GroupsIdRoute: typeof GroupsIdRouteWithChildren
   TransactionsIdRoute: typeof TransactionsIdRoute
   AuthIndexRoute: typeof AuthIndexRoute
   ContactsIndexRoute: typeof ContactsIndexRoute
@@ -348,6 +395,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PersonalAddRouteImport
       parentRoute: typeof PersonalRoute
     }
+    '/groups/$id': {
+      id: '/groups/$id'
+      path: '/groups/$id'
+      fullPath: '/groups/$id'
+      preLoaderRoute: typeof GroupsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contacts/new': {
       id: '/contacts/new'
       path: '/contacts/new'
@@ -362,12 +416,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/groups/$id/': {
+      id: '/groups/$id/'
+      path: '/'
+      fullPath: '/groups/$id/'
+      preLoaderRoute: typeof GroupsIdIndexRouteImport
+      parentRoute: typeof GroupsIdRoute
+    }
     '/contacts/$id/': {
       id: '/contacts/$id/'
       path: '/'
       fullPath: '/contacts/$id/'
       preLoaderRoute: typeof ContactsIdIndexRouteImport
       parentRoute: typeof ContactsIdRoute
+    }
+    '/groups/$id/reminder': {
+      id: '/groups/$id/reminder'
+      path: '/reminder'
+      fullPath: '/groups/$id/reminder'
+      preLoaderRoute: typeof GroupsIdReminderRouteImport
+      parentRoute: typeof GroupsIdRoute
+    }
+    '/groups/$id/add-expense': {
+      id: '/groups/$id/add-expense'
+      path: '/add-expense'
+      fullPath: '/groups/$id/add-expense'
+      preLoaderRoute: typeof GroupsIdAddExpenseRouteImport
+      parentRoute: typeof GroupsIdRoute
     }
     '/contacts/$id/reminder': {
       id: '/contacts/$id/reminder'
@@ -448,6 +523,22 @@ const ContactsIdRouteWithChildren = ContactsIdRoute._addFileChildren(
   ContactsIdRouteChildren,
 )
 
+interface GroupsIdRouteChildren {
+  GroupsIdAddExpenseRoute: typeof GroupsIdAddExpenseRoute
+  GroupsIdReminderRoute: typeof GroupsIdReminderRoute
+  GroupsIdIndexRoute: typeof GroupsIdIndexRoute
+}
+
+const GroupsIdRouteChildren: GroupsIdRouteChildren = {
+  GroupsIdAddExpenseRoute: GroupsIdAddExpenseRoute,
+  GroupsIdReminderRoute: GroupsIdReminderRoute,
+  GroupsIdIndexRoute: GroupsIdIndexRoute,
+}
+
+const GroupsIdRouteWithChildren = GroupsIdRoute._addFileChildren(
+  GroupsIdRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   NotificationsRoute: NotificationsRouteWithChildren,
@@ -455,6 +546,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   ContactsIdRoute: ContactsIdRouteWithChildren,
   ContactsNewRoute: ContactsNewRoute,
+  GroupsIdRoute: GroupsIdRouteWithChildren,
   TransactionsIdRoute: TransactionsIdRoute,
   AuthIndexRoute: AuthIndexRoute,
   ContactsIndexRoute: ContactsIndexRoute,

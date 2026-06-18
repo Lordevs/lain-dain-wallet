@@ -110,7 +110,21 @@ export default function LedgerBreakdownScreen() {
         params: { id: contact.id },
       })
     } else {
-      showToast(`Group details are locked. Focus is on 1-to-1 Ledger details.`)
+      const allLedgers = [...MOCK_RECEIVABLES, ...MOCK_PAYABLES]
+      const foundGroup = allLedgers.find(
+        (g) => g.type === 'group' && (
+          tagName.toLowerCase().includes(g.name.toLowerCase()) || 
+          g.name.toLowerCase().includes(tagName.toLowerCase())
+        )
+      )
+      if (foundGroup) {
+        navigate({
+          to: ROUTES.GROUP_DETAILS,
+          params: { id: foundGroup.id },
+        })
+      } else {
+        showToast(`Group ledger details not found.`)
+      }
     }
   }
 

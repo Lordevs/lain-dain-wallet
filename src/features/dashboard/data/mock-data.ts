@@ -1,9 +1,9 @@
 import type { BalanceSummary, ContactLedger } from '../types'
 
 export const MOCK_BALANCE: BalanceSummary = {
-  totalReceivable: 13800,
-  totalPayable: 2230,
-  netBalance: 11570,
+  totalReceivable: 19800,
+  totalPayable: 1800,
+  netBalance: 18000,
   currency: 'PKR',
 }
 
@@ -52,6 +52,25 @@ export const MOCK_RECEIVABLES: ContactLedger[] = [
       { name: 'Groceries', amount: 1250 },
     ],
   },
+  {
+    id: '5',
+    name: 'Murree Trip',
+    initials: '🏕️',
+    avatarColor: 'bg-[#E8F5E9]',
+    ledgerCount: 6,
+    netAmount: 6000,
+    isOnline: false,
+    type: 'group',
+    tags: [
+      { name: 'Hotel Booking', amount: 3000 },
+      { name: 'Fuel', amount: 1250 },
+      { name: 'Payment settled', amount: 1000 },
+      { name: 'Dinner', amount: 850 },
+      { name: 'Snacks', amount: 300 },
+      { name: 'Motorway Toll', amount: 200 },
+      { name: 'Breakfast', amount: 550 },
+    ],
+  },
 ]
 
 export const MOCK_PAYABLES: ContactLedger[] = [
@@ -67,19 +86,6 @@ export const MOCK_PAYABLES: ContactLedger[] = [
     tags: [
       { name: 'Murree', amount: -2000 },
       { name: 'Groceries', amount: 200 },
-    ],
-  },
-  {
-    id: '5',
-    name: 'Murree Trip',
-    initials: '🏕️',
-    avatarColor: 'bg-[#E8F5E9]',
-    ledgerCount: 1,
-    netAmount: -430,
-    isOnline: false,
-    type: 'group',
-    tags: [
-      { name: 'Fuel', amount: -430 },
     ],
   },
 ]

@@ -1,22 +1,24 @@
-import { useParams, useNavigate, useSearch } from '@tanstack/react-router'
+import { useParams, useNavigate } from '@tanstack/react-router'
+import { useState } from 'react'
 import AddExpenseBase, { type ConfirmExpenseData } from '@/components/shared/add-expense-base'
 import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
-import { TRANSACTION_STORE } from '@/features/contacts/data/transaction-store'
 import { ROUTES } from '@/constants/routes'
+import { TRANSACTION_STORE } from '@/features/contacts/data/transaction-store'
 
-export default function EditContactExpenseScreen() {
-  const { id } = useParams({ from: '/contacts/$id/edit-expense' })
-  const search = useSearch({ from: '/contacts/$id/edit-expense' })
+export default function AddGroupExpenseScreen() {
+  const { id } = useParams({ from: '/groups/$id/add-expense' })
   const navigate = useNavigate()
 
-  // Find contact by id from mock data
+  const [newTxId, setNewTxId] = useState<string | null>(null)
+
+  // Find group by id from mock data
   const contact = [...MOCK_RECEIVABLES, ...MOCK_PAYABLES].find((c) => c.id === id)
 
-  if (!contact) {
+  if (!contact || contact.type !== 'group') {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#FEFAF1]">
         <div className="text-center">
-          <p className="text-lg font-bold text-[#1A1A1A]">Contact not found</p>
+          <p className="text-lg font-bold text-[#1A1A1A]">Group not found</p>
           <button
             onClick={() => navigate({ to: '/' })}
             className="mt-4 px-4 py-2 bg-[#0B683A] text-white rounded-full font-bold"
@@ -26,23 +28,6 @@ export default function EditContactExpenseScreen() {
         </div>
       </div>
     )
-  }
-
-  const txId = search.txId || ''
-
-  // Prefill data configuration
-  const initialData = {
-    amount: search.amount || '',
-    description: search.description || '',
-    category: search.category || 'bills',
-    dateValue: search.dateValue || 'Today',
-    paidBy: search.paidBy || 'you',
-    splitData: {
-      type: 'equal' as const,
-      selectedMembers: ['you', 'contact'],
-      unequalAmounts: { you: 0, contact: 0 },
-      adjustmentAmounts: { you: 0, contact: 0 },
-    }
   }
 
   const handleConfirm = (data: ConfirmExpenseData) => {
@@ -55,7 +40,7 @@ export default function EditContactExpenseScreen() {
       adjustmentAmounts: { you: 0, contact: 0 },
     }
 
-    // Calculate contactOwesAmount
+    // Shared Expense logic: calculate split owes amount
     let contactOwesAmount = 0
     if (splitData.type === 'equal') {
       const selectedCount = splitData.selectedMembers.length
@@ -88,48 +73,39 @@ export default function EditContactExpenseScreen() {
       }
     }
 
-    // Update store
-    const txList = TRANSACTION_STORE[contact.id] || []
-    const txIndex = txList.findIndex((t) => t.id === txId)
-    let oldContactOwesAmount = 0
-    let oldName = ''
-
-    if (txIndex !== -1) {
-      const oldTx = txList[txIndex]
-      oldContactOwesAmount = oldTx.amount
-      oldName = oldTx.name
-
-      txList[txIndex] = {
-        ...oldTx,
-        name: data.description || 'Edited Expense',
-        amount: contactOwesAmount,
-        category: data.category as any,
-        subtitle: paidBy === 'you' ? 'You paid' : `${contact.name.split(' ')[0]} paid`,
-        splitType: splitData.type,
-        dateValue: data.dateValue
-      }
+    // Add to group's tags breakdown history
+    const newTag = {
+      name: data.description || 'New Group Expense',
+      amount: contactOwesAmount,
     }
+    contact.tags.push(newTag)
+    contact.netAmount += contactOwesAmount
+    contact.ledgerCount = contact.tags.length
 
-    // Update contact's netAmount balance
-    const diff = contactOwesAmount - oldContactOwesAmount
-    contact.netAmount += diff
-
-    // Update tags array
-    const tagIndex = contact.tags.findIndex((t) => t.name === oldName || t.name === (data.description || 'New Split Expense'))
-    if (tagIndex !== -1) {
-      contact.tags[tagIndex].name = data.description || 'Edited Expense'
-      contact.tags[tagIndex].amount = contactOwesAmount
-    } else {
-      contact.tags.push({
-        name: data.description || 'Edited Expense',
-        amount: contactOwesAmount
-      })
+    // Add to TRANSACTION_STORE
+    if (!TRANSACTION_STORE[contact.id]) {
+      TRANSACTION_STORE[contact.id] = []
     }
+    const now = new Date()
+    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    const generatedId = 'tx-' + Date.now()
+    TRANSACTION_STORE[contact.id].push({
+      id: generatedId,
+      name: data.description || 'New Group Expense',
+      subtitle: paidBy === 'you' ? 'You paid' : `${contact.name.split(' ')[0]} paid`,
+      amount: contactOwesAmount,
+      category: data.category as any,
+      rightSubtitle: `Today, ${timeStr}`,
+      splitType: splitData.type,
+      dateValue: data.dateValue
+    })
+
+    setNewTxId(generatedId)
   }
 
   return (
     <AddExpenseBase
-      title="Edit Expense"
+      title="Add Group Expense"
       showPaidByAndSplit={true}
       contact={{
         id: contact.id,
@@ -137,21 +113,16 @@ export default function EditContactExpenseScreen() {
         initials: contact.initials,
         avatarColor: contact.avatarColor,
       }}
-      initialData={initialData}
       onConfirm={handleConfirm}
       onSuccessComplete={() => {
-        if (contact.type === 'group') {
-          navigate({ to: ROUTES.GROUP_DETAILS, params: { id: contact.id } })
+        if (newTxId) {
+          navigate({ to: `/transactions/${newTxId}` })
         } else {
-          navigate({ to: ROUTES.CONTACT_DETAILS, params: { id: contact.id } })
+          navigate({ to: ROUTES.GROUP_DETAILS, params: { id: contact.id } })
         }
       }}
       onBack={() => {
-        if (contact.type === 'group') {
-          navigate({ to: ROUTES.GROUP_DETAILS, params: { id: contact.id } })
-        } else {
-          navigate({ to: ROUTES.CONTACT_DETAILS, params: { id: contact.id } })
-        }
+        navigate({ to: ROUTES.GROUP_DETAILS, params: { id: contact.id } })
       }}
     />
   )

@@ -101,7 +101,10 @@ export default function DashboardScreen() {
                     params: { id: contact.id },
                   })
                 } else {
-                  console.log('open group ledger', contact.id)
+                  navigate({
+                    to: ROUTES.GROUP_DETAILS,
+                    params: { id: contact.id },
+                  })
                 }
               }}
             />

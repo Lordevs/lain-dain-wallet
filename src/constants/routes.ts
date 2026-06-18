@@ -16,4 +16,7 @@ export const ROUTES = {
   CONTACT_ADD_EXPENSE: '/contacts/$id/add-expense',
   CONTACT_EDIT_EXPENSE: '/contacts/$id/edit-expense',
   CONTACT_REMINDER: '/contacts/$id/reminder',
+  GROUP_DETAILS: '/groups/$id',
+  GROUP_ADD_EXPENSE: '/groups/$id/add-expense',
+  GROUP_REMINDER: '/groups/$id/reminder',
 } as const

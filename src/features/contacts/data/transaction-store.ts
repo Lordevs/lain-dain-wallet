@@ -11,6 +11,7 @@ export interface TransactionRecord {
   className?: string
   splitType?: 'equal' | 'unequal' | 'adjustment'
   dateValue?: string
+  note?: string
 }
 
 // Initial seed data
@@ -65,6 +66,80 @@ export const TRANSACTION_STORE: Record<string, TransactionRecord[]> = {
       amount: 500,
       category: 'food',
       rightSubtitle: 'Sun, 2:10 PM',
+      splitType: 'equal',
+      dateValue: 'Today'
+    }
+  ],
+  '5': [
+    {
+      id: 'mt1',
+      name: 'Hotel Booking',
+      subtitle: 'Ali paid',
+      amount: 3000,
+      category: 'other',
+      rightSubtitle: '10:30 AM',
+      splitType: 'equal',
+      dateValue: 'Today'
+    },
+    {
+      id: 'mt2',
+      name: 'Fuel',
+      subtitle: 'You paid',
+      amount: 1250,
+      category: 'fuel',
+      rightSubtitle: '5:22 PM',
+      splitType: 'equal',
+      dateValue: 'Today'
+    },
+    {
+      id: 'mt3',
+      name: 'Payment settled',
+      subtitle: 'You paid Ali\nBalance adjusted',
+      amount: 1000,
+      category: 'payment',
+      rightSubtitle: '5:40 PM',
+      showChevron: false,
+      className: 'bg-[#ECF6F0] hover:bg-[#ECF6F0]/90 text-[#0B683A]',
+      splitType: 'equal',
+      dateValue: 'Today'
+    },
+    {
+      id: 'mt4',
+      name: 'Dinner',
+      subtitle: 'Sara paid',
+      amount: 850,
+      category: 'food',
+      rightSubtitle: '8:45 PM',
+      splitType: 'equal',
+      dateValue: 'Today'
+    },
+    {
+      id: 'mt5',
+      name: 'Snacks',
+      subtitle: 'Hassan paid',
+      amount: 300,
+      category: 'food',
+      rightSubtitle: '11:08 PM',
+      splitType: 'equal',
+      dateValue: 'Today'
+    },
+    {
+      id: 'mt6',
+      name: 'Motorway Toll',
+      subtitle: 'You paid',
+      amount: 200,
+      category: 'transport',
+      rightSubtitle: '2 days ago',
+      splitType: 'equal',
+      dateValue: 'Today'
+    },
+    {
+      id: 'mt7',
+      name: 'Breakfast',
+      subtitle: 'Ali paid',
+      amount: 550,
+      category: 'food',
+      rightSubtitle: '2 days ago',
       splitType: 'equal',
       dateValue: 'Today'
     }
