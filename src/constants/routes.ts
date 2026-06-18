@@ -4,6 +4,7 @@ export const ROUTES = {
   SETTINGS: '/settings',
   CONTACTS: '/contacts',
   CONTACT_DETAILS: '/contacts/$id',
+  CONTACT_BREAKDOWN: '/contacts/$id/breakdown',
   NEW_CONTACT: '/contacts/new',
   TRANSACTIONS: '/transactions',
   TRANSACTION_DETAILS: '/transactions/$id',

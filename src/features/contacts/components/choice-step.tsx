@@ -1,4 +1,4 @@
-import { Check, Users, Shield } from 'lucide-react'
+import { Check, Users, Shield, ChevronLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import SearchBar from '@/components/shared/search-bar'
 import QuickActionButton from '@/features/contacts/components/quick-action-button'
@@ -38,8 +38,10 @@ function SelectionCheckbox({ checked }: { checked: boolean }) {
  * Shows: search bar, quick-action buttons, contacts list, invite list, footer.
  */
 export default function ChoiceStep({ flow }: ChoiceStepProps) {
+  const hasSelection = flow.selectedContacts.length > 0
+
   return (
-    <div className="flex-1 flex flex-col px-6 overflow-hidden">
+    <div className="flex-1 flex flex-col px-6 overflow-hidden relative">
       {/* Search */}
       <SearchBar
         id="choice-search"
@@ -61,7 +63,7 @@ export default function ChoiceStep({ flow }: ChoiceStepProps) {
       </div>
 
       {/* Scrollable contact lists */}
-      <div className="flex-1 overflow-y-auto pb-8 space-y-6">
+      <div className={cn("flex-1 overflow-y-auto space-y-6 pb-8", hasSelection && "pb-24")}>
         {/* Contacts on Lain Dain */}
         <ContactList title="Contacts on Lain Dain" titleColor="primary">
           {flow.filteredContacts.map((contact) => {
@@ -101,13 +103,28 @@ export default function ChoiceStep({ flow }: ChoiceStepProps) {
         </ContactList>
       </div>
 
+      {/* Sticky Next button */}
+      {hasSelection && (
+        <div className="absolute bottom-6 left-6 right-6 z-10 animate-in fade-in slide-in-from-bottom duration-200">
+          <Button
+            onClick={flow.nextStep}
+            className="w-full h-14 rounded-full bg-primary text-white font-extrabold text-[15px] shadow-lg active:scale-[0.98] transition-transform cursor-pointer"
+          >
+            Next
+            <ChevronLeft size={16} className="rotate-180 ml-1 shrink-0" strokeWidth={3} />
+          </Button>
+        </div>
+      )}
+
       {/* Security footer */}
-      <div className="flex items-center justify-center gap-1.5 py-4 shrink-0">
-        <Shield size={16} className="text-[#6B6B6B] shrink-0" />
-        <span className="text-xs font-medium text-[#6B6B6B]">
-          All expenses are private and secure
-        </span>
-      </div>
+      {!hasSelection && (
+        <div className="flex items-center justify-center gap-1.5 py-4 shrink-0">
+          <Shield size={16} className="text-[#6B6B6B] shrink-0" />
+          <span className="text-xs font-medium text-[#6B6B6B]">
+            All expenses are private and secure
+          </span>
+        </div>
+      )}
     </div>
   )
 }

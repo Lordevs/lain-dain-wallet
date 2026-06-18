@@ -15,6 +15,7 @@ export interface ExpenseItemProps {
   rightSubtitle?: string
   onClick?: () => void
   className?: string
+  leftSlot?: React.ReactNode
 }
 
 const CATEGORY_VISUALS = {
@@ -60,6 +61,7 @@ export default function ExpenseItem({
   rightSubtitle,
   onClick,
   className,
+  leftSlot,
 }: ExpenseItemProps) {
   const { icon, bgClass } = CATEGORY_VISUALS[category] || CATEGORY_VISUALS.other
 
@@ -90,9 +92,13 @@ export default function ExpenseItem({
     >
       {/* Left side details */}
       <div className="flex items-center gap-3">
-        <div className={cn('w-12 h-12 rounded-[13px] flex items-center justify-center shrink-0', bgClass)}>
-          {icon}
-        </div>
+        {leftSlot ? (
+          leftSlot
+        ) : (
+          <div className={cn('w-12 h-12 rounded-[13px] flex items-center justify-center shrink-0', bgClass)}>
+            {icon}
+          </div>
+        )}
         <div>
           <p className="font-bold text-[15px] text-[#1A1A1A] leading-tight">
             {name}

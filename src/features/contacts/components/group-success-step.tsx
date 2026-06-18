@@ -15,12 +15,15 @@ interface GroupSuccessStepProps {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 /**
- * GroupSuccessStep (Step 4) — celebration screen after a group is created.
- * Shows: animated check, group name, member names, stacked avatars,
+ * GroupSuccessStep (Step 4) — celebration screen after a group is created or single contact is added.
+ * Shows: animated check, group/contact name, member names/info, avatars,
  * and primary CTA / skip buttons.
  */
 export default function GroupSuccessStep({ flow }: GroupSuccessStepProps) {
   const navigate = useNavigate()
+
+  const isGroupFlow = flow.selectedContacts.length > 1 || !!flow.groupName.trim()
+  const singleContact = flow.selectedList[0]
 
   const memberSummary = (() => {
     const names = flow.selectedList.map((c) => c.name.split(' ')[0])
@@ -30,6 +33,19 @@ export default function GroupSuccessStep({ flow }: GroupSuccessStepProps) {
     const suffix = flow.selectedList.length > 3 ? ' and others' : ''
     return `${rest}${suffix} have been added.`
   })()
+
+  const handleAddFirstExpense = () => {
+    if (isGroupFlow) {
+      navigate({ to: ROUTES.DASHBOARD })
+    } else if (singleContact) {
+      navigate({
+        to: ROUTES.CONTACT_DETAILS,
+        params: { id: singleContact.id },
+      })
+    } else {
+      navigate({ to: ROUTES.DASHBOARD })
+    }
+  }
 
   return (
     <div className="flex-1 flex flex-col justify-between px-6 pt-16 pb-8 relative">
@@ -41,40 +57,65 @@ export default function GroupSuccessStep({ flow }: GroupSuccessStepProps) {
         </div>
 
         <h2 className="text-[26px] font-extrabold text-foreground mt-8 leading-tight">
-          Group Created!
+          {isGroupFlow ? 'Group Created!' : 'Lain Dain Started!'}
         </h2>
-        <p className="text-[19px] font-bold text-primary mt-2">{flow.groupName}</p>
-        <p className="text-[14px] text-muted-foreground mt-4 max-w-[260px]">{memberSummary}</p>
+        
+        {isGroupFlow ? (
+          <>
+            <p className="text-[19px] font-bold text-primary mt-2">{flow.groupName}</p>
+            <p className="text-[14px] text-muted-foreground mt-4 max-w-[260px]">{memberSummary}</p>
+          </>
+        ) : (
+          <>
+            <p className="text-[19px] font-bold text-primary mt-2">{singleContact?.name}</p>
+            <p className="text-[14px] text-muted-foreground mt-4 max-w-[260px]">
+              You can now start tracking expenses with {singleContact?.name.split(' ')[0]}.
+            </p>
+          </>
+        )}
 
-        {/* Stacked avatars */}
-        <div className="flex -space-x-4 items-center justify-center mt-10">
-          {/* Group initials chip */}
-          <div className="w-12 h-12 rounded-full border-2 border-[#FDB105] bg-[#01592B] text-white flex items-center justify-center font-extrabold text-xs z-30 select-none">
-            {flow.groupName.slice(0, 2).toUpperCase()}
+        {/* Avatars */}
+        {isGroupFlow ? (
+          <div className="flex -space-x-4 items-center justify-center mt-10">
+            {/* Group initials chip */}
+            <div className="w-12 h-12 rounded-full border-2 border-[#FDB105] bg-[#01592B] text-white flex items-center justify-center font-extrabold text-xs z-30 select-none">
+              {flow.groupName.slice(0, 2).toUpperCase()}
+            </div>
+
+            {/* First 3 member avatars */}
+            {flow.selectedList.slice(0, 3).map((contact, i) => (
+              <ContactAvatar
+                key={contact.id}
+                initials={contact.initials}
+                avatarColor={contact.avatarColor}
+                size="md"
+                className={cn(
+                  'border-2 border-[#FDB105]',
+                  i === 0 && 'z-20',
+                  i === 1 && 'z-10',
+                  i === 2 && 'z-0',
+                )}
+              />
+            ))}
           </div>
-
-          {/* First 3 member avatars */}
-          {flow.selectedList.slice(0, 3).map((contact, i) => (
-            <ContactAvatar
-              key={contact.id}
-              initials={contact.initials}
-              avatarColor={contact.avatarColor}
-              size="md"
-              className={cn(
-                'border-2 border-[#FDB105]',
-                i === 0 && 'z-20',
-                i === 1 && 'z-10',
-                i === 2 && 'z-0',
-              )}
-            />
-          ))}
-        </div>
+        ) : (
+          <div className="flex items-center justify-center mt-10">
+            {singleContact && (
+              <ContactAvatar
+                initials={singleContact.initials}
+                avatarColor={singleContact.avatarColor}
+                size="lg"
+                className="border-2 border-[#FDB105]"
+              />
+            )}
+          </div>
+        )}
       </div>
 
       {/* CTA buttons */}
       <div className="flex flex-col gap-4 mt-auto">
         <Button
-          onClick={() => navigate({ to: ROUTES.DASHBOARD })}
+          onClick={handleAddFirstExpense}
           className="w-full h-14 rounded-full bg-primary text-white font-extrabold text-[15px] shadow-[0px_7.03px_23.42px_0px_#0B683A59] active:scale-[0.98] transition-transform cursor-pointer"
         >
           Add First Expense

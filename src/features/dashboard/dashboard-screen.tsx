@@ -97,7 +97,7 @@ export default function DashboardScreen() {
               onClick={() => {
                 if (contact.type === 'person') {
                   navigate({
-                    to: ROUTES.CONTACT_DETAILS,
+                    to: ROUTES.CONTACT_BREAKDOWN,
                     params: { id: contact.id },
                   })
                 } else {

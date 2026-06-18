@@ -11,6 +11,8 @@ export interface ExpenseListData {
   rightSubtitle?: string
   showChevron?: boolean
   className?: string
+  leftSlot?: React.ReactNode
+  amountColor?: 'green' | 'orange' | 'black' | 'default'
 }
 
 interface ExpenseListProps {
@@ -45,10 +47,11 @@ export default function ExpenseList({
           amount={expense.amount}
           currency={expense.currency}
           category={expense.category}
-          amountColor={amountColor}
+          amountColor={expense.amountColor ?? amountColor}
           rightSubtitle={expense.rightSubtitle}
           showChevron={expense.showChevron ?? true}
           className={expense.className}
+          leftSlot={expense.leftSlot}
           onClick={onItemClick ? () => onItemClick(expense.id) : undefined}
         />
       ))}

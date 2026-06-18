@@ -6,7 +6,6 @@ import SuccessCheck from '@/components/shared/success-check'
 import NotificationCard, { type NotificationAction } from './components/notification-card'
 import { useNotifications } from './hooks/use-notifications'
 import { type NotificationItem } from './types'
-import SettlementRequestPanel from './components/settlement-request-panel'
 import SettleUpPanel from './components/settle-up-panel'
 import PaymentConfirmationPanel from './components/payment-confirmation-panel'
 import PaymentDisputePanel from './components/payment-dispute-panel'
@@ -30,7 +29,6 @@ export default function NotificationsScreen() {
   } = useNotifications()
 
   // Panel visibility states for dynamic content rendering
-  const [activeRequestNotification, setActiveRequestNotification] = useState<NotificationItem | null>(null)
   const [activeSettleUpNotification, setActiveSettleUpNotification] = useState<NotificationItem | null>(null)
   const [activeConfirmNotification, setActiveConfirmNotification] = useState<NotificationItem | null>(null)
   const [activeDisputeNotification, setActiveDisputeNotification] = useState<NotificationItem | null>(null)
@@ -84,7 +82,7 @@ export default function NotificationsScreen() {
             variant: 'green',
             onClick: (e) => {
               e.stopPropagation()
-              setActiveRequestNotification(item)
+              setActiveSettleUpNotification(item)
             },
           },
           {
@@ -182,7 +180,7 @@ export default function NotificationsScreen() {
     if (item.type === 'edited') {
       navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: 'tx-1' } })
     } else if (item.type === 'request') {
-      setActiveRequestNotification(item)
+      setActiveSettleUpNotification(item)
     } else if (item.type === 'confirmation') {
       setActiveConfirmNotification(item)
     } else if (item.type === 'dispute') {
@@ -293,29 +291,12 @@ export default function NotificationsScreen() {
         )}
       </div>
 
-      {/* Sliding Settlement Details Panel */}
-      {activeRequestNotification && (
-        <SettlementRequestPanel
-          notification={activeRequestNotification}
-          onClose={() => setActiveRequestNotification(null)}
-          onSettle={() => {
-            setActiveRequestNotification(null)
-            setActiveSettleUpNotification(activeRequestNotification)
-          }}
-          onIgnore={() => {
-            handleIgnore(activeRequestNotification.id)
-            setActiveRequestNotification(null)
-          }}
-        />
-      )}
-
       {/* Sliding Settle Up Panel */}
       {activeSettleUpNotification && (
         <SettleUpPanel
           notification={activeSettleUpNotification}
           onClose={() => {
             setActiveSettleUpNotification(null)
-            setActiveRequestNotification(activeSettleUpNotification)
           }}
           onConfirm={() => {
             handleSettle(activeSettleUpNotification.id)

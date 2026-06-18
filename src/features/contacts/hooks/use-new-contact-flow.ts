@@ -73,17 +73,28 @@ export function useNewContactFlow(): NewContactFlowState {
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
 
-  const toggleContact = (id: string) =>
-    setSelectedContacts((prev) =>
-      prev.includes(id) ? prev.filter((cId) => cId !== id) : [...prev, id],
-    )
+  const toggleContact = (id: string) => {
+    if (step === 'choice') {
+      // Single selection on the choice step
+      setSelectedContacts((prev) => (prev.includes(id) ? [] : [id]))
+    } else {
+      // Multiple selection on the group member selection step
+      setSelectedContacts((prev) =>
+        prev.includes(id) ? prev.filter((cId) => cId !== id) : [...prev, id],
+      )
+    }
+  }
 
   const removeContact = (id: string) =>
     setSelectedContacts((prev) => prev.filter((cId) => cId !== id))
 
   const goBack = () => {
     if (step === 'success') {
-      navigate({ to: ROUTES.DASHBOARD })
+      if (selectedContacts.length === 1 && !groupName) {
+        setStep('choice')
+      } else {
+        navigate({ to: ROUTES.DASHBOARD })
+      }
     } else if (step === 'group_details') {
       setStep('add_members')
     } else if (step === 'add_members') {
@@ -94,7 +105,13 @@ export function useNewContactFlow(): NewContactFlowState {
   }
 
   const nextStep = () => {
-    if (selectedContacts.length > 0) setStep('group_details')
+    if (selectedContacts.length > 0) {
+      if (step === 'choice') {
+        setStep('success')
+      } else {
+        setStep('group_details')
+      }
+    }
   }
 
   const createGroup = () => {
