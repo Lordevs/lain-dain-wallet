@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Bus,
   ShoppingBag,
@@ -9,6 +11,7 @@ import {
   HelpCircle,
   Plus,
 } from 'lucide-react'
+import AddCategoryFlow from '@/components/shared/add-category-flow'
 
 export interface CategoryOption {
   id: string
@@ -37,9 +40,30 @@ export default function CategoryPicker({
   selectedCategoryId,
   onSelectCategory,
 }: CategoryPickerProps) {
+  const [localCategories, setLocalCategories] = useState<CategoryOption[]>(CATEGORIES)
+  const [showAddCategory, setShowAddCategory] = useState(false)
+
+  const handleSaveCategory = (name: string, icon: any, color: string) => {
+    const newId = name.toLowerCase().replace(/\s+/g, '-')
+    const newCategory: CategoryOption = {
+      id: newId,
+      label: name,
+      color: color,
+      icon: icon,
+    }
+
+    if (!CATEGORIES.some((c) => c.id === newId)) {
+      CATEGORIES.push(newCategory)
+    }
+
+    setLocalCategories([...CATEGORIES])
+    onSelectCategory(newId)
+    setShowAddCategory(false)
+  }
+
   return (
     <div className="flex flex-wrap gap-2.5">
-      {CATEGORIES.map((cat) => {
+      {localCategories.map((cat) => {
         const IconComponent = cat.icon
         const isSelected = selectedCategoryId === cat.id
 
@@ -62,12 +86,33 @@ export default function CategoryPicker({
       {/* Add Category Pill */}
       <button
         type="button"
-        onClick={() => console.log('add category clicked')}
+        onClick={() => setShowAddCategory(true)}
         className="flex items-center gap-1.5 px-4 py-2.5 bg-transparent rounded-full text-[13px] font-medium text-primary border-[1.5px] border-dashed border-[#E8E5DE] cursor-pointer hover:bg-[#E4F2EB]/40 transition-all"
       >
         <Plus size={14} strokeWidth={2.5} />
         Add Category
       </button>
+
+      {/* Add Category Flow Overlay */}
+      <AnimatePresence>
+        {showAddCategory && (
+          <motion.div
+            initial={{ opacity: 0, x: '100%' }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 250 }}
+            className="fixed inset-0 z-50 bg-[#FEFAF1]"
+          >
+            <AddCategoryFlow
+              isOpen={showAddCategory}
+              onClose={() => setShowAddCategory(false)}
+              onSave={handleSaveCategory}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
+
+

@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { FileText, ChevronRight, User, Users, Check } from 'lucide-react'
+import { FileText, ChevronRight, ChevronDown, Users, Check } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import FlowHeader from '@/components/shared/flow-header'
 import CategoryPicker, { CATEGORIES } from '@/features/personal/components/category-picker'
@@ -9,6 +10,7 @@ import AddNoteFlow from '@/components/shared/add-note-flow'
 import SuccessCheck from '@/components/shared/success-check'
 import PaidByDrawer from '@/components/shared/paid-by-drawer'
 import SplitExpenseDrawer, { type SplitData } from '@/components/shared/split-expense-drawer'
+import SelectDateDrawer from '@/components/shared/select-date-drawer'
 
 export interface ConfirmExpenseData {
   amount: number
@@ -17,7 +19,7 @@ export interface ConfirmExpenseData {
   dateValue: string
   receiptFile: { name: string; size: string; dataUrl?: string } | null
   noteText: string
-  paidBy?: 'you' | 'contact'
+  paidBy?: string
   splitData?: SplitData
 }
 
@@ -26,7 +28,7 @@ export interface InitialExpenseData {
   description?: string
   category?: string
   dateValue?: string
-  paidBy?: 'you' | 'contact'
+  paidBy?: string
   splitData?: SplitData
 }
 
@@ -64,9 +66,10 @@ export default function AddExpenseBase({
   const [noteText, setNoteText] = useState('')
   const [showNoteOverlay, setShowNoteOverlay] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [showDateDrawer, setShowDateDrawer] = useState(false)
 
   // Shared Expense Specific State
-  const [paidBy, setPaidBy] = useState<'you' | 'contact'>(initialData?.paidBy || 'you')
+  const [paidBy, setPaidBy] = useState<string>(initialData?.paidBy || 'you')
   const [showPaidBy, setShowPaidBy] = useState(false)
   const [splitData, setSplitData] = useState<SplitData>(initialData?.splitData || {
     type: 'equal',
@@ -76,13 +79,11 @@ export default function AddExpenseBase({
   })
   const [showSplit, setShowSplit] = useState(false)
 
-  const payerName = paidBy === 'you' ? 'You' : (contact?.name || 'Contact')
-  const splitSummary = splitData.type === 'equal'
-    ? `${splitData.selectedMembers.length} people`
-    : splitData.type === 'unequal'
-      ? 'Unequal'
-      : 'Adjustment'
-
+  const payerName = paidBy === 'you'
+    ? 'You'
+    : paidBy === 'multiple'
+      ? 'Multiple people'
+      : (contact?.name || 'Contact')
   // Format amount input as number with commas
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawVal = e.target.value.replace(/\D/g, '')
@@ -96,7 +97,7 @@ export default function AddExpenseBase({
 
   // Toggle helpers
   const handleToggleDate = () => {
-    setDateValue((prev) => (prev === 'Today' ? 'Tomorrow' : 'Today'))
+    setShowDateDrawer(true)
   }
 
   const handleToggleReceipt = () => {
@@ -211,32 +212,65 @@ export default function AddExpenseBase({
               <button
                 type="button"
                 onClick={() => setShowPaidBy(true)}
-                className="flex-1 bg-white rounded-md border-[0.8px] border-[#EBEBEB] p-4 flex items-center justify-between cursor-pointer transition-colors outline-none shadow-[0px_1px_4px_0px_#0000000A]"
+                className={cn(
+                  "flex-1 rounded-[20px] border p-4 flex items-center justify-between cursor-pointer transition-all outline-none",
+                  paidBy === 'multiple' 
+                    ? "bg-[#E4F2EB]/35 border-[#0B683A4D] hover:bg-[#E4F2EB]/50" 
+                    : "bg-white border-[#EBEBEB] hover:bg-[#F7F5F0]"
+                )}
               >
                 <div className="flex items-center gap-3">
-                  <User size={18} className="text-[#6B6B6B]" />
+                  {/* Avatars */}
+                  {paidBy === 'multiple' ? (
+                    <div className="flex -space-x-2 shrink-0">
+                      <div className="size-6 rounded-full border border-white bg-[#0B683A] text-white flex items-center justify-center font-extrabold text-[8px] select-none shadow-sm">
+                        MH
+                      </div>
+                      <div className="size-6 rounded-full border border-white bg-[#2F80ED] text-white flex items-center justify-center font-extrabold text-[8px] select-none shadow-sm">
+                        AH
+                      </div>
+                      <div className="size-6 rounded-full border border-white bg-[#C96A1B] text-white flex items-center justify-center font-extrabold text-[8px] select-none shadow-sm">
+                        SK
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={cn(
+                      "size-6 rounded-full text-white flex items-center justify-center font-extrabold text-[9px] select-none shadow-sm",
+                      paidBy === 'you' ? "bg-[#0B683A]" : (contact.avatarColor || 'bg-[#2F80ED]')
+                    )}>
+                      {paidBy === 'you' ? 'MH' : contact.initials}
+                    </div>
+                  )}
+
                   <div className="flex flex-col text-left">
-                    <span className="text-[10px] text-[#6B6B6B] font-medium leading-none">Paid by</span>
-                    <span className="text-[13px] font-semibold text-[#1A1A1A] mt-1.5 leading-none">{payerName}</span>
+                    <span className="text-[11px] text-[#6B6B6B] font-semibold leading-none">Paid by</span>
+                    <span className={cn(
+                      "text-[14px] font-black mt-1.5 leading-none",
+                      paidBy === 'multiple' ? "text-[#0B683A]" : "text-[#1A1A1A]"
+                    )}>
+                      {paidBy === 'multiple' ? '3 people' : payerName}
+                    </span>
                   </div>
                 </div>
-                <ChevronRight size={16} className="text-[#6B6B6B]" />
+                <ChevronRight size={14} className={paidBy === 'multiple' ? "text-[#0B683A]" : "text-[#9A9590]"} />
               </button>
 
-              {/* Split between */}
+              {/* Split Type */}
               <button
                 type="button"
                 onClick={() => setShowSplit(true)}
-                className="flex-1 bg-white rounded-md border-[0.8px] border-[#EBEBEB] p-4 flex items-center justify-between cursor-pointer transition-colors outline-none shadow-[0px_1px_4px_0px_#0000000A]"
+                className="flex-1 bg-white rounded-[20px] border border-[#EBEBEB] p-4 flex items-center justify-between cursor-pointer hover:bg-[#F7F5F0] transition-colors outline-none"
               >
                 <div className="flex items-center gap-3">
-                  <Users size={18} className="text-[#6B6B6B]" />
+                  <Users size={18} className="text-[#6B6B6B]" strokeWidth={1.5} />
                   <div className="flex flex-col text-left">
-                    <span className="text-[10px] text-[#6B6B6B] font-medium leading-none">Split between</span>
-                    <span className="text-[13px] font-semibold text-[#1A1A1A] mt-1.5 leading-none">{splitSummary}</span>
+                    <span className="text-[11px] text-[#6B6B6B] font-semibold leading-none">Split Type</span>
+                    <span className="text-[14px] font-black text-[#1A1A1A] mt-1.5 leading-none">
+                      {splitData.type === 'equal' ? 'Equal' : splitData.type === 'unequal' ? 'Unequal' : 'Adjustment'}
+                    </span>
                   </div>
                 </div>
-                <ChevronRight size={16} className="text-[#6B6B6B]" />
+                <ChevronDown size={14} className="text-[#9A9590]" />
               </button>
             </div>
           )}
@@ -313,6 +347,7 @@ export default function AddExpenseBase({
           contactName={contact.name}
           contactInitials={contact.initials}
           contactAvatarColor={contact.avatarColor}
+          amount={Number(amount) || 0}
         />
       )}
 
@@ -336,6 +371,22 @@ export default function AddExpenseBase({
           contactAvatarColor={contact.avatarColor}
         />
       )}
+
+      {/* Select Date Drawer */}
+      <SelectDateDrawer
+        isOpen={showDateDrawer}
+        onClose={() => setShowDateDrawer(false)}
+        selectedValue={dateValue.toLowerCase()}
+        onSelect={(val) => {
+          if (val === 'today') {
+            setDateValue('Today')
+          } else if (val === 'yesterday') {
+            setDateValue('Yesterday')
+          } else {
+            setDateValue(val)
+          }
+        }}
+      />
     </form>
   )
 }
