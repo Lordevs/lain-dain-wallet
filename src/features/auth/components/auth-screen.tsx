@@ -4,7 +4,6 @@ import { ChevronLeft } from 'lucide-react'
 import { useNavigate } from '@tanstack/react-router'
 
 // Import sub-forms
-import LoginForm from './login-form'
 import PhoneForm from './phone-form'
 import OtpForm from './otp-form'
 import SuccessCheck from '@/components/shared/success-check'
@@ -21,6 +20,7 @@ export default function AuthScreen() {
   const { setProfile, setIsAuthenticated } = useAuthStore()
 
   const [step, setStep] = useState<AuthStep>('signin')
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin')
   const [phone, setPhone] = useState('') // Empty initially
 
   // Shared Brand Logo
@@ -38,12 +38,13 @@ export default function AuthScreen() {
 
   const handleBack = () => {
     if (step === 'signup_phone') setStep('signin')
-    else if (step === 'otp') setStep('signup_phone')
+    else if (step === 'otp') setStep(authMode === 'signup' ? 'signup_phone' : 'signin')
     else if (step === 'profile') setStep('otp')
   }
 
   const handlePhoneContinue = (enteredPhone: string) => {
     setPhone(enteredPhone)
+    setAuthMode('signup')
     setStep('otp')
   }
 
@@ -86,19 +87,15 @@ export default function AuthScreen() {
           <motion.div key="signin" {...fadeSlideProps} className="flex-1 flex flex-col justify-between">
             <div>
               <BrandLogo />
-              <LoginForm
-                onSuccess={() => {
-                  setProfile({
-                    name: 'Muhammad Huzaifa',
-                    phone: '+92 300 1234567',
-                    email: 'huzaifa@example.com',
-                    occupation: 'Software Engineer',
-                    avatar: null,
-                  })
-                  setIsAuthenticated(true)
-                  navigate({ to: ROUTES.DASHBOARD })
+              <PhoneForm
+                mode="signin"
+                initialPhone={phone}
+                onSubmit={(enteredPhone) => {
+                  setPhone(enteredPhone)
+                  setAuthMode('signin')
+                  setStep('otp')
                 }}
-                onGoToSignUp={() => setStep('signup_phone')}
+                onToggleMode={() => setStep('signup_phone')}
               />
             </div>
           </motion.div>
@@ -109,9 +106,10 @@ export default function AuthScreen() {
             <div>
               <BrandLogo />
               <PhoneForm
+                mode="signup"
                 initialPhone={phone}
-                onContinue={handlePhoneContinue}
-                onBack={() => setStep('signin')}
+                onSubmit={handlePhoneContinue}
+                onToggleMode={() => setStep('signin')}
               />
             </div>
           </motion.div>
@@ -124,7 +122,7 @@ export default function AuthScreen() {
               <OtpForm
                 phoneNumber={phone}
                 onVerify={() => setStep('success')}
-                onBack={() => setStep('signup_phone')}
+                onBack={() => setStep(authMode === 'signup' ? 'signup_phone' : 'signin')}
               />
             </div>
           </motion.div>
@@ -132,7 +130,21 @@ export default function AuthScreen() {
 
         {step === 'success' && (
           <motion.div key="success" {...fadeSlideProps} className="flex-1 flex items-center justify-center">
-            <SuccessCheck onComplete={() => setStep('profile')} />
+            <SuccessCheck onComplete={() => {
+              if (authMode === 'signin') {
+                setProfile({
+                  name: 'Muhammad Huzaifa',
+                  phone: phone,
+                  email: 'huzaifa@example.com',
+                  occupation: 'Software Engineer',
+                  avatar: null,
+                })
+                setIsAuthenticated(true)
+                navigate({ to: ROUTES.DASHBOARD })
+              } else {
+                setStep('profile')
+              }
+            }} />
           </motion.div>
         )}
 

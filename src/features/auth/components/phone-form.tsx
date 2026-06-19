@@ -5,15 +5,17 @@ import { Label } from '@/components/ui/label'
 import { PhoneInput } from '@/components/reui/phone-input'
 
 interface PhoneFormProps {
+  mode: 'signin' | 'signup'
   initialPhone: string
-  onContinue: (phone: string) => void
-  onBack: () => void
+  onSubmit: (phone: string) => void
+  onToggleMode: () => void
 }
 
 export default function PhoneForm({
+  mode,
   initialPhone,
-  onContinue,
-  onBack
+  onSubmit,
+  onToggleMode,
 }: PhoneFormProps) {
   // initialPhone is expected to be a full E.164 string like "+923219988776"
   const [phone, setPhone] = useState(initialPhone || '')
@@ -21,21 +23,32 @@ export default function PhoneForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (phone) {
-      onContinue(phone)
+      onSubmit(phone)
     }
   }
+
+  const isSignIn = mode === 'signin'
 
   return (
     <div className="flex-1 flex flex-col justify-between w-full">
       <form onSubmit={handleSubmit} className="flex-1 flex flex-col justify-between">
         <div>
           <div className="mb-6 text-left">
-            <h2 className="text-xl font-bold text-foreground leading-tight">Create your account</h2>
-            <p className="text-muted-foreground mt-0.5 text-base">
-              Simple. <span className="text-primary">Secure.</span>{' '}
-              <span className="text-primary">Lain Dain</span> ka hisaab{' '}
-              <span className="text-secondary">easy.</span>
-            </p>
+            {isSignIn ? (
+              <>
+                <h2 className="text-xl font-bold text-foreground leading-tight">Welcome Back</h2>
+                <p className="text-muted-foreground mt-0.5 text-base">Sign in to manage your ledgers</p>
+              </>
+            ) : (
+              <>
+                <h2 className="text-xl font-bold text-foreground leading-tight">Create your account</h2>
+                <p className="text-muted-foreground mt-0.5 text-base">
+                  Simple. <span className="text-primary">Secure.</span>{' '}
+                  <span className="text-primary">Lain Dain</span> ka hisaab{' '}
+                  <span className="text-secondary">easy.</span>
+                </p>
+              </>
+            )}
           </div>
 
           {/* Phone Input Card */}
@@ -46,7 +59,6 @@ export default function PhoneForm({
 
             <div className="w-full">
               <PhoneInput
-                defaultCountry="PK"
                 value={phone}
                 onChange={(val) => setPhone(val || '')}
                 className="w-full text-foreground [&_button]:h-14 [&_button]:rounded-l-full [&_button]:bg-[#FEF5EE] [&_button]:border-t-[0.98px] [&_button]:border-t-[#EFE7DD] [&_button]:border-b [&_button]:border-l [&_button]:border-[#EADBCC] [&_button]:border-r-0 [&_input]:h-14 [&_input]:rounded-r-full [&_input]:bg-[#FEF5EE] [&_input]:border-t-[0.98px] [&_input]:border-t-[#EFE7DD] [&_input]:border-b [&_input]:border-r [&_input]:border-[#EADBCC] [&_input]:pl-4 [&_input]:placeholder:text-[#9A9590] focus-within:[&_input]:border-primary focus-within:[&_button]:border-primary focus-within:[&_input]:ring-1 focus-within:[&_input]:ring-primary transition-all"
@@ -70,19 +82,34 @@ export default function PhoneForm({
         {/* Bottom Actions */}
         <div className="mt-6 space-y-12 shrink-0">
           <p className="text-sm text-muted-foreground text-center">
-            Already have an account?{' '}
-            <button
-              type="button"
-              onClick={onBack}
-              className="text-primary font-bold hover:underline"
-            >
-              Log in
-            </button>
+            {isSignIn ? (
+              <>
+                Don't have an account?{' '}
+                <button
+                  type="button"
+                  onClick={onToggleMode}
+                  className="text-primary font-bold hover:underline cursor-pointer"
+                >
+                  Sign Up
+                </button>
+              </>
+            ) : (
+              <>
+                Already have an account?{' '}
+                <button
+                  type="button"
+                  onClick={onToggleMode}
+                  className="text-primary font-bold hover:underline cursor-pointer"
+                >
+                  Log in
+                </button>
+              </>
+            )}
           </p>
 
           <Button
             type="submit"
-            className="w-full h-14 bg-primary text-white rounded-full font-bold text-base shadow-[0px_7.03px_23.42px_0px_rgba(11,104,58,0.35)] hover:bg-primary/95 transition-all flex items-center justify-center gap-1.5"
+            className="w-full h-14 bg-primary text-white rounded-full font-bold text-base shadow-[0px_7.03px_23.42px_0px_rgba(11,104,58,0.35)] hover:bg-primary/95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
           >
             Continue
             <ChevronLeft size={16} strokeWidth={2.5} className="rotate-180 ml-1" />
