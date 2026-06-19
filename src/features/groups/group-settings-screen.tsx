@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
 import { MoreVertical, Camera, Pencil, Plus, LogOut, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -11,11 +11,36 @@ import ConfirmActionDrawer from '@/components/shared/confirm-action-drawer'
 import { ROUTES } from '@/constants/routes'
 import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
 
+/** A group member with a numeric balance field (positive = owes you, negative = you owe) */
+interface GroupMember {
+  id: string
+  name: string
+  initials: string
+  avatarColor: string
+  balance: number          // Numeric source of truth — never parse owesText for logic
+  owesText: string         // Display-only derived string
+  isAdmin: boolean
+  isPending: boolean
+}
+
+/** Build the display string from numeric balance */
+function buildOwesText(member: Omit<GroupMember, 'owesText'>): string {
+  if (member.id === 'you') return 'Admin · Group creator'
+  if (member.isPending) return 'Member · Invited via link'
+  if (member.balance > 0) return `Member · Owes you Rs. ${member.balance.toLocaleString('en-US')}`
+  if (member.balance < 0) return `Member · You owe Rs. ${Math.abs(member.balance).toLocaleString('en-US')}`
+  return `${member.isAdmin ? 'Admin' : 'Member'} · On Lain Dain`
+}
+
+function makeMember(partial: Omit<GroupMember, 'owesText'>): GroupMember {
+  return { ...partial, owesText: buildOwesText(partial) }
+}
+
 export default function GroupSettingsScreen() {
   const { id } = useParams({ from: '/groups/$id/settings' })
   const navigate = useNavigate()
 
-  // Find contact by id from mock data
+  // Find contact by id from mock data (read-only — never mutate imported objects)
   const contact = useMemo(() => {
     return [...MOCK_RECEIVABLES, ...MOCK_PAYABLES].find((c) => c.id === id)
   }, [id])
@@ -32,53 +57,13 @@ export default function GroupSettingsScreen() {
   const [isNamePanelOpen, setIsNamePanelOpen] = useState(false)
   const [tempGroupName, setTempGroupName] = useState(contact?.name || 'Murree Trip')
 
-  // Local dynamic state for members list
-  const [members, setMembers] = useState([
-    {
-      id: 'you',
-      name: 'You',
-      initials: 'MH',
-      avatarColor: 'bg-[#0B683A] text-white',
-      owesText: 'Admin · Group creator',
-      isAdmin: true,
-      isPending: false,
-    },
-    {
-      id: 'ali',
-      name: 'Ali Hassan',
-      initials: 'AH',
-      avatarColor: 'bg-[#2F80ED] text-white',
-      owesText: 'Member · Owes you Rs. 2,000',
-      isAdmin: false,
-      isPending: false,
-    },
-    {
-      id: 'sara',
-      name: 'Sara Khan',
-      initials: 'SK',
-      avatarColor: 'bg-[#C96A1B] text-white',
-      owesText: 'Admin · On Lain Dain',
-      isAdmin: true,
-      isPending: false,
-    },
-    {
-      id: 'hassan',
-      name: 'Hassan',
-      initials: 'HS',
-      avatarColor: 'bg-[#4F5D75] text-white',
-      owesText: 'Member · On Lain Dain',
-      isAdmin: false,
-      isPending: false,
-    },
-    {
-      id: 'usman',
-      name: 'Usman Shah',
-      initials: 'US',
-      avatarColor: 'bg-[#5C6BC0] text-white',
-      owesText: 'Member · Invited via link',
-      isAdmin: false,
-      isPending: true,
-    },
+  // Local dynamic state for members list — uses numeric balance, not display strings
+  const [members, setMembers] = useState<GroupMember[]>([
+    makeMember({ id: 'you',    name: 'You',        initials: 'MH', avatarColor: 'bg-[#0B683A] text-white', balance: 0,    isAdmin: true,  isPending: false }),
+    makeMember({ id: 'ali',    name: 'Ali Hassan', initials: 'AH', avatarColor: 'bg-[#2F80ED] text-white', balance: 2000, isAdmin: false, isPending: false }),
+    makeMember({ id: 'sara',   name: 'Sara Khan',  initials: 'SK', avatarColor: 'bg-[#C96A1B] text-white', balance: 0,    isAdmin: true,  isPending: false }),
+    makeMember({ id: 'hassan', name: 'Hassan',     initials: 'HS', avatarColor: 'bg-[#4F5D75] text-white', balance: 0,    isAdmin: false, isPending: false }),
+    makeMember({ id: 'usman',  name: 'Usman Shah', initials: 'US', avatarColor: 'bg-[#5C6BC0] text-white', balance: 0,    isAdmin: false, isPending: true }),
   ])
 
   // State to manage Member Options Drawer
@@ -92,12 +77,18 @@ export default function GroupSettingsScreen() {
     confirmTitle?: string
     confirmDescription?: string
     buttonText?: string
-    buttonClassName?: string
+    buttonVariant?: 'warning' | 'danger' | 'primary'
     onAction?: () => void
   }>({
     type: null,
     title: '',
   })
+
+  /**
+   * Pending action to run after the outstanding drawer fully closes.
+   * Avoids setTimeout hacks — fired from onOpenChange(false) callback.
+   */
+  const pendingAfterClose = useRef<(() => void) | null>(null)
 
   const selectedMember = useMemo(() => {
     return members.find((m) => m.id === selectedMemberId) || null
@@ -106,19 +97,10 @@ export default function GroupSettingsScreen() {
   const handleToggleAdmin = (memberId: string) => {
     setMembers((prev) =>
       prev.map((m) => {
-        if (m.id === memberId) {
-          const nextAdmin = !m.isAdmin
-          return {
-            ...m,
-            isAdmin: nextAdmin,
-            owesText: m.id === 'ali'
-              ? 'Member · Owes you Rs. 2,000'
-              : m.isPending
-              ? 'Member · Invited via link'
-              : `${nextAdmin ? 'Admin' : 'Member'} · On Lain Dain`
-          }
-        }
-        return m
+        if (m.id !== memberId) return m
+        const nextAdmin = !m.isAdmin
+        const updated = { ...m, isAdmin: nextAdmin }
+        return { ...updated, owesText: buildOwesText(updated) }
       })
     )
   }
@@ -128,19 +110,24 @@ export default function GroupSettingsScreen() {
     const member = members.find((m) => m.id === memberId)
     if (!member) return
 
-    // Ali Hassan has an outstanding balance (owes you Rs. 2,000)
-    const hasBalance = member.owesText.includes('Owes') || member.owesText.includes('owes') || member.id === 'ali'
-
-    if (hasBalance) {
+    if (member.balance !== 0) {
+      // Member has outstanding balance — show outstanding drawer first
       setDrawerConfig({
         type: 'outstanding',
         title: 'Permanently Remove the Member from the group',
         warningText: 'This member has unsettled balances in the group. Ask them to settle first before they can be removed.',
         buttonText: 'Settle Balance',
         onAction: () => {
-          // Settle the balance and trigger the confirm drawer
-          setMembers(prev => prev.map(m => m.id === memberId ? { ...m, owesText: 'Member · On Lain Dain' } : m))
-          setTimeout(() => {
+          // Settle numerically, re-derive display text
+          setMembers((prev) =>
+            prev.map((m) => {
+              if (m.id !== memberId) return m
+              const updated = { ...m, balance: 0 }
+              return { ...updated, owesText: buildOwesText(updated) }
+            })
+          )
+          // Queue confirm drawer to open after outstanding drawer closes
+          pendingAfterClose.current = () => {
             setDrawerConfig({
               type: 'confirm',
               title: 'Permanently Remove the Member from the group',
@@ -148,11 +135,11 @@ export default function GroupSettingsScreen() {
               confirmDescription: "They'll lose access to the group and its expenses. Their past contributions will remain visible to other members.",
               buttonText: 'Confirm',
               onAction: () => {
-                setMembers(prev => prev.filter(m => m.id !== memberId))
-              }
+                setMembers((prev) => prev.filter((m) => m.id !== memberId))
+              },
             })
-          }, 300)
-        }
+          }
+        },
       })
     } else {
       setDrawerConfig({
@@ -162,8 +149,8 @@ export default function GroupSettingsScreen() {
         confirmDescription: "They'll lose access to the group and its expenses. Their past contributions will remain visible to other members.",
         buttonText: 'Confirm',
         onAction: () => {
-          setMembers(prev => prev.filter(m => m.id !== memberId))
-        }
+          setMembers((prev) => prev.filter((m) => m.id !== memberId))
+        },
       })
     }
   }
@@ -173,8 +160,8 @@ export default function GroupSettingsScreen() {
   }
 
   const handleLeaveGroup = () => {
-    // Net balance check: check if any member owes us
-    const hasBalances = members.some(m => m.owesText.toLowerCase().includes('owes'))
+    // Use numeric balance field — never parse display strings for logic
+    const hasBalances = members.some((m) => m.id !== 'you' && m.balance > 0)
 
     if (hasBalances) {
       setDrawerConfig({
@@ -183,24 +170,26 @@ export default function GroupSettingsScreen() {
         warningText: `You have unsettled balances in ${groupName}. You must settle all balances before you can leave the group.`,
         buttonText: 'Settle Balance',
         onAction: () => {
-          // Settle balances, then open Confirm action drawer
-          setMembers(prev => prev.map(m => m.owesText.toLowerCase().includes('owes') ? { ...m, owesText: 'Member · On Lain Dain' } : m))
-          if (contact) {
-            contact.netAmount = 0
-          }
-          setTimeout(() => {
+          // Settle all balances numerically — do NOT mutate imported contact object
+          setMembers((prev) =>
+            prev.map((m) => {
+              if (m.balance <= 0) return m
+              const updated = { ...m, balance: 0 }
+              return { ...updated, owesText: buildOwesText(updated) }
+            })
+          )
+          // Queue confirm drawer via ref — no setTimeout
+          pendingAfterClose.current = () => {
             setDrawerConfig({
               type: 'confirm',
               title: 'Leave the Murree Group Permanently',
               confirmTitle: 'Leave Group permanently?',
               confirmDescription: "You'll lose access to this group and its expenses. Other members will still see your past contributions.",
               buttonText: 'Confirm',
-              onAction: () => {
-                navigate({ to: ROUTES.DASHBOARD })
-              }
+              onAction: () => navigate({ to: ROUTES.DASHBOARD }),
             })
-          }, 300)
-        }
+          }
+        },
       })
     } else {
       setDrawerConfig({
@@ -209,9 +198,7 @@ export default function GroupSettingsScreen() {
         confirmTitle: 'Leave Group permanently?',
         confirmDescription: "You'll lose access to this group and its expenses. Other members will still see your past contributions.",
         buttonText: 'Confirm',
-        onAction: () => {
-          navigate({ to: ROUTES.DASHBOARD })
-        }
+        onAction: () => navigate({ to: ROUTES.DASHBOARD }),
       })
     }
   }
@@ -223,10 +210,8 @@ export default function GroupSettingsScreen() {
       confirmTitle: 'Delete Group permanently?',
       confirmDescription: 'This will permanently delete this group and all its expenses for all members. This action cannot be undone.',
       buttonText: 'Delete',
-      buttonClassName: 'w-full h-14 bg-[#EB5757] hover:bg-[#EB5757]/95 text-white rounded-full font-bold text-base flex items-center justify-center active:scale-[0.99] transition-all cursor-pointer shadow-[0px_8px_20px_rgba(235,87,87,0.25)] border-0 outline-none',
-      onAction: () => {
-        navigate({ to: ROUTES.DASHBOARD })
-      }
+      buttonVariant: 'danger',
+      onAction: () => navigate({ to: ROUTES.DASHBOARD }),
     })
   }
 
@@ -540,7 +525,16 @@ export default function GroupSettingsScreen() {
       {/* Outstanding Balance Drawer */}
       <OutstandingBalanceDrawer
         isOpen={drawerConfig.type === 'outstanding'}
-        onClose={() => setDrawerConfig(prev => ({ ...prev, type: null }))}
+        onClose={() => {
+          setDrawerConfig((prev) => ({ ...prev, type: null }))
+          // Fire pending action (e.g. open confirm drawer) after this drawer closes
+          if (pendingAfterClose.current) {
+            const action = pendingAfterClose.current
+            pendingAfterClose.current = null
+            // Small rAF to let the close animation settle before opening next drawer
+            requestAnimationFrame(() => action())
+          }
+        }}
         title={drawerConfig.title}
         warningText={drawerConfig.warningText || ''}
         buttonText={drawerConfig.buttonText}
@@ -555,7 +549,7 @@ export default function GroupSettingsScreen() {
         confirmTitle={drawerConfig.confirmTitle || ''}
         confirmDescription={drawerConfig.confirmDescription || ''}
         buttonText={drawerConfig.buttonText}
-        buttonClassName={drawerConfig.buttonClassName}
+        variant={drawerConfig.buttonVariant}
         onConfirm={drawerConfig.onAction || (() => {})}
       />
 

@@ -7,7 +7,7 @@ import { useNavigate } from '@tanstack/react-router'
 import PhoneForm from './phone-form'
 import OtpForm from './otp-form'
 import SuccessCheck from '@/components/shared/success-check'
-import ProfileForm from './profile-form'
+import ProfileForm, { type ProfileFormData } from './profile-form'
 
 // Import store
 import { useAuthStore } from '@/store/use-auth-store'
@@ -15,16 +15,9 @@ import { ROUTES } from '@/constants/routes'
 
 type AuthStep = 'signin' | 'signup_phone' | 'otp' | 'success' | 'profile'
 
-export default function AuthScreen() {
-  const navigate = useNavigate()
-  const { setProfile, setIsAuthenticated } = useAuthStore()
-
-  const [step, setStep] = useState<AuthStep>('signin')
-  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin')
-  const [phone, setPhone] = useState('') // Empty initially
-
-  // Shared Brand Logo
-  const BrandLogo = () => (
+// Defined outside the component so React doesn't treat it as a new type on every render
+function BrandLogo() {
+  return (
     <div className="flex flex-col items-center mt-2 mb-8 select-none">
       <div className="flex items-center gap-1.5 text-[32px] font-extrabold tracking-tight">
         <span className="text-primary">Lain</span>
@@ -35,6 +28,15 @@ export default function AuthScreen() {
       </span>
     </div>
   )
+}
+
+export default function AuthScreen() {
+  const navigate = useNavigate()
+  const { setProfile, setIsAuthenticated } = useAuthStore()
+
+  const [step, setStep] = useState<AuthStep>('signin')
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin')
+  const [phone, setPhone] = useState('') // Empty initially
 
   const handleBack = () => {
     if (step === 'signup_phone') setStep('signin')
@@ -48,10 +50,11 @@ export default function AuthScreen() {
     setStep('otp')
   }
 
-  const handleProfileSubmit = (profileData: any) => {
+  const handleProfileSubmit = (profileData: ProfileFormData) => {
+    const { tempCountryCode, tempPhoneNumber } = useAuthStore.getState()
     const finalProfile = {
       name: 'Muhammad Huzaifa',
-      phone: useAuthStore.getState().tempCountryCode.code + ' ' + useAuthStore.getState().tempPhoneNumber,
+      phone: `${tempCountryCode.code} ${tempPhoneNumber}`,
       ...profileData,
     }
     setProfile(finalProfile)

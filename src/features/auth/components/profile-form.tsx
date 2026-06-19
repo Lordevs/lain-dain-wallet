@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useForm, Controller } from 'react-hook-form'
 import {
   Calendar as CalendarIcon,
   User,
@@ -23,52 +24,67 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
+/** Exported so auth-screen.tsx can type its handleProfileSubmit handler */
+export interface ProfileFormData {
+  age: string
+  gender: string
+  email: string
+  occupation: string
+  maritalStatus: string
+  avatar: string | null
+}
+
 interface ProfileFormProps {
-  onSubmit: (profile: {
-    age: string
-    gender: string
-    email: string
-    occupation: string
-    maritalStatus: string
-    avatar: string | null
-  }) => void
+  onSubmit: (profile: ProfileFormData) => void
+}
+
+interface FormValues {
+  dob: Date | undefined
+  gender: string
+  email: string
+  occupation: string
+  maritalStatus: string
 }
 
 export default function ProfileForm({ onSubmit }: ProfileFormProps) {
-  const [age, setAge] = useState('')
-  const [dob, setDob] = useState<Date | undefined>(undefined)
-  const [gender, setGender] = useState('')
-  const [email, setEmail] = useState('')
-  const [occupation, setOccupation] = useState('')
-  const [maritalStatus, setMaritalStatus] = useState('')
-  const [avatar, setAvatar] = useState<string | null>(null)
+  const { control, handleSubmit, watch } = useForm<FormValues>({
+    defaultValues: {
+      dob: undefined,
+      gender: '',
+      email: '',
+      occupation: '',
+      maritalStatus: '',
+    },
+  })
+
+  // Avatar uses a separate state since it's a File/URL, not a serialisable form field
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setAvatar(reader.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
+    if (!file) return
+    // Use Object URL — avoids storing large base64 strings in state/memory
+    const url = URL.createObjectURL(file)
+    setAvatarUrl(url)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const dob = watch('dob')
+  const age = dob ? String(differenceInYears(new Date(), dob)) : ''
+
+  const onFormSubmit = (values: FormValues) => {
     onSubmit({
       age,
-      gender,
-      email,
-      occupation,
-      maritalStatus,
-      avatar
+      gender: values.gender,
+      email: values.email,
+      occupation: values.occupation,
+      maritalStatus: values.maritalStatus,
+      avatar: avatarUrl,
     })
   }
 
   return (
     <div className="flex-1 flex flex-col justify-between w-full">
-      <form onSubmit={handleSubmit} className="w-full">
+      <form onSubmit={handleSubmit(onFormSubmit)} className="w-full">
         <div>
           <div className="mb-6 text-left">
             <h2 className="text-xl font-bold text-foreground leading-tight">Complete your profile</h2>
@@ -80,8 +96,8 @@ export default function ProfileForm({ onSubmit }: ProfileFormProps) {
             <div className="flex flex-col items-center mb-4">
               <div className="relative">
                 <Avatar className="w-24 h-24 border-2 border-[#EFE7DD] shadow-sm">
-                  {avatar ? (
-                    <AvatarImage src={avatar} alt="Profile photo" className="object-cover" />
+                  {avatarUrl ? (
+                    <AvatarImage src={avatarUrl} alt="Profile photo" className="object-cover" />
                   ) : (
                     <AvatarFallback className="bg-[#EDEAE5] text-[#C0BAB2]">
                       <User size={40} />
@@ -99,109 +115,131 @@ export default function ProfileForm({ onSubmit }: ProfileFormProps) {
             {/* Age Input (Popover with Calendar) */}
             <div className="space-y-1.5 w-full">
               <Label className="text-sm font-semibold text-foreground px-1">Age</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    className="w-full h-12 pl-12 pr-4 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground hover:bg-[#FEF5EE] justify-start font-normal text-sm relative shadow-none focus-visible:ring-1 focus-visible:ring-primary [&_svg:last-child]:text-[#9A9590]"
-                  >
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590]">
-                      <CalendarIcon size={18} />
-                    </span>
-                    {dob ? (
-                      <span className="text-foreground">{format(dob, "dd MMM yyyy")} ({differenceInYears(new Date(), dob)} years)</span>
-                    ) : (
-                      <span className="text-[#9A9590]">Enter your age</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dob}
-                    onSelect={(date) => {
-                      setDob(date)
-                      if (date) {
-                        setAge(differenceInYears(new Date(), date).toString())
-                      } else {
-                        setAge("")
-                      }
-                    }}
-                    disabled={(date) => date > new Date()}
-                    captionLayout='dropdown'
-                  />
-                </PopoverContent>
-              </Popover>
+              <Controller
+                name="dob"
+                control={control}
+                render={({ field }) => (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        className="w-full h-12 pl-12 pr-4 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground hover:bg-[#FEF5EE] justify-start font-normal text-sm relative shadow-none focus-visible:ring-1 focus-visible:ring-primary [&_svg:last-child]:text-[#9A9590]"
+                      >
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590]">
+                          <CalendarIcon size={18} />
+                        </span>
+                        {field.value ? (
+                          <span className="text-foreground">{format(field.value, "dd MMM yyyy")} ({differenceInYears(new Date(), field.value)} years)</span>
+                        ) : (
+                          <span className="text-[#9A9590]">Enter your age</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) => date > new Date()}
+                        captionLayout='dropdown'
+                      />
+                    </PopoverContent>
+                  </Popover>
+                )}
+              />
             </div>
 
             {/* Gender Input */}
             <div className="space-y-1.5">
               <Label className="text-sm font-semibold text-foreground px-1">Select Gender</Label>
-              <Select value={gender} onValueChange={setGender} required>
-                <SelectTrigger className="w-full h-12! pl-12 pr-10 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground text-sm focus:ring-0 focus:border-primary relative flex justify-between items-center select-none shadow-none font-normal [&_svg:last-child]:text-[#9A9590]">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590]">
-                    <User size={18} />
-                  </span>
-                  <SelectValue placeholder="Select gender" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#FEFAF1] border-[#EFE7DD] p-1">
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="female">Female</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
+              <Controller
+                name="gender"
+                control={control}
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange} required>
+                    <SelectTrigger className="w-full h-12! pl-12 pr-10 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground text-sm focus:ring-0 focus:border-primary relative flex justify-between items-center select-none shadow-none font-normal [&_svg:last-child]:text-[#9A9590]">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590]">
+                        <User size={18} />
+                      </span>
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#FEFAF1] border-[#EFE7DD] p-1">
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
 
             {/* Email Input */}
             <div className="space-y-1.5">
               <Label className="text-sm font-semibold text-foreground px-1">Email <span className='text-[#9A9590] font-normal'>(Optional)</span></Label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590]">
-                  <Mail size={18} />
-                </span>
-                <Input
-                  type="email"
-                  placeholder="Enter Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-12 pl-12 pr-4 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground text-sm placeholder:text-[#9A9590] shadow-none"
-                />
-              </div>
+              <Controller
+                name="email"
+                control={control}
+                render={({ field }) => (
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590]">
+                      <Mail size={18} />
+                    </span>
+                    <Input
+                      type="email"
+                      placeholder="Enter Email"
+                      className="h-12 pl-12 pr-4 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground text-sm placeholder:text-[#9A9590] shadow-none"
+                      {...field}
+                    />
+                  </div>
+                )}
+              />
             </div>
 
             {/* Occupation Input */}
             <div className="space-y-1.5">
               <Label className="text-sm font-semibold text-foreground px-1">Occupation <span className='text-[#9A9590] font-normal'>(Optional)</span></Label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590]">
-                  <Briefcase size={18} />
-                </span>
-                <Input
-                  type="text"
-                  placeholder="Enter your occupation"
-                  value={occupation}
-                  onChange={(e) => setOccupation(e.target.value)}
-                  className="h-12 pl-12 pr-4 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground text-sm placeholder:text-[#9A9590] shadow-none"
-                />
-              </div>
+              <Controller
+                name="occupation"
+                control={control}
+                render={({ field }) => (
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590]">
+                      <Briefcase size={18} />
+                    </span>
+                    <Input
+                      type="text"
+                      placeholder="Enter your occupation"
+                      className="h-12 pl-12 pr-4 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground text-sm placeholder:text-[#9A9590] shadow-none"
+                      {...field}
+                    />
+                  </div>
+                )}
+              />
             </div>
 
             {/* Marital Status Input */}
             <div className="space-y-1.5">
               <Label className="text-sm font-semibold text-foreground px-1">Marital status <span className='text-[#9A9590] font-normal'>(Optional)</span></Label>
-              <Select value={maritalStatus} onValueChange={setMaritalStatus}>
-                <SelectTrigger className="w-full h-12! pl-12 pr-10 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground text-sm focus:ring-0 focus:border-primary relative flex justify-between items-center select-none shadow-none font-normal [&_svg:last-child]:text-[#9A9590]">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590]">
-                    <Heart size={18} />
-                  </span>
-                  <SelectValue placeholder="Select marital status" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#FEFAF1] border-[#EFE7DD] p-1">
-                  <SelectItem value="single">Single</SelectItem>
-                  <SelectItem value="married">Married</SelectItem>
-                  <SelectItem value="divorced">Divorced</SelectItem>
-                </SelectContent>
-              </Select>
+              <Controller
+                name="maritalStatus"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full h-12! pl-12 pr-10 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground text-sm focus:ring-0 focus:border-primary relative flex justify-between items-center select-none shadow-none font-normal [&_svg:last-child]:text-[#9A9590]">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590]">
+                        <Heart size={18} />
+                      </span>
+                      <SelectValue placeholder="Select marital status" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#FEFAF1] border-[#EFE7DD] p-1">
+                      <SelectItem value="single">Single</SelectItem>
+                      <SelectItem value="married">Married</SelectItem>
+                      <SelectItem value="divorced">Divorced</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
           </div>
         </div>

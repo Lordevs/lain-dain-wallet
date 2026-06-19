@@ -33,8 +33,8 @@ export default function OtpForm({
       countryCallingCode = `+${parsed.countryCallingCode}`
       nationalNumber = parsed.nationalNumber
     }
-  } catch (error) {
-    console.warn('Could not parse phone number calling code:', error)
+  } catch {
+    // Silently ignore parse errors — phoneNumber may not be E.164 in all cases
   }
 
   const handleVerify = (e: React.FormEvent) => {
@@ -43,8 +43,7 @@ export default function OtpForm({
   }
 
   const handleResend = () => {
-    // Action to trigger resending code
-    console.log("Resend code triggered for:", phoneNumber)
+    // TODO: Trigger OTP resend via auth backend
   }
 
   return (

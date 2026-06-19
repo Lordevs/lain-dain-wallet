@@ -9,17 +9,10 @@ import SelectDateDrawer from '@/components/shared/select-date-drawer'
 import AddReceiptFlow from '@/components/shared/add-receipt-flow'
 import AddNoteFlow from '@/components/shared/add-note-flow'
 import SuccessCheck from '@/components/shared/success-check'
-import { RECURRING_STORE, getGroupRecurringPayments, type RecurringPaymentRecord } from '@/features/groups/data/recurring-store'
+import { useRecurringStore, type RecurringPaymentRecord } from '@/store/use-recurring-store'
+import { getMemberName } from '@/features/groups/data/group-members'
 import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
 import { ROUTES } from '@/constants/routes'
-
-// Static list of group members matching group 5 (Murree Trip) settings page
-const GROUP_MEMBERS = [
-  { id: 'you', name: 'You', initials: 'MH', avatarColor: 'bg-[#0B683A]' },
-  { id: 'ali', name: 'Ali Hassan', initials: 'AH', avatarColor: 'bg-[#2F80ED]' },
-  { id: 'sara', name: 'Sara Khan', initials: 'SK', avatarColor: 'bg-[#C96A1B]' },
-  { id: 'hassan', name: 'Hassan', initials: 'HS', avatarColor: 'bg-[#4F5D75]' },
-]
 
 export default function AddRecurringScreen() {
   const { id } = useParams({ from: '/groups/$id/recurring/add' })
@@ -28,16 +21,18 @@ export default function AddRecurringScreen() {
 
   const editId = search.edit
 
+  const { getPayments, addPayment, updatePayment } = useRecurringStore()
+
   // Find the group details
   const group = useMemo(() => {
     return [...MOCK_RECEIVABLES, ...MOCK_PAYABLES].find((c) => c.id === id)
   }, [id])
 
-  // Look up payment if editing
+  // Look up payment if editing from the Zustand store
   const editingPayment = useMemo(() => {
     if (!editId) return null
-    return getGroupRecurringPayments(id).find((p) => p.id === editId) || null
-  }, [id, editId])
+    return getPayments(id).find((p) => p.id === editId) ?? null
+  }, [id, editId, getPayments])
 
   // Form states
   const [amount, setAmount] = useState('')
@@ -83,13 +78,8 @@ export default function AddRecurringScreen() {
     }
   }, [editingPayment])
 
-  // Resolve payer full name
-  const payerName = useMemo(() => {
-    if (paidBy === 'you') return 'You'
-    if (paidBy === 'multiple') return 'Multiple people'
-    const found = GROUP_MEMBERS.find((m) => m.id === paidBy)
-    return found ? found.name : 'Ali Hassan'
-  }, [paidBy])
+  // Resolve payer full name from shared members list
+  const payerName = useMemo(() => getMemberName(paidBy), [paidBy])
 
   // Amount formatting
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -107,9 +97,7 @@ export default function AddRecurringScreen() {
     const parsedAmount = Number(amount) || 0
     if (parsedAmount <= 0) return
 
-    const currentList = getGroupRecurringPayments(id)
-
-    const updatedRecord: RecurringPaymentRecord = {
+    const record: RecurringPaymentRecord = {
       id: editingPayment ? editingPayment.id : `r-${Date.now()}`,
       name: description || 'Subscription Split',
       amount: parsedAmount,
@@ -124,11 +112,9 @@ export default function AddRecurringScreen() {
     }
 
     if (editingPayment) {
-      // Replace existing item
-      RECURRING_STORE[id] = currentList.map((p) => (p.id === editingPayment.id ? updatedRecord : p))
+      updatePayment(id, record)
     } else {
-      // Add new item
-      RECURRING_STORE[id] = [...currentList, updatedRecord]
+      addPayment(id, record)
     }
 
     setShowSuccess(true)

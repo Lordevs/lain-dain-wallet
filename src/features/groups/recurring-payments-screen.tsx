@@ -1,51 +1,38 @@
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
 import { Home, Music, Pencil, Trash2, Plus, Video } from 'lucide-react'
 import FlowHeader from '@/components/shared/flow-header'
 import { ROUTES } from '@/constants/routes'
-import { getGroupRecurringPayments, type RecurringPaymentRecord, RECURRING_STORE } from '@/features/groups/data/recurring-store'
+import { useRecurringStore } from '@/store/use-recurring-store'
+import { MOCK_GROUP_MEMBERS } from '@/features/groups/data/group-members'
 import { cn } from '@/lib/utils'
-
-// Static list of group members matching group 5 (Murree Trip) settings page
-const GROUP_MEMBERS = [
-  { id: 'you', name: 'You', initials: 'MH', avatarColor: 'bg-[#0B683A]' },
-  { id: 'ali', name: 'Ali Hassan', initials: 'AH', avatarColor: 'bg-[#2F80ED]' },
-  { id: 'sara', name: 'Sara Khan', initials: 'SK', avatarColor: 'bg-[#C96A1B]' },
-  { id: 'hassan', name: 'Hassan', initials: 'HS', avatarColor: 'bg-[#C96A1B]' },
-]
 
 export default function RecurringPaymentsScreen() {
   const { id } = useParams({ from: '/groups/$id/recurring/' })
   const navigate = useNavigate()
 
-  // Get current recurring list for this group
-  const [payments, setPayments] = useState<RecurringPaymentRecord[]>(() => {
-    return [...getGroupRecurringPayments(id)]
-  })
+  const { deletePayment } = useRecurringStore()
+  const payments = useRecurringStore((s) => s.paymentsByGroup[id] ?? [])
 
   // Calculate Monthly total and Active count dynamically
-  const monthlyTotal = useMemo(() => {
-    return payments.reduce((sum, item) => {
-      return sum + item.amount
-    }, 0)
-  }, [payments])
+  const monthlyTotal = useMemo(
+    () => payments.reduce((sum, item) => sum + item.amount, 0),
+    [payments]
+  )
 
   const activeCount = payments.length
 
-  // Delete payment handler
+  // Delete payment handler — updates Zustand store (triggers re-render)
   const handleDelete = (paymentId: string) => {
-    const updated = payments.filter((p) => p.id !== paymentId)
-    setPayments(updated)
-    // Persist back to store
-    RECURRING_STORE[id] = updated
+    deletePayment(id, paymentId)
   }
 
-  // Edit payment handler - Redirect to add screen with edit search param
+  // Edit payment handler — search params are typed via route's validateSearch
   const handleEdit = (paymentId: string) => {
     navigate({
       to: ROUTES.GROUP_RECURRING_ADD,
       params: { id },
-      search: { edit: paymentId } as any
+      search: { edit: paymentId },
     })
   }
 
@@ -85,27 +72,11 @@ export default function RecurringPaymentsScreen() {
     }
   }
 
-  // Resolve payer avatar initials and color
-  const getPayerVisuals = (paidById: string, paidByName: string) => {
-    if (paidById === 'you') {
-      return { initials: 'MH', avatarColor: 'bg-[#0B683A]' }
-    }
-    const found = GROUP_MEMBERS.find((m) => m.id === paidById)
-    if (found) {
-      return { initials: found.initials, avatarColor: found.avatarColor }
-    }
-    // Custom fallbacks based on name matching
-    const lowerName = paidByName.toLowerCase()
-    if (lowerName.includes('ali')) {
-      return { initials: 'AH', avatarColor: 'bg-[#2F80ED]' }
-    }
-    if (lowerName.includes('sara')) {
-      return { initials: 'SK', avatarColor: 'bg-[#F1C40F] text-white' }
-    }
-    if (lowerName.includes('hassan')) {
-      return { initials: 'HS', avatarColor: 'bg-[#C96A1B]' }
-    }
-    return { initials: 'AH', avatarColor: 'bg-[#2F80ED]' }
+  // Resolve payer avatar initials and color from shared MOCK_GROUP_MEMBERS
+  const getPayerVisuals = (paidById: string) => {
+    const found = MOCK_GROUP_MEMBERS.find((m) => m.id === paidById)
+    if (found) return { initials: found.initials, avatarColor: `${found.avatarColor} text-white` }
+    return { initials: '?', avatarColor: 'bg-[#9A9590] text-white' }
   }
 
   return (
@@ -157,7 +128,7 @@ export default function RecurringPaymentsScreen() {
             <div className="bg-white border border-[#EBEBEB] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] divide-y divide-[#EBEBEB] overflow-hidden">
               {payments.map((p) => {
                 const { Icon, iconColor, bgColor } = getCategoryVisuals(p.category, p.name)
-                const { initials, avatarColor } = getPayerVisuals(p.paidById, p.paidByName)
+                const { initials, avatarColor } = getPayerVisuals(p.paidById)
                 const isSoon = p.nextBillingStatus === 'orange' || p.nextBillingDate.includes('15') || p.nextBillingDate.includes('1')
 
                 return (

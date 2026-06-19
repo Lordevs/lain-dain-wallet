@@ -1,4 +1,5 @@
 import { X } from 'lucide-react'
+import { cva, type VariantProps } from 'class-variance-authority'
 import {
   Drawer,
   DrawerContent,
@@ -6,13 +7,33 @@ import {
   DrawerClose,
 } from '@/components/ui/drawer'
 
-interface ConfirmActionDrawerProps {
+// ─── Button Variants ──────────────────────────────────────────────────────────
+const confirmButtonVariants = cva(
+  // Base styles shared by all variants
+  'w-full h-14 text-white rounded-full font-bold text-base flex items-center justify-center active:scale-[0.99] transition-all cursor-pointer border-0 outline-none',
+  {
+    variants: {
+      variant: {
+        /** Default — used for leave/remove confirmations */
+        warning: 'bg-[#C96A1B] hover:bg-[#C96A1B]/95 shadow-[0px_8px_20px_rgba(201,106,27,0.25)]',
+        /** Destructive — used for delete group */
+        danger:  'bg-[#EB5757] hover:bg-[#EB5757]/95 shadow-[0px_8px_20px_rgba(235,87,87,0.25)]',
+        /** Primary — used for general confirm actions */
+        primary: 'bg-[#0B683A] hover:bg-[#0B683A]/95 shadow-[0px_8px_20px_rgba(11,104,58,0.25)]',
+      },
+    },
+    defaultVariants: { variant: 'warning' },
+  }
+)
+
+interface ConfirmActionDrawerProps extends VariantProps<typeof confirmButtonVariants> {
   isOpen: boolean
   onClose: () => void
   title: string
   confirmTitle: string
   confirmDescription: string
   buttonText?: string
+  /** @deprecated Pass `variant` instead of a raw className string */
   buttonClassName?: string
   onConfirm: () => void
 }
@@ -24,6 +45,7 @@ export default function ConfirmActionDrawer({
   confirmTitle,
   confirmDescription,
   buttonText = 'Confirm',
+  variant,
   buttonClassName,
   onConfirm,
 }: ConfirmActionDrawerProps) {
@@ -69,7 +91,9 @@ export default function ConfirmActionDrawer({
                 onConfirm()
                 onClose()
               }}
-              className={buttonClassName || "w-full h-14 bg-[#C96A1B] hover:bg-[#C96A1B]/95 text-white rounded-full font-bold text-base flex items-center justify-center active:scale-[0.99] transition-all cursor-pointer shadow-[0px_8px_20px_rgba(201,106,27,0.25)] border-0 outline-none"}
+              // buttonClassName is kept for backward compat but variant is preferred
+              className={buttonClassName ?? confirmButtonVariants({ variant })}
+              aria-label={buttonText}
             >
               {buttonText}
             </button>
