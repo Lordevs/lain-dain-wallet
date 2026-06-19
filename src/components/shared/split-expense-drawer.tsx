@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Check, Scale, AlertTriangle, Info, Users, TextAlignJustify } from 'lucide-react'
+import { X, Check, Scale, AlertTriangle, Info, Users, TextAlignJustify, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   Drawer,
@@ -43,6 +43,9 @@ interface SplitExpenseDrawerProps {
   contactName: string
   contactInitials: string
   contactAvatarColor: string
+  isRecurring?: boolean
+  frequency?: 'Monthly' | 'Weekly'
+  startsOn?: string
 }
 
 export interface SplitData {
@@ -65,6 +68,9 @@ export default function SplitExpenseDrawer({
   contactName,
   contactInitials,
   contactAvatarColor,
+  isRecurring = false,
+  frequency = 'Monthly',
+  startsOn = '',
 }: SplitExpenseDrawerProps) {
   const [splitType, setSplitType] = useState<'equal' | 'unequal' | 'adjustment'>('equal')
 
@@ -405,23 +411,23 @@ export default function SplitExpenseDrawer({
             )}
           </div>
 
-          {/* List box container */}
-          <div className="bg-[#FDF8F4] rounded-[24px] border-[0.8px] border-[#EBEBEB] overflow-hidden shadow-[0px_4px_16px_rgba(0,0,0,0.02)] divide-y divide-[#EBEBEB] flex flex-col mb-4">
+          {/* Flat List box with edge-to-edge dividers */}
+          <div className="flex flex-col border-t border-b border-[#EBEBEB] divide-y divide-[#EBEBEB] -mx-6 bg-white mb-2 select-none">
             {/* Member: You */}
-            <div className={cn("p-4 flex items-center justify-between transition-colors", (splitType === 'equal' && selectedMembers.includes('you')) ? 'bg-[#FFF9E6]' : 'bg-transparent')}>
+            <div className={cn("px-6 py-4 flex items-center justify-between transition-colors", (splitType === 'equal' && selectedMembers.includes('you')) ? 'bg-[#FFF9E6]/30' : 'bg-transparent')}>
               <div className="flex items-center gap-3 text-left">
                 {splitType === 'equal' && (
                   <button
                     type="button"
                     onClick={() => handleToggleEqualMember('you')}
-                    className="size-5 rounded border-0 p-0 flex items-center justify-center shrink-0 cursor-pointer outline-none"
+                    className="size-5 rounded border-0 p-0 flex items-center justify-center shrink-0 cursor-pointer outline-none active:scale-95"
                   >
                     {selectedMembers.includes('you') ? (
-                      <div className="size-5 rounded bg-[#0B683A] flex items-center justify-center text-white">
+                      <div className="size-5 rounded-[6px] bg-[#0B683A] flex items-center justify-center text-white">
                         <Check size={12} strokeWidth={4} className="text-white" />
                       </div>
                     ) : (
-                      <div className="size-5 rounded border-[1.5px] border-[#D4CFC8] bg-transparent" />
+                      <div className="size-5 rounded-[6px] border-[1.5px] border-[#D4CFC8] bg-transparent" />
                     )}
                   </button>
                 )}
@@ -483,20 +489,20 @@ export default function SplitExpenseDrawer({
             </div>
 
             {/* Member: Contact */}
-            <div className={cn("p-4 flex items-center justify-between transition-colors", (splitType === 'equal' && selectedMembers.includes('contact')) ? 'bg-[#FFF9E6]' : 'bg-transparent')}>
+            <div className={cn("px-6 py-4 flex items-center justify-between transition-colors", (splitType === 'equal' && selectedMembers.includes('contact')) ? 'bg-[#FFF9E6]/30' : 'bg-transparent')}>
               <div className="flex items-center gap-3 text-left">
                 {splitType === 'equal' && (
                   <button
                     type="button"
                     onClick={() => handleToggleEqualMember('contact')}
-                    className="size-5 rounded border-0 p-0 flex items-center justify-center shrink-0 cursor-pointer outline-none"
+                    className="size-5 rounded border-0 p-0 flex items-center justify-center shrink-0 cursor-pointer outline-none active:scale-95"
                   >
                     {selectedMembers.includes('contact') ? (
-                      <div className="size-5 rounded bg-[#0B683A] flex items-center justify-center text-white">
+                      <div className="size-5 rounded-[6px] bg-[#0B683A] flex items-center justify-center text-white">
                         <Check size={12} strokeWidth={4} className="text-white" />
                       </div>
                     ) : (
-                      <div className="size-5 rounded border-[1.5px] border-[#D4CFC8] bg-transparent" />
+                      <div className="size-5 rounded-[6px] border-[1.5px] border-[#D4CFC8] bg-transparent" />
                     )}
                   </button>
                 )}
@@ -554,6 +560,16 @@ export default function SplitExpenseDrawer({
               )}
             </div>
           </div>
+
+          {/* Repeats Status Message (Full-width bar below list) */}
+          {isRecurring && (
+            <div className="flex items-center gap-2 px-6 py-3.5 bg-[#F4FAF7] text-[#0B683A] text-[13.5px] font-bold border-b border-[#EBEBEB] -mx-6 mb-2 select-none">
+              <RefreshCw size={14} className="text-[#0B683A]" strokeWidth={2.5} />
+              <span>
+                Repeats {frequency.toLowerCase()} · Starting {startsOn}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Pinned Bottom CTA Bar */}

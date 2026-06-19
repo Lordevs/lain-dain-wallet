@@ -19,4 +19,8 @@ export const ROUTES = {
   GROUP_DETAILS: '/groups/$id',
   GROUP_ADD_EXPENSE: '/groups/$id/add-expense',
   GROUP_REMINDER: '/groups/$id/reminder',
+  GROUP_SETTINGS: '/groups/$id/settings',
+  GROUP_SMART_SETTLE: '/groups/$id/smart-settle',
+  GROUP_RECURRING: '/groups/$id/recurring',
+  GROUP_RECURRING_ADD: '/groups/$id/recurring/add',
 } as const

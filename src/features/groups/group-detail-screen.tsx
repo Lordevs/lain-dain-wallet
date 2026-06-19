@@ -318,7 +318,11 @@ export default function GroupDetailScreen() {
           </div>
         }
         rightSlot={
-          <button className="text-[#6B6B6B] cursor-pointer border-0 bg-transparent flex items-center justify-center p-2">
+          <button
+            type="button"
+            onClick={() => navigate({ to: ROUTES.GROUP_SETTINGS, params: { id: contact.id } })}
+            className="text-[#6B6B6B] cursor-pointer border-0 bg-transparent flex items-center justify-center p-2"
+          >
             <MoreVertical size={20} />
           </button>
         }

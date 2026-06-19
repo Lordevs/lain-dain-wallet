@@ -3,7 +3,7 @@ import { Pencil } from 'lucide-react'
 import FlowHeader from '@/components/shared/flow-header'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuthStore } from '@/store/use-auth-store'
-import ProfilePicturePanel from './profile-picture-panel'
+import ProfilePicturePanel from '@/components/shared/profile-picture-panel'
 
 interface EditProfilePanelProps {
   onClose: () => void

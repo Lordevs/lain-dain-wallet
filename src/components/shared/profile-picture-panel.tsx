@@ -5,14 +5,18 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 interface ProfilePicturePanelProps {
   currentAvatar: string | null
-  initials: string
+  initials?: string
+  title?: string
+  label?: string
   onClose: () => void
   onSave: (newAvatar: string | null) => void
 }
 
 export default function ProfilePicturePanel({
   currentAvatar,
-  initials,
+  initials = 'MH',
+  title = 'Profile Picture',
+  label = 'Your current photo',
   onClose,
   onSave,
 }: ProfilePicturePanelProps) {
@@ -38,7 +42,7 @@ export default function ProfilePicturePanel({
   return (
     <div className="fixed inset-0 z-70 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto animate-in fade-in slide-in-from-right duration-200 text-[#1A1A1A]">
       <FlowHeader
-        title="Profile Picture"
+        title={title}
         onBack={onClose}
       />
 
@@ -51,12 +55,12 @@ export default function ProfilePicturePanel({
                 <AvatarImage src={tempAvatar} alt="Profile Preview" className="object-cover" />
               ) : (
                 <AvatarFallback className="bg-[linear-gradient(140deg,#0B683A_3.67%,#14A558_96.33%)] text-white font-bold text-[36px] tracking-tight">
-                  {initials || 'MH'}
+                  {initials}
                 </AvatarFallback>
               )}
             </Avatar>
             <span className="text-[14px] font-medium text-[#6B6B6B] mt-4 block text-center animate-pulse">
-              Your current photo
+              {label}
             </span>
           </div>
 

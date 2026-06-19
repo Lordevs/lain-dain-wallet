@@ -1,0 +1,117 @@
+import { ShieldCheck, UserMinus, Ban } from 'lucide-react'
+import { Drawer, DrawerContent } from '@/components/ui/drawer'
+import ContactAvatar from './contact-avatar'
+
+export interface MemberOptionData {
+  id: string
+  name: string
+  initials: string
+  avatarColor: string
+  src?: string
+  isAdmin: boolean
+  owesText?: string // e.g. "Member · Owes you Rs. 2,000"
+}
+
+interface MemberOptionsDrawerProps {
+  isOpen: boolean
+  onClose: () => void
+  member: MemberOptionData | null
+  onToggleAdmin?: (memberId: string) => void
+  onRemove?: (memberId: string) => void
+  onBlockReport?: (memberId: string) => void
+}
+
+export default function MemberOptionsDrawer({
+  isOpen,
+  onClose,
+  member,
+  onToggleAdmin,
+  onRemove,
+  onBlockReport,
+}: MemberOptionsDrawerProps) {
+  if (!member) return null
+
+  return (
+    <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DrawerContent className="bg-white rounded-t-[32px] border-t-0 pb-6 text-left focus:outline-none">
+        {/* Header - Member Info */}
+        <div className="flex items-center gap-3.5 px-6 pt-5 pb-5 border-b border-[#EFE7DD]/60">
+          <ContactAvatar
+            initials={member.initials}
+            avatarColor={member.avatarColor}
+            src={member.src}
+            size="md"
+          />
+          <div className="flex flex-col text-left">
+            <h4 className="font-extrabold text-[16px] text-[#1A1A1A]">
+              {member.name}
+            </h4>
+            <span className="text-[12px] text-[#6B6B6B] font-medium mt-0.5">
+              {member.owesText || `${member.isAdmin ? 'Admin' : 'Member'} · On Lain Dain`}
+            </span>
+          </div>
+        </div>
+
+        {/* Action List Options */}
+        <div className="flex flex-col divide-y divide-[#EFE7DD]/60">
+          {/* Make / Remove Admin */}
+          {onToggleAdmin && (
+            <button
+              type="button"
+              onClick={() => {
+                onToggleAdmin(member.id)
+                onClose()
+              }}
+              className="flex items-center gap-4 px-6 py-4 hover:bg-muted/5 transition-colors cursor-pointer border-0 bg-transparent text-left w-full outline-none"
+            >
+              <div className="w-11 h-11 rounded-[14px] bg-[#E8F5E9] flex items-center justify-center text-[#0B683A] shrink-0">
+                <ShieldCheck size={20} strokeWidth={2.5} />
+              </div>
+              <span className="font-bold text-[15px] text-[#1A1A1A]">
+                {member.isAdmin ? 'Remove Admin' : 'Make Admin'}
+              </span>
+            </button>
+          )}
+
+          {/* Remove from Group */}
+          {onRemove && (
+            <button
+              type="button"
+              onClick={() => {
+                onRemove(member.id)
+                onClose()
+              }}
+              className="flex items-center gap-4 px-6 py-4 hover:bg-muted/5 transition-colors cursor-pointer border-0 bg-transparent text-left w-full outline-none"
+            >
+              <div className="w-11 h-11 rounded-[14px] bg-[#FFF5F0] flex items-center justify-center text-[#C96A1B] shrink-0">
+                <UserMinus size={20} strokeWidth={2.5} />
+              </div>
+              <span className="font-bold text-[15px] text-[#C96A1B]">
+                Remove from Group
+              </span>
+            </button>
+          )}
+
+          {/* Block & Report */}
+          {onBlockReport && (
+            <button
+              type="button"
+              onClick={() => {
+                onBlockReport(member.id)
+                onClose()
+              }}
+              className="flex items-center gap-4 px-6 py-4 hover:bg-muted/5 transition-colors cursor-pointer border-0 bg-transparent text-left w-full outline-none"
+            >
+              <div className="w-11 h-11 rounded-[14px] bg-[#FFF5F0] flex items-center justify-center text-[#C96A1B] shrink-0">
+                <Ban size={20} strokeWidth={2.5} />
+              </div>
+              <span className="font-bold text-[15px] text-[#C96A1B]">
+                Block & Report
+              </span>
+            </button>
+          )}
+        </div>
+      </DrawerContent>
+    </Drawer>
+  )
+}
