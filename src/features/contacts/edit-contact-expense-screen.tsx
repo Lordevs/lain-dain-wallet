@@ -1,44 +1,47 @@
-import { useParams, useNavigate, useSearch } from '@tanstack/react-router'
 import AddExpenseBase, { type ConfirmExpenseData } from '@/components/shared/add-expense-base'
 import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
 import { TRANSACTION_STORE } from '@/features/contacts/data/transaction-store'
-import { ROUTES } from '@/constants/routes'
 
-export default function EditContactExpenseScreen() {
-  const { id } = useParams({ from: '/contacts/$id/edit-expense' })
-  const search = useSearch({ from: '/contacts/$id/edit-expense' })
-  const navigate = useNavigate()
+interface EditContactExpenseScreenProps {
+  contactId: string
+  txId: string
+  onClose: () => void
+  onSuccess: () => void
+}
 
+export default function EditContactExpenseScreen({ contactId, txId, onClose, onSuccess }: EditContactExpenseScreenProps) {
   // Find contact by id from mock data
-  const contact = [...MOCK_RECEIVABLES, ...MOCK_PAYABLES].find((c) => c.id === id)
+  const contact = [...MOCK_RECEIVABLES, ...MOCK_PAYABLES].find((c) => c.id === contactId)
 
   if (!contact) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#FEFAF1]">
+      <div className="flex items-center justify-center p-6 bg-[#FEFAF1] h-[50vh]">
         <div className="text-center">
           <p className="text-lg font-bold text-[#1A1A1A]">Contact not found</p>
           <button
-            onClick={() => navigate({ to: '/' })}
-            className="mt-4 px-4 py-2 bg-[#0B683A] text-white rounded-full font-bold"
+            onClick={onClose}
+            className="mt-4 px-4 py-2 bg-[#0B683A] text-white rounded-full font-bold border-0 cursor-pointer"
           >
-            Go to Dashboard
+            Close
           </button>
         </div>
       </div>
     )
   }
 
-  const txId = search.txId || ''
+  // Find the transaction record to edit from TRANSACTION_STORE
+  const txList = TRANSACTION_STORE[contact.id] || []
+  const tx = txList.find((t) => t.id === txId)
 
-  // Prefill data configuration
+  // Prefill data configuration from tx record
   const initialData = {
-    amount: search.amount || '',
-    description: search.description || '',
-    category: search.category || 'bills',
-    dateValue: search.dateValue || 'Today',
-    paidBy: search.paidBy || 'you',
+    amount: tx ? Math.abs(tx.amount).toString() : '',
+    description: tx?.name || '',
+    category: tx?.category || 'bills',
+    dateValue: tx?.dateValue || 'Today',
+    paidBy: tx ? (tx.amount > 0 ? 'you' as const : 'contact' as const) : 'you' as const,
     splitData: {
-      type: 'equal' as const,
+      type: (tx?.splitType || 'equal') as 'equal' | 'unequal' | 'adjustment',
       selectedMembers: ['you', 'contact'],
       unequalAmounts: { you: 0, contact: 0 },
       adjustmentAmounts: { you: 0, contact: 0 },
@@ -89,7 +92,6 @@ export default function EditContactExpenseScreen() {
     }
 
     // Update store
-    const txList = TRANSACTION_STORE[contact.id] || []
     const txIndex = txList.findIndex((t) => t.id === txId)
     let oldContactOwesAmount = 0
     let oldName = ''
@@ -139,20 +141,8 @@ export default function EditContactExpenseScreen() {
       }}
       initialData={initialData}
       onConfirm={handleConfirm}
-      onSuccessComplete={() => {
-        if (contact.type === 'group') {
-          navigate({ to: ROUTES.GROUP_DETAILS, params: { id: contact.id } })
-        } else {
-          navigate({ to: ROUTES.CONTACT_DETAILS, params: { id: contact.id } })
-        }
-      }}
-      onBack={() => {
-        if (contact.type === 'group') {
-          navigate({ to: ROUTES.GROUP_DETAILS, params: { id: contact.id } })
-        } else {
-          navigate({ to: ROUTES.CONTACT_DETAILS, params: { id: contact.id } })
-        }
-      }}
+      onSuccessComplete={onSuccess}
+      onBack={onClose}
     />
   )
 }

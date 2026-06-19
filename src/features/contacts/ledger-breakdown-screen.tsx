@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, useNavigate } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Users, AlertTriangle, Smile, Info } from 'lucide-react'
 import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
@@ -35,8 +35,12 @@ const getTagStyle = (tagName: string) => {
   }
 }
 
-export default function LedgerBreakdownScreen() {
-  const { id } = useParams({ from: '/contacts/$id/breakdown' })
+interface LedgerBreakdownScreenProps {
+  contactId: string
+  onClose: () => void
+}
+
+export default function LedgerBreakdownScreen({ contactId, onClose }: LedgerBreakdownScreenProps) {
   const navigate = useNavigate()
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null)
 
@@ -48,17 +52,17 @@ export default function LedgerBreakdownScreen() {
   }
 
   // Find contact in mock data
-  const contact = [...MOCK_RECEIVABLES, ...MOCK_PAYABLES].find((c) => c.id === id)
+  const contact = [...MOCK_RECEIVABLES, ...MOCK_PAYABLES].find((c) => c.id === contactId)
 
   if (!contact) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-[#FEFAF1]">
+      <div className="flex flex-col items-center justify-center p-6 bg-[#FEFAF1] h-[50vh]">
         <p className="text-muted-foreground text-sm mb-4">Contact not found</p>
         <button
-          onClick={() => navigate({ to: ROUTES.DASHBOARD })}
+          onClick={onClose}
           className="text-primary font-bold hover:underline border-0 bg-transparent cursor-pointer"
         >
-          Go Back
+          Close
         </button>
       </div>
     )
@@ -105,6 +109,7 @@ export default function LedgerBreakdownScreen() {
     const tagName = String(tagId)
     const isOneToOne = tagName.toLowerCase().includes('1-to-1') || tagName.toLowerCase().includes('personal')
     if (isOneToOne) {
+      onClose()
       navigate({
         to: ROUTES.CONTACT_DETAILS,
         params: { id: contact.id },
@@ -113,7 +118,7 @@ export default function LedgerBreakdownScreen() {
       const allLedgers = [...MOCK_RECEIVABLES, ...MOCK_PAYABLES]
       const foundGroup = allLedgers.find(
         (g) => g.type === 'group' && (
-          tagName.toLowerCase().includes(g.name.toLowerCase()) || 
+          tagName.toLowerCase().includes(g.name.toLowerCase()) ||
           g.name.toLowerCase().includes(tagName.toLowerCase())
         )
       )
@@ -129,7 +134,7 @@ export default function LedgerBreakdownScreen() {
   }
 
   return (
-    <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen relative select-none">
+    <div className="flex flex-col flex-1 bg-[#FEFAF1] max-h-[85vh] relative select-none pb-10 overflow-y-auto">
       {/* Toast Alert overlay */}
       <AnimatePresence>
         {toast && (
@@ -150,7 +155,7 @@ export default function LedgerBreakdownScreen() {
       {/* Unified Header */}
       <FlowHeader
         title={contact.name}
-        onBack={() => navigate({ to: ROUTES.DASHBOARD })}
+        onBack={onClose}
         backVariant="minimal"
         avatar={
           <div className="relative shrink-0 flex items-center">

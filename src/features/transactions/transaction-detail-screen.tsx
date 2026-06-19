@@ -24,16 +24,33 @@ const getCategoryEmoji = (id: string) => {
   }
 }
 
-export default function TransactionDetailScreen() {
-  const { id } = useParams({ from: '/transactions/$id' })
+interface TransactionDetailScreenProps {
+  txId?: string
+  onClose?: () => void
+  onEdit?: () => void
+  onDelete?: () => void
+}
+
+export default function TransactionDetailScreen(props: TransactionDetailScreenProps) {
+  // Read path parameters if we are in route context (they will be empty in props/drawer context)
+  let id = ''
+  try {
+    const params = useParams({ strict: false })
+    id = (params as any).id || ''
+  } catch (e) {
+    // strict parameter is false, so it shouldn't throw, but catch just in case.
+  }
+
   const navigate = useNavigate()
 
   // Find transaction and contact ID
   let foundContactId = ''
   let tx = null
 
+  const resolvedTxId = props.txId || id
+
   for (const contactId in TRANSACTION_STORE) {
-    const t = TRANSACTION_STORE[contactId].find((item) => item.id === id)
+    const t = TRANSACTION_STORE[contactId].find((item) => item.id === resolvedTxId)
     if (t) {
       foundContactId = contactId
       tx = t
@@ -46,17 +63,24 @@ export default function TransactionDetailScreen() {
 
   if (!tx || !contact) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-[#FEFAF1] select-none text-[#1A1A1A]">
+      <div className="flex flex-col items-center justify-center p-6 bg-[#FEFAF1] select-none text-[#1A1A1A] h-[50vh]">
         <p className="text-muted-foreground text-sm mb-4">Transaction not found</p>
         <button
-          onClick={() => navigate({ to: '/' })}
+          onClick={() => {
+            if (props.onClose) {
+              props.onClose()
+            } else {
+              navigate({ to: '/' })
+            }
+          }}
           className="text-primary font-bold hover:underline border-0 bg-transparent cursor-pointer"
         >
-          Go to Dashboard
+          Close
         </button>
       </div>
     )
   }
+
 
   const [isReceiptOpen, setIsReceiptOpen] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null)
@@ -120,10 +144,14 @@ export default function TransactionDetailScreen() {
       <div className="flex items-center px-6 pt-5 pb-3 relative shrink-0">
         <button
           onClick={() => {
-            if (contact.type === 'group') {
-              navigate({ to: ROUTES.GROUP_DETAILS, params: { id: contact.id } })
+            if (props.onClose) {
+              props.onClose()
             } else {
-              navigate({ to: ROUTES.CONTACT_DETAILS, params: { id: contact.id } })
+              if (contact.type === 'group') {
+                navigate({ to: ROUTES.GROUP_DETAILS, params: { id: contact.id } })
+              } else {
+                navigate({ to: ROUTES.CONTACT_DETAILS, params: { id: contact.id } })
+              }
             }
           }}
           className="size-10 rounded-full bg-white border border-[#EBEBEB] flex items-center justify-center cursor-pointer shadow-[0px_2px_8px_rgba(0,0,0,0.04)] outline-none"
@@ -276,24 +304,24 @@ export default function TransactionDetailScreen() {
 
       </div>
 
-      {/* Sticky Bottom Actions */}
-      <div className="fixed bottom-0 left-0 right-0 z-10 px-6 py-4 bg-[#FEFAF1]/90 flex items-center gap-4 border-t border-[#EFE7DD]/30 backdrop-blur-sm">
+      {/* Absolute Bottom Actions */}
+      <div className="absolute bottom-0 left-0 right-0 z-10 px-6 py-4 bg-[#FEFAF1]/90 flex items-center gap-4 border-t border-[#EFE7DD]/30 backdrop-blur-sm">
         {/* Edit Button */}
         <button
           type="button"
           onClick={() => {
-            navigate({
-              to: '/contacts/$id/edit-expense',
-              params: { id: contact.id },
-              search: {
-                amount: absAmount.toString(),
-                description: tx.name,
-                category: tx.category,
-                dateValue: tx.dateValue || 'Today',
-                paidBy: tx.amount > 0 ? 'you' : 'contact',
-                txId: tx.id
-              }
-            })
+            if (props.onEdit) {
+              props.onEdit()
+            } else {
+              (navigate as any)({
+                to: '/contacts/$id',
+                params: { id: foundContactId || contact.id },
+                search: {
+                  drawer: 'edit-expense',
+                  txId: tx.id
+                }
+              })
+            }
           }}
           className="flex-1 h-14 rounded-[20px] bg-white border border-[#EFE7DD] text-[#6B6B6B] font-extrabold text-base cursor-pointer shadow-sm hover:bg-muted/5 transition-colors flex items-center justify-center gap-2 outline-none"
         >
@@ -312,11 +340,15 @@ export default function TransactionDetailScreen() {
             // Update contact netAmount balance
             contact.netAmount -= tx.amount
             contact.ledgerCount = contact.tags.length
-            // Navigate back
-            if (contact.type === 'group') {
-              navigate({ to: ROUTES.GROUP_DETAILS, params: { id: contact.id } })
+            
+            if (props.onDelete) {
+              props.onDelete()
             } else {
-              navigate({ to: ROUTES.CONTACT_DETAILS, params: { id: contact.id } })
+              if (contact.type === 'group') {
+                navigate({ to: ROUTES.GROUP_DETAILS, params: { id: contact.id } })
+              } else {
+                navigate({ to: ROUTES.CONTACT_DETAILS, params: { id: contact.id } })
+              }
             }
           }}
           className="flex-1 h-14 rounded-[20px] bg-[#FFF3F3] border border-[#C0392B40] text-[#C0392B] font-extrabold text-base cursor-pointer shadow-sm hover:bg-[#FFF3F3]/80 transition-colors flex items-center justify-center gap-2 outline-none"

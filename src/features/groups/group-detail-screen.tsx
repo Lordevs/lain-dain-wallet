@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useParams, useNavigate } from '@tanstack/react-router'
+import { useParams, useNavigate, useSearch } from '@tanstack/react-router'
 import { MoreVertical, Bell, ChevronRight, Building2, Handshake, HelpCircle, ArrowUp, ArrowDown } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
@@ -14,6 +14,11 @@ import ContactList from '@/components/shared/contact-list'
 import ContactListItem from '@/components/shared/contact-list-item'
 import SettleUpPanel from '@/features/notifications/components/settle-up-panel'
 import { CATEGORIES } from '@/features/personal/components/category-picker'
+import { Drawer, DrawerContent } from '@/components/ui/drawer'
+import SendGroupReminderScreen from '@/features/groups/send-group-reminder-screen'
+import AddGroupExpenseScreen from '@/features/groups/add-group-expense-screen'
+import TransactionDetailScreen from '@/features/transactions/transaction-detail-screen'
+
 
 interface TransactionItem extends ExpenseListData {
   id: string
@@ -93,7 +98,29 @@ const getCategoryDetails = (catId: string) => {
  */
 export default function GroupDetailScreen() {
   const { id } = useParams({ from: '/groups/$id/' })
-  const navigate = useNavigate()
+  const navigate = useNavigate({ from: '/groups/$id/' })
+  const { drawer, txId } = useSearch({ from: '/groups/$id/' })
+
+  const closeDrawer = () => {
+    navigate({
+      search: (prev) => {
+        const next = { ...prev }
+        delete next.drawer
+        delete next.txId
+        return next
+      },
+    })
+  }
+
+  const openDrawer = (name: 'reminder' | 'add-expense' | 'edit-expense' | 'transaction', tid?: string) => {
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        drawer: name,
+        txId: tid,
+      }),
+    })
+  }
 
   // Find contact by id from mock data
   const contact = [...MOCK_RECEIVABLES, ...MOCK_PAYABLES].find((c) => c.id === id)
@@ -295,7 +322,7 @@ export default function GroupDetailScreen() {
           <ExpenseList
             expenses={filteredExpenses}
             onItemClick={(expenseId) => {
-              navigate({ to: `/transactions/${expenseId}` })
+              openDrawer('transaction', expenseId.toString())
             }}
             className="border-[#EFE7DD] divide-[#EFE7DD]"
           />
@@ -356,7 +383,7 @@ export default function GroupDetailScreen() {
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation() // Prevent toggling the card when clicking remind
-                      navigate({ to: ROUTES.GROUP_REMINDER, params: { id: contact.id } })
+                      openDrawer('reminder')
                     }}
                     className="flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-[#0B683A4D] bg-[#E4F2EB] text-[#0B683A] text-xs font-bold transition-all hover:bg-[#E4F2EB]/80 shrink-0 cursor-pointer outline-none"
                   >
@@ -553,7 +580,7 @@ export default function GroupDetailScreen() {
         {/* + Add Expense */}
         <button
           type="button"
-          onClick={() => navigate({ to: ROUTES.GROUP_ADD_EXPENSE, params: { id: contact.id } })}
+          onClick={() => openDrawer('add-expense')}
           className="flex-1 h-14 rounded-full bg-[#0B683A] text-white font-extrabold text-base cursor-pointer shadow-[0px_6.29px_20.13px_0px_#0B683A4D] hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
         >
           + Add Expense
@@ -589,6 +616,39 @@ export default function GroupDetailScreen() {
           }}
         />
       )}
+
+      {/* Drawer Overlays */}
+      <Drawer open={drawer === 'reminder'} onOpenChange={(open) => !open && closeDrawer()}>
+        <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A]">
+          {drawer === 'reminder' && (
+            <SendGroupReminderScreen groupId={contact.id} onClose={closeDrawer} />
+          )}
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer open={drawer === 'add-expense'} onOpenChange={(open) => !open && closeDrawer()}>
+        <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] h-[95vh] max-h-[95vh]">
+          {drawer === 'add-expense' && (
+            <AddGroupExpenseScreen
+              groupId={contact.id}
+              onClose={closeDrawer}
+              onSuccess={(newId) => openDrawer('transaction', newId)}
+            />
+          )}
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer open={drawer === 'transaction'} onOpenChange={(open) => !open && closeDrawer()}>
+        <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] h-[90vh] max-h-[90vh]">
+          {drawer === 'transaction' && txId && (
+            <TransactionDetailScreen
+              txId={txId}
+              onClose={closeDrawer}
+              onDelete={closeDrawer}
+            />
+          )}
+        </DrawerContent>
+      </Drawer>
     </div>
   )
 }

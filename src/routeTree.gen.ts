@@ -20,23 +20,14 @@ import { Route as ContactsIndexRouteImport } from './routes/contacts/index'
 import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as TransactionsIdRouteImport } from './routes/transactions/$id'
 import { Route as PersonalReportsRouteImport } from './routes/personal/reports'
-import { Route as PersonalAddRouteImport } from './routes/personal/add'
 import { Route as GroupsIdRouteImport } from './routes/groups/$id'
 import { Route as ContactsNewRouteImport } from './routes/contacts/new'
 import { Route as ContactsIdRouteImport } from './routes/contacts/$id'
 import { Route as GroupsIdIndexRouteImport } from './routes/groups/$id.index'
 import { Route as ContactsIdIndexRouteImport } from './routes/contacts/$id.index'
-import { Route as GroupsIdSmartSettleRouteImport } from './routes/groups/$id.smart-settle'
 import { Route as GroupsIdSettingsRouteImport } from './routes/groups/$id.settings'
-import { Route as GroupsIdReminderRouteImport } from './routes/groups/$id.reminder'
 import { Route as GroupsIdRecurringRouteImport } from './routes/groups/$id.recurring'
-import { Route as GroupsIdAddExpenseRouteImport } from './routes/groups/$id.add-expense'
-import { Route as ContactsIdReminderRouteImport } from './routes/contacts/$id.reminder'
-import { Route as ContactsIdEditExpenseRouteImport } from './routes/contacts/$id.edit-expense'
-import { Route as ContactsIdBreakdownRouteImport } from './routes/contacts/$id.breakdown'
-import { Route as ContactsIdAddExpenseRouteImport } from './routes/contacts/$id.add-expense'
 import { Route as GroupsIdRecurringIndexRouteImport } from './routes/groups/$id.recurring.index'
-import { Route as GroupsIdRecurringAddRouteImport } from './routes/groups/$id.recurring.add'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -93,11 +84,6 @@ const PersonalReportsRoute = PersonalReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => PersonalRoute,
 } as any)
-const PersonalAddRoute = PersonalAddRouteImport.update({
-  id: '/add',
-  path: '/add',
-  getParentRoute: () => PersonalRoute,
-} as any)
 const GroupsIdRoute = GroupsIdRouteImport.update({
   id: '/groups/$id',
   path: '/groups/$id',
@@ -123,19 +109,9 @@ const ContactsIdIndexRoute = ContactsIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ContactsIdRoute,
 } as any)
-const GroupsIdSmartSettleRoute = GroupsIdSmartSettleRouteImport.update({
-  id: '/smart-settle',
-  path: '/smart-settle',
-  getParentRoute: () => GroupsIdRoute,
-} as any)
 const GroupsIdSettingsRoute = GroupsIdSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
-  getParentRoute: () => GroupsIdRoute,
-} as any)
-const GroupsIdReminderRoute = GroupsIdReminderRouteImport.update({
-  id: '/reminder',
-  path: '/reminder',
   getParentRoute: () => GroupsIdRoute,
 } as any)
 const GroupsIdRecurringRoute = GroupsIdRecurringRouteImport.update({
@@ -143,39 +119,9 @@ const GroupsIdRecurringRoute = GroupsIdRecurringRouteImport.update({
   path: '/recurring',
   getParentRoute: () => GroupsIdRoute,
 } as any)
-const GroupsIdAddExpenseRoute = GroupsIdAddExpenseRouteImport.update({
-  id: '/add-expense',
-  path: '/add-expense',
-  getParentRoute: () => GroupsIdRoute,
-} as any)
-const ContactsIdReminderRoute = ContactsIdReminderRouteImport.update({
-  id: '/reminder',
-  path: '/reminder',
-  getParentRoute: () => ContactsIdRoute,
-} as any)
-const ContactsIdEditExpenseRoute = ContactsIdEditExpenseRouteImport.update({
-  id: '/edit-expense',
-  path: '/edit-expense',
-  getParentRoute: () => ContactsIdRoute,
-} as any)
-const ContactsIdBreakdownRoute = ContactsIdBreakdownRouteImport.update({
-  id: '/breakdown',
-  path: '/breakdown',
-  getParentRoute: () => ContactsIdRoute,
-} as any)
-const ContactsIdAddExpenseRoute = ContactsIdAddExpenseRouteImport.update({
-  id: '/add-expense',
-  path: '/add-expense',
-  getParentRoute: () => ContactsIdRoute,
-} as any)
 const GroupsIdRecurringIndexRoute = GroupsIdRecurringIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => GroupsIdRecurringRoute,
-} as any)
-const GroupsIdRecurringAddRoute = GroupsIdRecurringAddRouteImport.update({
-  id: '/add',
-  path: '/add',
   getParentRoute: () => GroupsIdRecurringRoute,
 } as any)
 
@@ -187,7 +133,6 @@ export interface FileRoutesByFullPath {
   '/contacts/$id': typeof ContactsIdRouteWithChildren
   '/contacts/new': typeof ContactsNewRoute
   '/groups/$id': typeof GroupsIdRouteWithChildren
-  '/personal/add': typeof PersonalAddRoute
   '/personal/reports': typeof PersonalReportsRoute
   '/transactions/$id': typeof TransactionsIdRoute
   '/auth/': typeof AuthIndexRoute
@@ -195,25 +140,16 @@ export interface FileRoutesByFullPath {
   '/notifications/': typeof NotificationsIndexRoute
   '/personal/': typeof PersonalIndexRoute
   '/transactions/': typeof TransactionsIndexRoute
-  '/contacts/$id/add-expense': typeof ContactsIdAddExpenseRoute
-  '/contacts/$id/breakdown': typeof ContactsIdBreakdownRoute
-  '/contacts/$id/edit-expense': typeof ContactsIdEditExpenseRoute
-  '/contacts/$id/reminder': typeof ContactsIdReminderRoute
-  '/groups/$id/add-expense': typeof GroupsIdAddExpenseRoute
   '/groups/$id/recurring': typeof GroupsIdRecurringRouteWithChildren
-  '/groups/$id/reminder': typeof GroupsIdReminderRoute
   '/groups/$id/settings': typeof GroupsIdSettingsRoute
-  '/groups/$id/smart-settle': typeof GroupsIdSmartSettleRoute
   '/contacts/$id/': typeof ContactsIdIndexRoute
   '/groups/$id/': typeof GroupsIdIndexRoute
-  '/groups/$id/recurring/add': typeof GroupsIdRecurringAddRoute
   '/groups/$id/recurring/': typeof GroupsIdRecurringIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRoute
   '/contacts/new': typeof ContactsNewRoute
-  '/personal/add': typeof PersonalAddRoute
   '/personal/reports': typeof PersonalReportsRoute
   '/transactions/$id': typeof TransactionsIdRoute
   '/auth': typeof AuthIndexRoute
@@ -221,17 +157,9 @@ export interface FileRoutesByTo {
   '/notifications': typeof NotificationsIndexRoute
   '/personal': typeof PersonalIndexRoute
   '/transactions': typeof TransactionsIndexRoute
-  '/contacts/$id/add-expense': typeof ContactsIdAddExpenseRoute
-  '/contacts/$id/breakdown': typeof ContactsIdBreakdownRoute
-  '/contacts/$id/edit-expense': typeof ContactsIdEditExpenseRoute
-  '/contacts/$id/reminder': typeof ContactsIdReminderRoute
-  '/groups/$id/add-expense': typeof GroupsIdAddExpenseRoute
-  '/groups/$id/reminder': typeof GroupsIdReminderRoute
   '/groups/$id/settings': typeof GroupsIdSettingsRoute
-  '/groups/$id/smart-settle': typeof GroupsIdSmartSettleRoute
   '/contacts/$id': typeof ContactsIdIndexRoute
   '/groups/$id': typeof GroupsIdIndexRoute
-  '/groups/$id/recurring/add': typeof GroupsIdRecurringAddRoute
   '/groups/$id/recurring': typeof GroupsIdRecurringIndexRoute
 }
 export interface FileRoutesById {
@@ -243,7 +171,6 @@ export interface FileRoutesById {
   '/contacts/$id': typeof ContactsIdRouteWithChildren
   '/contacts/new': typeof ContactsNewRoute
   '/groups/$id': typeof GroupsIdRouteWithChildren
-  '/personal/add': typeof PersonalAddRoute
   '/personal/reports': typeof PersonalReportsRoute
   '/transactions/$id': typeof TransactionsIdRoute
   '/auth/': typeof AuthIndexRoute
@@ -251,18 +178,10 @@ export interface FileRoutesById {
   '/notifications/': typeof NotificationsIndexRoute
   '/personal/': typeof PersonalIndexRoute
   '/transactions/': typeof TransactionsIndexRoute
-  '/contacts/$id/add-expense': typeof ContactsIdAddExpenseRoute
-  '/contacts/$id/breakdown': typeof ContactsIdBreakdownRoute
-  '/contacts/$id/edit-expense': typeof ContactsIdEditExpenseRoute
-  '/contacts/$id/reminder': typeof ContactsIdReminderRoute
-  '/groups/$id/add-expense': typeof GroupsIdAddExpenseRoute
   '/groups/$id/recurring': typeof GroupsIdRecurringRouteWithChildren
-  '/groups/$id/reminder': typeof GroupsIdReminderRoute
   '/groups/$id/settings': typeof GroupsIdSettingsRoute
-  '/groups/$id/smart-settle': typeof GroupsIdSmartSettleRoute
   '/contacts/$id/': typeof ContactsIdIndexRoute
   '/groups/$id/': typeof GroupsIdIndexRoute
-  '/groups/$id/recurring/add': typeof GroupsIdRecurringAddRoute
   '/groups/$id/recurring/': typeof GroupsIdRecurringIndexRoute
 }
 export interface FileRouteTypes {
@@ -275,7 +194,6 @@ export interface FileRouteTypes {
     | '/contacts/$id'
     | '/contacts/new'
     | '/groups/$id'
-    | '/personal/add'
     | '/personal/reports'
     | '/transactions/$id'
     | '/auth/'
@@ -283,25 +201,16 @@ export interface FileRouteTypes {
     | '/notifications/'
     | '/personal/'
     | '/transactions/'
-    | '/contacts/$id/add-expense'
-    | '/contacts/$id/breakdown'
-    | '/contacts/$id/edit-expense'
-    | '/contacts/$id/reminder'
-    | '/groups/$id/add-expense'
     | '/groups/$id/recurring'
-    | '/groups/$id/reminder'
     | '/groups/$id/settings'
-    | '/groups/$id/smart-settle'
     | '/contacts/$id/'
     | '/groups/$id/'
-    | '/groups/$id/recurring/add'
     | '/groups/$id/recurring/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/settings'
     | '/contacts/new'
-    | '/personal/add'
     | '/personal/reports'
     | '/transactions/$id'
     | '/auth'
@@ -309,17 +218,9 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/personal'
     | '/transactions'
-    | '/contacts/$id/add-expense'
-    | '/contacts/$id/breakdown'
-    | '/contacts/$id/edit-expense'
-    | '/contacts/$id/reminder'
-    | '/groups/$id/add-expense'
-    | '/groups/$id/reminder'
     | '/groups/$id/settings'
-    | '/groups/$id/smart-settle'
     | '/contacts/$id'
     | '/groups/$id'
-    | '/groups/$id/recurring/add'
     | '/groups/$id/recurring'
   id:
     | '__root__'
@@ -330,7 +231,6 @@ export interface FileRouteTypes {
     | '/contacts/$id'
     | '/contacts/new'
     | '/groups/$id'
-    | '/personal/add'
     | '/personal/reports'
     | '/transactions/$id'
     | '/auth/'
@@ -338,18 +238,10 @@ export interface FileRouteTypes {
     | '/notifications/'
     | '/personal/'
     | '/transactions/'
-    | '/contacts/$id/add-expense'
-    | '/contacts/$id/breakdown'
-    | '/contacts/$id/edit-expense'
-    | '/contacts/$id/reminder'
-    | '/groups/$id/add-expense'
     | '/groups/$id/recurring'
-    | '/groups/$id/reminder'
     | '/groups/$id/settings'
-    | '/groups/$id/smart-settle'
     | '/contacts/$id/'
     | '/groups/$id/'
-    | '/groups/$id/recurring/add'
     | '/groups/$id/recurring/'
   fileRoutesById: FileRoutesById
 }
@@ -446,13 +338,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PersonalReportsRouteImport
       parentRoute: typeof PersonalRoute
     }
-    '/personal/add': {
-      id: '/personal/add'
-      path: '/add'
-      fullPath: '/personal/add'
-      preLoaderRoute: typeof PersonalAddRouteImport
-      parentRoute: typeof PersonalRoute
-    }
     '/groups/$id': {
       id: '/groups/$id'
       path: '/groups/$id'
@@ -488,25 +373,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactsIdIndexRouteImport
       parentRoute: typeof ContactsIdRoute
     }
-    '/groups/$id/smart-settle': {
-      id: '/groups/$id/smart-settle'
-      path: '/smart-settle'
-      fullPath: '/groups/$id/smart-settle'
-      preLoaderRoute: typeof GroupsIdSmartSettleRouteImport
-      parentRoute: typeof GroupsIdRoute
-    }
     '/groups/$id/settings': {
       id: '/groups/$id/settings'
       path: '/settings'
       fullPath: '/groups/$id/settings'
       preLoaderRoute: typeof GroupsIdSettingsRouteImport
-      parentRoute: typeof GroupsIdRoute
-    }
-    '/groups/$id/reminder': {
-      id: '/groups/$id/reminder'
-      path: '/reminder'
-      fullPath: '/groups/$id/reminder'
-      preLoaderRoute: typeof GroupsIdReminderRouteImport
       parentRoute: typeof GroupsIdRoute
     }
     '/groups/$id/recurring': {
@@ -516,53 +387,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GroupsIdRecurringRouteImport
       parentRoute: typeof GroupsIdRoute
     }
-    '/groups/$id/add-expense': {
-      id: '/groups/$id/add-expense'
-      path: '/add-expense'
-      fullPath: '/groups/$id/add-expense'
-      preLoaderRoute: typeof GroupsIdAddExpenseRouteImport
-      parentRoute: typeof GroupsIdRoute
-    }
-    '/contacts/$id/reminder': {
-      id: '/contacts/$id/reminder'
-      path: '/reminder'
-      fullPath: '/contacts/$id/reminder'
-      preLoaderRoute: typeof ContactsIdReminderRouteImport
-      parentRoute: typeof ContactsIdRoute
-    }
-    '/contacts/$id/edit-expense': {
-      id: '/contacts/$id/edit-expense'
-      path: '/edit-expense'
-      fullPath: '/contacts/$id/edit-expense'
-      preLoaderRoute: typeof ContactsIdEditExpenseRouteImport
-      parentRoute: typeof ContactsIdRoute
-    }
-    '/contacts/$id/breakdown': {
-      id: '/contacts/$id/breakdown'
-      path: '/breakdown'
-      fullPath: '/contacts/$id/breakdown'
-      preLoaderRoute: typeof ContactsIdBreakdownRouteImport
-      parentRoute: typeof ContactsIdRoute
-    }
-    '/contacts/$id/add-expense': {
-      id: '/contacts/$id/add-expense'
-      path: '/add-expense'
-      fullPath: '/contacts/$id/add-expense'
-      preLoaderRoute: typeof ContactsIdAddExpenseRouteImport
-      parentRoute: typeof ContactsIdRoute
-    }
     '/groups/$id/recurring/': {
       id: '/groups/$id/recurring/'
       path: '/'
       fullPath: '/groups/$id/recurring/'
       preLoaderRoute: typeof GroupsIdRecurringIndexRouteImport
-      parentRoute: typeof GroupsIdRecurringRoute
-    }
-    '/groups/$id/recurring/add': {
-      id: '/groups/$id/recurring/add'
-      path: '/add'
-      fullPath: '/groups/$id/recurring/add'
-      preLoaderRoute: typeof GroupsIdRecurringAddRouteImport
       parentRoute: typeof GroupsIdRecurringRoute
     }
   }
@@ -581,13 +410,11 @@ const NotificationsRouteWithChildren = NotificationsRoute._addFileChildren(
 )
 
 interface PersonalRouteChildren {
-  PersonalAddRoute: typeof PersonalAddRoute
   PersonalReportsRoute: typeof PersonalReportsRoute
   PersonalIndexRoute: typeof PersonalIndexRoute
 }
 
 const PersonalRouteChildren: PersonalRouteChildren = {
-  PersonalAddRoute: PersonalAddRoute,
   PersonalReportsRoute: PersonalReportsRoute,
   PersonalIndexRoute: PersonalIndexRoute,
 }
@@ -597,18 +424,10 @@ const PersonalRouteWithChildren = PersonalRoute._addFileChildren(
 )
 
 interface ContactsIdRouteChildren {
-  ContactsIdAddExpenseRoute: typeof ContactsIdAddExpenseRoute
-  ContactsIdBreakdownRoute: typeof ContactsIdBreakdownRoute
-  ContactsIdEditExpenseRoute: typeof ContactsIdEditExpenseRoute
-  ContactsIdReminderRoute: typeof ContactsIdReminderRoute
   ContactsIdIndexRoute: typeof ContactsIdIndexRoute
 }
 
 const ContactsIdRouteChildren: ContactsIdRouteChildren = {
-  ContactsIdAddExpenseRoute: ContactsIdAddExpenseRoute,
-  ContactsIdBreakdownRoute: ContactsIdBreakdownRoute,
-  ContactsIdEditExpenseRoute: ContactsIdEditExpenseRoute,
-  ContactsIdReminderRoute: ContactsIdReminderRoute,
   ContactsIdIndexRoute: ContactsIdIndexRoute,
 }
 
@@ -617,12 +436,10 @@ const ContactsIdRouteWithChildren = ContactsIdRoute._addFileChildren(
 )
 
 interface GroupsIdRecurringRouteChildren {
-  GroupsIdRecurringAddRoute: typeof GroupsIdRecurringAddRoute
   GroupsIdRecurringIndexRoute: typeof GroupsIdRecurringIndexRoute
 }
 
 const GroupsIdRecurringRouteChildren: GroupsIdRecurringRouteChildren = {
-  GroupsIdRecurringAddRoute: GroupsIdRecurringAddRoute,
   GroupsIdRecurringIndexRoute: GroupsIdRecurringIndexRoute,
 }
 
@@ -630,20 +447,14 @@ const GroupsIdRecurringRouteWithChildren =
   GroupsIdRecurringRoute._addFileChildren(GroupsIdRecurringRouteChildren)
 
 interface GroupsIdRouteChildren {
-  GroupsIdAddExpenseRoute: typeof GroupsIdAddExpenseRoute
   GroupsIdRecurringRoute: typeof GroupsIdRecurringRouteWithChildren
-  GroupsIdReminderRoute: typeof GroupsIdReminderRoute
   GroupsIdSettingsRoute: typeof GroupsIdSettingsRoute
-  GroupsIdSmartSettleRoute: typeof GroupsIdSmartSettleRoute
   GroupsIdIndexRoute: typeof GroupsIdIndexRoute
 }
 
 const GroupsIdRouteChildren: GroupsIdRouteChildren = {
-  GroupsIdAddExpenseRoute: GroupsIdAddExpenseRoute,
   GroupsIdRecurringRoute: GroupsIdRecurringRouteWithChildren,
-  GroupsIdReminderRoute: GroupsIdReminderRoute,
   GroupsIdSettingsRoute: GroupsIdSettingsRoute,
-  GroupsIdSmartSettleRoute: GroupsIdSmartSettleRoute,
   GroupsIdIndexRoute: GroupsIdIndexRoute,
 }
 

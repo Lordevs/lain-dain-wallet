@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import { ROUTES } from '@/constants/routes'
 import AppHeader from '@/components/layout/app-header'
 import SearchBar from '@/components/shared/search-bar'
@@ -9,17 +9,41 @@ import SectionHeader from './components/section-header'
 import ContactLedgerCard from './components/contact-ledger-card'
 import Fab from './components/fab'
 import { MOCK_BALANCE, MOCK_RECEIVABLES, MOCK_PAYABLES } from './data/mock-data'
+import { Drawer, DrawerContent } from '@/components/ui/drawer'
+import LedgerBreakdownScreen from '@/features/contacts/ledger-breakdown-screen'
 
 /**
  * DashboardScreen — the main home screen of the Lain Dain Wallet app.
  * Assembles all reusable dashboard components into the final layout.
  */
 export default function DashboardScreen() {
-  const navigate = useNavigate()
+  const navigate = useNavigate({ from: '/' })
+  const { drawer, contactId } = useSearch({ from: '/' })
   const [activeTab, setActiveTab] = useState<LedgerTab>('receivables')
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState<'all' | 'people' | 'groups'>('all')
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest')
+
+  const closeDrawer = () => {
+    navigate({
+      search: (prev) => {
+        const next = { ...prev }
+        delete next.drawer
+        delete next.contactId
+        return next
+      },
+    })
+  }
+
+  const openDrawer = (cid: string) => {
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        drawer: 'breakdown',
+        contactId: cid,
+      }),
+    })
+  }
 
   const contacts = activeTab === 'receivables' ? MOCK_RECEIVABLES : MOCK_PAYABLES
 
@@ -96,10 +120,7 @@ export default function DashboardScreen() {
               contact={contact}
               onClick={() => {
                 if (contact.type === 'person') {
-                  navigate({
-                    to: ROUTES.CONTACT_BREAKDOWN,
-                    params: { id: contact.id },
-                  })
+                  openDrawer(contact.id)
                 } else {
                   navigate({
                     to: ROUTES.GROUP_DETAILS,
@@ -118,6 +139,15 @@ export default function DashboardScreen() {
 
       {/* Floating Action Button */}
       <Fab onClick={() => navigate({ to: ROUTES.NEW_CONTACT })} />
+
+      {/* Ledger Breakdown Drawer */}
+      <Drawer direction="right" open={drawer === 'breakdown'} onOpenChange={(open) => !open && closeDrawer()}>
+        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=right]:w-full data-[vaul-drawer-direction=right]:max-w-full data-[vaul-drawer-direction=right]:rounded-none data-[vaul-drawer-direction=right]:border-0 data-[vaul-drawer-direction=right]:h-full">
+          {drawer === 'breakdown' && contactId && (
+            <LedgerBreakdownScreen contactId={contactId} onClose={closeDrawer} />
+          )}
+        </DrawerContent>
+      </Drawer>
     </div>
   )
 }

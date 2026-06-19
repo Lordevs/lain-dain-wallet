@@ -1,18 +1,41 @@
 import { useMemo } from 'react'
-import { useParams, useNavigate } from '@tanstack/react-router'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import { Home, Music, Pencil, Trash2, Plus, Video } from 'lucide-react'
 import FlowHeader from '@/components/shared/flow-header'
-import { ROUTES } from '@/constants/routes'
 import { useRecurringStore } from '@/store/use-recurring-store'
 import { MOCK_GROUP_MEMBERS } from '@/features/groups/data/group-members'
 import { cn } from '@/lib/utils'
+import { Drawer, DrawerContent } from '@/components/ui/drawer'
+import AddRecurringScreen from '@/features/groups/add-recurring-screen'
 
-export default function RecurringPaymentsScreen() {
-  const { id } = useParams({ from: '/groups/$id/recurring/' })
+
+interface RecurringPaymentsScreenProps {
+  groupId: string
+  onClose: () => void
+}
+
+export default function RecurringPaymentsScreen({ groupId, onClose }: RecurringPaymentsScreenProps) {
   const navigate = useNavigate()
+  const search = useSearch({ strict: false })
+  const isAddRecurringOpen = search?.subDrawer === 'add-recurring' || search?.drawer === 'add-recurring'
+  const editPaymentId = search?.edit as string | undefined
+
+  const closeAddRecurringDrawer = () => {
+    (navigate as any)({
+      search: (prev: any) => {
+        const next = { ...prev }
+        delete next.subDrawer
+        if (next.drawer === 'add-recurring') {
+          delete next.drawer
+        }
+        delete next.edit
+        return next
+      },
+    })
+  }
 
   const { deletePayment } = useRecurringStore()
-  const payments = useRecurringStore((s) => s.paymentsByGroup[id] ?? [])
+  const payments = useRecurringStore((s) => s.paymentsByGroup[groupId] ?? [])
 
   // Calculate Monthly total and Active count dynamically
   const monthlyTotal = useMemo(
@@ -24,20 +47,22 @@ export default function RecurringPaymentsScreen() {
 
   // Delete payment handler — updates Zustand store (triggers re-render)
   const handleDelete = (paymentId: string) => {
-    deletePayment(id, paymentId)
+    deletePayment(groupId, paymentId)
   }
 
   // Edit payment handler — search params are typed via route's validateSearch
   const handleEdit = (paymentId: string) => {
-    navigate({
-      to: ROUTES.GROUP_RECURRING_ADD,
-      params: { id },
-      search: { edit: paymentId },
+    (navigate as any)({
+      search: (prev: any) => ({
+        ...prev,
+        subDrawer: 'add-recurring',
+        edit: paymentId,
+      }),
     })
   }
 
   const handleBack = () => {
-    navigate({ to: ROUTES.GROUP_SETTINGS, params: { id } })
+    onClose()
   }
 
   // Map category ID to Icon and Visual design styles
@@ -200,17 +225,31 @@ export default function RecurringPaymentsScreen() {
         </div>
       </div>
 
-      {/* Sticky Bottom Actions Bar */}
-      <div className="fixed bottom-0 left-0 right-0 p-6 bg-linear-to-t from-[#FEFAF1] via-[#FEFAF1] to-transparent shrink-0 pointer-events-none z-10">
+      {/* Absolute Bottom Actions Bar */}
+      <div className="absolute bottom-0 left-0 right-0 p-6 bg-linear-to-t from-[#FEFAF1] via-[#FEFAF1] to-transparent shrink-0 pointer-events-none z-10">
         <button
           type="button"
-          onClick={() => navigate({ to: ROUTES.GROUP_RECURRING_ADD, params: { id } })}
+          onClick={() => (navigate as any)({ search: (prev: any) => ({ ...prev, subDrawer: 'add-recurring' }) })}
           className="w-full h-14 bg-[#0B683A] text-white rounded-full font-bold text-base shadow-[0px_8px_20px_rgba(11,104,58,0.3)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer border-0 pointer-events-auto"
         >
           <Plus size={18} strokeWidth={3} />
           Add New
         </button>
       </div>
+
+      {/* Nested Add Recurring Payment Drawer */}
+      <Drawer direction="right" open={isAddRecurringOpen} onOpenChange={(open) => !open && closeAddRecurringDrawer()}>
+        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=left]:w-full data-[vaul-drawer-direction=left]:max-w-full data-[vaul-drawer-direction=left]:rounded-none data-[vaul-drawer-direction=left]:border-0 data-[vaul-drawer-direction=left]:h-full">
+          {isAddRecurringOpen && (
+            <AddRecurringScreen
+              groupId={groupId}
+              editPaymentId={editPaymentId}
+              onClose={closeAddRecurringDrawer}
+              onSuccess={closeAddRecurringDrawer}
+            />
+          )}
+        </DrawerContent>
+      </Drawer>
     </div>
   )
 }

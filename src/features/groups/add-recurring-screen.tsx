@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useParams, useNavigate, useSearch } from '@tanstack/react-router'
 import { FileText, ChevronRight, ChevronDown, Calendar, Users, Check, Camera, Edit3, ChevronLeft, User, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import CategoryPicker, { CATEGORIES } from '@/features/personal/components/category-picker'
@@ -12,27 +11,27 @@ import SuccessCheck from '@/components/shared/success-check'
 import { useRecurringStore, type RecurringPaymentRecord } from '@/store/use-recurring-store'
 import { getMemberName } from '@/features/groups/data/group-members'
 import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
-import { ROUTES } from '@/constants/routes'
 
-export default function AddRecurringScreen() {
-  const { id } = useParams({ from: '/groups/$id/recurring/add' })
-  const search = useSearch({ from: '/groups/$id/recurring/add' })
-  const navigate = useNavigate()
+interface AddRecurringScreenProps {
+  groupId: string
+  editPaymentId?: string
+  onClose: () => void
+  onSuccess: () => void
+}
 
-  const editId = search.edit
-
+export default function AddRecurringScreen({ groupId, editPaymentId, onClose, onSuccess }: AddRecurringScreenProps) {
   const { getPayments, addPayment, updatePayment } = useRecurringStore()
 
   // Find the group details
   const group = useMemo(() => {
-    return [...MOCK_RECEIVABLES, ...MOCK_PAYABLES].find((c) => c.id === id)
-  }, [id])
+    return [...MOCK_RECEIVABLES, ...MOCK_PAYABLES].find((c) => c.id === groupId)
+  }, [groupId])
 
   // Look up payment if editing from the Zustand store
   const editingPayment = useMemo(() => {
-    if (!editId) return null
-    return getPayments(id).find((p) => p.id === editId) ?? null
-  }, [id, editId, getPayments])
+    if (!editPaymentId) return null
+    return getPayments(groupId).find((p) => p.id === editPaymentId) ?? null
+  }, [groupId, editPaymentId, getPayments])
 
   // Form states
   const [amount, setAmount] = useState('')
@@ -112,21 +111,21 @@ export default function AddRecurringScreen() {
     }
 
     if (editingPayment) {
-      updatePayment(id, record)
+      updatePayment(groupId, record)
     } else {
-      addPayment(id, record)
+      addPayment(groupId, record)
     }
 
     setShowSuccess(true)
   }
 
   const handleSuccessComplete = () => {
-    navigate({ to: ROUTES.GROUP_RECURRING, params: { id } })
+    onSuccess()
   }
 
   if (showSuccess) {
     return (
-      <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen select-none justify-between">
+      <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-[50vh] select-none justify-center">
         <SuccessCheck onComplete={handleSuccessComplete} />
       </div>
     )
@@ -135,7 +134,7 @@ export default function AddRecurringScreen() {
   return (
     <form
       onSubmit={handleSave}
-      className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen select-none justify-between text-left"
+      className="flex flex-col flex-1 bg-[#FEFAF1] max-h-[85vh] select-none justify-between text-left overflow-y-auto"
     >
       <div className="flex flex-col flex-1 pb-4">
         {/* Custom Centered Header */}
@@ -143,7 +142,7 @@ export default function AddRecurringScreen() {
           {/* Back Chevron */}
           <button
             type="button"
-            onClick={() => navigate({ to: ROUTES.GROUP_RECURRING, params: { id } })}
+            onClick={onClose}
             className="p-1.5 text-[#0B683A] bg-transparent border-0 cursor-pointer outline-none focus:outline-none flex items-center justify-center -ml-1 shrink-0 active:scale-95"
             aria-label="Go back"
           >

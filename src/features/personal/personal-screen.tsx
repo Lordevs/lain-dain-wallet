@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import { MoreVertical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ROUTES } from '@/constants/routes'
@@ -9,6 +9,9 @@ import ViewReportsCard from './components/view-reports-card'
 import ExpenseList from '@/components/shared/expense-list'
 import MonthFilterDropdown from './components/month-filter-dropdown'
 import FlowHeader from '@/components/shared/flow-header'
+import { Drawer, DrawerContent } from '@/components/ui/drawer'
+import AddEntryScreen from '@/features/personal/add-entry-screen'
+
 
 /**
  * PersonalScreen — Orchestrator for the "My Expenses" section.
@@ -16,8 +19,28 @@ import FlowHeader from '@/components/shared/flow-header'
  * and lists of dynamic mock personal expenses.
  */
 export default function PersonalScreen() {
-  const navigate = useNavigate()
+  const navigate = useNavigate({ from: '/personal/' })
+  const { drawer } = useSearch({ from: '/personal/' })
   const [activeFilter, setActiveFilter] = useState<'this_month' | 'last_month' | 'all_time'>('this_month')
+
+  const closeDrawer = () => {
+    navigate({
+      search: (prev) => {
+        const next = { ...prev }
+        delete next.drawer
+        return next
+      },
+    })
+  }
+
+  const openDrawer = (name: 'add-expense') => {
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        drawer: name,
+      }),
+    })
+  }
 
   const currentData = FILTER_DATA[activeFilter]
 
@@ -68,16 +91,25 @@ export default function PersonalScreen() {
         </div>
       </div>
 
-      {/* Sticky Bottom Action Button */}
-      <div className="px-6 py-4 bg-[#FEFAF1]/90">
+      {/* Absolute Bottom Action Button */}
+      <div className="absolute bottom-0 left-0 right-0 px-6 py-4 bg-[#FEFAF1]/90 border-t border-[#EFE7DD]/30 backdrop-blur-sm z-10">
         <Button
           type="button"
-          onClick={() => navigate({ to: ROUTES.PERSONAL_ADD })}
+          onClick={() => openDrawer('add-expense')}
           className="w-full h-14 rounded-full bg-primary shadow-[0px_6.29px_20.13px_0px_#0B683A4D] text-white font-bold text-base cursor-pointer transition-transform active:scale-[0.99]"
         >
           Add Personal Expense
         </Button>
       </div>
+
+      {/* Drawer Overlay for Add Personal Expense */}
+      <Drawer open={drawer === 'add-expense'} onOpenChange={(open) => !open && closeDrawer()}>
+        <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] h-[95vh] max-h-[95vh]">
+          {drawer === 'add-expense' && (
+            <AddEntryScreen onClose={closeDrawer} onSuccess={closeDrawer} />
+          )}
+        </DrawerContent>
+      </Drawer>
     </div>
   )
 }

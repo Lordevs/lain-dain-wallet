@@ -1,11 +1,12 @@
-import { useNavigate } from '@tanstack/react-router'
-import { ROUTES } from '@/constants/routes'
 import AddExpenseBase, { type ConfirmExpenseData } from '@/components/shared/add-expense-base'
 import { FILTER_DATA } from './data/mock-data'
 
-export default function AddEntryScreen() {
-  const navigate = useNavigate()
+interface AddEntryScreenProps {
+  onClose: () => void
+  onSuccess: () => void
+}
 
+export default function AddEntryScreen({ onClose, onSuccess }: AddEntryScreenProps) {
   const handleConfirm = (data: ConfirmExpenseData) => {
     const parsedAmount = data.amount
 
@@ -41,12 +42,8 @@ export default function AddEntryScreen() {
       title="Add Entry"
       showPaidByAndSplit={false}
       onConfirm={handleConfirm}
-      onSuccessComplete={() => {
-        navigate({ to: ROUTES.PERSONAL })
-      }}
-      onBack={() => {
-        navigate({ to: ROUTES.PERSONAL })
-      }}
+      onSuccessComplete={onSuccess}
+      onBack={onClose}
     />
   )
 }

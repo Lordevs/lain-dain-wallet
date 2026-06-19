@@ -1,28 +1,23 @@
 import { useState } from 'react'
-import { useParams, useNavigate } from '@tanstack/react-router'
 import { cn } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
-import { ROUTES } from '@/constants/routes'
 import smartSettleImg from '@/assets/smart-settle.png'
 
-export default function SmartSettleScreen() {
-  const { id } = useParams({ from: '/groups/$id/smart-settle' })
-  const navigate = useNavigate()
+interface SmartSettleScreenProps {
+  onClose: () => void
+}
 
+export default function SmartSettleScreen({ onClose }: SmartSettleScreenProps) {
   // Local state for the dynamic "Simplify" toggle
   const [isSimplified, setIsSimplified] = useState(true)
 
-  // Handle back navigation
-  const handleBack = () => {
-    navigate({ to: ROUTES.GROUP_SETTINGS, params: { id } })
-  }
 
   return (
-    <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-12 select-none text-left">
+    <div className="flex flex-col flex-1 bg-[#FEFAF1] max-h-[85vh] pb-12 select-none text-left overflow-y-auto">
       {/* Header */}
       <FlowHeader
         title="Smart Settle"
-        onBack={handleBack}
+        onBack={onClose}
         backVariant="circle"
       />
 

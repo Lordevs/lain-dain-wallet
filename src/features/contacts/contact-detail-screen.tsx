@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useParams, useNavigate, Navigate } from '@tanstack/react-router'
+import { useParams, useNavigate, Navigate, useSearch } from '@tanstack/react-router'
 import { Bell } from 'lucide-react'
 import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
 import ContactAvatar from '@/components/shared/contact-avatar'
@@ -10,6 +10,13 @@ import FlowHeader from '@/components/shared/flow-header'
 import ExpenseList, { type ExpenseListData } from '@/components/shared/expense-list'
 import { type ExpenseCategory } from '@/components/shared/expense-item'
 import { getContactTransactions } from '@/features/contacts/data/transaction-store'
+import { Drawer, DrawerContent } from '@/components/ui/drawer'
+import SendReminderScreen from '@/features/contacts/send-reminder-screen'
+import LedgerBreakdownScreen from '@/features/contacts/ledger-breakdown-screen'
+import AddContactExpenseScreen from '@/features/contacts/add-contact-expense-screen'
+import EditContactExpenseScreen from '@/features/contacts/edit-contact-expense-screen'
+import TransactionDetailScreen from '@/features/transactions/transaction-detail-screen'
+
 
 interface TransactionItem extends ExpenseListData {
   id: string
@@ -73,7 +80,29 @@ const GET_TRANSACTIONS = (contactId: string, contactName: string): {
  */
 export default function ContactDetailScreen() {
   const { id } = useParams({ from: '/contacts/$id/' })
-  const navigate = useNavigate()
+  const navigate = useNavigate({ from: '/contacts/$id/' })
+  const { drawer, txId } = useSearch({ from: '/contacts/$id/' })
+
+  const closeDrawer = () => {
+    navigate({
+      search: (prev) => {
+        const next = { ...prev }
+        delete next.drawer
+        delete next.txId
+        return next
+      },
+    })
+  }
+
+  const openDrawer = (name: 'reminder' | 'breakdown' | 'add-expense' | 'edit-expense' | 'transaction', tid?: string) => {
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        drawer: name,
+        txId: tid,
+      }),
+    })
+  }
 
   // Find contact by id from mock data
   const contact = [...MOCK_RECEIVABLES, ...MOCK_PAYABLES].find((c) => c.id === id)
@@ -161,7 +190,7 @@ export default function ContactDetailScreen() {
           {isPositive && (
             <button
               type="button"
-              onClick={() => navigate({ to: ROUTES.CONTACT_REMINDER, params: { id: contact.id } })}
+              onClick={() => openDrawer('reminder')}
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-[#0B683A4D] bg-[#E4F2EB] text-[#0B683A] text-xs font-bold transition-all hover:bg-[#E4F2EB]/80 shrink-0 cursor-pointer outline-none"
             >
               <Bell size={13} className="text-[#0B683A]" strokeWidth={2.5} />
@@ -190,7 +219,7 @@ export default function ContactDetailScreen() {
             <ExpenseList
               expenses={transactions.Today}
               onItemClick={(tid) => {
-                navigate({ to: `/transactions/${tid}` })
+                openDrawer('transaction', tid.toString())
               }}
             />
           </div>
@@ -203,7 +232,7 @@ export default function ContactDetailScreen() {
             <ExpenseList
               expenses={transactions.Yesterday}
               onItemClick={(tid) => {
-                navigate({ to: `/transactions/${tid}` })
+                openDrawer('transaction', tid.toString())
               }}
             />
           </div>
@@ -216,7 +245,7 @@ export default function ContactDetailScreen() {
             <ExpenseList
               expenses={transactions.Earlier}
               onItemClick={(tid) => {
-                navigate({ to: `/transactions/${tid}` })
+                openDrawer('transaction', tid.toString())
               }}
             />
           </div>
@@ -228,7 +257,7 @@ export default function ContactDetailScreen() {
         {/* + Add Expense */}
         <button
           type="button"
-          onClick={() => navigate({ to: ROUTES.CONTACT_ADD_EXPENSE, params: { id: contact.id } })}
+          onClick={() => openDrawer('add-expense')}
           className="flex-1 h-14 rounded-full bg-[#0B683A] text-white font-extrabold text-base cursor-pointer shadow-[0px_6.29px_20.13px_0px_#0B683A4D] hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
         >
           + Add Expense
@@ -243,6 +272,61 @@ export default function ContactDetailScreen() {
           Record Payment
         </button>
       </div>
+
+      {/* Drawer Overlays */}
+      <Drawer open={drawer === 'reminder'} onOpenChange={(open) => !open && closeDrawer()}>
+        <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A]">
+          {drawer === 'reminder' && (
+            <SendReminderScreen contactId={contact.id} onClose={closeDrawer} />
+          )}
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer direction="right" open={drawer === 'breakdown'} onOpenChange={(open) => !open && closeDrawer()}>
+        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=right]:w-full data-[vaul-drawer-direction=right]:max-w-full data-[vaul-drawer-direction=right]:rounded-none data-[vaul-drawer-direction=right]:border-0 data-[vaul-drawer-direction=right]:h-full">
+          {drawer === 'breakdown' && (
+            <LedgerBreakdownScreen contactId={contact.id} onClose={closeDrawer} />
+          )}
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer open={drawer === 'add-expense'} onOpenChange={(open) => !open && closeDrawer()}>
+        <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] h-[95vh] max-h-[95vh]">
+          {drawer === 'add-expense' && (
+            <AddContactExpenseScreen
+              contactId={contact.id}
+              onClose={closeDrawer}
+              onSuccess={(newId) => openDrawer('transaction', newId)}
+            />
+          )}
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer open={drawer === 'edit-expense'} onOpenChange={(open) => !open && closeDrawer()}>
+        <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] h-[95vh] max-h-[95vh]">
+          {drawer === 'edit-expense' && txId && (
+            <EditContactExpenseScreen
+              contactId={contact.id}
+              txId={txId}
+              onClose={closeDrawer}
+              onSuccess={() => openDrawer('transaction', txId)}
+            />
+          )}
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer open={drawer === 'transaction'} onOpenChange={(open) => !open && closeDrawer()}>
+        <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] h-[90vh] max-h-[90vh]">
+          {drawer === 'transaction' && txId && (
+            <TransactionDetailScreen
+              txId={txId}
+              onClose={closeDrawer}
+              onEdit={() => openDrawer('edit-expense', txId)}
+              onDelete={closeDrawer}
+            />
+          )}
+        </DrawerContent>
+      </Drawer>
     </div>
   )
 }

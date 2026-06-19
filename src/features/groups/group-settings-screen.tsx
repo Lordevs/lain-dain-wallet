@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react'
-import { useParams, useNavigate } from '@tanstack/react-router'
+import { useParams, useNavigate, useSearch } from '@tanstack/react-router'
 import { MoreVertical, Camera, Pencil, Plus, LogOut, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
@@ -10,6 +10,9 @@ import OutstandingBalanceDrawer from '@/components/shared/outstanding-balance-dr
 import ConfirmActionDrawer from '@/components/shared/confirm-action-drawer'
 import { ROUTES } from '@/constants/routes'
 import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
+import { Drawer, DrawerContent } from '@/components/ui/drawer'
+import SmartSettleScreen from '@/features/groups/smart-settle-screen'
+import RecurringPaymentsScreen from '@/features/groups/recurring-payments-screen'
 
 /** A group member with a numeric balance field (positive = owes you, negative = you owe) */
 interface GroupMember {
@@ -38,7 +41,29 @@ function makeMember(partial: Omit<GroupMember, 'owesText'>): GroupMember {
 
 export default function GroupSettingsScreen() {
   const { id } = useParams({ from: '/groups/$id/settings' })
-  const navigate = useNavigate()
+  const navigate = useNavigate({ from: '/groups/$id/settings' })
+  const { drawer } = useSearch({ from: '/groups/$id/settings' })
+
+  const closeDrawer = () => {
+    navigate({
+      search: (prev) => {
+        const next = { ...prev }
+        delete next.drawer
+        delete next.subDrawer
+        delete next.edit
+        return next
+      },
+    })
+  }
+
+  const openDrawer = (name: 'smart-settle' | 'recurring') => {
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        drawer: name,
+      }),
+    })
+  }
 
   // Find contact by id from mock data (read-only — never mutate imported objects)
   const contact = useMemo(() => {
@@ -59,11 +84,11 @@ export default function GroupSettingsScreen() {
 
   // Local dynamic state for members list — uses numeric balance, not display strings
   const [members, setMembers] = useState<GroupMember[]>([
-    makeMember({ id: 'you',    name: 'You',        initials: 'MH', avatarColor: 'bg-[#0B683A] text-white', balance: 0,    isAdmin: true,  isPending: false }),
-    makeMember({ id: 'ali',    name: 'Ali Hassan', initials: 'AH', avatarColor: 'bg-[#2F80ED] text-white', balance: 2000, isAdmin: false, isPending: false }),
-    makeMember({ id: 'sara',   name: 'Sara Khan',  initials: 'SK', avatarColor: 'bg-[#C96A1B] text-white', balance: 0,    isAdmin: true,  isPending: false }),
-    makeMember({ id: 'hassan', name: 'Hassan',     initials: 'HS', avatarColor: 'bg-[#4F5D75] text-white', balance: 0,    isAdmin: false, isPending: false }),
-    makeMember({ id: 'usman',  name: 'Usman Shah', initials: 'US', avatarColor: 'bg-[#5C6BC0] text-white', balance: 0,    isAdmin: false, isPending: true }),
+    makeMember({ id: 'you', name: 'You', initials: 'MH', avatarColor: 'bg-[#0B683A] text-white', balance: 0, isAdmin: true, isPending: false }),
+    makeMember({ id: 'ali', name: 'Ali Hassan', initials: 'AH', avatarColor: 'bg-[#2F80ED] text-white', balance: 2000, isAdmin: false, isPending: false }),
+    makeMember({ id: 'sara', name: 'Sara Khan', initials: 'SK', avatarColor: 'bg-[#C96A1B] text-white', balance: 0, isAdmin: true, isPending: false }),
+    makeMember({ id: 'hassan', name: 'Hassan', initials: 'HS', avatarColor: 'bg-[#4F5D75] text-white', balance: 0, isAdmin: false, isPending: false }),
+    makeMember({ id: 'usman', name: 'Usman Shah', initials: 'US', avatarColor: 'bg-[#5C6BC0] text-white', balance: 0, isAdmin: false, isPending: true }),
   ])
 
   // State to manage Member Options Drawer
@@ -422,7 +447,7 @@ export default function GroupSettingsScreen() {
                 </p>
                 <button
                   type="button"
-                  onClick={() => navigate({ to: ROUTES.GROUP_SMART_SETTLE, params: { id: contact.id } })}
+                  onClick={() => openDrawer('smart-settle')}
                   className="text-[12px] text-[#C96A1B] font-bold mt-1.5 block hover:underline border-0 bg-transparent cursor-pointer p-0 text-left outline-none"
                 >
                   Learn More
@@ -451,7 +476,7 @@ export default function GroupSettingsScreen() {
             <div
               role="button"
               tabIndex={0}
-              onClick={() => navigate({ to: ROUTES.GROUP_RECURRING, params: { id: contact.id } })}
+              onClick={() => openDrawer('recurring')}
               className="bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-5 flex flex-col cursor-pointer hover:bg-muted/5 transition-colors outline-none"
             >
               <p className="font-bold text-[15px] text-[#1A1A1A]">
@@ -538,7 +563,7 @@ export default function GroupSettingsScreen() {
         title={drawerConfig.title}
         warningText={drawerConfig.warningText || ''}
         buttonText={drawerConfig.buttonText}
-        onAction={drawerConfig.onAction || (() => {})}
+        onAction={drawerConfig.onAction || (() => { })}
       />
 
       {/* Confirm Action Drawer */}
@@ -550,7 +575,7 @@ export default function GroupSettingsScreen() {
         confirmDescription={drawerConfig.confirmDescription || ''}
         buttonText={drawerConfig.buttonText}
         variant={drawerConfig.buttonVariant}
-        onConfirm={drawerConfig.onAction || (() => {})}
+        onConfirm={drawerConfig.onAction || (() => { })}
       />
 
       {/* Edit Group Name Panel */}
@@ -573,7 +598,7 @@ export default function GroupSettingsScreen() {
                     type="text"
                     value={tempGroupName}
                     onChange={(e) => setTempGroupName(e.target.value)}
-                    className="outline-none border-0 w-full text-[15px] font-medium text-[#1A1A1A] p-0 bg-transparent font-semibold"
+                    className="outline-none border-0 w-full text-[15px] font-medium text-[#1A1A1A] p-0 bg-transparent"
                     required
                     placeholder="Enter group name"
                   />
@@ -593,6 +618,22 @@ export default function GroupSettingsScreen() {
           </form>
         </div>
       )}
+      {/* Drawer Overlays */}
+      <Drawer direction="right" open={drawer === 'smart-settle'} onOpenChange={(open) => !open && closeDrawer()}>
+        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=right]:w-full data-[vaul-drawer-direction=right]:max-w-full data-[vaul-drawer-direction=right]:rounded-none data-[vaul-drawer-direction=right]:border-0 data-[vaul-drawer-direction=right]:h-full">
+          {drawer === 'smart-settle' && contact && (
+            <SmartSettleScreen onClose={closeDrawer} />
+          )}
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer direction="left" open={drawer === 'recurring'} onOpenChange={(open) => !open && closeDrawer()}>
+        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=left]:w-full data-[vaul-drawer-direction=left]:max-w-full data-[vaul-drawer-direction=left]:rounded-none data-[vaul-drawer-direction=left]:border-0 data-[vaul-drawer-direction=left]:h-full">
+          {drawer === 'recurring' && contact && (
+            <RecurringPaymentsScreen groupId={contact.id} onClose={closeDrawer} />
+          )}
+        </DrawerContent>
+      </Drawer>
     </div>
   )
 }

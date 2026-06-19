@@ -1,34 +1,36 @@
-import { useParams, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import AddExpenseBase, { type ConfirmExpenseData } from '@/components/shared/add-expense-base'
 import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
-import { ROUTES } from '@/constants/routes'
 import { TRANSACTION_STORE } from '@/features/contacts/data/transaction-store'
 
-export default function AddContactExpenseScreen() {
-  const { id } = useParams({ from: '/contacts/$id/add-expense' })
-  const navigate = useNavigate()
+interface AddContactExpenseScreenProps {
+  contactId: string
+  onClose: () => void
+  onSuccess: (newTxId: string) => void
+}
 
+export default function AddContactExpenseScreen({ contactId, onClose, onSuccess }: AddContactExpenseScreenProps) {
   const [newTxId, setNewTxId] = useState<string | null>(null)
 
   // Find contact by id from mock data
-  const contact = [...MOCK_RECEIVABLES, ...MOCK_PAYABLES].find((c) => c.id === id)
+  const contact = [...MOCK_RECEIVABLES, ...MOCK_PAYABLES].find((c) => c.id === contactId)
 
   if (!contact) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#FEFAF1]">
+      <div className="flex items-center justify-center p-6 bg-[#FEFAF1] h-[50vh]">
         <div className="text-center">
           <p className="text-lg font-bold text-[#1A1A1A]">Contact not found</p>
           <button
-            onClick={() => navigate({ to: '/' })}
-            className="mt-4 px-4 py-2 bg-[#0B683A] text-white rounded-full font-bold"
+            onClick={onClose}
+            className="mt-4 px-4 py-2 bg-[#0B683A] text-white rounded-full font-bold border-0 cursor-pointer"
           >
-            Go to Dashboard
+            Close
           </button>
         </div>
       </div>
     )
   }
+
 
   const handleConfirm = (data: ConfirmExpenseData) => {
     const parsedAmount = data.amount
@@ -116,14 +118,12 @@ export default function AddContactExpenseScreen() {
       onConfirm={handleConfirm}
       onSuccessComplete={() => {
         if (newTxId) {
-          navigate({ to: `/transactions/${newTxId}` })
+          onSuccess(newTxId)
         } else {
-          navigate({ to: ROUTES.CONTACT_DETAILS, params: { id: contact.id } })
+          onClose()
         }
       }}
-      onBack={() => {
-        navigate({ to: ROUTES.CONTACT_DETAILS, params: { id: contact.id } })
-      }}
+      onBack={onClose}
     />
   )
 }
