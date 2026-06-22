@@ -134,7 +134,7 @@ export default function LedgerBreakdownScreen({ contactId, onClose }: LedgerBrea
   }
 
   return (
-    <div className="flex flex-col flex-1 bg-[#FEFAF1] max-h-[85vh] relative select-none pb-10 overflow-y-auto">
+    <div className="flex flex-col flex-1 bg-[#FEFAF1] h-full relative select-none pb-10 overflow-y-auto">
       {/* Toast Alert overlay */}
       <AnimatePresence>
         {toast && (

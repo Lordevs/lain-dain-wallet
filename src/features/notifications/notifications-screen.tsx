@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import { Check, Wallet, CheckCircle2, Clock, AlertTriangle } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import SuccessCheck from '@/components/shared/success-check'
@@ -9,9 +9,24 @@ import { type NotificationItem } from './types'
 import SettleUpPanel from './components/settle-up-panel'
 import PaymentConfirmationPanel from './components/payment-confirmation-panel'
 import PaymentDisputePanel from './components/payment-dispute-panel'
+import { Drawer, DrawerContent } from '@/components/ui/drawer'
+import SendReminderScreen from '@/features/contacts/send-reminder-screen'
+import LedgerBreakdownScreen from '@/features/contacts/ledger-breakdown-screen'
 
 export default function NotificationsScreen() {
-  const navigate = useNavigate()
+  const navigate = useNavigate({ from: '/notifications/' })
+  const { drawer, contactId } = useSearch({ from: '/notifications/' })
+
+  const closeDrawer = () => {
+    navigate({
+      search: (prev: any) => {
+        const next = { ...prev }
+        delete next.drawer
+        delete next.contactId
+        return next
+      },
+    })
+  }
 
   // Decoupled Business Logic & State Layer
   const {
@@ -185,8 +200,10 @@ export default function NotificationsScreen() {
       setActiveConfirmNotification(item)
     } else if (item.type === 'dispute') {
       setActiveDisputeNotification(item)
+    } else if (item.type === 'reminder') {
+      navigate({ search: (prev: any) => ({ ...prev, drawer: 'reminder', contactId: '1' }) })
     } else {
-      navigate({ to: ROUTES.CONTACT_DETAILS, params: { id: '1' } })
+      navigate({ search: (prev: any) => ({ ...prev, drawer: 'breakdown', contactId: '1' }) })
     }
   }
 
@@ -336,6 +353,22 @@ export default function NotificationsScreen() {
           }}
         />
       )}
+
+      <Drawer open={drawer === 'reminder'} onOpenChange={(open) => !open && closeDrawer()}>
+        <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] h-[85vh] max-h-[85vh]">
+          {drawer === 'reminder' && contactId && (
+            <SendReminderScreen contactId={contactId} onClose={closeDrawer} />
+          )}
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer open={drawer === 'breakdown'} onOpenChange={(open) => !open && closeDrawer()}>
+        <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] h-[95vh] max-h-[95vh]">
+          {drawer === 'breakdown' && contactId && (
+            <LedgerBreakdownScreen contactId={contactId} onClose={closeDrawer} />
+          )}
+        </DrawerContent>
+      </Drawer>
     </div>
   )
 }

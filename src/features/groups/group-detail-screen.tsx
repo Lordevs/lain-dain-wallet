@@ -617,9 +617,8 @@ export default function GroupDetailScreen() {
         />
       )}
 
-      {/* Drawer Overlays */}
       <Drawer open={drawer === 'reminder'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A]">
+        <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] h-[85vh] max-h-[85vh]">
           {drawer === 'reminder' && (
             <SendGroupReminderScreen groupId={contact.id} onClose={closeDrawer} />
           )}

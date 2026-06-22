@@ -13,7 +13,7 @@ export default function SmartSettleScreen({ onClose }: SmartSettleScreenProps) {
 
 
   return (
-    <div className="flex flex-col flex-1 bg-[#FEFAF1] max-h-[85vh] pb-12 select-none text-left overflow-y-auto">
+    <div className="flex flex-col flex-1 bg-[#FEFAF1] h-full pb-12 select-none text-left overflow-y-auto">
       {/* Header */}
       <FlowHeader
         title="Smart Settle"

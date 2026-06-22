@@ -55,14 +55,14 @@ export default function SendReminderScreen({ contactId, onClose }: SendReminderS
 
   if (showSuccess) {
     return (
-      <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-[50vh] select-none justify-center">
+      <div className="flex flex-col flex-1 bg-[#FEFAF1] h-full select-none justify-center">
         <SuccessCheck onComplete={handleSuccessComplete} />
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col flex-1 bg-[#FEFAF1] max-h-[85vh] pb-24 relative select-none overflow-y-auto">
+    <div className="flex flex-col flex-1 bg-[#FEFAF1] h-full pb-24 relative select-none overflow-y-auto">
       {/* Header */}
       <FlowHeader
         title="Send Reminder"

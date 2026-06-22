@@ -134,7 +134,7 @@ export default function AddRecurringScreen({ groupId, editPaymentId, onClose, on
   return (
     <form
       onSubmit={handleSave}
-      className="flex flex-col flex-1 bg-[#FEFAF1] max-h-[85vh] select-none justify-between text-left overflow-y-auto"
+      className="flex flex-col flex-1 bg-[#FEFAF1] h-full select-none justify-between text-left overflow-y-auto"
     >
       <div className="flex flex-col flex-1 pb-4">
         {/* Custom Centered Header */}
