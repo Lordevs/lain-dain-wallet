@@ -19,10 +19,10 @@ const config: CapacitorConfig = {
       showSpinner: false,
     },
   },
-  server: {
-    url: 'http://localhost:5173', // Point to your active Vite dev server
-    cleartext: true               // Enables loading http pages in native wrappers
-  }
+  // server: {
+  //   url: 'http://localhost:5173', // Point to your active Vite dev server
+  //   cleartext: true               // Enables loading http pages in native wrappers
+  // }
 };
 
 export default config;
