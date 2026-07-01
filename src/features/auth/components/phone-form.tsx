@@ -109,7 +109,7 @@ export default function PhoneForm({
 
           <Button
             type="submit"
-            className="w-full h-14 bg-primary text-white rounded-full font-bold text-base shadow-[0px_7.03px_23.42px_0px_rgba(11,104,58,0.35)] hover:bg-primary/95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            className="w-full h-14 bg-primary text-white rounded-full font-bold text-base hover:bg-primary/95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
           >
             Continue
             <ChevronLeft size={16} strokeWidth={2.5} className="rotate-180 ml-1" />

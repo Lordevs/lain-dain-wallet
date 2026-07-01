@@ -103,7 +103,7 @@ export default function OtpForm({
           <Button
             type="submit"
             disabled={otpValue.length !== 6}
-            className="w-full h-14 bg-primary text-white rounded-full font-bold text-base shadow-[0px_7.03px_23.42px_0px_rgba(11,104,58,0.35)] hover:bg-primary/95 disabled:bg-[#D9D2C5] disabled:text-white disabled:shadow-none disabled:opacity-100 transition-all"
+            className="w-full h-14 bg-primary text-white rounded-full font-bold text-base hover:bg-primary/95 disabled:bg-[#D9D2C5] disabled:text-white disabled:shadow-none disabled:opacity-100 transition-all"
           >
             Verify Phone Number
           </Button>
