@@ -20,7 +20,7 @@ const config: CapacitorConfig = {
     },
   },
   // server: {
-  //   url: 'http://localhost:5173', // Point to your active Vite dev server
+  //   url: 'http://192.168.1.19:5173', // Point to your active Vite dev server
   //   cleartext: true               // Enables loading http pages in native wrappers
   // }
 };

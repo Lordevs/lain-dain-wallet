@@ -15,12 +15,10 @@ function RootComponent() {
     // Hide native splash screen immediately when JS bundle loads
     SplashScreen.hide().catch(() => { })
 
-    // Custom GIF animation duration
     const timer = setTimeout(() => {
       setShowSplash(false)
     }, 2800)
 
-    // Remove from DOM after fade-out transition
     const removeTimer = setTimeout(() => {
       setIsMounted(false)
     }, 3300)
@@ -42,23 +40,29 @@ function RootComponent() {
             }`}
         >
           {/* Central Animated Coin GIF */}
-          <div className="w-[500px] h-[500px] flex items-center justify-center shrink-0">
-            <img
-              src={coinGif}
-              alt="Lain Dain Coin"
-              className="w-full h-full object-contain"
+          <div className="relative flex flex-col items-center shrink-0 mb-24">
+            <div className="w-[250px] h-[250px] flex items-center justify-center">
+              <img
+                src={coinGif}
+                alt="Lain Dain Coin"
+                className="w-full h-full object-contain animate-bounce-slow"
+              />
+            </div>
+            {/* Shadow under the coin */}
+            <div
+              className="w-[180px] h-[15px] mt-4 rounded-[50%] opacity-65 bg-[radial-gradient(40.82%_40.82%_at_50%_50%,#949494_0%,rgba(254,250,241,0)_100%)] backdrop-blur-[10.2px]"
             />
           </div>
 
           {/* Brand Logo Layout */}
           <div className="flex flex-col items-center -mt-6 shrink-0">
-            <span className="text-[36px] font-extrabold tracking-tight">
+            <span className="text-[48px] font-bold tracking-tight">
               <span className="text-[#0B683A]">Lain</span>{' '}
               <span className="text-[#FDB105]">Dain</span>
             </span>
             <div className="flex items-center gap-3.5 w-44 mt-3.5 justify-center">
               <div className="h-[0.8px] flex-1 bg-[#FDB105]/60" />
-              <span className="text-[12px] font-bold tracking-[0.25em] text-[#6B6B6B] uppercase leading-none">
+              <span className="text-[12px] font-normal tracking-[0.25em] text-[#0B683A] uppercase leading-none">
                 Wallet
               </span>
               <div className="h-[0.8px] flex-1 bg-[#FDB105]/60" />
