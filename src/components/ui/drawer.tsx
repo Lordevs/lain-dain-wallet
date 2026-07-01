@@ -118,6 +118,13 @@ function DrawerDescription({
   )
 }
 
+/** Shared className for full-screen bottom-drawer overlays used as in-app sub-screens. */
+export const FULLSCREEN_DRAWER_CN =
+  'bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] ' +
+  'data-[vaul-drawer-direction=bottom]:h-full! data-[vaul-drawer-direction=bottom]:max-h-full! ' +
+  'data-[vaul-drawer-direction=bottom]:rounded-none! data-[vaul-drawer-direction=bottom]:border-0! ' +
+  'data-[vaul-drawer-direction=bottom]:mt-0! [&>div:first-child]:hidden!'
+
 export {
   Drawer,
   DrawerPortal,

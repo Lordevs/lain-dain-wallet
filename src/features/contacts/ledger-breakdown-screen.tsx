@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Users, AlertTriangle, Smile, Info } from 'lucide-react'
 import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
 import { ROUTES } from '@/constants/routes'
-import { formatCurrency } from '@/lib/currency'
+import { formatPKR } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import ExpenseList, { type ExpenseListData } from '@/components/shared/expense-list'
 import ContactAvatar from '@/components/shared/contact-avatar'
@@ -73,8 +73,7 @@ export default function LedgerBreakdownScreen({ contactId, onClose }: LedgerBrea
   const isPositive = overallAmount > 0
   const isNegative = overallAmount < 0
   const absOverall = Math.abs(overallAmount)
-  let formattedOverall = formatCurrency(absOverall, 'PKR')
-  formattedOverall = formattedOverall.replace('₨', 'Rs.').replace('Rs. ', 'Rs.')
+  const formattedOverall = formatPKR(absOverall)
 
   const overallAmountColorClass = isPositive
     ? 'text-[#0B683A]'

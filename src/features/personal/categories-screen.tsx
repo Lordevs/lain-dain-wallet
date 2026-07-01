@@ -180,9 +180,9 @@ export default function PersonalCategoriesScreen() {
             onReorder={handleReorder}
             className="divide-y divide-[#EFE7DD]"
           >
-            {categories.map((cat) => {
+            {categories.map((cat, index) => {
               const Icon = cat.icon
-              const isFirstGrocery = isReordering && cat.id === 'grocery'
+              const isFirstGrocery = isReordering && index === 0
 
               return (
                 <Reorder.Item

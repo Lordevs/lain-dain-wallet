@@ -10,8 +10,14 @@ export function formatCurrency(amount: number, currencyCode: string): string {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   }).format(Math.abs(amount))
+  // PKR symbol already ends with a period; no space needed (e.g. "Rs.1,500" not "Rs. 1,500")
+  const separator = currencyCode.toUpperCase() === 'PKR' ? '' : ' '
+  return `${currency.symbol}${separator}${formatted}`
+}
 
-  return `${currency.symbol} ${formatted}`
+/** Formats an amount in PKR, e.g. formatPKR(1500) → "Rs.1,500" */
+export function formatPKR(amount: number): string {
+  return formatCurrency(amount, 'PKR')
 }
 
 /**

@@ -52,11 +52,12 @@ export default function CategoryPicker({
       icon: icon,
     }
 
-    if (!CATEGORIES.some((c) => c.id === newId)) {
-      CATEGORIES.push(newCategory)
+    // Add only to local state — never mutate the exported CATEGORIES const,
+    // which is shared across every importer in the module graph.
+    if (!localCategories.some((c) => c.id === newId)) {
+      setLocalCategories((prev) => [...prev, newCategory])
     }
 
-    setLocalCategories([...CATEGORIES])
     onSelectCategory(newId)
     setShowAddCategory(false)
   }

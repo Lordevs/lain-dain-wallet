@@ -60,5 +60,6 @@ export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
     time: '5d ago',
     theme: 'orange',
     section: 'action_needed',
+    txId: 'mt1',
   },
 ]

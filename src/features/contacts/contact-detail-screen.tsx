@@ -4,13 +4,13 @@ import { Bell } from 'lucide-react'
 import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
 import ContactAvatar from '@/components/shared/contact-avatar'
 import { ROUTES } from '@/constants/routes'
-import { formatCurrency } from '@/lib/currency'
+import { formatPKR } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
 import ExpenseList, { type ExpenseListData } from '@/components/shared/expense-list'
 import { type ExpenseCategory } from '@/components/shared/expense-item'
 import { getContactTransactions } from '@/features/contacts/data/transaction-store'
-import { Drawer, DrawerContent } from '@/components/ui/drawer'
+import { Drawer, DrawerContent, FULLSCREEN_DRAWER_CN } from '@/components/ui/drawer'
 import SendReminderScreen from '@/features/contacts/send-reminder-screen'
 import LedgerBreakdownScreen from '@/features/contacts/ledger-breakdown-screen'
 import AddContactExpenseScreen from '@/features/contacts/add-contact-expense-screen'
@@ -136,8 +136,7 @@ export default function ContactDetailScreen() {
   const isPositive = personalAmount > 0
   const isNegative = personalAmount < 0
   const absAmount = Math.abs(personalAmount)
-  let formattedVal = formatCurrency(absAmount, 'PKR')
-  formattedVal = formattedVal.replace('₨', 'Rs.').replace('Rs. ', 'Rs.')
+  const formattedVal = formatPKR(absAmount)
 
   const statusLabel = isPositive
     ? 'You will receive'
@@ -254,7 +253,7 @@ export default function ContactDetailScreen() {
       </div>
 
       {/* Sticky Bottom Row Buttons */}
-      <div className="fixed bottom-0 left-0 right-0 z-10 px-6 py-4 bg-[#FEFAF1]/90 flex items-center gap-4">
+      <div className="fixed bottom-0 left-0 right-0 z-10 px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-[#FEFAF1]/90 flex items-center gap-4">
         {/* + Add Expense */}
         <button
           type="button"
@@ -275,7 +274,7 @@ export default function ContactDetailScreen() {
       </div>
 
       <Drawer open={drawer === 'reminder'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=bottom]:h-full! data-[vaul-drawer-direction=bottom]:max-h-full! data-[vaul-drawer-direction=bottom]:rounded-none! data-[vaul-drawer-direction=bottom]:border-0! data-[vaul-drawer-direction=bottom]:mt-0! [&>div:first-child]:hidden!">
+        <DrawerContent className={FULLSCREEN_DRAWER_CN}>
           {drawer === 'reminder' && (
             <SendReminderScreen contactId={contact.id} onClose={closeDrawer} />
           )}
@@ -291,7 +290,7 @@ export default function ContactDetailScreen() {
       </Drawer>
 
       <Drawer open={drawer === 'add-expense'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=bottom]:h-full! data-[vaul-drawer-direction=bottom]:max-h-full! data-[vaul-drawer-direction=bottom]:rounded-none! data-[vaul-drawer-direction=bottom]:border-0! data-[vaul-drawer-direction=bottom]:mt-0! [&>div:first-child]:hidden!">
+        <DrawerContent className={FULLSCREEN_DRAWER_CN}>
           {drawer === 'add-expense' && (
             <AddContactExpenseScreen
               contactId={contact.id}
@@ -303,7 +302,7 @@ export default function ContactDetailScreen() {
       </Drawer>
 
       <Drawer open={drawer === 'edit-expense'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=bottom]:h-full! data-[vaul-drawer-direction=bottom]:max-h-full! data-[vaul-drawer-direction=bottom]:rounded-none! data-[vaul-drawer-direction=bottom]:border-0! data-[vaul-drawer-direction=bottom]:mt-0! [&>div:first-child]:hidden!">
+        <DrawerContent className={FULLSCREEN_DRAWER_CN}>
           {drawer === 'edit-expense' && txId && (
             <EditContactExpenseScreen
               contactId={contact.id}
@@ -316,7 +315,7 @@ export default function ContactDetailScreen() {
       </Drawer>
 
       <Drawer open={drawer === 'transaction'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=bottom]:h-full! data-[vaul-drawer-direction=bottom]:max-h-full! data-[vaul-drawer-direction=bottom]:rounded-none! data-[vaul-drawer-direction=bottom]:border-0! data-[vaul-drawer-direction=bottom]:mt-0! [&>div:first-child]:hidden!">
+        <DrawerContent className={FULLSCREEN_DRAWER_CN}>
           {drawer === 'transaction' && txId && (
             <TransactionDetailScreen
               txId={txId}

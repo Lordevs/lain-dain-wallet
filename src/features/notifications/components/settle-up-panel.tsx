@@ -47,11 +47,11 @@ export default function SettleUpPanel({
 
   // Pay mode input states
   const [muzaffarAmount, setMuzaffarAmount] = useState('')
-  const [ahmedAmount, setAhmedAmount] = useState('500')
+  const [ahmedAmount, setAhmedAmount] = useState('')
 
   // Receive mode input states
   const [aliAmount, setAliAmount] = useState('')
-  const [saraAmount, setSaraAmount] = useState('500')
+  const [saraAmount, setSaraAmount] = useState('')
 
   const [showSuccess, setShowSuccess] = useState(false)
 

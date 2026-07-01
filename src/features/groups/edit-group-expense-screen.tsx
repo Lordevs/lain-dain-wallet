@@ -1,6 +1,7 @@
 import AddExpenseBase, { type ConfirmExpenseData } from '@/components/shared/add-expense-base'
 import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
 import { TRANSACTION_STORE } from '@/features/contacts/data/transaction-store'
+import { calculateContactOwesAmount } from '@/lib/split'
 
 interface EditGroupExpenseScreenProps {
   groupId: string
@@ -58,61 +59,35 @@ export default function EditGroupExpenseScreen({ groupId, txId, onClose, onSucce
       adjustmentAmounts: { you: 0, contact: 0 },
     }
 
-    // Shared Expense logic: calculate split owes amount
-    let contactOwesAmount = 0
-    if (splitData.type === 'equal') {
-      const selectedCount = splitData.selectedMembers.length
-      if (selectedCount > 0) {
-        const share = parsedAmount / selectedCount
-        if (paidBy === 'you') {
-          contactOwesAmount = splitData.selectedMembers.includes('contact') ? share : 0
-        } else {
-          contactOwesAmount = splitData.selectedMembers.includes('you') ? -share : 0
-        }
-      }
-    } else if (splitData.type === 'unequal') {
-      if (paidBy === 'you') {
-        contactOwesAmount = Number(splitData.unequalAmounts.contact) || 0
-      } else {
-        contactOwesAmount = -(Number(splitData.unequalAmounts.you) || 0)
-      }
-    } else if (splitData.type === 'adjustment') {
-      const adjYou = Number(splitData.adjustmentAmounts.you) || 0
-      const adjContact = Number(splitData.adjustmentAmounts.contact) || 0
-      const totalAdjustments = adjYou + adjContact
-      const baseSplit = Math.max(0, parsedAmount - totalAdjustments)
-      const basePerPerson = Math.round(baseSplit / 2)
-      const finalYou = basePerPerson + adjYou
-      const finalContact = basePerPerson + adjContact
-      if (paidBy === 'you') {
-        contactOwesAmount = finalContact
-      } else {
-        contactOwesAmount = -finalYou
-      }
-    }
+    const contactOwesAmount = calculateContactOwesAmount(parsedAmount, paidBy as 'you' | 'contact', splitData)
 
     // Update the transaction in store
-    if (tx) {
-      // Revert old transaction netAmount change
-      contact.netAmount -= tx.amount
+    const txIndex = txList.findIndex((t) => t.id === txId)
+    if (txIndex !== -1) {
+      const oldTx = txList[txIndex]
+      const oldAmount = oldTx.amount
+      const oldName = oldTx.name
 
-      // Update tx fields
-      tx.name = data.description || 'Edited Group Expense'
-      tx.amount = contactOwesAmount
-      tx.category = data.category as any
-      tx.subtitle = paidBy === 'you' ? 'You paid' : `${contact.name.split(' ')[0]} paid`
-      tx.splitType = splitData.type
-      tx.dateValue = data.dateValue
+      // Replace record without mutating — preserves old values for tag lookup below
+      txList[txIndex] = {
+        ...oldTx,
+        name: data.description || 'Edited Group Expense',
+        amount: contactOwesAmount,
+        category: data.category as any,
+        subtitle: paidBy === 'you' ? 'You paid' : `${contact.name.split(' ')[0]} paid`,
+        splitType: splitData.type,
+        dateValue: data.dateValue,
+      }
 
-      // Apply new transaction netAmount change
-      contact.netAmount += contactOwesAmount
+      // Diff-based netAmount update avoids double-apply on repeated edits
+      contact.netAmount += contactOwesAmount - oldAmount
 
-      // Also update matching tag in breakdown list
-      const tagIndex = contact.tags.findIndex((t) => t.name === tx.name || t.amount === tx.amount)
+      // Use original name/amount to locate the tag before it was changed
+      const tagIndex = contact.tags.findIndex((t) => t.name === oldName || t.amount === oldAmount)
       if (tagIndex !== -1) {
         contact.tags[tagIndex] = {
-          name: tx.name,
-          amount: contactOwesAmount
+          name: data.description || 'Edited Group Expense',
+          amount: contactOwesAmount,
         }
       }
     }

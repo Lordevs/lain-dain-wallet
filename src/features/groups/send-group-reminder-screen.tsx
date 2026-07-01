@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { User } from 'lucide-react'
 import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
-import { formatCurrency } from '@/lib/currency'
+import { formatPKR } from '@/lib/currency'
 import FlowHeader from '@/components/shared/flow-header'
 import SuccessCheck from '@/components/shared/success-check'
 
@@ -34,8 +34,7 @@ export default function SendGroupReminderScreen({ groupId, onClose }: SendGroupR
   }
 
   const absAmount = Math.abs(contact.netAmount)
-  let formattedVal = formatCurrency(absAmount, 'PKR')
-  formattedVal = formattedVal.replace('₨', 'Rs.').replace('Rs. ', 'Rs.')
+  const formattedVal = formatPKR(absAmount)
 
   const handleSendReminder = () => {
     setShowSuccess(true)

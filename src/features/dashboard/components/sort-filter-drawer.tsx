@@ -54,6 +54,10 @@ export default function SortFilterDrawer({
   const handleReset = () => {
     setTempSortBy('newest')
     setTempFilterType('all')
+    // Apply immediately so closing the drawer without tapping Apply doesn't silently discard the reset.
+    onSortByChange('newest')
+    onFilterTypeChange('all')
+    setIsOpen(false)
   }
 
   return (

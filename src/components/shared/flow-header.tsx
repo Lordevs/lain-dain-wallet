@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import { ChevronLeft } from 'lucide-react'
-import { useNavigate } from '@tanstack/react-router'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -35,18 +34,16 @@ export default function FlowHeader({
   avatar,
   rightSlot,
 }: FlowHeaderProps) {
-  const navigate = useNavigate()
-
   const handleBack = () => {
     if (onBack) {
       onBack()
-    } else {
-      if (window.history.length > 1) {
-        window.history.back()
-      } else {
-        navigate({ to: '/' })
-      }
+      return
     }
+    // window.history.length is always ≥ 2 in a Capacitor WebView (the WebView
+    // pre-populates the stack with a blank entry before the app loads), so
+    // checking it is an unreliable guard. Every screen in this app is reached
+    // via in-app navigation, so history.back() is always safe to call.
+    window.history.back()
   }
 
   // Check if subtitle contains "selected" to style it green

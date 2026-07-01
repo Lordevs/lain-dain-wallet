@@ -9,7 +9,7 @@ import ViewReportsCard from './components/view-reports-card'
 import ExpenseList from '@/components/shared/expense-list'
 import MonthFilterDropdown from './components/month-filter-dropdown'
 import FlowHeader from '@/components/shared/flow-header'
-import { Drawer, DrawerContent } from '@/components/ui/drawer'
+import { Drawer, DrawerContent, FULLSCREEN_DRAWER_CN } from '@/components/ui/drawer'
 import AddEntryScreen from '@/features/personal/add-entry-screen'
 
 
@@ -106,7 +106,7 @@ export default function PersonalScreen() {
 
       {/* Drawer Overlay for Add Personal Expense */}
       <Drawer open={drawer === 'add-expense'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=bottom]:h-full! data-[vaul-drawer-direction=bottom]:max-h-full! data-[vaul-drawer-direction=bottom]:rounded-none! data-[vaul-drawer-direction=bottom]:border-0! data-[vaul-drawer-direction=bottom]:mt-0! [&>div:first-child]:hidden!">
+        <DrawerContent className={FULLSCREEN_DRAWER_CN}>
           {drawer === 'add-expense' && (
             <AddEntryScreen onClose={closeDrawer} onSuccess={closeDrawer} />
           )}

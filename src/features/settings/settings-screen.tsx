@@ -15,32 +15,11 @@ import { ROUTES } from '@/constants/routes'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import FlowHeader from '@/components/shared/flow-header'
+import { Switch } from '@/components/ui/switch'
 import EditProfilePanel from './components/edit-profile-panel'
 import ReportIssuePanel from './components/report-issue-panel'
 import LogoutPanel from './components/logout-panel'
 import DeleteAccountPanel from './components/delete-account-panel'
-
-// ─── Custom Switch Component ──────────────────────────────────────────────────
-interface SwitchProps {
-  checked: boolean
-  onChange: (checked: boolean) => void
-}
-
-function Switch({ checked, onChange }: SwitchProps) {
-  return (
-    <button
-      type="button"
-      onClick={() => onChange(!checked)}
-      className={`w-[51px] h-[31px] rounded-full relative p-0.5 transition-colors duration-200 ease-in-out cursor-pointer outline-none shrink-0 ${checked ? 'bg-[#0B683A]' : 'bg-[#E5DFD5]'
-        }`}
-    >
-      <span
-        className={`block w-[27px] h-[27px] bg-white rounded-full shadow-[0px_3px_8px_rgba(0,0,0,0.15)] transform transition-transform duration-200 ease-in-out ${checked ? 'translate-x-[20px]' : 'translate-x-0'
-          }`}
-      />
-    </button>
-  )
-}
 
 // ─── Main Screen Component ─────────────────────────────────────────────────────
 export default function SettingsScreen() {
@@ -168,7 +147,7 @@ export default function SettingsScreen() {
                   <h4 className="text-[15px] font-semibold text-[#1A1A1A] leading-tight">Push Notifications</h4>
                   <p className="text-[12px] text-[#6B6B6B]">Payment alerts, reminders</p>
                 </div>
-                <Switch checked={pushNotifications} onChange={setPushNotifications} />
+                <Switch checked={pushNotifications} onCheckedChange={setPushNotifications} size="lg" />
               </div>
 
               {/* Auto Personal Reminders Row */}
@@ -178,7 +157,7 @@ export default function SettingsScreen() {
                     <h4 className="text-[15px] font-semibold text-[#1A1A1A] leading-tight">Auto Personal Reminders</h4>
                     <p className="text-[12px] text-[#6B6B6B]">Automatically remind people who owe you</p>
                   </div>
-                  <Switch checked={autoReminders} onChange={setAutoReminders} />
+                  <Switch checked={autoReminders} onCheckedChange={setAutoReminders} size="lg" />
                 </div>
 
                 {/* Collapsible auto reminder frequency sub-options */}

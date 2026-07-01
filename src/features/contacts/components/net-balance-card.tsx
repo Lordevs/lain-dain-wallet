@@ -30,10 +30,7 @@ export default function NetBalanceCard({
     amount === 0 && 'text-[#1A1A1A]'
   )
 
-  let formattedVal = formatCurrency(Math.abs(amount), currency)
-  if (currency.toUpperCase() === 'PKR') {
-    formattedVal = formattedVal.replace('₨', 'Rs.').replace('Rs. ', 'Rs.')
-  }
+  const formattedVal = formatCurrency(Math.abs(amount), currency)
 
   return (
     <div

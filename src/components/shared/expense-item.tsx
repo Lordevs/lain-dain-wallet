@@ -77,10 +77,7 @@ export default function ExpenseItem({
       )
     )
 
-  let formattedAmount = formatCurrency(Math.abs(amount), currency)
-  if (currency.toUpperCase() === 'PKR') {
-    formattedAmount = formattedAmount.replace('₨', 'Rs.')
-  }
+  const formattedAmount = formatCurrency(Math.abs(amount), currency)
   const displayAmount = `${amount < 0 ? '-' : ''}${formattedAmount}`
 
   return (

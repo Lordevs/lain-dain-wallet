@@ -1,15 +1,35 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { type NotificationItem } from '../types'
 import { INITIAL_NOTIFICATIONS } from '../data/mock-notifications'
 
+// Module-level reference so notification state survives tab switches
+// (component unmount/remount) without needing a global store.
+let _notifications: NotificationItem[] = [...INITIAL_NOTIFICATIONS]
+
 export function useNotifications() {
-  const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS)
+  const [notifications, setNotificationsRaw] = useState<NotificationItem[]>(_notifications)
   const [activeAnimation, setActiveAnimation] = useState<string | null>(null)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    }
+  }, [])
+
+  const setNotifications = (updater: (prev: NotificationItem[]) => NotificationItem[]) => {
+    setNotificationsRaw((prev) => {
+      const next = updater(prev)
+      _notifications = next
+      return next
+    })
+  }
 
   const triggerToast = (msg: string) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
     setToastMessage(msg)
-    setTimeout(() => {
+    toastTimerRef.current = setTimeout(() => {
       setToastMessage(null)
     }, 2500)
   }

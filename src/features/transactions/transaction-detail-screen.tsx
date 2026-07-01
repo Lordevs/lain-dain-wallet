@@ -44,6 +44,19 @@ export default function TransactionDetailScreen(props: TransactionDetailScreenPr
 
   const navigate = useNavigate()
 
+  // All hooks must be declared before any conditional return to satisfy Rules of Hooks
+  const [isReceiptOpen, setIsReceiptOpen] = useState(false)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null)
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => {
+        setToast(null)
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [toast])
+
   // Find transaction and contact ID
   let foundContactId = ''
   let tx = null
@@ -81,19 +94,6 @@ export default function TransactionDetailScreen(props: TransactionDetailScreenPr
       </div>
     )
   }
-
-
-  const [isReceiptOpen, setIsReceiptOpen] = useState(false)
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null)
-
-  useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => {
-        setToast(null)
-      }, 3000)
-      return () => clearTimeout(timer)
-    }
-  }, [toast])
 
   const absAmount = Math.abs(tx.amount)
   const paidByText = tx.amount > 0 ? 'You (full amount)' : `${contact.name} (full amount)`
@@ -304,7 +304,7 @@ export default function TransactionDetailScreen(props: TransactionDetailScreenPr
       </div>
 
       {/* Absolute Bottom Actions */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 px-6 py-4 bg-[#FEFAF1]/90 flex items-center gap-4 border-t border-[#EFE7DD]/30 backdrop-blur-sm">
+      <div className="absolute bottom-0 left-0 right-0 z-10 px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-[#FEFAF1]/90 flex items-center gap-4 border-t border-[#EFE7DD]/30 backdrop-blur-sm">
         {/* Edit Button */}
         <button
           type="button"

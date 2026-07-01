@@ -15,4 +15,6 @@ export interface NotificationItem {
   time?: string
   theme: NotificationTheme
   section: NotificationSection
+  /** ID of the linked transaction (used by 'edited' notifications to navigate to the right expense). */
+  txId?: string
 }

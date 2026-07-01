@@ -4,7 +4,7 @@ import { MoreVertical, Bell, ChevronRight, Building2, Handshake, HelpCircle, Arr
 import { motion, AnimatePresence } from 'framer-motion'
 import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
 import { ROUTES } from '@/constants/routes'
-import { formatCurrency } from '@/lib/currency'
+import { formatPKR } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
 import ExpenseList, { type ExpenseListData } from '@/components/shared/expense-list'
@@ -14,7 +14,7 @@ import ContactList from '@/components/shared/contact-list'
 import ContactListItem from '@/components/shared/contact-list-item'
 import SettleUpPanel from '@/features/notifications/components/settle-up-panel'
 import { CATEGORIES } from '@/features/personal/components/category-picker'
-import { Drawer, DrawerContent } from '@/components/ui/drawer'
+import { Drawer, DrawerContent, FULLSCREEN_DRAWER_CN } from '@/components/ui/drawer'
 import SendGroupReminderScreen from '@/features/groups/send-group-reminder-screen'
 import AddGroupExpenseScreen from '@/features/groups/add-group-expense-screen'
 import EditGroupExpenseScreen from '@/features/groups/edit-group-expense-screen'
@@ -285,16 +285,12 @@ export default function GroupDetailScreen() {
   }, [id])
 
   const isGroupReceivable = contact.netAmount > 0
-  const formattedGroupVal = formatCurrency(Math.abs(contact.netAmount), 'PKR')
-    .replace('₨', 'Rs.')
-    .replace('Rs. ', 'Rs.')
+  const formattedGroupVal = formatPKR(Math.abs(contact.netAmount))
 
   const catDetails = selectedCategory ? getCategoryDetails(selectedCategory) : null
   const filteredExpenses = selectedCategory ? groupExpensesData.filter((exp) => (exp.category || 'other') === selectedCategory) : []
   const totalSpent = filteredExpenses.reduce((sum, exp) => sum + Math.abs(exp.amount), 0)
-  const formattedTotal = formatCurrency(totalSpent, 'PKR')
-    .replace('₨', 'Rs.')
-    .replace('Rs. ', 'Rs.')
+  const formattedTotal = formatPKR(totalSpent)
   const CatIcon = catDetails?.icon
 
   return (
@@ -390,12 +386,11 @@ export default function GroupDetailScreen() {
                 onDragEnd={(_, info) => {
                   const swipeThreshold = 50
                   if (info.offset.x < -swipeThreshold) {
+                    // Swipe left on card 0 → advance to card 1
                     setSlideDirection('left')
                     setActiveCardIndex(1)
-                  } else if (info.offset.x > swipeThreshold) {
-                    setSlideDirection('right')
-                    setActiveCardIndex(1)
                   }
+                  // Swipe right on card 0 → no card -1, do nothing
                 }}
                 onClick={() => {
                   setSlideDirection('left')
@@ -462,13 +457,12 @@ export default function GroupDetailScreen() {
                 dragElastic={0.6}
                 onDragEnd={(_, info) => {
                   const swipeThreshold = 50
-                  if (info.offset.x < -swipeThreshold) {
-                    setSlideDirection('left')
-                    setActiveCardIndex(0)
-                  } else if (info.offset.x > swipeThreshold) {
+                  if (info.offset.x > swipeThreshold) {
+                    // Swipe right on card 1 → go back to card 0
                     setSlideDirection('right')
                     setActiveCardIndex(0)
                   }
+                  // Swipe left on card 1 → no card 2, do nothing
                 }}
                 onClick={() => {
                   setSlideDirection('right')
@@ -615,9 +609,7 @@ export default function GroupDetailScreen() {
           <div className="bg-white border border-[#EFE7DD] rounded-xl divide-y! divide-[#EFE7DD]! overflow-hidden shadow-[0px_4px_16px_rgba(0,0,0,0.02)]">
             {categoriesSummary.map((summary) => {
               const IconComp = summary.icon
-              const formattedVal = formatCurrency(summary.total, 'PKR')
-                .replace('₨', 'Rs.')
-                .replace('Rs. ', 'Rs.')
+              const formattedVal = formatPKR(summary.total)
               return (
                 <button
                   key={summary.id}
@@ -657,7 +649,7 @@ export default function GroupDetailScreen() {
       </div>
 
       {/* Sticky Bottom Row Buttons */}
-      <div className="fixed bottom-0 left-0 right-0 z-10 px-6 py-4 bg-[#FEFAF1]/90 flex items-center gap-4 border-t border-[#EFE7DD]/30 backdrop-blur-sm">
+      <div className="fixed bottom-0 left-0 right-0 z-10 px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-[#FEFAF1]/90 flex items-center gap-4 border-t border-[#EFE7DD]/30 backdrop-blur-sm">
         {/* + Add Expense */}
         <button
           type="button"
@@ -702,7 +694,7 @@ export default function GroupDetailScreen() {
       )}
 
       <Drawer open={drawer === 'reminder'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=bottom]:h-full! data-[vaul-drawer-direction=bottom]:max-h-full! data-[vaul-drawer-direction=bottom]:rounded-none! data-[vaul-drawer-direction=bottom]:border-0! data-[vaul-drawer-direction=bottom]:mt-0! [&>div:first-child]:hidden!">
+        <DrawerContent className={FULLSCREEN_DRAWER_CN}>
           {drawer === 'reminder' && (
             <SendGroupReminderScreen groupId={contact.id} onClose={closeDrawer} />
           )}
@@ -710,7 +702,7 @@ export default function GroupDetailScreen() {
       </Drawer>
 
       <Drawer open={drawer === 'add-expense'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=bottom]:h-full! data-[vaul-drawer-direction=bottom]:max-h-full! data-[vaul-drawer-direction=bottom]:rounded-none! data-[vaul-drawer-direction=bottom]:border-0! data-[vaul-drawer-direction=bottom]:mt-0! [&>div:first-child]:hidden!">
+        <DrawerContent className={FULLSCREEN_DRAWER_CN}>
           {drawer === 'add-expense' && (
             <AddGroupExpenseScreen
               groupId={contact.id}
@@ -722,7 +714,7 @@ export default function GroupDetailScreen() {
       </Drawer>
 
       <Drawer open={drawer === 'transaction'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=bottom]:h-full! data-[vaul-drawer-direction=bottom]:max-h-full! data-[vaul-drawer-direction=bottom]:rounded-none! data-[vaul-drawer-direction=bottom]:border-0! data-[vaul-drawer-direction=bottom]:mt-0! [&>div:first-child]:hidden!">
+        <DrawerContent className={FULLSCREEN_DRAWER_CN}>
           {drawer === 'transaction' && txId && (
             <TransactionDetailScreen
               txId={txId}
@@ -735,7 +727,7 @@ export default function GroupDetailScreen() {
       </Drawer>
 
       <Drawer open={drawer === 'edit-expense'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=bottom]:h-full! data-[vaul-drawer-direction=bottom]:max-h-full! data-[vaul-drawer-direction=bottom]:rounded-none! data-[vaul-drawer-direction=bottom]:border-0! data-[vaul-drawer-direction=bottom]:mt-0! [&>div:first-child]:hidden!">
+        <DrawerContent className={FULLSCREEN_DRAWER_CN}>
           {drawer === 'edit-expense' && txId && (
             <EditGroupExpenseScreen
               groupId={contact.id}

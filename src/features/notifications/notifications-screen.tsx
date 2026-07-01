@@ -162,7 +162,7 @@ export default function NotificationsScreen() {
             variant: 'amber',
             onClick: (e) => {
               e.stopPropagation()
-              setActiveDisputeNotification(item)
+              handleIgnore(item.id)
             },
           },
         ]
@@ -173,7 +173,7 @@ export default function NotificationsScreen() {
             variant: 'green',
             onClick: (e) => {
               e.stopPropagation()
-              navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: 'tx-1' } })
+              navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: item.txId || item.id } })
             },
           },
           {
@@ -193,7 +193,7 @@ export default function NotificationsScreen() {
   // Handle generic card body clicks
   const handleCardClick = (item: NotificationItem) => {
     if (item.type === 'edited') {
-      navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: 'tx-1' } })
+      navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: item.txId || item.id } })
     } else if (item.type === 'request') {
       setActiveSettleUpNotification(item)
     } else if (item.type === 'confirmation') {
