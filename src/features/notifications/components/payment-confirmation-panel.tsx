@@ -121,7 +121,7 @@ export default function PaymentConfirmationPanel({
             type="button"
             onClick={onConfirmReceived}
             // box-shadow: 0px 3px 10px 0px #0B683A47;
-            className="flex-1 h-14 rounded-full bg-[#0B683A] text-white font-bold text-sm cursor-pointer shadow-[0px_3px_10px_0px_#0B683A47] active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
+            className="flex-1 h-14 rounded-full bg-[#0B683A] text-white font-bold text-sm cursor-pointer active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
           >
             Confirm Received
           </button>

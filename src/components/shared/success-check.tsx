@@ -9,7 +9,7 @@ export default function SuccessCheck({ onComplete }: SuccessCheckProps) {
   useEffect(() => {
     const timer = setTimeout(() => {
       onComplete()
-    }, 1800)
+    }, 800)
     return () => clearTimeout(timer)
   }, [onComplete])
 

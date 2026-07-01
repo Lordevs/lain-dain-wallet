@@ -40,7 +40,7 @@ export default function AddMembersStep({ flow }: AddMembersStepProps) {
       />
 
       {/* Contacts list */}
-      <div className="flex-1 overflow-y-auto pb-24">
+      <div className="flex-1 overflow-y-auto pb-4">
         <ContactList title="Contacts on Lain Dain" titleColor="primary">
           {flow.filteredContacts.map((contact) => {
             const isChecked = flow.selectedContacts.includes(contact.id)
@@ -70,16 +70,17 @@ export default function AddMembersStep({ flow }: AddMembersStepProps) {
       </div>
 
       {/* Sticky Next button */}
-      <div className="absolute bottom-6 left-6 right-6 z-10">
-        <Button
-          onClick={flow.nextStep}
-          disabled={flow.selectedContacts.length === 0}
-          className="w-full h-14 rounded-full bg-primary text-white font-extrabold text-[15px] shadow-lg active:scale-[0.98] transition-transform cursor-pointer"
-        >
-          Next
-          <ChevronLeft size={16} className="rotate-180 ml-1 shrink-0" strokeWidth={3} />
-        </Button>
-      </div>
+      {flow.selectedContacts.length > 0 && (
+        <div className="absolute bottom-6 left-6 right-6 z-10 animate-in fade-in slide-in-from-bottom duration-200">
+          <Button
+            onClick={flow.nextStep}
+            className="w-full h-14 rounded-full bg-primary text-white font-extrabold text-[15px] shadow-lg active:scale-[0.98] transition-transform cursor-pointer"
+          >
+            Next
+            <ChevronLeft size={16} className="rotate-180 ml-1 shrink-0" strokeWidth={3} />
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

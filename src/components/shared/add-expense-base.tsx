@@ -137,30 +137,33 @@ export default function AddExpenseBase({
     )
   }
 
+  const isFormInvalid = !amount || Number(amount) <= 0 || !description.trim()
+
   return (
     <form
       onSubmit={handleFormSubmit}
-      className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen select-none justify-between"
+      className="flex flex-col h-screen max-h-screen bg-[#FEFAF1] select-none justify-between overflow-hidden relative"
     >
-      {/* Scrollable Container */}
-      <div className="flex flex-col flex-1 pb-4">
-        {/* Header */}
-        <FlowHeader
-          title={title}
-          onBack={onBack}
-          backVariant="circle"
-          rightSlot={
-            showPaidByAndSplit ? (
-              <button
-                type="submit"
-                className="text-[#0B683A] font-extrabold text-base bg-transparent border-0 cursor-pointer p-2 outline-none transition-opacity"
-              >
-                <Check size={22} strokeWidth={2.5} />
-              </button>
-            ) : undefined
-          }
-        />
+      {/* Header */}
+      <FlowHeader
+        title={title}
+        onBack={onBack}
+        backVariant="circle"
+        rightSlot={
+          showPaidByAndSplit ? (
+            <button
+              type="submit"
+              disabled={isFormInvalid}
+              className="text-[#0B683A] font-extrabold text-base bg-transparent border-0 cursor-pointer p-2 outline-none transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Check size={22} strokeWidth={2.5} />
+            </button>
+          ) : undefined
+        }
+      />
 
+      {/* Scrollable Container */}
+      <div className="flex-1 overflow-y-auto pb-4">
         {/* Inputs Content */}
         <div className="px-6 flex flex-col mt-4">
           {/* Amount Section */}
@@ -177,6 +180,7 @@ export default function AddExpenseBase({
               <div className="flex-1 flex items-center px-4">
                 <input
                   type="text"
+                  inputMode="decimal"
                   value={getFormattedAmount()}
                   onChange={handleAmountChange}
                   className="w-full bg-transparent border-0 outline-none text-[32px] font-extrabold text-[#1A1A1A] placeholder:text-[#EBEBEB] font-sans leading-none py-1"
@@ -214,8 +218,8 @@ export default function AddExpenseBase({
                 onClick={() => setShowPaidBy(true)}
                 className={cn(
                   "flex-1 rounded-[20px] border p-4 flex items-center justify-between cursor-pointer transition-all outline-none",
-                  paidBy === 'multiple' 
-                    ? "bg-[#E4F2EB]/35 border-[#0B683A4D] hover:bg-[#E4F2EB]/50" 
+                  paidBy === 'multiple'
+                    ? "bg-[#E4F2EB]/35 border-[#0B683A4D] hover:bg-[#E4F2EB]/50"
                     : "bg-white border-[#EBEBEB] hover:bg-[#F7F5F0]"
                 )}
               >
@@ -286,23 +290,24 @@ export default function AddExpenseBase({
             />
           </div>
         </div>
-      </div>
 
-      {/* Footer & Actions */}
-      <div className="flex flex-col shrink-0">
-        <AttachmentTabs
-          dateValue={dateValue}
-          receiptAttached={!!receiptFile}
-          noteAttached={!!noteText}
-          onToggleDate={handleToggleDate}
-          onToggleReceipt={handleToggleReceipt}
-          onToggleNote={handleToggleNote}
-        />
+        <div className="flex flex-col shrink-0 bg-[#FEFAF1] border-t border-[#EBEBEB]/20 py-4">
+          <AttachmentTabs
+            dateValue={dateValue}
+            receiptAttached={!!receiptFile}
+            noteAttached={!!noteText}
+            onToggleDate={handleToggleDate}
+            onToggleReceipt={handleToggleReceipt}
+            onToggleNote={handleToggleNote}
+          />
+        </div>
 
-        <div className="px-6 py-6">
+        <div className="px-6">
+
           <Button
             type="submit"
-            className="w-full h-14 rounded-full bg-primary shadow-[0px_6.29px_20.13px_0px_#0B683A4D] text-white font-bold text-base cursor-pointer transition-transform active:scale-[0.99]"
+            disabled={isFormInvalid}
+            className="w-full h-14 rounded-full bg-primary text-white font-bold text-base cursor-pointer transition-transform active:scale-[0.99] disabled:opacity-50 disabled:bg-[#D0CBC0]"
           >
             Confirm
           </Button>

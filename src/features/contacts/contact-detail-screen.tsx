@@ -41,8 +41,8 @@ const GET_TRANSACTIONS = (contactId: string, contactName: string): {
   const items: TransactionItem[] = list.map((record) => {
     const displaySubtitle = record.category === 'payment' ? (
       <div className="flex flex-col text-left">
-        <span className="text-primary font-bold text-[12px]">You paid {firstName}</span>
-        <span className="text-[10px] text-[#9A9590] mt-0.5 font-normal">Balance adjusted</span>
+        <span className="text-[#6B6B6B] text-[12px] font-normal">You paid {firstName}</span>
+        <span className="text-[12px] text-[#6B6B6B] font-normal">Balance adjusted</span>
       </div>
     ) : record.subtitle
 
@@ -258,23 +258,23 @@ export default function ContactDetailScreen() {
         <button
           type="button"
           onClick={() => openDrawer('add-expense')}
-          className="flex-1 h-14 rounded-full bg-[#0B683A] text-white font-extrabold text-base cursor-pointer shadow-[0px_6.29px_20.13px_0px_#0B683A4D] hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
+          className="flex-1 h-14 rounded-full bg-[#0B683A] text-white font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
         >
-          + Add Expense
+          Add Expense
         </button>
 
         {/* Record Payment */}
         <button
           type="button"
           onClick={() => console.log('Record Payment Clicked')}
-          className="flex-1 h-14 rounded-full bg-[#FDB105] text-[#1A1A1A] font-extrabold text-base cursor-pointer shadow-[0px_6.29px_20.13px_0px_#FDB1054D] hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
+          className="flex-1 h-14 rounded-full bg-[#FDB105] text-[#1A1A1A] font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
         >
           Record Payment
         </button>
       </div>
 
       <Drawer open={drawer === 'reminder'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] h-[85vh] max-h-[85vh]">
+        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=bottom]:h-full! data-[vaul-drawer-direction=bottom]:max-h-full! data-[vaul-drawer-direction=bottom]:rounded-none! data-[vaul-drawer-direction=bottom]:border-0! data-[vaul-drawer-direction=bottom]:mt-0! [&>div:first-child]:hidden!">
           {drawer === 'reminder' && (
             <SendReminderScreen contactId={contact.id} onClose={closeDrawer} />
           )}
@@ -290,7 +290,7 @@ export default function ContactDetailScreen() {
       </Drawer>
 
       <Drawer open={drawer === 'add-expense'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] h-[95vh] max-h-[95vh]">
+        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=bottom]:h-full! data-[vaul-drawer-direction=bottom]:max-h-full! data-[vaul-drawer-direction=bottom]:rounded-none! data-[vaul-drawer-direction=bottom]:border-0! data-[vaul-drawer-direction=bottom]:mt-0! [&>div:first-child]:hidden!">
           {drawer === 'add-expense' && (
             <AddContactExpenseScreen
               contactId={contact.id}
@@ -302,7 +302,7 @@ export default function ContactDetailScreen() {
       </Drawer>
 
       <Drawer open={drawer === 'edit-expense'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] h-[95vh] max-h-[95vh]">
+        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=bottom]:h-full! data-[vaul-drawer-direction=bottom]:max-h-full! data-[vaul-drawer-direction=bottom]:rounded-none! data-[vaul-drawer-direction=bottom]:border-0! data-[vaul-drawer-direction=bottom]:mt-0! [&>div:first-child]:hidden!">
           {drawer === 'edit-expense' && txId && (
             <EditContactExpenseScreen
               contactId={contact.id}
@@ -315,7 +315,7 @@ export default function ContactDetailScreen() {
       </Drawer>
 
       <Drawer open={drawer === 'transaction'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] h-[90vh] max-h-[90vh]">
+        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=bottom]:h-full! data-[vaul-drawer-direction=bottom]:max-h-full! data-[vaul-drawer-direction=bottom]:rounded-none! data-[vaul-drawer-direction=bottom]:border-0! data-[vaul-drawer-direction=bottom]:mt-0! [&>div:first-child]:hidden!">
           {drawer === 'transaction' && txId && (
             <TransactionDetailScreen
               txId={txId}

@@ -153,7 +153,7 @@ export default function PaymentMethodDrawer({
               onSelect(tempValue)
               onClose()
             }}
-            className="w-full h-14 rounded-full bg-secondary text-white font-bold text-15px cursor-pointer shadow-[0px_3px_12px_0px_#0B683A47] active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
+            className="w-full h-14 rounded-full bg-secondary text-white font-bold text-15px cursor-pointer active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
           >
             Confirm {selectedMethod.title}
           </button>

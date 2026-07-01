@@ -36,8 +36,8 @@ const CATEGORY_VISUALS = {
     bgClass: 'bg-[#E3F2FD]',
   },
   payment: {
-    icon: <Handshake size={24} className="text-[#0B683A]" />,
-    bgClass: 'bg-[#ECF6F0]',
+    icon: <Handshake size={24} className="text-[#01592B]" />,
+    bgClass: 'bg-[#B8DECA]',
   },
   other: {
     icon: <Layers size={24} className="text-[#9A9590]" />,
@@ -66,14 +66,16 @@ export default function ExpenseItem({
   const { icon, bgClass } = CATEGORY_VISUALS[category] || CATEGORY_VISUALS.other
 
   // Resolve text color for the amount
-  const colorClass = cn(
-    amountColor === 'green' && 'text-[#0B683A]',
-    amountColor === 'orange' && 'text-[#C96A1B]',
-    amountColor === 'black' && 'text-[#1A1A1A]',
-    amountColor === 'default' && (
-      amount > 0 ? 'text-[#0B683A]' : amount < 0 ? 'text-[#C96A1B]' : 'text-[#1A1A1A]'
+  const colorClass = category === 'payment'
+    ? 'text-[#0B683A]'
+    : cn(
+      amountColor === 'green' && 'text-[#0B683A]',
+      amountColor === 'orange' && 'text-[#C96A1B]',
+      amountColor === 'black' && 'text-[#1A1A1A]',
+      amountColor === 'default' && (
+        amount > 0 ? 'text-[#0B683A]' : amount < 0 ? 'text-[#C96A1B]' : 'text-[#1A1A1A]'
+      )
     )
-  )
 
   let formattedAmount = formatCurrency(Math.abs(amount), currency)
   if (currency.toUpperCase() === 'PKR') {
@@ -100,7 +102,10 @@ export default function ExpenseItem({
           </div>
         )}
         <div>
-          <p className="font-bold text-[15px] text-[#1A1A1A] leading-tight">
+          <p className={cn(
+            "font-bold text-[15px] leading-tight",
+            category === 'payment' ? "text-[#0B683A]" : "text-[#1A1A1A]"
+          )}>
             {name}
           </p>
           <div className="text-[12px] text-[#6B6B6B] mt-1 font-normal leading-normal whitespace-pre-line">
@@ -116,7 +121,7 @@ export default function ExpenseItem({
             {displayAmount}
           </span>
           {rightSubtitle && (
-            <span className="text-[11px] text-[#9A9590] mt-1 font-normal leading-none">
+            <span className="text-[11px] text-[#6B6B6B] mt-1 font-normal leading-none">
               {rightSubtitle}
             </span>
           )}

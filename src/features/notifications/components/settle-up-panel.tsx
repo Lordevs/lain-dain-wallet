@@ -168,7 +168,7 @@ export default function SettleUpPanel({
             type="button"
             onClick={() => setActiveTab('pay')}
             className={`flex-1 py-3 text-center rounded-full text-sm font-extrabold transition-all border-0 outline-none cursor-pointer ${activeTab === 'pay'
-              ? 'bg-[#C96A1B] text-white shadow-[0px_3px_12px_0px_#B453094D]'
+              ? 'bg-[#C96A1B] text-white'
               : 'bg-transparent text-[#6B6B6B] hover:text-[#1A1A1A]'
               }`}
           >
@@ -178,7 +178,7 @@ export default function SettleUpPanel({
             type="button"
             onClick={() => setActiveTab('receive')}
             className={`flex-1 py-3 text-center rounded-full text-sm font-extrabold transition-all border-0 outline-none cursor-pointer ${activeTab === 'receive'
-              ? 'bg-[#0B683A] text-white shadow-[0px_3px_12px_0px_#0B683A4D]'
+              ? 'bg-[#0B683A] text-white'
               : 'bg-transparent text-[#6B6B6B] hover:text-[#1A1A1A]'
               }`}
           >
@@ -356,7 +356,7 @@ export default function SettleUpPanel({
         <button
           type="button"
           onClick={handleConfirmAction}
-          className="w-full h-14 rounded-full bg-[#FDB105] text-[#1A1A1A] font-extrabold text-base cursor-pointer shadow-[0px_6.29px_20.13px_0px_#FDB1054D] hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
+          className="w-full h-14 rounded-full bg-[#FDB105] text-[#1A1A1A] font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
         >
           Confirm
         </button>

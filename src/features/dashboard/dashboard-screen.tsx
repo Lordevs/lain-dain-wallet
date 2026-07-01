@@ -112,7 +112,7 @@ export default function DashboardScreen() {
       />
 
       {/* Contact/Group Ledger Cards */}
-      <div className="flex flex-col gap-3 px-6 pb-6">
+      <div className="flex flex-col gap-1.5 px-6 pb-6">
         {filteredContacts.length > 0 ? (
           filteredContacts.map((contact) => (
             <ContactLedgerCard

@@ -8,9 +8,9 @@ import { cn } from '@/lib/utils'
 // ─── Nav Items ────────────────────────────────────────────────────────────────
 
 const NAV_ITEMS = [
-  { label: 'Notifications', icon: Bell, to: ROUTES.NOTIFICATIONS },
-  { label: 'Home', icon: Home, to: ROUTES.DASHBOARD },
   { label: 'Personal', icon: User, to: ROUTES.PERSONAL },
+  { label: 'Home', icon: Home, to: ROUTES.DASHBOARD },
+  { label: 'Notifications', icon: Bell, to: ROUTES.NOTIFICATIONS },
 ] as const
 
 // ─── Active matching ──────────────────────────────────────────────────────────
@@ -36,7 +36,7 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t-[1.08px] border-[#EFE7DD] h-[76px] flex items-center justify-between px-6 shadow-[0px_4.03px_18.83px_0px_#00000012] select-none"
+      className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t-[1.08px] border-[#EFE7DD] h-14 flex items-center justify-between px-6 shadow-[0px_4.03px_18.83px_0px_#00000012] select-none"
       aria-label="Main navigation"
     >
       {NAV_ITEMS.map(({ label, icon: Icon, to }, idx) => {
@@ -47,7 +47,7 @@ export default function BottomNav() {
             {idx > 0 && (
               <Separator
                 orientation="vertical"
-                className="self-stretch my-3.5 h-auto w-px bg-[#EEEDED]"
+                className="self-stretch my-1.5 h-auto w-px bg-[#EEEDED]"
               />
             )}
             <Link
@@ -58,7 +58,7 @@ export default function BottomNav() {
             >
               <div
                 className={cn(
-                  'w-12 h-9 rounded-sm flex items-center justify-center transition-all duration-200',
+                  'w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200',
                   isActive ? 'bg-[#DCEFE4]' : 'bg-transparent',
                 )}
               >
@@ -68,14 +68,6 @@ export default function BottomNav() {
                   strokeWidth={isActive ? 2.2 : 1.8}
                 />
               </div>
-              <span
-                className={cn(
-                  'text-[12px] font-bold tracking-tight transition-colors',
-                  isActive ? 'text-primary' : 'text-[#6B6B6B]',
-                )}
-              >
-                {label}
-              </span>
             </Link>
           </React.Fragment>
         )

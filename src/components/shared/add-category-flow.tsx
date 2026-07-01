@@ -72,6 +72,7 @@ export default function AddCategoryFlow({
       {/* Header */}
       <div className="flex items-center justify-between px-6 pt-5 pb-3 relative shrink-0">
         <button
+          type="button"
           onClick={onClose}
           className="size-10 flex items-center justify-start cursor-pointer bg-transparent border-0 outline-none"
         >
@@ -83,6 +84,7 @@ export default function AddCategoryFlow({
         </h3>
 
         <button
+          type="button"
           onClick={handleSave}
           disabled={!categoryName.trim()}
           className="text-[#0B683A] font-extrabold text-base bg-transparent border-0 cursor-pointer p-2 outline-none hover:opacity-80 disabled:opacity-40 transition-all"

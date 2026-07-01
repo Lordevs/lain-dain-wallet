@@ -44,8 +44,8 @@ export const TRANSACTION_STORE: Record<string, TransactionRecord[]> = {
       amount: 1000,
       category: 'payment',
       rightSubtitle: '5:40 PM',
-      showChevron: false,
-      className: 'bg-[#F0FDF4] hover:bg-[#F0FDF4]/90',
+      showChevron: true,
+      className: 'bg-[#DFF2E8] hover:bg-[#F0FDF4]/90',
       splitType: 'equal',
       dateValue: 'Today'
     },
@@ -98,7 +98,7 @@ export const TRANSACTION_STORE: Record<string, TransactionRecord[]> = {
       amount: 1000,
       category: 'payment',
       rightSubtitle: '5:40 PM',
-      showChevron: false,
+      showChevron: true,
       className: 'bg-[#ECF6F0] hover:bg-[#ECF6F0]/90 text-[#0B683A]',
       splitType: 'equal',
       dateValue: 'Today'

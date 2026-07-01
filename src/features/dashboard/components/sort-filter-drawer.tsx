@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import {
@@ -7,6 +6,13 @@ import {
   DrawerTrigger,
   DrawerContent,
 } from '@/components/ui/drawer'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemTitle,
+} from '@/components/ui/item'
 
 interface SortFilterDrawerProps {
   children: React.ReactNode
@@ -78,89 +84,117 @@ export default function SortFilterDrawer({
           </div>
 
           {/* Section 1 Options */}
-          {[
-            { value: 'newest', label: 'Newest first' },
-            { value: 'oldest', label: 'Oldest first' },
-            { value: 'highest', label: 'Highest amount' },
-            { value: 'lowest', label: 'Lowest amount' },
-          ].map((option) => {
-            const isSelected = tempSortBy === option.value
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => setTempSortBy(option.value as any)}
-                className={cn(
-                  'w-full flex items-center justify-between py-4 px-6 text-left transition-colors focus:outline-none border-0 border-b border-[#EFE7DD] cursor-pointer',
-                  isSelected ? 'bg-[#ECF6F0]' : 'bg-white hover:bg-muted/5',
-                )}
-              >
-                <span
-                  className={cn(
-                    'text-[15px] font-bold',
-                    isSelected ? 'text-[#0B683A]' : 'text-[#1A1A1A]',
-                  )}
+          <RadioGroup
+            value={tempSortBy}
+            onValueChange={(val) => setTempSortBy(val as any)}
+            className="gap-0 divide-y divide-[#EFE7DD] shrink-0"
+          >
+            {[
+              { value: 'newest', label: 'Newest first' },
+              { value: 'oldest', label: 'Oldest first' },
+              { value: 'highest', label: 'Highest amount' },
+              { value: 'lowest', label: 'Lowest amount' },
+            ].map((option) => {
+              const isSelected = tempSortBy === option.value
+              return (
+                <label
+                  key={option.value}
+                  htmlFor={`sort-${option.value}`}
+                  className="w-full cursor-pointer"
                 >
-                  {option.label}
-                </span>
-                <div
-                  className={cn(
-                    'w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-all border',
-                    isSelected
-                      ? 'bg-[#0B683A] border-[#0B683A] text-white'
-                      : 'border-[#E2DDD5] bg-white',
-                  )}
-                >
-                  {isSelected && <Check size={12} strokeWidth={4} className="stroke-white" />}
-                </div>
-              </button>
-            )
-          })}
+                  <Item
+                    className={cn(
+                      'flex items-center justify-between py-4 px-6 transition-colors rounded-none border-0',
+                      isSelected ? 'bg-[#ECF6F0]' : 'bg-white hover:bg-muted/5',
+                    )}
+                  >
+                    <ItemContent className="text-left">
+                      <ItemTitle
+                        className={cn(
+                          'text-[15px] font-bold',
+                          isSelected ? 'text-[#0B683A]' : 'text-[#1A1A1A]',
+                        )}
+                      >
+                        {option.label}
+                      </ItemTitle>
+                    </ItemContent>
+                    <ItemActions>
+                      <RadioGroupItem
+                        value={option.value}
+                        id={`sort-${option.value}`}
+                        className={cn(
+                          'w-6 h-6 border-[1.5px] shrink-0 border-[#E2DDD5]',
+                          'data-[state=checked]:bg-[#0B683A] data-[state=checked]:border-[#0B683A]'
+                        )}
+                      />
+                    </ItemActions>
+                  </Item>
+                </label>
+              )
+            })}
+          </RadioGroup>
 
           {/* Section 2 Header */}
           <div className="text-[11px] font-bold text-[#9A9590] uppercase tracking-widest px-6 pt-5 pb-2.5 bg-transparent shrink-0">
-            Sort by
+            Filter by
           </div>
 
           {/* Section 2 Options */}
-          {[
-            { value: 'people', label: 'People' },
-            { value: 'groups', label: 'Group' },
-          ].map((option) => {
-            const isSelected = tempFilterType === option.value
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() =>
-                  setTempFilterType((prev) => (prev === option.value ? 'all' : (option.value as any)))
-                }
-                className={cn(
-                  'w-full flex items-center justify-between py-4 px-6 text-left transition-colors focus:outline-none border-0 border-b border-[#EFE7DD] cursor-pointer',
-                  isSelected ? 'bg-[#ECF6F0]' : 'bg-white hover:bg-muted/5',
-                )}
-              >
-                <span
-                  className={cn(
-                    'text-[15px] font-bold',
-                    isSelected ? 'text-[#0B683A]' : 'text-[#1A1A1A]',
-                  )}
+          <RadioGroup
+            value={tempFilterType}
+            onValueChange={(val) => {
+              setTempFilterType(val === tempFilterType ? 'all' : (val as any))
+            }}
+            className="gap-0 divide-y divide-[#EFE7DD] shrink-0"
+          >
+            {[
+              { value: 'people', label: 'People' },
+              { value: 'groups', label: 'Group' },
+            ].map((option) => {
+              const isSelected = tempFilterType === option.value
+              return (
+                <label
+                  key={option.value}
+                  htmlFor={`filter-${option.value}`}
+                  className="w-full cursor-pointer"
+                  onClick={(e) => {
+                    if (tempFilterType === option.value) {
+                      e.preventDefault()
+                      setTempFilterType('all')
+                    }
+                  }}
                 >
-                  {option.label}
-                </span>
-                <div
-                  className={cn(
-                    'w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-all border',
-                    isSelected
-                      ? 'bg-[#0B683A] border-[#0B683A] text-white'
-                      : 'border-[#E2DDD5] bg-white',
-                  )}
-                >
-                  {isSelected && <Check size={12} strokeWidth={4} className="stroke-white" />}
-                </div>
-              </button>
-            )
-          })}
+                  <Item
+                    className={cn(
+                      'flex items-center justify-between py-4 px-6 transition-colors rounded-none border-0',
+                      isSelected ? 'bg-[#ECF6F0]' : 'bg-white hover:bg-muted/5',
+                    )}
+                  >
+                    <ItemContent className="text-left">
+                      <ItemTitle
+                        className={cn(
+                          'text-[15px] font-bold',
+                          isSelected ? 'text-[#0B683A]' : 'text-[#1A1A1A]',
+                        )}
+                      >
+                        {option.label}
+                      </ItemTitle>
+                    </ItemContent>
+                    <ItemActions>
+                      <RadioGroupItem
+                        value={option.value}
+                        id={`filter-${option.value}`}
+                        className={cn(
+                          'w-6 h-6 border-[1.5px] shrink-0 border-[#E2DDD5]',
+                          'data-[state=checked]:bg-[#0B683A] data-[state=checked]:border-[#0B683A]'
+                        )}
+                      />
+                    </ItemActions>
+                  </Item>
+                </label>
+              )
+            })}
+          </RadioGroup>
         </div>
 
         {/* Footer - Apply Filters Button */}
@@ -168,7 +202,7 @@ export default function SortFilterDrawer({
           <Button
             type="button"
             onClick={handleApply}
-            className="w-full h-14 rounded-full bg-[#FDB105] hover:bg-[#FDB105]/95 text-white font-extrabold text-[15px] shadow-[0px_4px_12px_rgba(253,177,5,0.3)] active:scale-[0.98] transition-transform cursor-pointer"
+            className="w-full h-14 rounded-full bg-[#FDB105] hover:bg-[#FDB105]/95 text-white font-extrabold text-[15px] active:scale-[0.98] transition-transform cursor-pointer"
           >
             Apply Filters
           </Button>

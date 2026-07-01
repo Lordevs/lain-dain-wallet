@@ -59,7 +59,7 @@ export default function GroupSuccessStep({ flow }: GroupSuccessStepProps) {
         <h2 className="text-[26px] font-extrabold text-foreground mt-8 leading-tight">
           {isGroupFlow ? 'Group Created!' : 'Lain Dain Started!'}
         </h2>
-        
+
         {isGroupFlow ? (
           <>
             <p className="text-[19px] font-bold text-primary mt-2">{flow.groupName}</p>
@@ -116,7 +116,7 @@ export default function GroupSuccessStep({ flow }: GroupSuccessStepProps) {
       <div className="flex flex-col gap-4 mt-auto">
         <Button
           onClick={handleAddFirstExpense}
-          className="w-full h-14 rounded-full bg-primary text-white font-extrabold text-[15px] shadow-[0px_7.03px_23.42px_0px_#0B683A59] active:scale-[0.98] transition-transform cursor-pointer"
+          className="w-full h-14 rounded-full bg-primary text-white font-extrabold text-[15px] active:scale-[0.98] transition-transform cursor-pointer"
         >
           Add First Expense
           <ChevronLeft size={16} className="rotate-180 ml-1 shrink-0" strokeWidth={3} />

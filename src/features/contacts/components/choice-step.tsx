@@ -41,7 +41,7 @@ export default function ChoiceStep({ flow }: ChoiceStepProps) {
   const hasSelection = flow.selectedContacts.length > 0
 
   return (
-    <div className="flex-1 flex flex-col px-6 overflow-hidden relative">
+    <div className="flex-1 overflow-y-auto px-6 pb-24 relative scrollbar-none">
       {/* Search */}
       <SearchBar
         id="choice-search"
@@ -63,7 +63,7 @@ export default function ChoiceStep({ flow }: ChoiceStepProps) {
       </div>
 
       {/* Scrollable contact lists */}
-      <div className={cn("flex-1 overflow-y-auto space-y-6 pb-8", hasSelection && "pb-24")}>
+      <div className="space-y-6">
         {/* Contacts on Lain Dain */}
         <ContactList title="Contacts on Lain Dain" titleColor="primary">
           {flow.filteredContacts.map((contact) => {
@@ -105,7 +105,7 @@ export default function ChoiceStep({ flow }: ChoiceStepProps) {
 
       {/* Sticky Next button */}
       {hasSelection && (
-        <div className="absolute bottom-6 left-6 right-6 z-10 animate-in fade-in slide-in-from-bottom duration-200">
+        <div className="fixed bottom-4 left-6 right-6 z-10 animate-in fade-in slide-in-from-bottom duration-200">
           <Button
             onClick={flow.nextStep}
             className="w-full h-14 rounded-full bg-primary text-white font-extrabold text-[15px] shadow-lg active:scale-[0.98] transition-transform cursor-pointer"

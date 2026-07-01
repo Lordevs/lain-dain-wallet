@@ -24,14 +24,12 @@ export default function ContactLedgerCard({ contact, onClick }: ContactLedgerCar
   const { name, initials, avatarColor, ledgerCount, netAmount, tags, isOnline, type } = contact
 
   const isReceivable = netAmount > 0
-  const MAX_VISIBLE_TAGS = 3
-
 
   return (
     <button
       id={`contact-card-${contact.id}`}
       onClick={onClick}
-      className="w-full bg-[linear-gradient(160deg,#FFFDF5_8.49%,#FFFFFF_58.3%)] rounded-lg border-[1.08px] border-[#F3C62359] text-left overflow-hidden hover:shadow-md active:scale-[0.99] transition-all"
+      className="w-full bg-[linear-gradient(160deg,#FFFDF5_8.49%,#FFFFFF_58.3%)] rounded-lg border-[1.08px] border-[#EFE7DD] text-left overflow-hidden hover:shadow-md active:scale-[0.99] transition-all"
     >
       {/* Top Row */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-3">
@@ -78,9 +76,12 @@ export default function ContactLedgerCard({ contact, onClick }: ContactLedgerCar
       </div>
 
       {/* Ledger Tag Row */}
-      {tags.length > 0 && (
-        <div className="flex items-center gap-2 px-4 pb-3 border-t border-[#EFE7DD] pt-2.5 overflow-x-auto scrollbar-none">
-          {tags.slice(0, MAX_VISIBLE_TAGS).map((tag, i) => (
+      {type !== 'group' && tags.length > 0 && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center gap-2 px-4 pb-3 border-t border-[#EFE7DD] pt-2.5 overflow-x-auto scrollbar-none"
+        >
+          {tags.map((tag, i) => (
             <span
               key={`${tag.name}-${i}`}
               className="text-[12px] font-semibold whitespace-nowrap"
@@ -94,11 +95,6 @@ export default function ContactLedgerCard({ contact, onClick }: ContactLedgerCar
               </span>
             </span>
           ))}
-          {tags.length > MAX_VISIBLE_TAGS && (
-            <span className="text-[12px] text-muted-foreground font-medium whitespace-nowrap">
-              ...
-            </span>
-          )}
         </div>
       )}
     </button>

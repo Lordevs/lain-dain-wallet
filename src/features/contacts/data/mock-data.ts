@@ -1,16 +1,5 @@
 import type { AppContact, ContactCategory } from '../types'
 
-// ─── Currencies ───────────────────────────────────────────────────────────────
-
-export const SUPPORTED_CURRENCIES = [
-  { code: 'PKR', name: 'Pakistan Rupee', flag: '🇵🇰' },
-  { code: 'USD', name: 'US Dollar', flag: '🇺🇸' },
-  { code: 'EUR', name: 'Euro', flag: '🇪🇺' },
-  { code: 'GBP', name: 'British Pound', flag: '🇬🇧' },
-  { code: 'AED', name: 'UAE Dirham', flag: '🇦🇪' },
-  { code: 'SAR', name: 'Saudi Riyal', flag: '🇸🇦' },
-] as const
-
 // ─── Contacts on Lain Dain ────────────────────────────────────────────────────
 
 export const MOCK_CONTACTS: AppContact[] = [
@@ -49,6 +38,41 @@ export const MOCK_CONTACTS: AppContact[] = [
     avatarColor: 'bg-[#FCE4EC] text-[#880E4F]',
     isOnLainDain: true,
   },
+  {
+    id: 'c6',
+    name: 'Zainab Ahmed',
+    initials: 'ZA',
+    avatarColor: 'bg-[#E8EAF6] text-[#283593]',
+    isOnLainDain: true,
+  },
+  {
+    id: 'c7',
+    name: 'Bilal Farooq',
+    initials: 'BF',
+    avatarColor: 'bg-[#E0F7FA] text-[#00838F]',
+    isOnLainDain: true,
+  },
+  {
+    id: 'c8',
+    name: 'Mahnoor Shah',
+    initials: 'MS',
+    avatarColor: 'bg-[#F3E5F5] text-[#4A148C]',
+    isOnLainDain: true,
+  },
+  {
+    id: 'c9',
+    name: 'Omer Malik',
+    initials: 'OM',
+    avatarColor: 'bg-[#FFF3E0] text-[#E65100]',
+    isOnLainDain: true,
+  },
+  {
+    id: 'c10',
+    name: 'Zoya Khan',
+    initials: 'ZK',
+    avatarColor: 'bg-[#E8F5E9] text-[#0F5132]',
+    isOnLainDain: true,
+  },
 ]
 
 // ─── Contacts to Invite ───────────────────────────────────────────────────────
@@ -67,6 +91,38 @@ export const MOCK_INVITES: AppContact[] = [
     name: 'Hassan Ali',
     phone: '+92 333 9876543',
     initials: 'HA',
+    avatarColor: 'bg-[#EFE7DD] text-[#9A9590]',
+    isOnLainDain: false,
+  },
+  {
+    id: 'i3',
+    name: 'Kashif Jamil',
+    phone: '+92 321 4455667',
+    initials: 'KJ',
+    avatarColor: 'bg-[#EFE7DD] text-[#9A9590]',
+    isOnLainDain: false,
+  },
+  {
+    id: 'i4',
+    name: 'Nida Fatima',
+    phone: '+92 345 5566778',
+    initials: 'NF',
+    avatarColor: 'bg-[#EFE7DD] text-[#9A9590]',
+    isOnLainDain: false,
+  },
+  {
+    id: 'i5',
+    name: 'Waqas Ahmed',
+    phone: '+92 312 8899001',
+    initials: 'WA',
+    avatarColor: 'bg-[#EFE7DD] text-[#9A9590]',
+    isOnLainDain: false,
+  },
+  {
+    id: 'i6',
+    name: 'Sadia Malik',
+    phone: '+92 300 9900112',
+    initials: 'SM',
     avatarColor: 'bg-[#EFE7DD] text-[#9A9590]',
     isOnLainDain: false,
   },

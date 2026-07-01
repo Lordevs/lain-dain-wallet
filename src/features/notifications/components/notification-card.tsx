@@ -83,10 +83,10 @@ export default function NotificationCard({
           {actions.map((action, index) => {
             const btnBg =
               action.variant === 'green'
-                ? 'bg-[#0B683A] text-white shadow-[0px_3px_10px_0px_#0B683A47]'
+                ? 'bg-[#0B683A] text-white'
                 : action.variant === 'amber'
-                  ? 'bg-[#FDB105] text-[#1A1A1A] shadow-[0px_3px_10px_0px_#F3C6234D]'
-                  : 'bg-[#C96A1B] text-white shadow-[0px_3px_10px_0px_#C0392B38]'
+                  ? 'bg-[#FDB105] text-[#1A1A1A]'
+                  : 'bg-[#C96A1B] text-white'
 
             return (
               <button

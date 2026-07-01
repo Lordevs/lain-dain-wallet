@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
-import { ChevronLeft, Pencil, Trash2, FileText, Coffee, HelpCircle, Download, Check } from 'lucide-react'
+import { ChevronLeft, Pencil, Trash2, FileText, Coffee, HelpCircle, Check } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
@@ -8,6 +8,7 @@ import { TRANSACTION_STORE } from '@/features/contacts/data/transaction-store'
 import { ROUTES } from '@/constants/routes'
 import { CATEGORIES } from '@/features/personal/components/category-picker'
 import receiptMockup from '@/assets/receipt_mockup.png'
+import ReceiptPreviewFlow from './components/receipt-preview-flow'
 
 const getCategoryEmoji = (id: string) => {
   switch (id) {
@@ -130,7 +131,7 @@ export default function TransactionDetailScreen(props: TransactionDetailScreenPr
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className="fixed top-6 left-6 right-6 z-[120] mx-auto max-w-[380px] bg-white/90 backdrop-blur-md border border-[#EFE7DD] shadow-[0px_10px_30px_rgba(0,0,0,0.08)] rounded-2xl p-4 flex items-center gap-3"
+            className="fixed top-6 left-6 right-6 z-120 mx-auto max-w-[380px] bg-white/90 backdrop-blur-md border border-[#EFE7DD] shadow-[0px_10px_30px_rgba(0,0,0,0.08)] rounded-2xl p-4 flex items-center gap-3"
           >
             <div className="w-8 h-8 rounded-full bg-[#E4F2EB] flex items-center justify-center text-[#0B683A] shrink-0">
               <Check size={16} strokeWidth={3} />
@@ -164,7 +165,9 @@ export default function TransactionDetailScreen(props: TransactionDetailScreenPr
       </div>
 
       {/* Main Info Card */}
-      <div className="px-6 mb-6 mt-4">
+      {/* Scrollable breakdown container */}
+      <div className="flex-1 overflow-y-auto px-6 pb-6 flex flex-col gap-6">
+
         <div className="bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-6 flex flex-col text-left">
           <div className="flex items-center gap-4">
             <div
@@ -191,11 +194,7 @@ export default function TransactionDetailScreen(props: TransactionDetailScreenPr
             {tx.amount > 0 ? 'You paid the full amount' : `${contact.name.split(' ')[0]} paid the full amount`}
           </span>
         </div>
-      </div>
 
-      {/* Scrollable breakdown container */}
-      <div className="flex-1 overflow-y-auto px-6 pb-6 flex flex-col gap-6">
-        
         {/* Summary Card */}
         <div className="flex flex-col text-left">
           <div className="flex items-center justify-between mb-3">
@@ -340,7 +339,7 @@ export default function TransactionDetailScreen(props: TransactionDetailScreenPr
             // Update contact netAmount balance
             contact.netAmount -= tx.amount
             contact.ledgerCount = contact.tags.length
-            
+
             if (props.onDelete) {
               props.onDelete()
             } else {
@@ -362,9 +361,9 @@ export default function TransactionDetailScreen(props: TransactionDetailScreenPr
       <AnimatePresence>
         {isReceiptOpen && (
           <motion.div
-            initial={{ opacity: 0, x: '100%' }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: '100%' }}
+            initial={{ opacity: 0, y: '100%' }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 250 }}
             className="fixed inset-0 z-50 bg-[#FEFAF1]"
           >
@@ -377,74 +376,6 @@ export default function TransactionDetailScreen(props: TransactionDetailScreenPr
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
-  )
-}
-
-interface ReceiptPreviewFlowProps {
-  isOpen: boolean
-  onClose: () => void
-  tx: any
-  onDownload: () => void
-}
-
-function ReceiptPreviewFlow({
-  onClose,
-  tx,
-  onDownload,
-}: ReceiptPreviewFlowProps) {
-
-  return (
-    <div className="flex flex-col h-full select-none overflow-y-auto pb-8">
-      {/* Header */}
-      <div className="flex items-center px-6 pt-5 pb-3 relative shrink-0">
-        <button
-          onClick={onClose}
-          className="size-10 rounded-full bg-white border border-[#EBEBEB] flex items-center justify-center cursor-pointer shadow-[0px_2px_8px_rgba(0,0,0,0.04)] outline-none"
-        >
-          <ChevronLeft size={20} className="text-[#1A1A1A]" />
-        </button>
-        <h3 className="text-lg font-extrabold text-[#1A1A1A] absolute left-1/2 -translate-x-1/2">
-          Receipt Preview
-        </h3>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 px-6 py-6 flex flex-col items-center justify-between">
-        <div className="w-full max-w-[380px] bg-white rounded-[28px] border border-[#EFE7DD] shadow-[0px_8px_32px_rgba(26,26,26,0.03)] overflow-hidden flex flex-col p-3 mt-2">
-          <div className="w-full bg-[#F7F5F0] rounded-[20px] overflow-hidden flex items-center justify-center border border-[#EFE7DD]/40 relative aspect-square">
-            <img
-              src={receiptMockup}
-              alt="Uploaded Receipt"
-              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-            />
-          </div>
-          
-          <div className="mt-4 flex items-center justify-between px-2 pb-1">
-            <div className="flex flex-col text-left">
-              <span className="text-[14px] font-extrabold text-[#1A1A1A] max-w-[200px] truncate">
-                {tx.name ? `${tx.name.replace(/\s+/g, '_')}_Receipt.png` : 'Receipt_Hotel_Booking.png'}
-              </span>
-              <span className="text-[11px] font-semibold text-[#9A9590] mt-0.5">
-                1.05 MB • PNG Image
-              </span>
-            </div>
-            <div className="text-[11px] font-extrabold uppercase tracking-wider text-[#0B683A] bg-[#E4F2EB] px-3 py-1 rounded-full">
-              Uploaded
-            </div>
-          </div>
-        </div>
-
-        {/* Download Action Button */}
-        <button
-          type="button"
-          onClick={onDownload}
-          className="w-full max-w-[380px] h-14 rounded-[20px] bg-[#0B683A] text-white font-extrabold text-base cursor-pointer shadow-[0px_4px_16px_rgba(11,104,58,0.16)] hover:bg-[#0B683A]/90 transition-all flex items-center justify-center gap-2 outline-none mt-6"
-        >
-          <Download size={18} />
-          Download Receipt
-        </button>
-      </div>
     </div>
   )
 }

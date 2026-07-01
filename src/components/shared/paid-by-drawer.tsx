@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Check, X, Info, Users, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { Check, X, Info, Users, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   Drawer,
@@ -36,37 +36,48 @@ export default function PaidByDrawer({
   const [tempValue, setTempValue] = useState<string>(selectedValue)
 
   // Amount inputs for multiple payers
-  const [payerAmounts, setPayerAmounts] = useState<Record<string, string>>({
-    you: '2000',
-    ali: '1000',
-    sara: '',
-    hassan: '',
-  })
-
-  useEffect(() => {
-    if (isOpen) {
-      setView(selectedValue === 'multiple' ? 'multiple' : 'selection')
-      setTempValue(selectedValue)
-    }
-  }, [isOpen, selectedValue])
+  const [payerAmounts, setPayerAmounts] = useState<Record<string, string>>({})
 
   // Resolve members list dynamically based on group or single contact
-  const isGroup = contactName.toLowerCase().includes('trip') || contactName.toLowerCase().includes('family') || contactName.toLowerCase().includes('group')
-  const members = isGroup
-    ? [
+  const isGroup = useMemo(() => {
+    return contactName.toLowerCase().includes('trip') || contactName.toLowerCase().includes('family') || contactName.toLowerCase().includes('group')
+  }, [contactName])
+
+  const members = useMemo(() => {
+    return isGroup
+      ? [
         { id: 'you', name: 'You', subname: 'Muhammad Huzaifa', initials: 'MH', avatarColor: 'bg-[#0B683A]' },
         { id: 'ali', name: 'Ali Hassan', subname: 'Ali Hassan', initials: 'AH', avatarColor: 'bg-[#2F80ED]' },
         { id: 'sara', name: 'Sara Khan', subname: 'Sara Khan', initials: 'SK', avatarColor: 'bg-[#C96A1B]' },
         { id: 'hassan', name: 'Hassan', subname: 'Hassan', initials: 'HS', avatarColor: 'bg-[#475569]' },
       ]
-    : [
+      : [
         { id: 'you', name: 'You', subname: 'Muhammad Huzaifa', initials: 'MH', avatarColor: 'bg-[#0B683A]' },
         { id: 'contact', name: contactName, subname: contactName, initials: contactInitials, avatarColor: contactAvatarColor || 'bg-[#2F80ED]' },
       ]
+  }, [isGroup, contactName, contactInitials, contactAvatarColor])
+
+  useEffect(() => {
+    if (isOpen) {
+      setView(selectedValue === 'multiple' ? 'multiple' : 'selection')
+      setTempValue(selectedValue)
+
+      const initialAmounts: Record<string, string> = {}
+      members.forEach((m) => {
+        if (selectedValue === 'multiple') {
+          const share = Math.round(amount / members.length)
+          initialAmounts[m.id] = share.toString()
+        } else {
+          initialAmounts[m.id] = m.id === selectedValue ? amount.toString() : ''
+        }
+      })
+      setPayerAmounts(initialAmounts)
+    }
+  }, [isOpen, selectedValue, members, amount])
 
   // Calculated multi-payer assignments
   const totalAmount = amount || 5000
-  const totalAssigned = Object.values(payerAmounts).reduce((sum, v) => sum + (Number(v) || 0), 0)
+  const totalAssigned = members.reduce((sum, member) => sum + (Number(payerAmounts[member.id]) || 0), 0)
   const totalUnassigned = Math.max(0, totalAmount - totalAssigned)
 
   const handleAmountChange = (memberId: string, val: string) => {
@@ -86,6 +97,12 @@ export default function PaidByDrawer({
     }))
   }
 
+  const getFormattedMemberAmount = (id: string) => {
+    const val = payerAmounts[id]
+    if (!val) return ''
+    return Number(val).toLocaleString('en-US')
+  }
+
   const handleConfirmAction = () => {
     if (view === 'multiple') {
       onSelect('multiple')
@@ -97,8 +114,8 @@ export default function PaidByDrawer({
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
-      <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col h-[90vh] max-h-[90vh] focus:outline-none overflow-hidden text-[#1A1A1A]">
-        
+      <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col data-[vaul-drawer-direction=bottom]:h-[80dvh]! data-[vaul-drawer-direction=bottom]:max-h-[80dvh]! focus:outline-none overflow-hidden text-[#1A1A1A]">
+
         {/* Drawer Header */}
         <div className="flex items-center justify-between px-6 pt-5 pb-3 shrink-0 relative">
           {view === 'multiple' ? (
@@ -173,35 +190,33 @@ export default function PaidByDrawer({
                   )
                 })}
 
-                {/* Multiple People Option Button (Group Only) */}
-                {isGroup && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTempValue('multiple')
-                      setView('multiple')
-                    }}
-                    className={cn(
-                      'w-full flex items-center justify-between py-4.5 px-5 text-left border-0 cursor-pointer transition-colors outline-none',
-                      tempValue === 'multiple' ? 'bg-[#FFF9E6]' : 'bg-transparent'
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="size-10 rounded-full bg-[#7D3C98] flex items-center justify-center text-white shrink-0 shadow-sm">
-                        <Users size={18} strokeWidth={2} />
-                      </div>
-                      <div className="flex flex-col text-left">
-                        <span className="font-semibold text-sm text-[#1A1A1A] leading-tight">
-                          Multiple people
-                        </span>
-                        <span className="text-[11px] text-[#6B6B6B] font-medium mt-1 leading-none">
-                          More than one person paid
-                        </span>
-                      </div>
+                {/* Multiple People Option Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTempValue('multiple')
+                    setView('multiple')
+                  }}
+                  className={cn(
+                    'w-full flex items-center justify-between py-4.5 px-5 text-left border-0 cursor-pointer transition-colors outline-none',
+                    tempValue === 'multiple' ? 'bg-[#FFF9E6]' : 'bg-transparent'
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="size-10 rounded-full bg-[#7D3C98] flex items-center justify-center text-white shrink-0 shadow-sm">
+                      <Users size={18} strokeWidth={2} />
                     </div>
-                    <ChevronRight size={16} className="text-[#9A9590]" />
-                  </button>
-                )}
+                    <div className="flex flex-col text-left">
+                      <span className="font-semibold text-sm text-[#1A1A1A] leading-tight">
+                        Multiple people
+                      </span>
+                      <span className="text-[11px] text-[#6B6B6B] font-medium mt-1 leading-none">
+                        More than one person paid
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="text-[#9A9590]" />
+                </button>
               </div>
             </div>
 
@@ -222,10 +237,10 @@ export default function PaidByDrawer({
               <span className="text-[13px] font-semibold text-[#6B6B6B]">
                 How much did each person pay?
               </span>
-              <div className="flex items-center justify-between mt-3 mb-1">
+              <div className="flex items-center justify-between mt-3 mb-2">
                 <span className={cn("text-[13px] font-bold", totalUnassigned === 0 ? "text-[#0B683A]" : "text-[#C96A1B]")}>
-                  {totalUnassigned === 0 
-                    ? `Rs. ${totalAmount.toLocaleString('en-US')} assigned` 
+                  {totalUnassigned === 0
+                    ? `Rs. ${totalAmount.toLocaleString('en-US')} assigned`
                     : `Rs. ${totalAssigned.toLocaleString('en-US')} assigned`
                   }
                 </span>
@@ -235,75 +250,80 @@ export default function PaidByDrawer({
               </div>
             </div>
 
-            <hr className="border-[#EBEBEB] border-b-[0.8px] w-full shrink-0 mt-1" />
-
             <div className="flex-1 overflow-y-auto divide-y divide-[#EBEBEB] text-left">
-              {members.map((member) => (
-                <div key={member.id} className="px-6 py-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="size-10 shrink-0 font-extrabold text-sm text-white select-none shadow-sm">
-                      <AvatarFallback className={cn("rounded-full flex items-center justify-center border-0 text-white font-extrabold text-sm", member.avatarColor)}>
-                        {member.initials}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col text-left">
-                      <span className="font-semibold text-sm text-[#1A1A1A] leading-tight">
-                        {member.name}
-                      </span>
-                      <span className="text-[11px] text-[#9A9590] font-medium mt-1 leading-none">
-                        {member.subname}
-                      </span>
+              {members.map((member) => {
+                const hasValue = Number(payerAmounts[member.id]) > 0
+                return (
+                  <div key={member.id} className="px-6 py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="size-10 shrink-0 font-extrabold text-sm text-white select-none shadow-sm">
+                        <AvatarFallback className={cn("rounded-full flex items-center justify-center border-0 text-white font-extrabold text-sm", member.avatarColor)}>
+                          {member.initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col text-left">
+                        <span className="font-semibold text-sm text-[#1A1A1A] leading-tight">
+                          {member.name}
+                        </span>
+                        {member.subname && member.subname !== member.name && (
+                          <span className="text-[11px] text-[#9A9590] font-medium mt-1 leading-none">
+                            {member.subname}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Input Box */}
+                    <div className={cn(
+                      "w-28 h-12 rounded-[14px] border-[1.5px] flex items-center px-4 transition-all focus-within:border-[#0B683A59] focus-within:bg-[#F5FBF7]",
+                      hasValue
+                        ? "border-[#0B683A]/30 bg-white"
+                        : "border-[#EFE7DD] bg-[#F7F5F0]"
+                    )}>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="Rs. 0"
+                        value={getFormattedMemberAmount(member.id)}
+                        onChange={(e) => handleAmountChange(member.id, e.target.value)}
+                        className="w-full text-right outline-none bg-transparent font-extrabold text-sm text-[#1A1A1A] placeholder:text-[#9A9590]/50"
+                      />
                     </div>
                   </div>
-
-                  {/* Input Box */}
-                  <div className="w-24 h-10 rounded-lg border border-[#EBEBEB] bg-white flex items-center px-3 focus-within:border-[#0B683A] transition-colors">
-                    <input
-                      type="text"
-                      placeholder="Rs. 0"
-                      value={payerAmounts[member.id] || ''}
-                      onChange={(e) => handleAmountChange(member.id, e.target.value)}
-                      className="w-full text-right outline-none bg-transparent font-bold text-sm text-[#1A1A1A] placeholder:text-[#CCCCCC]"
-                    />
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
-
-            {/* Bottom Unassigned Warning bar */}
-            {totalUnassigned > 0 ? (
-              <div className="mx-6 mb-2 flex items-center justify-between shrink-0 py-2">
-                <span className="text-[12px] font-bold text-[#C96A1B] flex items-center gap-1.5">
-                  <span>⚠️</span> Rs. {totalUnassigned.toLocaleString('en-US')} still unassigned
-                </span>
-                <button
-                  type="button"
-                  onClick={handleAutofill}
-                  className="text-[12px] font-extrabold text-[#0B683A] bg-transparent border-0 cursor-pointer p-1 hover:underline outline-none"
-                >
-                  Auto-fill
-                </button>
-              </div>
-            ) : (
-              <div className="mx-6 mb-2 flex items-center justify-between shrink-0 py-2">
-                <span className="text-[12px] font-bold text-[#0B683A] flex items-center gap-1.5">
-                  <span>✅</span> All amounts fully assigned
-                </span>
-              </div>
-            )}
           </>
         )}
 
         {/* Pinned Bottom Confirm Action Button */}
-        <div className="px-6 py-5 bg-white shrink-0">
-          <button
-            type="button"
-            onClick={handleConfirmAction}
-            disabled={view === 'multiple' && totalUnassigned !== 0}
-            className="w-full h-14 rounded-full bg-[#0B683A] text-[#FEFAF1] font-extrabold text-base cursor-pointer shadow-[0px_4px_16px_rgba(11,104,58,0.15)] hover:opacity-95 disabled:opacity-50 transition-all flex items-center justify-center outline-none border-0"
-          >
-            Confirm
-          </button>
+        <div className="flex flex-col shrink-0 bg-white border-t border-[#EFE7DD]/40">
+          {view === 'multiple' && totalUnassigned > 0 && (
+            <div className="mx-6 py-3 flex items-center justify-between">
+              <span className="text-[13px] font-bold text-[#C96A1B] flex items-center gap-1.5">
+                <AlertTriangle size={15} className="text-[#C96A1B]" />
+                Rs. {totalUnassigned.toLocaleString('en-US')} still unassigned
+              </span>
+              <button
+                type="button"
+                onClick={handleAutofill}
+                className="text-[13px] font-extrabold text-[#0B683A] bg-transparent border-0 cursor-pointer p-1 hover:underline outline-none"
+              >
+                Auto-fill
+              </button>
+            </div>
+          )}
+
+          <div className="px-6 py-5">
+            <button
+              type="button"
+              onClick={handleConfirmAction}
+              disabled={view === 'multiple' && totalUnassigned !== 0}
+              className="w-full h-14 rounded-[20px] bg-[#0B683A] text-white font-extrabold text-base cursor-pointer shadow-[0px_4px_16px_rgba(11,104,58,0.15)] hover:opacity-95 disabled:opacity-50 transition-all flex items-center justify-center outline-none border-0"
+            >
+              Confirm
+            </button>
+          </div>
         </div>
       </DrawerContent>
     </Drawer>

@@ -43,8 +43,8 @@ const GET_TRANSACTIONS = (contactId: string, contactName: string): {
   const items: TransactionItem[] = list.map((record) => {
     const displaySubtitle = record.category === 'payment' ? (
       <div className="flex flex-col text-left">
-        <span className="text-primary font-bold text-[12px]">You paid {firstName}</span>
-        <span className="text-[10px] text-[#9A9590] mt-0.5 font-normal">Balance adjusted</span>
+        <span className="text-[#6B6B6B] text-[12px] font-normal">You paid {firstName}</span>
+        <span className="text-[12px] text-[#9A9590] mt-0.5 font-normal">Balance adjusted</span>
       </div>
     ) : record.subtitle
 
@@ -96,6 +96,21 @@ const getCategoryDetails = (catId: string) => {
 /**
  * GroupDetailScreen — displays detailed breakdown of ledgers for a selected group.
  */
+const cardVariants = {
+  initial: (direction: 'left' | 'right') => ({
+    opacity: 0,
+    x: direction === 'left' ? 120 : -120
+  }),
+  animate: {
+    opacity: 1,
+    x: 0
+  },
+  exit: (direction: 'left' | 'right') => ({
+    opacity: 0,
+    x: direction === 'left' ? -120 : 120
+  })
+}
+
 export default function GroupDetailScreen() {
   const { id } = useParams({ from: '/groups/$id/' })
   const navigate = useNavigate({ from: '/groups/$id/' })
@@ -147,6 +162,7 @@ export default function GroupDetailScreen() {
 
   // State for active carousel card index (0 for Net Balance, 1 for Receive/Pay breakdown)
   const [activeCardIndex, setActiveCardIndex] = useState(0)
+  const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('left')
 
   // Get grouped transaction history
   const transactions = useMemo(() => GET_TRANSACTIONS(id, contact.name), [id, contact.name])
@@ -358,16 +374,34 @@ export default function GroupDetailScreen() {
       {/* Overall Balance Stat Card Carousel */}
       <div className="px-6 mb-6 mt-4 relative overflow-hidden">
         <div className="relative min-h-[148px]">
-          <AnimatePresence mode="wait">
+          <AnimatePresence custom={slideDirection} mode="wait">
             {activeCardIndex === 0 ? (
               <motion.div
                 key="card1"
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -50 }}
+                custom={slideDirection}
+                variants={cardVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
                 transition={{ duration: 0.2 }}
-                onClick={() => setActiveCardIndex(1)}
-                className="bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-6 flex items-center justify-between cursor-pointer min-h-[148px] relative text-left select-none"
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.6}
+                onDragEnd={(_, info) => {
+                  const swipeThreshold = 50
+                  if (info.offset.x < -swipeThreshold) {
+                    setSlideDirection('left')
+                    setActiveCardIndex(1)
+                  } else if (info.offset.x > swipeThreshold) {
+                    setSlideDirection('right')
+                    setActiveCardIndex(1)
+                  }
+                }}
+                onClick={() => {
+                  setSlideDirection('left')
+                  setActiveCardIndex(1)
+                }}
+                className="bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-6 flex items-center justify-between cursor-grab active:cursor-grabbing min-h-[148px] relative text-left select-none touch-pan-y"
               >
                 <div className="flex flex-col text-left">
                   <span className="text-[#6B6B6B] text-[13px] font-semibold">
@@ -396,12 +430,20 @@ export default function GroupDetailScreen() {
                 <div className="absolute bottom-3.5 right-4 flex gap-1.5 z-10">
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); setActiveCardIndex(0); }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSlideDirection('right')
+                      setActiveCardIndex(0)
+                    }}
                     className="w-2.5 h-2.5 rounded-full bg-[#0B683A] p-0 border-0 outline-none cursor-pointer"
                   />
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); setActiveCardIndex(1); }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSlideDirection('left')
+                      setActiveCardIndex(1)
+                    }}
                     className="w-2.5 h-2.5 rounded-full bg-[#9A9590]/40 p-0 border-0 outline-none cursor-pointer"
                   />
                 </div>
@@ -409,12 +451,30 @@ export default function GroupDetailScreen() {
             ) : (
               <motion.div
                 key="card2"
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -50 }}
+                custom={slideDirection}
+                variants={cardVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
                 transition={{ duration: 0.2 }}
-                onClick={() => setActiveCardIndex(0)}
-                className="bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-6 flex items-center justify-between cursor-pointer min-h-[148px] relative text-left select-none"
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.6}
+                onDragEnd={(_, info) => {
+                  const swipeThreshold = 50
+                  if (info.offset.x < -swipeThreshold) {
+                    setSlideDirection('left')
+                    setActiveCardIndex(0)
+                  } else if (info.offset.x > swipeThreshold) {
+                    setSlideDirection('right')
+                    setActiveCardIndex(0)
+                  }
+                }}
+                onClick={() => {
+                  setSlideDirection('right')
+                  setActiveCardIndex(0)
+                }}
+                className="bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-6 flex items-center justify-between cursor-grab active:cursor-grabbing min-h-[148px] relative text-left select-none touch-pan-y"
               >
                 {/* Two Column Layout Split by Light Vertical Line */}
                 <div className="flex-1 flex items-stretch divide-x divide-[#EFE7DD] h-full">
@@ -453,12 +513,20 @@ export default function GroupDetailScreen() {
                 <div className="absolute bottom-3.5 right-4 flex gap-1.5 z-10">
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); setActiveCardIndex(0); }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSlideDirection('right')
+                      setActiveCardIndex(0)
+                    }}
                     className="w-2.5 h-2.5 rounded-full bg-[#9A9590]/40 p-0 border-0 outline-none cursor-pointer"
                   />
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); setActiveCardIndex(1); }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSlideDirection('left')
+                      setActiveCardIndex(1)
+                    }}
                     className="w-2.5 h-2.5 rounded-full bg-[#0B683A] p-0 border-0 outline-none cursor-pointer"
                   />
                 </div>
@@ -484,6 +552,20 @@ export default function GroupDetailScreen() {
             {groupBalances.map((mb) => (
               <ContactListItem
                 key={mb.id}
+                onClick={() => {
+                  let targetId = mb.id
+                  if (mb.name === 'Ali Hassan') {
+                    targetId = '1'
+                  } else if (mb.name === 'Sara Khan') {
+                    targetId = '2'
+                  } else {
+                    targetId = '1' // Fallback to Ali Hassan (existing mock data)
+                  }
+                  navigate({
+                    to: ROUTES.CONTACT_DETAILS,
+                    params: { id: targetId }
+                  })
+                }}
                 contact={{
                   id: mb.id,
                   name: mb.name,
@@ -516,7 +598,6 @@ export default function GroupDetailScreen() {
                     <ChevronRight size={14} className="text-[#9A9590]" strokeWidth={2.5} />
                   </div>
                 }
-                onClick={() => console.log('Member balance details clicked', mb.name)}
                 className="p-4 hover:bg-muted/5 transition-all bg-white"
               />
             ))}
@@ -581,16 +662,16 @@ export default function GroupDetailScreen() {
         <button
           type="button"
           onClick={() => openDrawer('add-expense')}
-          className="flex-1 h-14 rounded-full bg-[#0B683A] text-white font-extrabold text-base cursor-pointer shadow-[0px_6.29px_20.13px_0px_#0B683A4D] hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
+          className="flex-1 h-14 rounded-full bg-[#0B683A] text-white font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
         >
-          + Add Expense
+          Add Expense
         </button>
 
         {/* Settle Up */}
         <button
           type="button"
           onClick={() => setShowSettleUp(true)}
-          className="flex-1 h-14 rounded-full bg-[#FDB105] text-[#1A1A1A] font-extrabold text-base cursor-pointer shadow-[0px_6.29px_20.13px_0px_#FDB1054D] hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
+          className="flex-1 h-14 rounded-full bg-[#FDB105] text-[#1A1A1A] font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
         >
           Settle Up
         </button>
@@ -618,7 +699,7 @@ export default function GroupDetailScreen() {
       )}
 
       <Drawer open={drawer === 'reminder'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] h-[85vh] max-h-[85vh]">
+        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=bottom]:h-full! data-[vaul-drawer-direction=bottom]:max-h-full! data-[vaul-drawer-direction=bottom]:rounded-none! data-[vaul-drawer-direction=bottom]:border-0! data-[vaul-drawer-direction=bottom]:mt-0! [&>div:first-child]:hidden!">
           {drawer === 'reminder' && (
             <SendGroupReminderScreen groupId={contact.id} onClose={closeDrawer} />
           )}
@@ -626,7 +707,7 @@ export default function GroupDetailScreen() {
       </Drawer>
 
       <Drawer open={drawer === 'add-expense'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] h-[95vh] max-h-[95vh]">
+        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=bottom]:h-full! data-[vaul-drawer-direction=bottom]:max-h-full! data-[vaul-drawer-direction=bottom]:rounded-none! data-[vaul-drawer-direction=bottom]:border-0! data-[vaul-drawer-direction=bottom]:mt-0! [&>div:first-child]:hidden!">
           {drawer === 'add-expense' && (
             <AddGroupExpenseScreen
               groupId={contact.id}
@@ -638,7 +719,7 @@ export default function GroupDetailScreen() {
       </Drawer>
 
       <Drawer open={drawer === 'transaction'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] h-[90vh] max-h-[90vh]">
+        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=bottom]:h-full! data-[vaul-drawer-direction=bottom]:max-h-full! data-[vaul-drawer-direction=bottom]:rounded-none! data-[vaul-drawer-direction=bottom]:border-0! data-[vaul-drawer-direction=bottom]:mt-0! [&>div:first-child]:hidden!">
           {drawer === 'transaction' && txId && (
             <TransactionDetailScreen
               txId={txId}

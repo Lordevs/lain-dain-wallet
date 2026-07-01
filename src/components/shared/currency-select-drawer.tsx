@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import {
-  Check,
   Banknote,
   Search,
   ChevronDown,
@@ -15,6 +14,15 @@ import {
 } from '@/components/ui/drawer'
 import { cn } from '@/lib/utils'
 import { SUPPORTED_CURRENCIES } from '@/types'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
+} from '@/components/ui/item'
 
 interface CurrencySelectDrawerProps {
   value: string
@@ -86,13 +94,9 @@ export default function CurrencySelectDrawer({
     return sortedCurrencies.filter(
       (cur) =>
         cur.name.toLowerCase().includes(query) ||
-        cur.code.toLowerCase().includes(query),
+        cur.code.toLowerCase().includes(query)
     )
   }, [sortedCurrencies, currencySearch])
-
-  const activeCurrency = useMemo(() => {
-    return SUPPORTED_CURRENCIES.find((c) => c.code.toUpperCase() === value.toUpperCase())
-  }, [value])
 
   return (
     <Drawer open={isCurrencyOpen} onOpenChange={setIsCurrencyOpen}>
@@ -100,21 +104,28 @@ export default function CurrencySelectDrawer({
         <button
           type="button"
           className={cn(
-            'w-full h-12! rounded-full bg-white! border-[1.26px] border-[#EFE7DD] font-semibold text-sm px-5 mb-4 shrink-0 focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary transition-all flex justify-between items-center select-none cursor-pointer',
-            className,
+            'w-full h-11 flex items-center justify-between px-4 rounded-full bg-white! border-[1.26px] border-[#EFE7DD] text-xs font-bold text-foreground cursor-pointer transition-all outline-none',
+            className
           )}
         >
-          <div className="flex items-center gap-2">
-            <Banknote className="size-5 text-[#9A9590] shrink-0" />
-            <span className="text-[#6B6B6B] font-medium">{activeCurrency?.name ?? 'Pakistani Rupee'}</span>
+          <div className="flex items-center gap-1.5">
+            <Banknote size={16} className="text-[#6B6B6B]" />
+            <span className="uppercase text-muted-foreground font-semibold">
+              Currency:
+            </span>
+            <span className="text-foreground font-bold">
+              {value.toUpperCase()}
+            </span>
           </div>
-          <ChevronDown className="pointer-events-none size-4 text-[#9A9590]" />
+          <ChevronDown size={16} className="text-[#6B6B6B]" />
         </button>
       </DrawerTrigger>
-      <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col max-h-[85vh] focus:outline-none overflow-hidden">
+      <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] h-[65dvh] max-h-[65dvh]">
         {/* Drawer Header */}
-        <div className="flex items-center justify-between px-6 pt-4 pb-3">
-          <h3 className="text-xl font-bold text-[#2C2C2C]">Currency</h3>
+        <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0">
+          <h2 className="text-[19px] font-extrabold text-foreground">
+            Select Currency
+          </h2>
           <DrawerClose asChild>
             <button
               type="button"
@@ -128,19 +139,27 @@ export default function CurrencySelectDrawer({
         <hr className="border-[#EFE7DD] border-b-[1.26px] w-full" />
 
         {/* Search Input */}
-        <div className="relative mx-6 my-4 shrink-0">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590] pointer-events-none size-4" />
+        <div className="relative mx-5 my-4 shrink-0">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A0A0A0] pointer-events-none size-4" />
           <Input
             type="search"
             placeholder="Search currency..."
             value={currencySearch}
             onChange={(e) => setCurrencySearch(e.target.value)}
-            className="w-full h-11 pl-11 pr-4 rounded-xl bg-[#F5F3ED] border-0 text-sm text-foreground placeholder:text-[#9A9590] focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary transition-all outline-none"
+            className="w-full h-11 pl-11 pr-4 rounded-md bg-[#F7F5F0] border-[1.5px] border-[#EBEBEB] text-sm text-foreground placeholder:text-[#9A9590] focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary transition-all outline-none"
           />
         </div>
 
         {/* Currency List */}
-        <div className="flex-1 overflow-y-auto divide-y divide-[#EFE7DD]/60 px-6 pb-8">
+        <RadioGroup
+          value={value.toLowerCase()}
+          onValueChange={(val) => {
+            onChange(val.toLowerCase())
+            setIsCurrencyOpen(false)
+            setCurrencySearch('')
+          }}
+          className="overflow-y-auto divide-y-[1.5px]! divide-[#EBEBEB] pb-8 gap-0"
+        >
           {filteredCurrencies.map((cur) => {
             const isSelected = value.toLowerCase() === cur.code.toLowerCase()
             const visuals = CURRENCY_VISUALS[cur.code.toLowerCase()] || {
@@ -150,57 +169,52 @@ export default function CurrencySelectDrawer({
             }
 
             return (
-              <button
+              <label
                 key={cur.code}
-                type="button"
-                onClick={() => {
-                  onChange(cur.code.toLowerCase())
-                  setIsCurrencyOpen(false)
-                  setCurrencySearch('')
-                }}
-                className={cn(
-                  'w-full flex items-center justify-between py-3.5 px-4 text-left transition-colors focus:outline-none border-0 cursor-pointer',
-                  isSelected ? 'bg-[#E5F2EB]' : 'hover:bg-muted/10',
-                )}
+                htmlFor={cur.code}
+                className="w-full cursor-pointe h-fit"
               >
-                <div className="flex items-center gap-3">
-                  {/* Circle icon */}
-                  <div
-                    className={cn(
-                      'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0',
-                      visuals.circleBg,
-                    )}
-                  >
-                    {visuals.circleText}
-                  </div>
-                  {/* Currency texts */}
-                  <div>
-                    <p
+                <Item
+                  className={cn(
+                    'flex items-center justify-between py-3.5 px-4 transition-colors rounded-none border-0',
+                    isSelected ? 'bg-[#E5F2EB]' : 'hover:bg-muted/10',
+                  )}
+                >
+                  <ItemMedia>
+                    <div
                       className={cn(
-                        'font-bold text-[14px]',
-                        isSelected ? 'text-[#01592B]' : 'text-foreground',
+                        'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0',
+                        visuals.circleBg,
+                      )}
+                    >
+                      {visuals.circleText}
+                    </div>
+                  </ItemMedia>
+                  <ItemContent className="text-left ml-3">
+                    <ItemTitle
+                      className={cn(
+                        'font-bold text-[14px] leading-snug',
+                        isSelected ? 'text-primary' : 'text-foreground',
                       )}
                     >
                       {cur.name}
-                    </p>
-                    <p className="text-[11px] text-[#9A9590] mt-0.5 font-medium">
+                    </ItemTitle>
+                    <ItemDescription className="text-[11px] text-[#9A9590] mt-0.5 font-medium leading-none">
                       {visuals.subText}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Radio check badge */}
-                <div
-                  className={cn(
-                    'w-6 h-6 rounded-full flex items-center justify-center shrink-0 border-2 transition-all',
-                    isSelected
-                      ? 'bg-[#01592B] border-[#01592B] text-white'
-                      : 'border-[#D4CFC8] bg-transparent',
-                  )}
-                >
-                  {isSelected && <Check size={12} strokeWidth={4} className="stroke-white" />}
-                </div>
-              </button>
+                    </ItemDescription>
+                  </ItemContent>
+                  <ItemActions>
+                    <RadioGroupItem
+                      value={cur.code.toLowerCase()}
+                      id={cur.code}
+                      className={cn(
+                        "w-6 h-6 border-[1.5px] border-muted-foreground/30 shrink-0",
+                        "data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                      )}
+                    />
+                  </ItemActions>
+                </Item>
+              </label>
             )
           })}
           {filteredCurrencies.length === 0 && (
@@ -208,7 +222,7 @@ export default function CurrencySelectDrawer({
               No currencies found.
             </p>
           )}
-        </div>
+        </RadioGroup>
       </DrawerContent>
     </Drawer>
   )

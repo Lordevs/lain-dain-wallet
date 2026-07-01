@@ -97,10 +97,10 @@ export default function CategoryPicker({
       <AnimatePresence>
         {showAddCategory && (
           <motion.div
-            initial={{ opacity: 0, x: '100%' }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 250 }}
+            initial={{ opacity: 0, y: '100%' }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: '100%' }}
+            transition={{ duration: 0.075, ease: 'easeOut' }}
             className="fixed inset-0 z-50 bg-[#FEFAF1]"
           >
             <AddCategoryFlow

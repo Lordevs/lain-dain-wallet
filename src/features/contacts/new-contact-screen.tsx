@@ -52,7 +52,7 @@ export default function NewContactScreen() {
   }
 
   return (
-    <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen relative select-none overflow-hidden">
+    <div className="flex flex-col flex-1 bg-[#FEFAF1] h-screen max-h-dvh relative select-none overflow-hidden">
       {/* Header — hidden on success screen (it has its own back button) */}
 
       <FlowHeader

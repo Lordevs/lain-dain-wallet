@@ -355,7 +355,7 @@ export default function NotificationsScreen() {
       )}
 
       <Drawer open={drawer === 'reminder'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] h-[85vh] max-h-[85vh]">
+        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=bottom]:h-full! data-[vaul-drawer-direction=bottom]:max-h-full! data-[vaul-drawer-direction=bottom]:rounded-none! data-[vaul-drawer-direction=bottom]:border-0! data-[vaul-drawer-direction=bottom]:mt-0! [&>div:first-child]:hidden!">
           {drawer === 'reminder' && contactId && (
             <SendReminderScreen contactId={contactId} onClose={closeDrawer} />
           )}

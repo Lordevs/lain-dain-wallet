@@ -36,7 +36,7 @@ export default function QuickActionButton({
       <div className="flex items-center gap-4">
         {/* Gradient Icon Container */}
         <div
-          className="w-12 h-12 rounded-full text-white flex items-center justify-center shrink-0 bg-[linear-gradient(230deg,#0B683A_54.37%,#14A558_89.86%)] shadow-[0px_4px_19px_0px_rgba(11,104,58,0.35)]"
+          className="w-12 h-12 rounded-full text-white flex items-center justify-center shrink-0 bg-[linear-gradient(230deg,#0B683A_54.37%,#14A558_89.86%)] "
         >
           {icon}
         </div>

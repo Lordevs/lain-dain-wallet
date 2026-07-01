@@ -173,5 +173,15 @@ h2 {
 
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Smooth scroll behavior & inertial touch scrolling on mobile WebKit browsers */
+  .overflow-y-auto,
+  .overflow-x-auto,
+  .overflow-scroll {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
   }
 }

@@ -209,7 +209,7 @@ export default function SelectDateDrawer({
               onSelect(displayDate)
               onClose()
             }}
-            className="w-full h-14 rounded-full bg-secondary text-white font-extrabold text-base cursor-pointer shadow-[0px_3px_12px_0px_#0B683A47] active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
+            className="w-full h-14 rounded-full bg-secondary text-white font-extrabold text-base cursor-pointer active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
           >
             Select {selectedDate.getDate()} {getMonthName(selectedDate)}
           </button>

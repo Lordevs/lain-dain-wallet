@@ -104,7 +104,7 @@ export default function PersonalScreen() {
 
       {/* Drawer Overlay for Add Personal Expense */}
       <Drawer open={drawer === 'add-expense'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] h-[95vh] max-h-[95vh]">
+        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=bottom]:h-full! data-[vaul-drawer-direction=bottom]:max-h-full! data-[vaul-drawer-direction=bottom]:rounded-none! data-[vaul-drawer-direction=bottom]:border-0! data-[vaul-drawer-direction=bottom]:mt-0! [&>div:first-child]:hidden!">
           {drawer === 'add-expense' && (
             <AddEntryScreen onClose={closeDrawer} onSuccess={closeDrawer} />
           )}

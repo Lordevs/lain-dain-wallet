@@ -1,5 +1,4 @@
 import {
-  Check,
   Plus,
   Camera,
   User,
@@ -20,6 +19,15 @@ import CurrencySelectDrawer from '@/components/shared/currency-select-drawer'
 import { MOCK_CATEGORIES } from '../data/mock-data'
 import type { NewContactFlowState } from '../hooks/use-new-contact-flow'
 import imagePlaceholder from '@/assets/image-placeholder.svg'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
+} from '@/components/ui/item'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -48,7 +56,10 @@ const CATEGORY_ICON_MAP: Record<string, React.ComponentType<any>> = {
  */
 export default function GroupDetailsStep({ flow }: GroupDetailsStepProps) {
   return (
-    <div className="flex-1 flex flex-col px-6 overflow-hidden">
+    <div className={cn(
+      "flex-1 overflow-y-auto px-6 scrollbar-none relative",
+      (flow.groupName.trim() && flow.selectedCategory) ? "pb-24" : "pb-4"
+    )}>
       {/* Row 1: Group Avatar placeholder + Name Input */}
       <div className="flex gap-4 items-center mt-3 mb-3 shrink-0">
         {/* Group avatar input */}
@@ -157,67 +168,80 @@ export default function GroupDetailsStep({ flow }: GroupDetailsStepProps) {
       />
 
       {/* Category list */}
-      <h2 className="text-xs font-bold text-[#6B6B6B] uppercase tracking-wider mb-2 shrink-0">
+      <h2 className="text-xs font-bold text-[#6B6B6B] uppercase tracking-wider pt-6 mb-2 shrink-0">
         All Categories
       </h2>
-      <div className="border-[0.8px] border-[#EBEBEB] rounded-xl bg-white shadow-[0px_2px_10px_0px_#0000000D] divide-y-[0.8px] divide-[#EBEBEB]">
+      <RadioGroup
+        value={flow.selectedCategory}
+        onValueChange={flow.setSelectedCategory}
+        className="grid gap-0 border-[0.8px] border-[#EBEBEB] rounded-xl bg-white shadow-[0px_2px_10px_0px_#0000000D] divide-y-[0.8px] divide-[#EBEBEB] overflow-hidden"
+      >
         {MOCK_CATEGORIES.map((cat) => {
           const isSelected = flow.selectedCategory === cat.id
           const IconComponent = CATEGORY_ICON_MAP[cat.id] || AlertCircle
 
           return (
-            <div
+            <label
               key={cat.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => flow.setSelectedCategory(cat.id)}
-              onKeyDown={(e) => e.key === 'Enter' && flow.setSelectedCategory(cat.id)}
-              className={cn(
-                'flex items-center justify-between p-3.5 cursor-pointer transition-colors',
-                isSelected ? 'bg-[#E5F2EB]' : 'hover:bg-muted/10',
-              )}
+              htmlFor={cat.id}
+              className="w-full cursor-pointer"
             >
-              <div className="flex items-center gap-3">
-                <div
-                  className={cn(
-                    'w-10 h-10 rounded-sm flex items-center justify-center select-none',
-                    cat.bgColor,
-                  )}
-                >
-                  <IconComponent className={cn('size-5', isSelected ? 'text-primary' : cat.iconColor)} />
-                </div>
-                <div>
-                  <p
+              <Item
+                className={cn(
+                  'flex items-center justify-between p-3.5 transition-colors rounded-none border-0',
+                  isSelected ? 'bg-[#E5F2EB]' : 'hover:bg-muted/10',
+                )}
+              >
+                <ItemMedia>
+                  <div
                     className={cn(
-                      'font-bold text-[14px]',
+                      'w-10 h-10 rounded-sm flex items-center justify-center select-none shrink-0',
+                      cat.bgColor,
+                    )}
+                  >
+                    <IconComponent className={cn('size-5', isSelected ? 'text-primary' : cat.iconColor)} />
+                  </div>
+                </ItemMedia>
+                <ItemContent className="text-left ml-3">
+                  <ItemTitle
+                    className={cn(
+                      'font-bold text-[14px] leading-snug',
                       isSelected ? 'text-primary' : 'text-foreground',
                     )}
                   >
                     {cat.name}
-                  </p>
-                  <p className={cn('text-[11px]', isSelected ? 'text-primary/80 font-medium' : 'text-muted-foreground')}>{cat.description}</p>
-                </div>
-              </div>
-              {isSelected && (
-                <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center shrink-0">
-                  <Check size={14} strokeWidth={3.5} className="stroke-white" />
-                </div>
-              )}
-            </div>
+                  </ItemTitle>
+                  <ItemDescription className={cn('text-[11px] leading-snug mt-0.5', isSelected ? 'text-[#01592B]/85 font-medium' : 'text-muted-foreground')}>
+                    {cat.description}
+                  </ItemDescription>
+                </ItemContent>
+                <ItemActions>
+                  <RadioGroupItem
+                    value={cat.id}
+                    id={cat.id}
+                    className={cn(
+                      "w-6 h-6 border-[1.5px] border-muted-foreground/30 shrink-0",
+                      "data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    )}
+                  />
+                </ItemActions>
+              </Item>
+            </label>
           )
         })}
-      </div>
+      </RadioGroup>
 
       {/* Sticky Create Group button */}
-      <div className="mt-20">
-        <Button
-          onClick={flow.createGroup}
-          disabled={!flow.groupName.trim()}
-          className="w-full h-14 rounded-full bg-primary text-white font-extrabold text-[15px] shadow-lg active:scale-[0.98] transition-transform cursor-pointer"
-        >
-          Create Group
-        </Button>
-      </div>
+      {flow.groupName.trim() && flow.selectedCategory && (
+        <div className="fixed bottom-4 left-6 right-6 z-10 animate-in fade-in slide-in-from-bottom duration-200">
+          <Button
+            onClick={flow.createGroup}
+            className="w-full h-14 rounded-full bg-primary text-white font-extrabold text-[15px] shadow-lg active:scale-[0.98] transition-transform cursor-pointer"
+          >
+            Create Group
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

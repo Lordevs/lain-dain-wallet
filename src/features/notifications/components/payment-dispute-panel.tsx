@@ -99,7 +99,7 @@ export default function PaymentDisputePanel({
         <button
           type="button"
           onClick={onPayAgain}
-          className="flex-1 h-14 rounded-full bg-tertiary text-white font-extrabold text-base cursor-pointer shadow-[0px_3px_10px_0px_#C0392B38] active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
+          className="flex-1 h-14 rounded-full bg-tertiary text-white font-extrabold text-base cursor-pointer active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
         >
           Pay Again
         </button>
