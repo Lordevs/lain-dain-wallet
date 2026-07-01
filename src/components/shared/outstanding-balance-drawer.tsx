@@ -27,7 +27,7 @@ export default function OutstandingBalanceDrawer({
 }: OutstandingBalanceDrawerProps) {
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="bg-white rounded-t-[32px] pb-9 border-t-0 h-[50vh] max-h-[50vh]">
+      <DrawerContent className="bg-white rounded-t-[32px] pb-9 border-t-0 h-auto max-h-[90vh]">
         <DrawerHeader className="flex-row items-center justify-between px-6 pt-5 pb-3">
           <h3 className="text-[17px] font-bold text-[#1A1A1A] text-left">
             {title}
@@ -42,9 +42,9 @@ export default function OutstandingBalanceDrawer({
             </button>
           </DrawerClose>
         </DrawerHeader>
-        <hr className="border-[#EBEBEB] border-b-[0.8px] w-full shrink-0 mb-6" />
+        <hr className="border-[#EBEBEB] border-b-[0.8px] w-full shrink-0" />
 
-        <div className="flex-1 flex flex-col justify-between px-6 text-left">
+        <div className="flex flex-col px-6 pt-6 pb-2">
           {/* Warning box */}
           <div className="w-full bg-[#FFF9E6] border-[1.11px] border-[#C85A0033] rounded-[20px] p-5 pb-10 text-left shadow-[0px_2px_8px_0px_rgba(253,177,5,0.03)]">
             <div className='flex items-center gap-2 mb-2'>
@@ -59,14 +59,14 @@ export default function OutstandingBalanceDrawer({
           </div>
 
           {/* Bottom CTA */}
-          <div className="mt-20">
+          <div className="mt-10">
             <button
               type="button"
               onClick={() => {
                 onAction()
                 onClose()
               }}
-              className="w-full h-14 bg-secondary text-white rounded-full font-bold text-[17px] flex items-center justify-center active:scale-[0.99] transition-all cursor-pointer shadow-[0px_3px_12px_0px_#0B683A47]"
+              className="w-full h-14 bg-secondary text-white rounded-full font-bold text-[17px] flex items-center justify-center active:scale-[0.99] transition-all cursor-pointer"
             >
               {buttonText}
             </button>

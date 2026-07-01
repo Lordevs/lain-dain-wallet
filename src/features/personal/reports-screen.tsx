@@ -1,6 +1,4 @@
 import { useState } from 'react'
-import { useNavigate } from '@tanstack/react-router'
-import { ROUTES } from '@/constants/routes'
 import { REPORTS_MOCK_DATA } from './data/mock-data'
 import ExpenseSummaryCard from './components/expense-summary-card'
 import CategoryBreakdownCard from './components/category-breakdown-card'
@@ -11,7 +9,6 @@ import FlowHeader from '@/components/shared/flow-header'
 type ReportPeriodKey = 'april_2026' | 'march_2026' | 'february_2026'
 
 export default function ReportsScreen() {
-  const navigate = useNavigate()
 
   // Global header filter state (select month/year)
   const [selectedReportPeriod, setSelectedReportPeriod] = useState<ReportPeriodKey>('april_2026')
@@ -58,7 +55,6 @@ export default function ReportsScreen() {
       {/* Top Header */}
       <FlowHeader
         title="Reports"
-        onBack={() => navigate({ to: ROUTES.PERSONAL })}
         backVariant="minimal"
         rightSlot={
           <MonthFilterDropdown<ReportPeriodKey>

@@ -103,7 +103,6 @@ export default function SettingsScreen() {
       {/* Top Header */}
       <FlowHeader
         title="Settings"
-        onBack={() => navigate({ to: ROUTES.DASHBOARD })}
       />
 
       <div className="flex-1 px-6 flex flex-col">

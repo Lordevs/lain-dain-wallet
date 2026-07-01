@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { ChevronLeft } from 'lucide-react'
+import { useNavigate } from '@tanstack/react-router'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -8,8 +9,8 @@ interface FlowHeaderProps {
   title: string
   /** Subtitle text displayed below the title */
   subtitle?: string
-  /** Called when the back-chevron button is tapped */
-  onBack: () => void
+  /** Called when the back-chevron button is tapped. Defaults to window.history.back() */
+  onBack?: () => void
   /** Back button style variant: 'circle' (default circular button) or 'minimal' (just the chevron arrow) */
   backVariant?: 'circle' | 'minimal'
   /** Optional avatar component (renders between back button and text) */
@@ -34,6 +35,20 @@ export default function FlowHeader({
   avatar,
   rightSlot,
 }: FlowHeaderProps) {
+  const navigate = useNavigate()
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack()
+    } else {
+      if (window.history.length > 1) {
+        window.history.back()
+      } else {
+        navigate({ to: '/' })
+      }
+    }
+  }
+
   // Check if subtitle contains "selected" to style it green
   const isSelectedSubtitle = subtitle?.toLowerCase().includes('selected')
 
@@ -45,7 +60,7 @@ export default function FlowHeader({
         {backVariant === 'circle' ? (
           <button
             type="button"
-            onClick={onBack}
+            onClick={handleBack}
             className="size-10 rounded-full border-[0.8px] border-[#EBEBEB] bg-white shadow-[0px_1px_4px_#0000000F] flex items-center justify-center text-foreground transition-all cursor-pointer outline-none shrink-0"
             aria-label="Go back"
           >
@@ -54,7 +69,7 @@ export default function FlowHeader({
         ) : (
           <button
             type="button"
-            onClick={onBack}
+            onClick={handleBack}
             className="flex items-center justify-center p-2 text-[#1A1A1A] cursor-pointer bg-transparent border-0 outline-none -ml-2 shrink-0"
             aria-label="Go back"
           >

@@ -49,7 +49,6 @@ export default function PersonalScreen() {
       {/* Top Header */}
       <FlowHeader
         title="My Expenses"
-        onBack={() => navigate({ to: ROUTES.DASHBOARD })}
         rightSlot={
           <button className="text-[#6B6B6B] cursor-pointer border-0 bg-transparent flex items-center justify-center p-2">
             <MoreVertical size={20} />

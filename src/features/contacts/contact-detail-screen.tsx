@@ -91,6 +91,7 @@ export default function ContactDetailScreen() {
         delete next.txId
         return next
       },
+      replace: true,
     })
   }
 
@@ -101,6 +102,7 @@ export default function ContactDetailScreen() {
         drawer: name,
         txId: tid,
       }),
+      replace: true,
     })
   }
 
@@ -158,7 +160,6 @@ export default function ContactDetailScreen() {
       <FlowHeader
         title={contact.name}
         subtitle="Personal Balance"
-        onBack={() => navigate({ to: ROUTES.DASHBOARD })}
         backVariant="minimal"
         avatar={
           <div className="relative shrink-0 flex items-center">
@@ -307,8 +308,8 @@ export default function ContactDetailScreen() {
             <EditContactExpenseScreen
               contactId={contact.id}
               txId={txId}
-              onClose={closeDrawer}
-              onSuccess={() => openDrawer('transaction', txId)}
+              onClose={() => openDrawer('transaction', txId)}
+              onSuccess={closeDrawer}
             />
           )}
         </DrawerContent>

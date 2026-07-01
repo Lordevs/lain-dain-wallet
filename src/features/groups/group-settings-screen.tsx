@@ -53,6 +53,7 @@ export default function GroupSettingsScreen() {
         delete next.edit
         return next
       },
+      replace: true,
     })
   }
 
@@ -62,6 +63,7 @@ export default function GroupSettingsScreen() {
         ...prev,
         drawer: name,
       }),
+      replace: true,
     })
   }
 
@@ -263,7 +265,11 @@ export default function GroupSettingsScreen() {
 
   // Handle back navigation
   const handleBack = () => {
-    navigate({ to: ROUTES.GROUP_DETAILS, params: { id: contact.id } })
+    if (window.history.length > 1) {
+      window.history.back()
+    } else {
+      navigate({ to: ROUTES.GROUP_DETAILS, params: { id: contact.id } })
+    }
   }
 
   // Derive group initials for fallback preview
@@ -376,7 +382,7 @@ export default function GroupSettingsScreen() {
                 }}
                 subtitle={
                   <span className="text-[#6B6B6B] text-[12px]">
-                    {m.owesText}
+                    {m.isAdmin ? 'Admin' : 'Member'}
                   </span>
                 }
                 rightSlot={

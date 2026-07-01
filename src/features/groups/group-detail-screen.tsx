@@ -17,6 +17,7 @@ import { CATEGORIES } from '@/features/personal/components/category-picker'
 import { Drawer, DrawerContent } from '@/components/ui/drawer'
 import SendGroupReminderScreen from '@/features/groups/send-group-reminder-screen'
 import AddGroupExpenseScreen from '@/features/groups/add-group-expense-screen'
+import EditGroupExpenseScreen from '@/features/groups/edit-group-expense-screen'
 import TransactionDetailScreen from '@/features/transactions/transaction-detail-screen'
 
 
@@ -124,6 +125,7 @@ export default function GroupDetailScreen() {
         delete next.txId
         return next
       },
+      replace: true,
     })
   }
 
@@ -134,6 +136,7 @@ export default function GroupDetailScreen() {
         drawer: name,
         txId: tid,
       }),
+      replace: true,
     })
   }
 
@@ -286,90 +289,87 @@ export default function GroupDetailScreen() {
     .replace('₨', 'Rs.')
     .replace('Rs. ', 'Rs.')
 
-  if (selectedCategory) {
-    const catDetails = getCategoryDetails(selectedCategory)
-    const filteredExpenses = groupExpensesData.filter((exp) => (exp.category || 'other') === selectedCategory)
-    const totalSpent = filteredExpenses.reduce((sum, exp) => sum + Math.abs(exp.amount), 0)
-    const formattedTotal = formatCurrency(totalSpent, 'PKR')
-      .replace('₨', 'Rs.')
-      .replace('Rs. ', 'Rs.')
-    const CatIcon = catDetails.icon
-
-    return (
-      <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24 relative select-none">
-        {/* Unified Header */}
-        <FlowHeader
-          title={`${catDetails.label} Expenses`}
-          subtitle={`${filteredExpenses.length} ${filteredExpenses.length === 1 ? 'item' : 'items'}`}
-          onBack={() => setSelectedCategory(null)}
-          backVariant="minimal"
-          avatar={
-            <div
-              className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 border border-[#EFE7DD] shadow-[0px_2px_8px_rgba(0,0,0,0.02)]"
-              style={{ backgroundColor: `${catDetails.color}15` }}
-            >
-              <CatIcon size={20} style={{ color: catDetails.color }} />
-            </div>
-          }
-        />
-
-        {/* Category Spent Summary Card */}
-        <div className="px-6 mb-6 mt-4">
-          <div className="bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-6 flex items-center justify-between">
-            <div className="flex flex-col text-left">
-              <span className="text-[#6B6B6B] text-[13px] font-semibold">
-                Total Category Spent
-              </span>
-              <span className={cn('text-3xl font-extrabold mt-2 leading-none tracking-tight text-[#1A1A1A]')}>
-                {formattedTotal}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Expenses List */}
-        <div className="flex-1 overflow-y-auto px-6 pb-12 flex flex-col text-left">
-          <div className="flex items-center justify-between mb-3 mt-1">
-            <h3 className="text-sm font-bold text-[#1A1A1A]">
-              Expenses
-            </h3>
-          </div>
-
-          <ExpenseList
-            expenses={filteredExpenses}
-            onItemClick={(expenseId) => {
-              openDrawer('transaction', expenseId.toString())
-            }}
-            className="border-[#EFE7DD] divide-[#EFE7DD]"
-          />
-        </div>
-      </div>
-    )
-  }
+  const catDetails = selectedCategory ? getCategoryDetails(selectedCategory) : null
+  const filteredExpenses = selectedCategory ? groupExpensesData.filter((exp) => (exp.category || 'other') === selectedCategory) : []
+  const totalSpent = filteredExpenses.reduce((sum, exp) => sum + Math.abs(exp.amount), 0)
+  const formattedTotal = formatCurrency(totalSpent, 'PKR')
+    .replace('₨', 'Rs.')
+    .replace('Rs. ', 'Rs.')
+  const CatIcon = catDetails?.icon
 
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24 relative select-none">
-      {/* Unified Header */}
-      <FlowHeader
-        title={contact.name}
-        subtitle={`${contact.ledgerCount} members`}
-        onBack={() => navigate({ to: ROUTES.DASHBOARD })}
-        backVariant="minimal"
-        avatar={
-          <div className={cn("w-11 h-11 rounded-full flex items-center justify-center text-xl shrink-0 border border-[#EFE7DD] shadow-[0px_2px_8px_rgba(0,0,0,0.02)]", contact.avatarColor)}>
-            {contact.initials}
+      {selectedCategory && catDetails && CatIcon ? (
+        <>
+          {/* Category-specific Header */}
+          <FlowHeader
+            title={`${catDetails.label} Expenses`}
+            subtitle={`${filteredExpenses.length} ${filteredExpenses.length === 1 ? 'item' : 'items'}`}
+            onBack={() => setSelectedCategory(null)}
+            backVariant="minimal"
+            avatar={
+              <div
+                className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 border border-[#EFE7DD] shadow-[0px_2px_8px_rgba(0,0,0,0.02)]"
+                style={{ backgroundColor: `${catDetails.color}15` }}
+              >
+                <CatIcon size={20} style={{ color: catDetails.color }} />
+              </div>
+            }
+          />
+
+          {/* Category Spent Summary Card */}
+          <div className="px-6 mb-6 mt-4">
+            <div className="bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-6 flex items-center justify-between">
+              <div className="flex flex-col text-left">
+                <span className="text-[#6B6B6B] text-[13px] font-semibold">
+                  Total Category Spent
+                </span>
+                <span className={cn('text-3xl font-extrabold mt-2 leading-none tracking-tight text-[#1A1A1A]')}>
+                  {formattedTotal}
+                </span>
+              </div>
+            </div>
           </div>
-        }
-        rightSlot={
-          <button
-            type="button"
-            onClick={() => navigate({ to: ROUTES.GROUP_SETTINGS, params: { id: contact.id } })}
-            className="text-[#6B6B6B] cursor-pointer border-0 bg-transparent flex items-center justify-center p-2"
-          >
-            <MoreVertical size={20} />
-          </button>
-        }
-      />
+
+          {/* Expenses List */}
+          <div className="flex-1 overflow-y-auto px-6 pb-12 flex flex-col text-left">
+            <div className="flex items-center justify-between mb-3 mt-1">
+              <h3 className="text-sm font-bold text-[#1A1A1A]">
+                Expenses
+              </h3>
+            </div>
+
+            <ExpenseList
+              expenses={filteredExpenses}
+              onItemClick={(expenseId) => {
+                openDrawer('transaction', expenseId.toString())
+              }}
+              className="border-[#EFE7DD] divide-[#EFE7DD]"
+            />
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Unified Header */}
+          <FlowHeader
+            title={contact.name}
+            subtitle={`${contact.ledgerCount} members`}
+            backVariant="minimal"
+            avatar={
+              <div className={cn("w-11 h-11 rounded-full flex items-center justify-center text-xl shrink-0 border border-[#EFE7DD] shadow-[0px_2px_8px_rgba(0,0,0,0.02)]", contact.avatarColor)}>
+                {contact.initials}
+              </div>
+            }
+            rightSlot={
+              <button
+                type="button"
+                onClick={() => navigate({ to: ROUTES.GROUP_SETTINGS, params: { id: contact.id } })}
+                className="text-[#6B6B6B] cursor-pointer border-0 bg-transparent flex items-center justify-center p-2"
+              >
+                <MoreVertical size={20} />
+              </button>
+            }
+          />
 
       {/* Overall Balance Stat Card Carousel */}
       <div className="px-6 mb-6 mt-4 relative overflow-hidden">
@@ -698,6 +698,9 @@ export default function GroupDetailScreen() {
         />
       )}
 
+        </>
+      )}
+
       <Drawer open={drawer === 'reminder'} onOpenChange={(open) => !open && closeDrawer()}>
         <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=bottom]:h-full! data-[vaul-drawer-direction=bottom]:max-h-full! data-[vaul-drawer-direction=bottom]:rounded-none! data-[vaul-drawer-direction=bottom]:border-0! data-[vaul-drawer-direction=bottom]:mt-0! [&>div:first-child]:hidden!">
           {drawer === 'reminder' && (
@@ -725,6 +728,20 @@ export default function GroupDetailScreen() {
               txId={txId}
               onClose={closeDrawer}
               onDelete={closeDrawer}
+              onEdit={() => openDrawer('edit-expense', txId)}
+            />
+          )}
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer open={drawer === 'edit-expense'} onOpenChange={(open) => !open && closeDrawer()}>
+        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=bottom]:h-full! data-[vaul-drawer-direction=bottom]:max-h-full! data-[vaul-drawer-direction=bottom]:rounded-none! data-[vaul-drawer-direction=bottom]:border-0! data-[vaul-drawer-direction=bottom]:mt-0! [&>div:first-child]:hidden!">
+          {drawer === 'edit-expense' && txId && (
+            <EditGroupExpenseScreen
+              groupId={contact.id}
+              txId={txId}
+              onClose={() => openDrawer('transaction', txId)}
+              onSuccess={closeDrawer}
             />
           )}
         </DrawerContent>

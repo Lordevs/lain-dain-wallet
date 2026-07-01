@@ -15,11 +15,11 @@ const confirmButtonVariants = cva(
     variants: {
       variant: {
         /** Default — used for leave/remove confirmations */
-        warning: 'bg-[#C96A1B] hover:bg-[#C96A1B]/95 shadow-[0px_8px_20px_rgba(201,106,27,0.25)]',
+        warning: 'bg-[#C96A1B] hover:bg-[#C96A1B]/95',
         /** Destructive — used for delete group */
-        danger:  'bg-[#EB5757] hover:bg-[#EB5757]/95 shadow-[0px_8px_20px_rgba(235,87,87,0.25)]',
+        danger: 'bg-[#EB5757] hover:bg-[#EB5757]/95',
         /** Primary — used for general confirm actions */
-        primary: 'bg-[#0B683A] hover:bg-[#0B683A]/95 shadow-[0px_8px_20px_rgba(11,104,58,0.25)]',
+        primary: 'bg-[#0B683A] hover:bg-[#0B683A]/95',
       },
     },
     defaultVariants: { variant: 'warning' },
@@ -52,9 +52,6 @@ export default function ConfirmActionDrawer({
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DrawerContent className="bg-white rounded-t-[32px] pb-8 border-t-0 h-auto max-h-[90vh] text-left text-[#1A1A1A] outline-none">
-        {/* Grab Handle */}
-        <div className="mx-auto mt-3.5 h-1.5 w-12 rounded-full bg-[#E5E0DA] shrink-0" />
-
         {/* Drawer Header */}
         <DrawerHeader className="relative flex items-center justify-center px-14 pt-4 pb-4 shrink-0 text-center">
           <h3 className="text-[17px] font-extrabold text-[#1A1A1A] leading-snug max-w-[280px]">
