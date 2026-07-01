@@ -439,7 +439,6 @@ export default function SplitExpenseDrawer({
           {/* Scrollable Members List Box */}
           <div className="flex-1 overflow-y-auto border-[0.8px] rounded-lg border-[#EBEBEB] divide-y divide-[#EBEBEB] bg-white mb-2 select-none">
             {members.map((member) => {
-              const isYou = member.id === 'you'
               const isSelected = selectedMembers.includes(member.id)
 
               return (

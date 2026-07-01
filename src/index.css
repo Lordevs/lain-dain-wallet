@@ -3,6 +3,21 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
+/* Prevent Android WebView text autosizing from enlarging text in narrow containers */
+html,
+body {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Prevent iOS WKWebView from auto-zooming when an input is tapped.
+   iOS zooms if the focused input's font-size < 16px; this locks all inputs to 16px minimum. */
+input,
+textarea,
+select {
+  font-size: max(16px, 1em);
+}
+
 :root {
   --text: #1A1A1A;
   --text-h: #1A1A1A;
