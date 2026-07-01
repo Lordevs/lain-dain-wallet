@@ -14,5 +14,7 @@ export const ROUTES = {
   GROUP_DETAILS: '/groups/$id',
   GROUP_SETTINGS: '/groups/$id/settings',
   GROUP_RECURRING: '/groups/$id/recurring',
+  PERSONAL_SETTINGS: '/personal/settings',
+  PERSONAL_CATEGORIES: '/personal/categories',
 } as const
 

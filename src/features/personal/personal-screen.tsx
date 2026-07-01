@@ -50,7 +50,10 @@ export default function PersonalScreen() {
       <FlowHeader
         title="My Expenses"
         rightSlot={
-          <button className="text-[#6B6B6B] cursor-pointer border-0 bg-transparent flex items-center justify-center p-2">
+          <button
+            onClick={() => navigate({ to: ROUTES.PERSONAL_SETTINGS })}
+            className="text-[#6B6B6B] cursor-pointer border-0 bg-transparent flex items-center justify-center p-2 hover:opacity-80 transition-opacity"
+          >
             <MoreVertical size={20} />
           </button>
         }
