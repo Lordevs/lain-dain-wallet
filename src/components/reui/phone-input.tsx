@@ -12,20 +12,9 @@ import flags from "react-phone-number-input/flags"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-  ComboboxSeparator,
-  ComboboxTrigger,
-  ComboboxValue,
-} from "@/components/ui/combobox"
 import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { GlobeIcon, ChevronDown } from "lucide-react"
+import { GlobeIcon, ChevronDown, Check } from "lucide-react"
+import { Drawer, DrawerContent } from "@/components/ui/drawer"
 
 type PhoneInputSize = "sm" | "default" | "lg"
 
@@ -119,8 +108,9 @@ function CountrySelect({
   options: countryList,
   onChange,
 }: CountrySelectProps) {
-  const { variant, popupClassName } = useContext(PhoneInputContext)
+  const { variant } = useContext(PhoneInputContext)
   const [searchValue, setSearchValue] = useState("")
+  const [isOpen, setIsOpen] = useState(false)
 
   const filteredCountries = useMemo(() => {
     if (!searchValue) return countryList
@@ -130,87 +120,90 @@ function CountrySelect({
   }, [countryList, searchValue])
 
   return (
-    <Combobox
-      items={filteredCountries}
-      value={selectedCountry || ""}
-      onValueChange={(country: BasePhoneInput.Country | null) => {
-        if (country) {
-          onChange(country)
-        }
-      }}
-    >
-      <ComboboxTrigger
-        render={
-          <Button
-            variant="outline"
-            size={variant}
-            className={cn(
-              "rounded-s-full rounded-e-none flex items-center gap-1.5 border-e-0 px-4.5 py-0 leading-none hover:bg-transparent focus:z-10 data-pressed:bg-transparent h-full shrink-0 text-foreground border-input bg-transparent",
-              disabled && "opacity-50"
-            )}
-            disabled={disabled}
-          >
-            <span className="sr-only">
-              <ComboboxValue />
-            </span>
-            <FlagComponent
-              country={selectedCountry}
-              countryName={selectedCountry}
-            />
-            {selectedCountry && (
-              <span className="text-[15px] font-semibold text-foreground select-none">
-                +{BasePhoneInput.getCountryCallingCode(selectedCountry)}
-              </span>
-            )}
-            <ChevronDown size={14} className="text-muted-foreground shrink-0 ml-0.5" />
-          </Button>
-        }
-      />
-      <ComboboxContent
+    <>
+      <Button
+        variant="outline"
+        size={variant}
+        type="button"
+        onClick={() => setIsOpen(true)}
         className={cn(
-          "w-xs *:data-[slot=input-group]:bg-transparent",
-          popupClassName
+          "rounded-s-full rounded-e-none flex items-center gap-1.5 border-e-0 px-4.5 py-0 leading-none hover:bg-transparent focus:z-10 data-pressed:bg-transparent h-full shrink-0 text-foreground border-input bg-transparent",
+          disabled && "opacity-50"
         )}
+        disabled={disabled}
       >
-        <ComboboxInput
-          placeholder="e.g. United States"
-          value={searchValue}
-          onChange={(e) => setSearchValue(e.target.value)}
-          showTrigger={false}
-          className="border-input focus-visible:border-border rounded-none border-0 px-0 py-2.5 shadow-none ring-0! outline-none! focus-visible:ring-0 focus-visible:ring-offset-0"
+        <FlagComponent
+          country={selectedCountry}
+          countryName={selectedCountry}
         />
-        <ComboboxSeparator />
-        <ComboboxEmpty className="px-4 py-2.5 text-sm">
-          No country found.
-        </ComboboxEmpty>
-        <ComboboxList>
-          <div className="relative flex max-h-full">
-            <div className="flex max-h-[min(var(--available-height),24rem)] w-full scroll-pt-2 scroll-pb-2 flex-col overscroll-contain">
-              <ScrollArea className="size-full min-h-0 **:data-[slot=scroll-area-scrollbar]:m-0 **:data-[slot=scroll-area-viewport]:h-full **:data-[slot=scroll-area-viewport]:overscroll-contain">
-                {filteredCountries.map((item: CountryEntry) =>
-                  item.value ? (
-                    <ComboboxItem
-                      key={item.value}
-                      value={item.value}
-                      className="flex items-center gap-2"
-                    >
-                      <FlagComponent
-                        country={item.value}
-                        countryName={item.label}
-                      />
-                      <span className="flex-1 text-sm">{item.label}</span>
-                      <span className="text-foreground/50 text-sm">
-                        {`+${BasePhoneInput.getCountryCallingCode(item.value)}`}
-                      </span>
-                    </ComboboxItem>
-                  ) : null
-                )}
-              </ScrollArea>
-            </div>
+        {selectedCountry && (
+          <span className="text-[15px] font-semibold text-foreground select-none">
+            +{BasePhoneInput.getCountryCallingCode(selectedCountry)}
+          </span>
+        )}
+        <ChevronDown size={14} className="text-muted-foreground shrink-0 ml-0.5" />
+      </Button>
+
+      <Drawer open={isOpen} onOpenChange={setIsOpen}>
+        <DrawerContent className="bg-white rounded-t-[32px] p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] h-[75dvh]">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 pt-5 pb-3 shrink-0 relative">
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="size-8 rounded-full bg-[#FEFAF1] border border-[#EBEBEB] text-[#6B6B6B] flex items-center justify-center cursor-pointer hover:bg-muted/10 outline-none focus:outline-none font-sans text-xs font-bold"
+            >
+              ✕
+            </button>
+            <h3 className="text-lg font-extrabold text-[#1A1A1A] absolute left-1/2 -translate-x-1/2">Select Country</h3>
+            <div className="size-8" />
           </div>
-        </ComboboxList>
-      </ComboboxContent>
-    </Combobox>
+          <hr className="border-[#EBEBEB] border-b-[0.8px] w-full shrink-0" />
+
+          {/* Search Input */}
+          <div className="p-4 shrink-0">
+            <Input
+              type="text"
+              placeholder="Search country..."
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              className="w-full h-11 px-4 rounded-xl border border-[#EBEBEB] bg-[#FEFAF1] text-foreground text-sm shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-[#FDB105]"
+            />
+          </div>
+
+          {/* Countries list */}
+          <div className="flex-1 overflow-y-auto px-6 pb-6 flex flex-col gap-2">
+            {filteredCountries.map((item) => {
+              if (!item.value) return null
+              const isSelected = selectedCountry === item.value
+              return (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(item.value!)
+                    setIsOpen(false)
+                  }}
+                  className={cn(
+                    "w-full flex items-center justify-between py-3.5 px-4 rounded-xl border border-[#EBEBEB] text-left text-sm font-semibold transition-colors outline-none cursor-pointer",
+                    isSelected ? "bg-[#FFF9E6] border-[#FDB105]" : "bg-[#FEFAF1] hover:bg-gray-50/50"
+                  )}
+                >
+                  <div className="flex items-center gap-3.5">
+                    <FlagComponent country={item.value} countryName={item.label} />
+                    <span>{item.label}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#9A9590]">+{BasePhoneInput.getCountryCallingCode(item.value)}</span>
+                    {isSelected && <Check size={16} className="text-[#0B683A] stroke-[3px]" />}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </DrawerContent>
+      </Drawer>
+    </>
   )
 }
 

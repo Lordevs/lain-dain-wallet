@@ -9,7 +9,6 @@ import coinGif from '@/assets/coin.gif'
 
 function RootComponent() {
   const [showSplash, setShowSplash] = useState(true)
-  const [isMounted, setIsMounted] = useState(true)
 
   useEffect(() => {
     // Hide native splash screen immediately when JS bundle loads
@@ -19,13 +18,8 @@ function RootComponent() {
       setShowSplash(false)
     }, 2800)
 
-    const removeTimer = setTimeout(() => {
-      setIsMounted(false)
-    }, 3300)
-
     return () => {
       clearTimeout(timer)
-      clearTimeout(removeTimer)
     }
   }, [])
 
@@ -34,10 +28,9 @@ function RootComponent() {
       <AppShell>
         <Outlet />
       </AppShell>
-      {isMounted && (
+      {showSplash && (
         <div
-          className={`fixed inset-0 z-9999 bg-[#FEFAF1] flex flex-col items-center justify-center select-none transition-opacity duration-500 ease-out ${showSplash ? 'opacity-100' : 'opacity-0 pointer-events-none'
-            }`}
+          className="fixed inset-0 z-9999 bg-[#FEFAF1] flex flex-col items-center justify-center select-none"
         >
           {/* Central Animated Coin GIF */}
           <div className="relative flex flex-col items-center shrink-0 mb-24">

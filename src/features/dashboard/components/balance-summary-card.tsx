@@ -21,8 +21,8 @@ export default function BalanceSummaryCard({ summary }: BalanceSummaryCardProps)
     <div className="bg-white rounded-lg border-[1.08px] border-[#EFE7DD] shadow-[0px_2.69px_10.76px_0px_#0000000D] mx-6 mt-3">
       <div className="flex divide-x divide-[#EFE7DD] text-center">
         {/* Receivable Column */}
-        <div className="flex-1 py-3 px-2 space-y-4">
-          <p className="text-sm font-medium text-primary leading-tight">
+        <div className="flex-1 py-3 px-2 space-y-3">
+          <p className="text-xs font-normal text-primary leading-tight">
             You will receive
           </p>
           <p className="text-[18px] font-extrabold text-primary leading-none">
@@ -34,8 +34,8 @@ export default function BalanceSummaryCard({ summary }: BalanceSummaryCardProps)
         </div>
 
         {/* Payable Column */}
-        <div className="flex-1 py-3 px-2 space-y-4">
-          <p className="text-sm font-medium text-[#C96A1B] leading-tight">
+        <div className="flex-1 py-3 px-2 space-y-3">
+          <p className="text-xs font-normal text-[#C96A1B] leading-tight">
             You will pay
           </p>
           <p className="text-[18px] font-extrabold text-[#C96A1B] leading-none">
@@ -47,8 +47,8 @@ export default function BalanceSummaryCard({ summary }: BalanceSummaryCardProps)
         </div>
 
         {/* Net Balance Column */}
-        <div className="flex-1 py-3 px-2 space-y-4">
-          <p className="text-sm font-medium text-foreground leading-tight">
+        <div className="flex-1 py-3 px-2 space-y-3">
+          <p className="text-xs font-normal text-foreground leading-tight">
             Net balance
           </p>
           <p className="text-[18px] font-extrabold text-foreground leading-none">

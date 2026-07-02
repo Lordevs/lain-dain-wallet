@@ -59,7 +59,7 @@ export default function AddExpenseBase({
   // State management
   const [amount, setAmount] = useState(initialData?.amount || '')
   const [description, setDescription] = useState(initialData?.description || '')
-  const [selectedCategory, setSelectedCategory] = useState(initialData?.category || 'bills')
+  const [selectedCategory, setSelectedCategory] = useState(initialData?.category || '')
   const [dateValue, setDateValue] = useState(initialData?.dateValue || 'Today')
   const [receiptFile, setReceiptFile] = useState<{ name: string; size: string; dataUrl?: string } | null>(null)
   const [showReceiptOverlay, setShowReceiptOverlay] = useState(false)
@@ -137,7 +137,7 @@ export default function AddExpenseBase({
     )
   }
 
-  const isFormInvalid = !amount || Number(amount) <= 0 || !description.trim()
+  const isFormInvalid = !amount || Number(amount) <= 0 || !description.trim() || !selectedCategory
 
   return (
     <form
@@ -291,7 +291,7 @@ export default function AddExpenseBase({
           </div>
         </div>
 
-        <div className="flex flex-col shrink-0 bg-[#FEFAF1] border-t border-[#EBEBEB]/20 py-4">
+        <div className="flex flex-col shrink-0 bg-[#FEFAF1] border-t border-[#EBEBEB]/20 py-3">
           <AttachmentTabs
             dateValue={dateValue}
             receiptAttached={!!receiptFile}

@@ -18,7 +18,7 @@ export const MOCK_RECEIVABLES: ContactLedger[] = [
     isOnline: true,
     type: 'person',
     tags: [
-      { name: '1-to-1 Ledger', amount: 6000 },
+      { name: 'Personal', amount: 6000 },
       { name: 'Murree Trip Group', amount: 2000 },
       { name: 'Poker Group', amount: -500 },
     ],

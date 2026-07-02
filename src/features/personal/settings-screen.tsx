@@ -5,6 +5,7 @@ import { ROUTES } from '@/constants/routes'
 import FlowHeader from '@/components/shared/flow-header'
 import { Switch } from '@/components/ui/switch'
 import ConfirmActionDrawer from '@/components/shared/confirm-action-drawer'
+import SelectDateDrawer from '@/components/shared/select-date-drawer'
 
 export default function PersonalSettingsScreen() {
   const navigate = useNavigate()
@@ -12,6 +13,8 @@ export default function PersonalSettingsScreen() {
   const [showSpendingComp, setShowSpendingComp] = useState(true)
   const [monthlyAlert, setMonthlyAlert] = useState(true)
   const [recurringRemind, setRecurringRemind] = useState(true)
+  const [isDateDrawerOpen, setIsDateDrawerOpen] = useState(false)
+  const [defaultPeriodText, setDefaultPeriodText] = useState('This month')
 
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen select-none overflow-hidden">
@@ -44,13 +47,16 @@ export default function PersonalSettingsScreen() {
             </div>
 
             {/* Default Period */}
-            <div className="p-5 flex items-center justify-between transition-colors hover:bg-muted/5 cursor-pointer">
+            <div
+              className="p-5 flex items-center justify-between transition-colors hover:bg-muted/5 cursor-pointer"
+              onClick={() => setIsDateDrawerOpen(true)}
+            >
               <div className="flex flex-col text-left pr-4">
                 <span className="text-[15px] font-bold text-[#1A1A1A] leading-tight">Default period</span>
                 <span className="text-[12px] font-normal text-[#6B6B6B] mt-1 leading-normal">Time range shown on open</span>
               </div>
               <div className="flex items-center gap-1.5 shrink-0 select-none">
-                <span className="text-sm font-semibold text-[#6B6B6B]">This month</span>
+                <span className="text-sm font-semibold text-[#6B6B6B]">{defaultPeriodText}</span>
                 <ChevronRight size={14} className="text-[#6B6B6B]" strokeWidth={2.5} />
               </div>
             </div>
@@ -232,6 +238,22 @@ export default function PersonalSettingsScreen() {
           console.log('All personal expenses cleared!')
           setIsClearConfirmOpen(false)
         }}
+      />
+
+      {/* Date Picker Drawer */}
+      <SelectDateDrawer
+        isOpen={isDateDrawerOpen}
+        onClose={() => setIsDateDrawerOpen(false)}
+        onSelect={(dateText) => {
+          if (dateText === 'today') {
+            setDefaultPeriodText('Today')
+          } else if (dateText === 'yesterday') {
+            setDefaultPeriodText('Yesterday')
+          } else {
+            setDefaultPeriodText(dateText)
+          }
+        }}
+        selectedValue={defaultPeriodText.toLowerCase()}
       />
     </div>
   )

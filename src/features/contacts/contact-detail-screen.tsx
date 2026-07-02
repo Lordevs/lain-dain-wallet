@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams, useNavigate, Navigate, useSearch } from '@tanstack/react-router'
 import { Bell } from 'lucide-react'
 import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
@@ -16,6 +16,7 @@ import LedgerBreakdownScreen from '@/features/contacts/ledger-breakdown-screen'
 import AddContactExpenseScreen from '@/features/contacts/add-contact-expense-screen'
 import EditContactExpenseScreen from '@/features/contacts/edit-contact-expense-screen'
 import TransactionDetailScreen from '@/features/transactions/transaction-detail-screen'
+import SettleUpPanel from '@/features/notifications/components/settle-up-panel'
 
 
 interface TransactionItem extends ExpenseListData {
@@ -82,6 +83,7 @@ export default function ContactDetailScreen() {
   const { id } = useParams({ from: '/contacts/$id/' })
   const navigate = useNavigate({ from: '/contacts/$id/' })
   const { drawer, txId } = useSearch({ from: '/contacts/$id/' })
+  const [showSettleUp, setShowSettleUp] = useState(false)
 
   const closeDrawer = () => {
     navigate({
@@ -258,20 +260,42 @@ export default function ContactDetailScreen() {
         <button
           type="button"
           onClick={() => openDrawer('add-expense')}
-          className="flex-1 h-14 rounded-full bg-[#0B683A] text-white font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
+          className="flex-1 h-12 rounded-full bg-[#0B683A] text-white font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
         >
           Add Expense
         </button>
 
-        {/* Record Payment */}
+        {/* Settle Up */}
         <button
           type="button"
-          onClick={() => console.log('Record Payment Clicked')}
-          className="flex-1 h-14 rounded-full bg-[#FDB105] text-[#1A1A1A] font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
+          onClick={() => setShowSettleUp(true)}
+          className="flex-1 h-12 rounded-full bg-[#FDB105] text-[#1A1A1A] font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
         >
-          Record Payment
+          Settle Up
         </button>
       </div>
+
+      {/* Settle Up sliding drawer flow */}
+      {showSettleUp && (
+        <SettleUpPanel
+          mode="contact"
+          notification={{
+            id: 'contact-settle',
+            tag: 'Payment requested',
+            title: `${contact.name} requested Rs. ${Math.abs(personalAmount)}`,
+            subtitle: contact.name,
+            time: 'Just now',
+            type: 'request',
+            section: 'action_needed',
+            theme: 'green'
+          }}
+          onClose={() => setShowSettleUp(false)}
+          onConfirm={() => {
+            setShowSettleUp(false)
+            console.log('Contact Settle Up Confirmed!')
+          }}
+        />
+      )}
 
       <Drawer open={drawer === 'reminder'} onOpenChange={(open) => !open && closeDrawer()}>
         <DrawerContent className={FULLSCREEN_DRAWER_CN}>

@@ -5,6 +5,7 @@ import {
   Drawer,
   DrawerContent,
   DrawerClose,
+  FULLSCREEN_DRAWER_CN,
 } from '@/components/ui/drawer'
 import {
   Avatar,
@@ -230,7 +231,7 @@ export default function SplitExpenseDrawer({
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
-      <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col data-[vaul-drawer-direction=bottom]:h-[90dvh]! data-[vaul-drawer-direction=bottom]:max-h-[90dvh]! focus:outline-none overflow-hidden text-[#1A1A1A]">
+      <DrawerContent className={FULLSCREEN_DRAWER_CN}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-5 pb-3 shrink-0 relative">
           <DrawerClose asChild>
@@ -296,9 +297,12 @@ export default function SplitExpenseDrawer({
             {/* Equal Tab */}
             <button
               type="button"
-              onClick={() => setSplitType('equal')}
+              onClick={() => {
+                setSplitType('equal')
+                setSelectedMembers(members.map((m) => m.id))
+              }}
               className={cn(
-                'flex-1 flex items-center justify-center gap-2 py-3 rounded-full text-sm font-bold cursor-pointer transition-all outline-none border',
+                'flex-1 flex items-center justify-center gap-2 py-3 rounded-full text-xs font-semibold cursor-pointer transition-all outline-none border',
                 splitType === 'equal'
                   ? 'bg-[#0B683A] text-white border-[#0B683A] shadow-sm'
                   : 'bg-white text-[#5C5C5C] border-[#EBEBEB] hover:bg-gray-50/50 hover:text-[#1A1A1A] hover:border-gray-300'
@@ -313,7 +317,7 @@ export default function SplitExpenseDrawer({
               type="button"
               onClick={() => setSplitType('unequal')}
               className={cn(
-                'flex-1 flex items-center justify-center gap-2 py-3 rounded-full text-sm font-bold cursor-pointer transition-all outline-none border',
+                'flex-1 flex items-center justify-center gap-2 py-3 rounded-full text-xs font-semibold cursor-pointer transition-all outline-none border',
                 splitType === 'unequal'
                   ? 'bg-[#0B683A] text-white border-[#0B683A] shadow-sm'
                   : 'bg-white text-[#5C5C5C] border-[#EBEBEB] hover:bg-gray-50/50 hover:text-[#1A1A1A] hover:border-gray-300'
@@ -328,7 +332,7 @@ export default function SplitExpenseDrawer({
               type="button"
               onClick={() => setSplitType('adjustment')}
               className={cn(
-                'flex-1 flex items-center justify-center gap-2 p-3 rounded-full text-sm font-bold cursor-pointer transition-all outline-none border',
+                'flex-1 flex items-center justify-center gap-2 p-3 rounded-full text-xs font-semibold cursor-pointer transition-all outline-none border',
                 splitType === 'adjustment'
                   ? 'bg-[#0B683A] text-white border-[#0B683A] shadow-sm'
                   : 'bg-white text-[#5C5C5C] border-[#EBEBEB] hover:bg-gray-50/50 hover:text-[#1A1A1A] hover:border-gray-300'
@@ -494,6 +498,7 @@ export default function SplitExpenseDrawer({
                       <span className="text-xs text-[#9A9590] font-bold">Rs.</span>
                       <input
                         type="text"
+                        inputMode='decimal'
                         value={unequalAmounts[member.id]}
                         onChange={(e) => handleUnequalChange(member.id, e.target.value)}
                         className="w-18 bg-transparent border-0 outline-none text-sm font-extrabold text-[#1A1A1A] text-right font-sans py-0"
@@ -514,6 +519,7 @@ export default function SplitExpenseDrawer({
                           <span className="text-xs text-[#9A9590] font-bold">Rs.</span>
                           <input
                             type="text"
+                            inputMode='decimal'
                             value={adjustmentAmounts[member.id]}
                             onChange={(e) => handleAdjustmentChange(member.id, e.target.value)}
                             className="w-14 bg-transparent border-0 outline-none text-xs font-extrabold text-[#1A1A1A] text-right font-sans py-0"

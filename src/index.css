@@ -199,4 +199,13 @@ h2 {
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
   }
+
+  /* Force Vaul Drawer slide & fade animations to be super fast and smooth (150ms) */
+  [data-vaul-drawer],
+  [data-slot="drawer-content"],
+  [data-slot="drawer-overlay"] {
+    transition-duration: 150ms !important;
+    animation-duration: 150ms !important;
+    transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1) !important;
+  }
 }

@@ -180,6 +180,7 @@ export default function AddRecurringScreen({ groupId, editPaymentId, onClose, on
               <div className="flex-1 flex items-center px-5">
                 <input
                   type="text"
+                  inputMode='decimal'
                   value={getFormattedAmount()}
                   onChange={handleAmountChange}
                   className="w-full bg-transparent border-0 outline-none text-[32px] font-extrabold text-[#1A1A1A] placeholder:text-[#CCCCCC] font-sans"

@@ -13,6 +13,7 @@ interface SettleUpPanelProps {
   notification: NotificationItem
   onClose: () => void
   onConfirm: () => void
+  mode?: 'group' | 'contact'
 }
 
 interface ReceiptFile {
@@ -30,11 +31,21 @@ export default function SettleUpPanel({
   notification,
   onClose,
   onConfirm,
+  mode = 'group',
 }: SettleUpPanelProps) {
   const [activeTab, setActiveTab] = useState<'pay' | 'receive'>('pay')
 
   // Parse dynamic requester data
-  const requesterName = notification.title.split(' ')[0] || 'Muzaffar'
+  let requesterName = notification.title.split(' ')[0] || 'Muzaffar'
+  if (
+    requesterName.toLowerCase().includes('murree') || 
+    requesterName.toLowerCase().includes('poker') || 
+    requesterName.toLowerCase().includes('group') ||
+    requesterName.toLowerCase().includes('trip')
+  ) {
+    requesterName = 'Muzaffar'
+  }
+
   const groupName = notification.subtitle.toLowerCase().includes('for:')
     ? notification.subtitle.replace(/For:/i, '').trim()
     : 'Murree Trip'
@@ -45,6 +56,12 @@ export default function SettleUpPanel({
   // Split calculations
   const perPersonShare = Math.floor(totalDue / 2)
 
+  // Max cap constants
+  const muzaffarMax = totalDue === 2500 ? 1000 : perPersonShare
+  const ahmedMax = totalDue === 2500 ? 1000 : perPersonShare
+  const aliMax = 2000
+  const saraMax = 800
+
   // Pay mode input states
   const [muzaffarAmount, setMuzaffarAmount] = useState('')
   const [ahmedAmount, setAhmedAmount] = useState('')
@@ -52,6 +69,23 @@ export default function SettleUpPanel({
   // Receive mode input states
   const [aliAmount, setAliAmount] = useState('')
   const [saraAmount, setSaraAmount] = useState('')
+
+  // 1-to-1 Mode state
+  const [contactAmount, setContactAmount] = useState('')
+
+  const handleAmountChange = (val: string, max: number, setter: (s: string) => void) => {
+    const cleaned = val.replace(/[^0-9]/g, '')
+    if (cleaned === '') {
+      setter('')
+      return
+    }
+    const num = Number(cleaned)
+    if (num > max) {
+      setter(max.toString())
+    } else {
+      setter(num.toString())
+    }
+  }
 
   const [showSuccess, setShowSuccess] = useState(false)
 
@@ -67,8 +101,14 @@ export default function SettleUpPanel({
   const [isNoteFlowOpen, setIsNoteFlowOpen] = useState(false)
 
   // Calculate totals based on active mode
-  const payingNow = (Number(muzaffarAmount) || 0) + (Number(ahmedAmount) || 0)
-  const receivingNow = (Number(aliAmount) || 0) + (Number(saraAmount) || 0)
+  const payingNow = mode === 'contact' 
+    ? (Number(contactAmount) || 0) 
+    : (Number(muzaffarAmount) || 0) + (Number(ahmedAmount) || 0)
+
+  const receivingNow = mode === 'contact' 
+    ? (Number(contactAmount) || 0) 
+    : (Number(aliAmount) || 0) + (Number(saraAmount) || 0)
+
   const activeAmountNow = activeTab === 'pay' ? payingNow : receivingNow
   const stillLeft = Math.max(0, totalDue - activeAmountNow)
 
@@ -139,27 +179,29 @@ export default function SettleUpPanel({
       />
 
       {/* Group Card */}
-      <div className="px-6 mt-4">
-        <div className="bg-white rounded-[24px] border-[0.8px] border-[#EBEBEB] p-4 flex items-center gap-3.5 shadow-[0px_4px_16px_rgba(0,0,0,0.02)] text-left">
-          {/* Custom Mountain Group Avatar Icon */}
-          <div className="w-12 h-12 rounded-full bg-[#E8F5EE] border border-[#0B683A]/10 flex items-center justify-center overflow-hidden shrink-0">
-            <svg viewBox="0 0 100 100" className="w-9 h-9">
-              <circle cx="50" cy="50" r="45" fill="#E8F5EE" />
-              <circle cx="65" cy="35" r="8" fill="#FDB105" opacity="0.8" />
-              <path d="M25,70 L45,35 L60,55 L75,40 L90,70 Z" fill="#4CAF50" opacity="0.6" />
-              <path d="M15,70 L35,45 L55,65 L70,50 L85,70 Z" fill="#0B683A" opacity="0.8" />
-            </svg>
-          </div>
-          <div className="flex flex-col">
-            <span className="font-extrabold text-[15px] text-[#1A1A1A] leading-tight">
-              {groupName}
-            </span>
-            <span className="text-[12px] text-[#6B6B6B] font-semibold mt-0.5">
-              6 members
-            </span>
+      {mode !== 'contact' && (
+        <div className="px-6 mt-4">
+          <div className="bg-white rounded-[24px] border-[0.8px] border-[#EBEBEB] p-4 flex items-center gap-3.5 shadow-[0px_4px_16px_rgba(0,0,0,0.02)] text-left">
+            {/* Custom Mountain Group Avatar Icon */}
+            <div className="w-12 h-12 rounded-full bg-[#E8F5EE] border border-[#0B683A]/10 flex items-center justify-center overflow-hidden shrink-0">
+              <svg viewBox="0 0 100 100" className="w-9 h-9">
+                <circle cx="50" cy="50" r="45" fill="#E8F5EE" />
+                <circle cx="65" cy="35" r="8" fill="#FDB105" opacity="0.8" />
+                <path d="M25,70 L45,35 L60,55 L75,40 L90,70 Z" fill="#4CAF50" opacity="0.6" />
+                <path d="M15,70 L35,45 L55,65 L70,50 L85,70 Z" fill="#0B683A" opacity="0.8" />
+              </svg>
+            </div>
+            <div className="flex flex-col">
+              <span className="font-extrabold text-[15px] text-[#1A1A1A] leading-tight">
+                {groupName}
+              </span>
+              <span className="text-[12px] text-[#6B6B6B] font-semibold mt-0.5">
+                6 members
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Tabs */}
       <div className="px-6 mt-4">
@@ -227,18 +269,35 @@ export default function SettleUpPanel({
 
       {/* Members Balance Inputs List (Directly on Canvas, Full-width divider) */}
       <div className="px-6 mt-4 flex flex-col gap-5 text-left">
-        {activeTab === 'pay' ? (
+        {mode === 'contact' ? (
+          <MemberRow
+            initials={requesterInitials}
+            name={requesterName}
+            subtext={
+              activeTab === 'pay'
+                ? `You owe Rs. ${Math.max(0, totalDue - (Number(contactAmount) || 0)).toLocaleString('en-US')}`
+                : `Owes you Rs. ${Math.max(0, totalDue - (Number(contactAmount) || 0)).toLocaleString('en-US')}`
+            }
+            subtextColorClass={activeTab === 'pay' ? 'text-[#C96A1B]' : 'text-[#0B683A]'}
+            avatarBg="bg-[#EDE9FE]"
+            avatarText="text-[#6366F1]"
+            avatarBorder="border-[#6366F1]/10"
+            amount={contactAmount}
+            onAmountChange={(val) => handleAmountChange(val, totalDue, setContactAmount)}
+            activeThemeColor={activeTab === 'pay' ? 'pay' : 'receive'}
+          />
+        ) : activeTab === 'pay' ? (
           <>
             {/* Muzaffar Member */}
             <MemberRow
               initials={requesterInitials}
               name={requesterName}
-              subtext={`You owe Rs. ${(totalDue === 2500 ? 1000 : perPersonShare).toLocaleString('en-US')}`}
+              subtext={`You owe Rs. ${Math.max(0, (totalDue === 2500 ? 1000 : perPersonShare) - (Number(muzaffarAmount) || 0)).toLocaleString('en-US')}`}
               avatarBg="bg-[#E1F0FF]"
               avatarText="text-[#1D70B8]"
               avatarBorder="border-[#1D70B8]/10"
               amount={muzaffarAmount}
-              onAmountChange={setMuzaffarAmount}
+              onAmountChange={(val) => handleAmountChange(val, muzaffarMax, setMuzaffarAmount)}
               activeThemeColor="pay"
             />
 
@@ -249,13 +308,13 @@ export default function SettleUpPanel({
             <MemberRow
               initials="A"
               name="Ahmed"
-              subtext={`Left: Rs. ${(totalDue === 2500 ? 1000 : perPersonShare).toLocaleString('en-US')}`}
+              subtext={`Left: Rs. ${Math.max(0, (totalDue === 2500 ? 1000 : perPersonShare) - (Number(ahmedAmount) || 0)).toLocaleString('en-US')}`}
               subtextColorClass="text-[#C96A1B]"
               avatarBg="bg-[#FFF2D1]"
               avatarText="text-[#C96A1B]"
               avatarBorder="border-[#C96A1B]/10"
               amount={ahmedAmount}
-              onAmountChange={setAhmedAmount}
+              onAmountChange={(val) => handleAmountChange(val, ahmedMax, setAhmedAmount)}
               activeThemeColor="pay"
             />
           </>
@@ -265,12 +324,12 @@ export default function SettleUpPanel({
             <MemberRow
               initials="A"
               name="Ali"
-              subtext="Owes you Rs. 2,000"
+              subtext={`Owes you Rs. ${Math.max(0, 2000 - (Number(aliAmount) || 0)).toLocaleString('en-US')}`}
               avatarBg="bg-[#FFF2D1]"
               avatarText="text-[#C96A1B]"
               avatarBorder="border-[#C96A1B]/10"
               amount={aliAmount}
-              onAmountChange={setAliAmount}
+              onAmountChange={(val) => handleAmountChange(val, aliMax, setAliAmount)}
               activeThemeColor="receive"
             />
 
@@ -281,13 +340,13 @@ export default function SettleUpPanel({
             <MemberRow
               initials="S"
               name="Sara"
-              subtext="Left: Rs. 800"
+              subtext={`Left: Rs. ${Math.max(0, 800 - (Number(saraAmount) || 0)).toLocaleString('en-US')}`}
               subtextColorClass="text-[#0B683A]"
               avatarBg="bg-[#EDE9FE]"
               avatarText="text-[#6366F1]"
               avatarBorder="border-[#6366F1]/10"
               amount={saraAmount}
-              onAmountChange={setSaraAmount}
+              onAmountChange={(val) => handleAmountChange(val, saraMax, setSaraAmount)}
               activeThemeColor="receive"
             />
           </>

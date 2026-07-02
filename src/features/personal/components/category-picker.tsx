@@ -10,6 +10,7 @@ import {
   Fuel as FuelIcon,
   HelpCircle,
   Plus,
+  ForkKnife,
 } from 'lucide-react'
 import AddCategoryFlow from '@/components/shared/add-category-flow'
 
@@ -22,11 +23,12 @@ export interface CategoryOption {
 
 export const CATEGORIES: CategoryOption[] = [
   { id: 'transport', label: 'Transport', color: '#C96A1B', icon: Bus },
+  { id: 'food', label: 'Food', color: '#D35400', icon: ForkKnife },
   { id: 'shopping', label: 'Shopping', color: '#7D3C98', icon: ShoppingBag },
   { id: 'grocery', label: 'Grocery', color: '#27AE60', icon: ShoppingCart },
   { id: 'bills', label: 'Bills', color: '#16A085', icon: Receipt },
-  { id: 'entertainment', label: 'Entertainment', color: '#D35400', icon: Film },
   { id: 'health', label: 'Health', color: '#C0392B', icon: Activity },
+  { id: 'entertainment', label: 'Entertainment', color: '#D35400', icon: Film },
   { id: 'fuel', label: 'Fuel', color: '#F39C12', icon: FuelIcon },
   { id: 'other', label: 'Other', color: '#7F8C8D', icon: HelpCircle },
 ]

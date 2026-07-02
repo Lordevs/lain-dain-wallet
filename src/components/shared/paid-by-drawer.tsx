@@ -5,6 +5,7 @@ import {
   Drawer,
   DrawerContent,
   DrawerClose,
+  FULLSCREEN_DRAWER_CN,
 } from '@/components/ui/drawer'
 import {
   Avatar,
@@ -114,7 +115,7 @@ export default function PaidByDrawer({
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
-      <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col data-[vaul-drawer-direction=bottom]:h-[80dvh]! data-[vaul-drawer-direction=bottom]:max-h-[80dvh]! focus:outline-none overflow-hidden text-[#1A1A1A]">
+      <DrawerContent className={FULLSCREEN_DRAWER_CN}>
 
         {/* Drawer Header */}
         <div className="flex items-center justify-between px-6 pt-5 pb-3 shrink-0 relative">

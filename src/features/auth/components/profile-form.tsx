@@ -7,7 +7,9 @@ import {
   Briefcase,
   Heart,
   Camera,
-  ChevronLeft
+  ChevronLeft,
+  ChevronDown,
+  Check
 } from 'lucide-react'
 import { differenceInYears, format } from 'date-fns'
 import { Button } from '@/components/ui/button'
@@ -16,13 +18,8 @@ import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Drawer, DrawerContent } from '@/components/ui/drawer'
+import { cn } from '@/lib/utils'
 
 /** Exported so auth-screen.tsx can type its handleProfileSubmit handler */
 export interface ProfileFormData {
@@ -59,6 +56,11 @@ export default function ProfileForm({ onSubmit }: ProfileFormProps) {
 
   // Avatar uses a separate state since it's a File/URL, not a serialisable form field
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+
+  // Drawer states
+  const [isGenderOpen, setIsGenderOpen] = useState(false)
+  const [isOccupationOpen, setIsOccupationOpen] = useState(false)
+  const [isMaritalStatusOpen, setIsMaritalStatusOpen] = useState(false)
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -157,19 +159,136 @@ export default function ProfileForm({ onSubmit }: ProfileFormProps) {
                 control={control}
                 rules={{ required: true }}
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange} required>
-                    <SelectTrigger className="w-full h-12! pl-12 pr-10 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground text-sm focus:ring-0 focus:border-primary relative flex justify-between items-center select-none shadow-none font-normal [&_svg:last-child]:text-[#9A9590]">
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setIsGenderOpen(true)}
+                      className="w-full h-12 pl-12 pr-10 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground text-sm focus:ring-0 focus:border-primary focus:outline-none relative flex items-center justify-between shadow-none font-normal cursor-pointer"
+                    >
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590]">
                         <User size={18} />
                       </span>
-                      <SelectValue placeholder="Select gender" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#FEFAF1] border-[#EFE7DD] p-1">
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="female">Female</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+                      <span className={field.value ? "text-foreground capitalize" : "text-[#9A9590]"}>
+                        {field.value || "Select gender"}
+                      </span>
+                      <ChevronDown size={16} className="text-[#9A9590]" />
+                    </button>
+
+                    <Drawer open={isGenderOpen} onOpenChange={setIsGenderOpen}>
+                      <DrawerContent className="bg-white rounded-t-[32px] p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A]">
+                        <div className="flex items-center justify-between px-6 pt-5 pb-3 shrink-0 relative">
+                          <button
+                            type="button"
+                            onClick={() => setIsGenderOpen(false)}
+                            className="size-8 rounded-full bg-[#FEFAF1] border border-[#EBEBEB] text-[#6B6B6B] flex items-center justify-center cursor-pointer hover:bg-muted/10 outline-none focus:outline-none font-sans text-xs font-bold"
+                          >
+                            ✕
+                          </button>
+                          <h3 className="text-lg font-extrabold text-[#1A1A1A] absolute left-1/2 -translate-x-1/2">Select Gender</h3>
+                          <div className="size-8" />
+                        </div>
+                        <hr className="border-[#EBEBEB] border-b-[0.8px] w-full shrink-0" />
+                        <div className="p-6 flex flex-col gap-3">
+                          {[
+                            { label: 'Male', value: 'male' },
+                            { label: 'Female', value: 'female' },
+                            { label: 'Other', value: 'other' }
+                          ].map((opt) => {
+                            const isSelected = field.value === opt.value
+                            return (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => {
+                                  field.onChange(opt.value)
+                                  setIsGenderOpen(false)
+                                }}
+                                className={cn(
+                                  "w-full flex items-center justify-between py-4 px-5 rounded-xl border border-[#EBEBEB] text-left text-sm font-semibold transition-colors outline-none cursor-pointer",
+                                  isSelected ? "bg-[#FFF9E6] border-[#FDB105]" : "bg-[#FEFAF1] hover:bg-gray-50/50"
+                                )}
+                              >
+                                <span className="capitalize">{opt.label}</span>
+                                {isSelected && <Check size={16} className="text-[#0B683A] stroke-[3px]" />}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </DrawerContent>
+                    </Drawer>
+                  </>
+                )}
+              />
+            </div>
+
+            {/* Occupation Input */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-semibold text-foreground px-1">Occupation</Label>
+              <Controller
+                name="occupation"
+                control={control}
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setIsOccupationOpen(true)}
+                      className="w-full h-12 pl-12 pr-10 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground text-sm focus:ring-0 focus:border-primary focus:outline-none relative flex items-center justify-between shadow-none font-normal cursor-pointer"
+                    >
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590]">
+                        <Briefcase size={18} />
+                      </span>
+                      <span className={field.value ? "text-foreground capitalize" : "text-[#9A9590]"}>
+                        {field.value ? (field.value === 'self-employed' ? 'Self-employed' : field.value.charAt(0).toUpperCase() + field.value.slice(1)) : "Select occupation"}
+                      </span>
+                      <ChevronDown size={16} className="text-[#9A9590]" />
+                    </button>
+
+                    <Drawer open={isOccupationOpen} onOpenChange={setIsOccupationOpen}>
+                      <DrawerContent className="bg-white rounded-t-[32px] p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A]">
+                        <div className="flex items-center justify-between px-6 pt-5 pb-3 shrink-0 relative">
+                          <button
+                            type="button"
+                            onClick={() => setIsOccupationOpen(false)}
+                            className="size-8 rounded-full bg-[#FEFAF1] border border-[#EBEBEB] text-[#6B6B6B] flex items-center justify-center cursor-pointer hover:bg-muted/10 outline-none focus:outline-none font-sans text-xs font-bold"
+                          >
+                            ✕
+                          </button>
+                          <h3 className="text-lg font-extrabold text-[#1A1A1A] absolute left-1/2 -translate-x-1/2">Select Occupation</h3>
+                          <div className="size-8" />
+                        </div>
+                        <hr className="border-[#EBEBEB] border-b-[0.8px] w-full shrink-0" />
+                        <div className="p-6 flex flex-col gap-3">
+                          {[
+                            { label: 'Student', value: 'student' },
+                            { label: 'Professional', value: 'professional' },
+                            { label: 'Self-employed', value: 'self-employed' },
+                            { label: 'Unemployed', value: 'unemployed' },
+                            { label: 'Other', value: 'other' }
+                          ].map((opt) => {
+                            const isSelected = field.value === opt.value
+                            return (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => {
+                                  field.onChange(opt.value)
+                                  setIsOccupationOpen(false)
+                                }}
+                                className={cn(
+                                  "w-full flex items-center justify-between py-4 px-5 rounded-xl border border-[#EBEBEB] text-left text-sm font-semibold transition-colors outline-none cursor-pointer",
+                                  isSelected ? "bg-[#FFF9E6] border-[#FDB105]" : "bg-[#FEFAF1] hover:bg-gray-50/50"
+                                )}
+                              >
+                                <span>{opt.label}</span>
+                                {isSelected && <Check size={16} className="text-[#0B683A] stroke-[3px]" />}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </DrawerContent>
+                    </Drawer>
+                  </>
                 )}
               />
             </div>
@@ -196,28 +315,6 @@ export default function ProfileForm({ onSubmit }: ProfileFormProps) {
               />
             </div>
 
-            {/* Occupation Input */}
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold text-foreground px-1">Occupation <span className='text-[#9A9590] font-normal'>(Optional)</span></Label>
-              <Controller
-                name="occupation"
-                control={control}
-                render={({ field }) => (
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590]">
-                      <Briefcase size={18} />
-                    </span>
-                    <Input
-                      type="text"
-                      placeholder="Enter your occupation"
-                      className="h-12 pl-12 pr-4 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground text-sm placeholder:text-[#9A9590] shadow-none"
-                      {...field}
-                    />
-                  </div>
-                )}
-              />
-            </div>
-
             {/* Marital Status Input */}
             <div className="space-y-1.5">
               <Label className="text-sm font-semibold text-foreground px-1">Marital status <span className='text-[#9A9590] font-normal'>(Optional)</span></Label>
@@ -225,19 +322,64 @@ export default function ProfileForm({ onSubmit }: ProfileFormProps) {
                 name="maritalStatus"
                 control={control}
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="w-full h-12! pl-12 pr-10 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground text-sm focus:ring-0 focus:border-primary relative flex justify-between items-center select-none shadow-none font-normal [&_svg:last-child]:text-[#9A9590]">
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setIsMaritalStatusOpen(true)}
+                      className="w-full h-12 pl-12 pr-10 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground text-sm focus:ring-0 focus:border-primary focus:outline-none relative flex items-center justify-between shadow-none font-normal cursor-pointer"
+                    >
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590]">
                         <Heart size={18} />
                       </span>
-                      <SelectValue placeholder="Select marital status" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#FEFAF1] border-[#EFE7DD] p-1">
-                      <SelectItem value="single">Single</SelectItem>
-                      <SelectItem value="married">Married</SelectItem>
-                      <SelectItem value="divorced">Divorced</SelectItem>
-                    </SelectContent>
-                  </Select>
+                      <span className={field.value ? "text-foreground capitalize" : "text-[#9A9590]"}>
+                        {field.value || "Select marital status"}
+                      </span>
+                      <ChevronDown size={16} className="text-[#9A9590]" />
+                    </button>
+
+                    <Drawer open={isMaritalStatusOpen} onOpenChange={setIsMaritalStatusOpen}>
+                      <DrawerContent className="bg-white rounded-t-[32px] p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A]">
+                        <div className="flex items-center justify-between px-6 pt-5 pb-3 shrink-0 relative">
+                          <button
+                            type="button"
+                            onClick={() => setIsMaritalStatusOpen(false)}
+                            className="size-8 rounded-full bg-[#FEFAF1] border border-[#EBEBEB] text-[#6B6B6B] flex items-center justify-center cursor-pointer hover:bg-muted/10 outline-none focus:outline-none font-sans text-xs font-bold"
+                          >
+                            ✕
+                          </button>
+                          <h3 className="text-lg font-extrabold text-[#1A1A1A] absolute left-1/2 -translate-x-1/2">Select Marital Status</h3>
+                          <div className="size-8" />
+                        </div>
+                        <hr className="border-[#EBEBEB] border-b-[0.8px] w-full shrink-0" />
+                        <div className="p-6 flex flex-col gap-3">
+                          {[
+                            { label: 'Single', value: 'single' },
+                            { label: 'Married', value: 'married' },
+                            { label: 'Divorced', value: 'divorced' }
+                          ].map((opt) => {
+                            const isSelected = field.value === opt.value
+                            return (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => {
+                                  field.onChange(opt.value)
+                                  setIsMaritalStatusOpen(false)
+                                }}
+                                className={cn(
+                                  "w-full flex items-center justify-between py-4 px-5 rounded-xl border border-[#EBEBEB] text-left text-sm font-semibold transition-colors outline-none cursor-pointer",
+                                  isSelected ? "bg-[#FFF9E6] border-[#FDB105]" : "bg-[#FEFAF1] hover:bg-gray-50/50"
+                                )}
+                              >
+                                <span className="capitalize">{opt.label}</span>
+                                {isSelected && <Check size={16} className="text-[#0B683A] stroke-[3px]" />}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </DrawerContent>
+                    </Drawer>
+                  </>
                 )}
               />
             </div>
