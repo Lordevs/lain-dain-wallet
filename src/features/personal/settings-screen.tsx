@@ -235,7 +235,6 @@ export default function PersonalSettingsScreen() {
         buttonText="Clear All Expenses"
         variant="danger"
         onConfirm={() => {
-          console.log('All personal expenses cleared!')
           setIsClearConfirmOpen(false)
         }}
       />

@@ -271,7 +271,6 @@ export default function GroupDetailScreen() {
               onClose={() => setShowSettleUp(false)}
               onConfirm={() => {
                 setShowSettleUp(false)
-                console.log('Group Settle Up Confirmed!')
               }}
             />
           )}

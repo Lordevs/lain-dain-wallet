@@ -88,7 +88,7 @@ export default function PersonalScreen() {
           <ExpenseList
             expenses={currentData.expenses}
             amountColor="green"
-            onItemClick={(id) => console.log('expense clicked', id)}
+            onItemClick={() => {}}
           />
         </div>
       </div>

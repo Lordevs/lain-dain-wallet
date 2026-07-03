@@ -274,7 +274,6 @@ export default function ContactDetailScreen() {
           onClose={() => setShowSettleUp(false)}
           onConfirm={() => {
             setShowSettleUp(false)
-            console.log('Contact Settle Up Confirmed!')
           }}
         />
       )}
