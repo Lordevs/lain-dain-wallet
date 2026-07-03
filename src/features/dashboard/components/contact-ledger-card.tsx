@@ -1,10 +1,10 @@
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { ContactLedger } from '../types'
+import type { Contact } from '@/types'
 import { Status, StatusIndicator } from '@/components/kibo-ui/status'
 
 interface ContactLedgerCardProps {
-  contact: ContactLedger
+  contact: Contact
   onClick?: () => void
 }
 

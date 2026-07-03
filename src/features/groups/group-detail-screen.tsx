@@ -7,8 +7,7 @@ import { ROUTES } from '@/constants/routes'
 import { formatPKR } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
-import ExpenseList, { type ExpenseListData } from '@/components/shared/expense-list'
-import { type ExpenseCategory } from '@/components/shared/expense-item'
+import ExpenseList, { type TransactionListItem } from '@/components/shared/expense-list'
 import { useTransactionStore } from '@/store/use-transaction-store'
 import ContactList from '@/components/shared/contact-list'
 import ContactListItem from '@/components/shared/contact-list-item'
@@ -20,17 +19,6 @@ import AddGroupExpenseScreen from '@/features/groups/add-group-expense-screen'
 import EditGroupExpenseScreen from '@/features/groups/edit-group-expense-screen'
 import TransactionDetailScreen from '@/features/transactions/transaction-detail-screen'
 
-
-interface TransactionItem extends ExpenseListData {
-  id: string
-  name: string
-  subtitle: React.ReactNode
-  amount: number
-  category: ExpenseCategory
-  rightSubtitle: string
-  showChevron?: boolean
-  className?: string
-}
 
 const getCategoryDetails = (catId: string) => {
   if (catId === 'payment') {
@@ -117,7 +105,7 @@ export default function GroupDetailScreen() {
     const list = useTransactionStore.getState().getContactTransactions(id, contact.name)
     const firstName = contact.name.split(' ')[0]
 
-    const items: TransactionItem[] = list.map((record) => {
+    const items: TransactionListItem[] = list.map((record) => {
       const displaySubtitle = record.category === 'payment' ? (
         <div className="flex flex-col text-left">
           <span className="text-[#6B6B6B] text-[12px] font-normal">You paid {firstName}</span>
@@ -138,9 +126,9 @@ export default function GroupDetailScreen() {
       }
     })
 
-    const today: TransactionItem[] = []
-    const yesterday: TransactionItem[] = []
-    const earlier: TransactionItem[] = []
+    const today: TransactionListItem[] = []
+    const yesterday: TransactionListItem[] = []
+    const earlier: TransactionListItem[] = []
 
     items.forEach((item) => {
       const sub = item.rightSubtitle.toLowerCase()

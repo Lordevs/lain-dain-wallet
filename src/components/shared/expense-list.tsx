@@ -15,6 +15,18 @@ export interface ExpenseListData {
   amountColor?: 'green' | 'orange' | 'black' | 'default'
 }
 
+/** A transaction record adapted for date-grouped list rendering (contact/group detail screens). */
+export interface TransactionListItem extends ExpenseListData {
+  id: string
+  name: string
+  subtitle: React.ReactNode
+  amount: number
+  category: ExpenseCategory
+  rightSubtitle: string
+  showChevron?: boolean
+  className?: string
+}
+
 interface ExpenseListProps {
   expenses: ExpenseListData[]
   onItemClick?: (id: string | number) => void

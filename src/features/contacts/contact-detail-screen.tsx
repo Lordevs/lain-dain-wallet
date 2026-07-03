@@ -7,8 +7,7 @@ import { ROUTES } from '@/constants/routes'
 import { formatPKR } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
-import ExpenseList, { type ExpenseListData } from '@/components/shared/expense-list'
-import { type ExpenseCategory } from '@/components/shared/expense-item'
+import ExpenseList, { type TransactionListItem } from '@/components/shared/expense-list'
 import { useTransactionStore } from '@/store/use-transaction-store'
 import { Drawer, DrawerContent, FULLSCREEN_DRAWER_CN } from '@/components/ui/drawer'
 import SendReminderScreen from '@/features/contacts/send-reminder-screen'
@@ -18,17 +17,6 @@ import EditContactExpenseScreen from '@/features/contacts/edit-contact-expense-s
 import TransactionDetailScreen from '@/features/transactions/transaction-detail-screen'
 import SettleUpPanel from '@/features/notifications/components/settle-up-panel'
 
-
-interface TransactionItem extends ExpenseListData {
-  id: string
-  name: string
-  subtitle: React.ReactNode
-  amount: number
-  category: ExpenseCategory
-  rightSubtitle: string
-  showChevron?: boolean
-  className?: string
-}
 
 /**
  * ContactDetailScreen — manages individual contact ledger detail view.
@@ -66,6 +54,47 @@ export default function ContactDetailScreen() {
   // Find contact by id from store
   const contacts = useContactStore((state) => state.contacts)
   const contact = contacts.find((c) => c.id === id)
+
+  const transactionState = useTransactionStore((state) => state.transactionsByContact)
+
+  // Get grouped transaction history
+  const transactions = useMemo(() => {
+    const list = useTransactionStore.getState().getContactTransactions(id, contact?.name ?? '')
+    const firstName = (contact?.name ?? '').split(' ')[0]
+
+    const items: TransactionListItem[] = list.map((record) => {
+      const displaySubtitle = record.category === 'payment' ? (
+        <div className="flex flex-col text-left">
+          <span className="text-[#6B6B6B] text-[12px] font-normal">You paid {firstName}</span>
+          <span className="text-[#0B683A] text-[12px] font-semibold">{record.subtitle}</span>
+        </div>
+      ) : record.subtitle
+
+      return {
+        id: record.id,
+        name: record.name,
+        subtitle: displaySubtitle,
+        amount: Math.abs(record.amount),
+        category: record.category as any,
+        rightSubtitle: record.rightSubtitle,
+        showChevron: record.showChevron,
+        className: record.className,
+        amountColor: record.amount > 0 ? 'green' : record.amount < 0 ? 'orange' : 'black',
+      }
+    })
+
+    return {
+      Today: items.filter((item) => item.rightSubtitle.toLowerCase().includes('today') || item.rightSubtitle.toLowerCase().includes('pm') || item.rightSubtitle.toLowerCase().includes('am')),
+      Yesterday: items.filter((item) => item.rightSubtitle.toLowerCase().includes('yesterday')),
+      Earlier: items.filter(
+        (item) =>
+          !item.rightSubtitle.toLowerCase().includes('today') &&
+          !item.rightSubtitle.toLowerCase().includes('pm') &&
+          !item.rightSubtitle.toLowerCase().includes('am') &&
+          !item.rightSubtitle.toLowerCase().includes('yesterday')
+      ),
+    }
+  }, [id, contact?.name, transactionState])
 
   if (!contact) {
     return (
@@ -107,47 +136,6 @@ export default function ContactDetailScreen() {
     : isNegative
       ? 'text-[#C96A1B]'
       : 'text-[#1A1A1A]'
-
-  const transactionState = useTransactionStore((state) => state.transactionsByContact)
-
-  // Get grouped transaction history
-  const transactions = useMemo(() => {
-    const list = useTransactionStore.getState().getContactTransactions(id, contact.name)
-    const firstName = contact.name.split(' ')[0]
-
-    const items: TransactionItem[] = list.map((record) => {
-      const displaySubtitle = record.category === 'payment' ? (
-        <div className="flex flex-col text-left">
-          <span className="text-[#6B6B6B] text-[12px] font-normal">You paid {firstName}</span>
-          <span className="text-[#0B683A] text-[12px] font-semibold">{record.subtitle}</span>
-        </div>
-      ) : record.subtitle
-
-      return {
-        id: record.id,
-        name: record.name,
-        subtitle: displaySubtitle,
-        amount: Math.abs(record.amount),
-        category: record.category as any,
-        rightSubtitle: record.rightSubtitle,
-        showChevron: record.showChevron,
-        className: record.className,
-        amountColor: record.amount > 0 ? 'green' : record.amount < 0 ? 'orange' : 'black',
-      }
-    })
-
-    return {
-      Today: items.filter((item) => item.rightSubtitle.toLowerCase().includes('today') || item.rightSubtitle.toLowerCase().includes('pm') || item.rightSubtitle.toLowerCase().includes('am')),
-      Yesterday: items.filter((item) => item.rightSubtitle.toLowerCase().includes('yesterday')),
-      Earlier: items.filter(
-        (item) =>
-          !item.rightSubtitle.toLowerCase().includes('today') &&
-          !item.rightSubtitle.toLowerCase().includes('pm') &&
-          !item.rightSubtitle.toLowerCase().includes('am') &&
-          !item.rightSubtitle.toLowerCase().includes('yesterday')
-      ),
-    }
-  }, [id, contact.name, transactionState])
 
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24 relative select-none">

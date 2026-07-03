@@ -17,7 +17,7 @@ export interface NewContactFlowState {
   selectedContacts: string[]
   /** Full contact objects matching selectedContacts ids */
   selectedList: Contact[]
-  /** MOCK_CONTACTS filtered by current searchQuery */
+  /** Contacts from the store filtered by current searchQuery */
   filteredContacts: Contact[]
   toggleContact: (id: string) => void
   removeContact: (id: string) => void

@@ -1,23 +1,9 @@
 import { create } from 'zustand'
+import type { Contact, LedgerTag, BalanceSummary } from '@/types'
 
-export interface LedgerTag {
-  name: string
-  amount: number
-}
-
-export interface Contact {
-  id: string
-  name: string
-  initials: string
-  avatarColor: string
-  ledgerCount: number
-  netAmount: number
-  tags: LedgerTag[]
-  isOnline?: boolean
-  isOnLainDain?: boolean
-  phone?: string
-  type: 'person' | 'group'
-}
+// Re-exported for existing consumers that import the type from this store;
+// the canonical definition lives in `@/types`.
+export type { Contact, LedgerTag }
 
 interface ContactState {
   contacts: Contact[]
@@ -300,7 +286,7 @@ export function selectPayables(state: ContactState) {
   return state.contacts.filter((c) => c.netAmount < 0)
 }
 
-export function selectBalanceSummary(state: ContactState) {
+export function selectBalanceSummary(state: ContactState): BalanceSummary {
   const totalReceivable = state.contacts
     .filter((c) => c.netAmount > 0)
     .reduce((sum, c) => sum + c.netAmount, 0)

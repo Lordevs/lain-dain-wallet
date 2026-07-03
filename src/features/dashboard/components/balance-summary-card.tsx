@@ -1,6 +1,6 @@
 import { ArrowDown, ArrowUp, Wallet } from 'lucide-react'
 import { formatCurrency } from '@/lib/currency'
-import type { BalanceSummary } from '../types'
+import type { BalanceSummary } from '@/types'
 
 interface BalanceSummaryCardProps {
   summary: BalanceSummary

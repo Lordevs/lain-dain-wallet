@@ -1,18 +1,9 @@
 import { create } from 'zustand'
+import type { TransactionRecord } from '@/types'
 
-export interface TransactionRecord {
-  id: string
-  name: string
-  subtitle: string
-  amount: number
-  category: string
-  rightSubtitle: string
-  showChevron?: boolean
-  className?: string
-  splitType?: 'equal' | 'unequal' | 'adjustment'
-  dateValue?: string
-  note?: string
-}
+// Re-exported for existing consumers that import the type from this store;
+// the canonical definition lives in `@/types`.
+export type { TransactionRecord }
 
 interface TransactionState {
   transactionsByContact: Record<string, TransactionRecord[]>

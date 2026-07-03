@@ -1,8 +1,9 @@
 // ─── Contact Domain Types ─────────────────────────────────────────────────────
 
 /**
- * AppContact — the canonical contact shape used across the entire app.
- * Compatible with ContactLedger in the dashboard feature.
+ * AppContact — a lightweight contact reference for invites and pre-ledger
+ * contacts that don't have balance data yet. Once a contact has a ledger,
+ * it's represented by the canonical `Contact` type in `@/types` instead.
  */
 export interface AppContact {
   id: string
