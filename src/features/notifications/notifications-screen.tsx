@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { Check, Wallet, CheckCircle2, Clock, AlertTriangle } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
@@ -15,16 +15,43 @@ import LedgerBreakdownScreen from '@/features/contacts/ledger-breakdown-screen'
 
 export default function NotificationsScreen() {
   const navigate = useNavigate({ from: '/notifications/' })
-  const { drawer, contactId } = useSearch({ from: '/notifications/' })
+  const { drawer, contactId, txId } = useSearch({ from: '/notifications/' })
+  const openedInSessionRef = useRef(false)
 
   const closeDrawer = () => {
+    if (!drawer) return
+
+    if (openedInSessionRef.current) {
+      openedInSessionRef.current = false
+      window.history.back()
+    } else {
+      navigate({
+        search: (prev: any) => {
+          const next = { ...prev }
+          delete next.drawer
+          delete next.contactId
+          delete next.txId
+          return next
+        },
+        replace: true,
+      })
+    }
+  }
+
+  const openDrawer = (
+    dName: 'reminder' | 'breakdown' | 'settle-up' | 'confirm' | 'dispute',
+    cid: string
+  ) => {
+    openedInSessionRef.current = true
     navigate({
-      search: (prev: any) => {
-        const next = { ...prev }
-        delete next.drawer
-        delete next.contactId
-        return next
-      },
+      search: (prev: any) => ({
+        ...prev,
+        drawer: dName,
+        // If it's reminder or breakdown, store as contactId. Otherwise store as txId.
+        contactId: (dName === 'reminder' || dName === 'breakdown') ? cid : prev.contactId,
+        txId: (dName !== 'reminder' && dName !== 'breakdown') ? cid : prev.txId,
+      }),
+      replace: !!drawer,
     })
   }
 
@@ -43,10 +70,10 @@ export default function NotificationsScreen() {
     handleRemindComplete,
   } = useNotifications()
 
-  // Panel visibility states for dynamic content rendering
-  const [activeSettleUpNotification, setActiveSettleUpNotification] = useState<NotificationItem | null>(null)
-  const [activeConfirmNotification, setActiveConfirmNotification] = useState<NotificationItem | null>(null)
-  const [activeDisputeNotification, setActiveDisputeNotification] = useState<NotificationItem | null>(null)
+  // Panel visibility states resolved from search query params
+  const activeSettleUpNotification = drawer === 'settle-up' ? notifications.find((n) => n.id === txId) || null : null
+  const activeConfirmNotification = drawer === 'confirm' ? notifications.find((n) => n.id === txId) || null : null
+  const activeDisputeNotification = drawer === 'dispute' ? notifications.find((n) => n.id === txId) || null : null
 
   // Render Category Icon Badges based on type
   const getNotificationIcon = (type: NotificationItem['type']) => {
@@ -97,7 +124,7 @@ export default function NotificationsScreen() {
             variant: 'green',
             onClick: (e) => {
               e.stopPropagation()
-              setActiveSettleUpNotification(item)
+              openDrawer('settle-up', item.id)
             },
           },
           {
@@ -116,7 +143,7 @@ export default function NotificationsScreen() {
             variant: 'green',
             onClick: (e) => {
               e.stopPropagation()
-              setActiveConfirmNotification(item)
+              openDrawer('confirm', item.id)
             },
           },
           {
@@ -124,7 +151,7 @@ export default function NotificationsScreen() {
             variant: 'orange',
             onClick: (e) => {
               e.stopPropagation()
-              setActiveConfirmNotification(item)
+              openDrawer('confirm', item.id)
             },
           },
         ]
@@ -154,7 +181,7 @@ export default function NotificationsScreen() {
             variant: 'orange',
             onClick: (e) => {
               e.stopPropagation()
-              setActiveDisputeNotification(item)
+              openDrawer('dispute', item.id)
             },
           },
           {
@@ -195,15 +222,15 @@ export default function NotificationsScreen() {
     if (item.type === 'edited') {
       navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: item.txId || item.id } })
     } else if (item.type === 'request') {
-      setActiveSettleUpNotification(item)
+      openDrawer('settle-up', item.id)
     } else if (item.type === 'confirmation') {
-      setActiveConfirmNotification(item)
+      openDrawer('confirm', item.id)
     } else if (item.type === 'dispute') {
-      setActiveDisputeNotification(item)
+      openDrawer('dispute', item.id)
     } else if (item.type === 'reminder') {
-      navigate({ search: (prev: any) => ({ ...prev, drawer: 'reminder', contactId: '1' }) })
+      openDrawer('reminder', '1')
     } else {
-      navigate({ search: (prev: any) => ({ ...prev, drawer: 'breakdown', contactId: '1' }) })
+      openDrawer('breakdown', '1')
     }
   }
 
@@ -312,12 +339,10 @@ export default function NotificationsScreen() {
       {activeSettleUpNotification && (
         <SettleUpPanel
           notification={activeSettleUpNotification}
-          onClose={() => {
-            setActiveSettleUpNotification(null)
-          }}
+          onClose={closeDrawer}
           onConfirm={() => {
             handleSettle(activeSettleUpNotification.id)
-            setActiveSettleUpNotification(null)
+            closeDrawer()
           }}
         />
       )}
@@ -326,14 +351,14 @@ export default function NotificationsScreen() {
       {activeConfirmNotification && (
         <PaymentConfirmationPanel
           notification={activeConfirmNotification}
-          onClose={() => setActiveConfirmNotification(null)}
+          onClose={closeDrawer}
           onConfirmReceived={() => {
             handleConfirmReceived(activeConfirmNotification.id)
-            setActiveConfirmNotification(null)
+            closeDrawer()
           }}
           onDispute={() => {
             triggerToast('Dispute logged')
-            setActiveConfirmNotification(null)
+            closeDrawer()
           }}
         />
       )}
@@ -342,14 +367,14 @@ export default function NotificationsScreen() {
       {activeDisputeNotification && (
         <PaymentDisputePanel
           notification={activeDisputeNotification}
-          onClose={() => setActiveDisputeNotification(null)}
+          onClose={closeDrawer}
           onPayAgain={() => {
             triggerToast('Redirecting to Payment screen...')
-            setActiveDisputeNotification(null)
+            closeDrawer()
           }}
           onIgnore={() => {
             handleIgnore(activeDisputeNotification.id)
-            setActiveDisputeNotification(null)
+            closeDrawer()
           }}
         />
       )}

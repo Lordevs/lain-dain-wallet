@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { useSearch } from '@tanstack/react-router'
 import { MoreVertical, Camera, Pencil, Plus, LogOut, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -16,6 +17,7 @@ import EditGroupNamePanel from './components/edit-group-name-panel'
 
 export default function GroupSettingsScreen() {
   const { drawer } = useSearch({ from: '/groups/$id/settings' })
+  const openedInSessionRef = useRef(false)
 
   const {
     contact,
@@ -48,25 +50,33 @@ export default function GroupSettingsScreen() {
   } = useGroupSettings()
 
   const closeDrawer = () => {
-    navigate({
-      search: (prev) => {
-        const next = { ...prev }
-        delete next.drawer
-        delete next.subDrawer
-        delete next.edit
-        return next
-      },
-      replace: true,
-    })
+    if (!drawer) return
+
+    if (openedInSessionRef.current) {
+      openedInSessionRef.current = false
+      window.history.back()
+    } else {
+      navigate({
+        search: (prev) => {
+          const next = { ...prev }
+          delete next.drawer
+          delete next.subDrawer
+          delete next.edit
+          return next
+        },
+        replace: true,
+      })
+    }
   }
 
   const openDrawer = (name: 'smart-settle' | 'recurring') => {
+    openedInSessionRef.current = true
     navigate({
       search: (prev) => ({
         ...prev,
         drawer: name,
       }),
-      replace: true,
+      replace: !!drawer,
     })
   }
 

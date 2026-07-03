@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef } from 'react'
 import { useParams, useNavigate, Navigate, useSearch } from '@tanstack/react-router'
 import { Bell } from 'lucide-react'
 import { useContactStore } from '@/store/use-contact-store'
@@ -27,28 +27,37 @@ export default function ContactDetailScreen() {
   const navigate = useNavigate({ from: '/contacts/$id/' })
   const { drawer, txId } = useSearch({ from: '/contacts/$id/' })
   const [showSettleUp, setShowSettleUp] = useState(false)
+  const openedInSessionRef = useRef(false)
 
   const openDrawer = (dName: 'breakdown' | 'reminder' | 'transaction' | 'add-expense' | 'edit-expense', tid?: string) => {
+    openedInSessionRef.current = true
     navigate({
       search: (prev) => ({
         ...prev,
         drawer: dName,
         txId: tid,
       }),
-      replace: true,
+      replace: !!drawer,
     })
   }
 
   const closeDrawer = () => {
-    navigate({
-      search: (prev) => {
-        const next = { ...prev }
-        delete next.drawer
-        delete next.txId
-        return next
-      },
-      replace: true,
-    })
+    if (!drawer) return
+
+    if (openedInSessionRef.current) {
+      openedInSessionRef.current = false
+      window.history.back()
+    } else {
+      navigate({
+        search: (prev) => {
+          const next = { ...prev }
+          delete next.drawer
+          delete next.txId
+          return next
+        },
+        replace: true,
+      })
+    }
   }
 
   // Find contact by id from store

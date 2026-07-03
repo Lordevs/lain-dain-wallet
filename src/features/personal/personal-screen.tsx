@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { MoreVertical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -22,23 +22,34 @@ export default function PersonalScreen() {
   const navigate = useNavigate({ from: '/personal/' })
   const { drawer } = useSearch({ from: '/personal/' })
   const [activeFilter, setActiveFilter] = useState<'this_month' | 'last_month' | 'all_time'>('this_month')
+  const openedInSessionRef = useRef(false)
 
   const closeDrawer = () => {
-    navigate({
-      search: (prev) => {
-        const next = { ...prev }
-        delete next.drawer
-        return next
-      },
-    })
+    if (!drawer) return
+
+    if (openedInSessionRef.current) {
+      openedInSessionRef.current = false
+      window.history.back()
+    } else {
+      navigate({
+        search: (prev) => {
+          const next = { ...prev }
+          delete next.drawer
+          return next
+        },
+        replace: true,
+      })
+    }
   }
 
   const openDrawer = (name: 'add-expense') => {
+    openedInSessionRef.current = true
     navigate({
       search: (prev) => ({
         ...prev,
         drawer: name,
       }),
+      replace: !!drawer,
     })
   }
 

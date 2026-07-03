@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useParams, useNavigate, useSearch } from '@tanstack/react-router'
 import { MoreVertical, ChevronRight } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
@@ -24,28 +24,37 @@ export default function GroupDetailScreen() {
   const { id } = useParams({ from: '/groups/$id/' })
   const navigate = useNavigate({ from: '/groups/$id/' })
   const { drawer, txId } = useSearch({ from: '/groups/$id/' })
+  const openedInSessionRef = useRef(false)
 
   const openDrawer = (name: 'reminder' | 'add-expense' | 'edit-expense' | 'transaction', tid?: string) => {
+    openedInSessionRef.current = true
     navigate({
       search: (prev) => ({
         ...prev,
         drawer: name,
         txId: tid,
       }),
-      replace: true,
+      replace: !!drawer,
     })
   }
 
   const closeDrawer = () => {
-    navigate({
-      search: (prev) => {
-        const next = { ...prev }
-        delete next.drawer
-        delete next.txId
-        return next
-      },
-      replace: true,
-    })
+    if (!drawer) return
+
+    if (openedInSessionRef.current) {
+      openedInSessionRef.current = false
+      window.history.back()
+    } else {
+      navigate({
+        search: (prev) => {
+          const next = { ...prev }
+          delete next.drawer
+          delete next.txId
+          return next
+        },
+        replace: true,
+      })
+    }
   }
 
   // State to filter by category

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { ROUTES } from '@/constants/routes'
 import AppHeader from '@/components/layout/app-header'
@@ -13,6 +13,7 @@ import { useContactStore, selectBalanceSummary, selectReceivables, selectPayable
 import { Drawer, DrawerContent } from '@/components/ui/drawer'
 import LedgerBreakdownScreen from '@/features/contacts/ledger-breakdown-screen'
 
+
 /**
  * DashboardScreen — the main home screen of the Lain Dain Wallet app.
  * Assembles all reusable dashboard components into the final layout.
@@ -24,29 +25,40 @@ export default function DashboardScreen() {
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState<'all' | 'people' | 'groups'>('all')
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest')
+  const openedInSessionRef = useRef(false)
 
   const balanceSummary = useContactStore(useShallow(selectBalanceSummary))
   const receivables = useContactStore(useShallow(selectReceivables))
   const payables = useContactStore(useShallow(selectPayables))
 
   const closeDrawer = () => {
-    navigate({
-      search: (prev) => {
-        const next = { ...prev }
-        delete next.drawer
-        delete next.contactId
-        return next
-      },
-    })
+    if (!drawer) return
+
+    if (openedInSessionRef.current) {
+      openedInSessionRef.current = false
+      window.history.back()
+    } else {
+      navigate({
+        search: (prev) => {
+          const next = { ...prev }
+          delete next.drawer
+          delete next.contactId
+          return next
+        },
+        replace: true,
+      })
+    }
   }
 
   const openDrawer = (cid: string) => {
+    openedInSessionRef.current = true
     navigate({
       search: (prev) => ({
         ...prev,
         drawer: 'breakdown',
         contactId: cid,
       }),
+      replace: !!drawer,
     })
   }
 
