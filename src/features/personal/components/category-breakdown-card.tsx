@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import MonthFilterDropdown from './month-filter-dropdown'
 import { formatCurrency } from '@/lib/currency'
 import type { CategoryBreakdownItem } from '../types'
@@ -36,25 +36,27 @@ export default function CategoryBreakdownCard({
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
   // Calculate coordinates for slices and labels
-  let accumulatedPercent = 0
-  const slices = categories.map((cat, idx) => {
-    const start = accumulatedPercent
-    const end = accumulatedPercent + cat.percentage / 100
-    accumulatedPercent = end
+  const slices = useMemo(() => {
+    let accumulatedPercent = 0
+    return categories.map((cat, idx) => {
+      const start = accumulatedPercent
+      const end = accumulatedPercent + cat.percentage / 100
+      accumulatedPercent = end
 
-    // Midpoint for label placing
-    const midAngle = (start + (end - start) / 2) * 360
-    const labelRadius = 55
-    const labelCoords = polarToCartesian(80, 80, labelRadius, midAngle)
+      // Midpoint for label placing
+      const midAngle = (start + (end - start) / 2) * 360
+      const labelRadius = 55
+      const labelCoords = polarToCartesian(80, 80, labelRadius, midAngle)
 
-    return {
-      path: getSlicePath(80, 80, 75, start, end),
-      labelX: labelCoords.x,
-      labelY: labelCoords.y,
-      cat,
-      idx,
-    }
-  })
+      return {
+        path: getSlicePath(80, 80, 75, start, end),
+        labelX: labelCoords.x,
+        labelY: labelCoords.y,
+        cat,
+        idx,
+      }
+    })
+  }, [categories])
 
   return (
     <div className="bg-white rounded-[24px] border-[0.8px] border-[#EBEBEB] shadow-[0px_2px_10px_0px_#0000000D] p-6 mx-6 mt-4 flex flex-col">
