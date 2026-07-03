@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { FileText, ChevronRight, ChevronDown, Users, Check } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { useAuthStore } from '@/store/use-auth-store'
+import { useFormattedAmountInput } from '@/hooks/use-formatted-amount-input'
 import { Button } from '@/components/ui/button'
 import FlowHeader from '@/components/shared/flow-header'
 import CategoryPicker, { CATEGORIES } from '@/features/personal/components/category-picker'
@@ -58,7 +59,7 @@ export default function AddExpenseBase({
   onBack,
 }: AddExpenseBaseProps) {
   // State management
-  const [amount, setAmount] = useState(initialData?.amount || '')
+  const { amount, handleAmountChange, formattedAmount } = useFormattedAmountInput(initialData?.amount || '')
   const [description, setDescription] = useState(initialData?.description || '')
   const [selectedCategory, setSelectedCategory] = useState(initialData?.category || '')
   const [dateValue, setDateValue] = useState(initialData?.dateValue || 'Today')
@@ -88,16 +89,6 @@ export default function AddExpenseBase({
     : paidBy === 'multiple'
       ? 'Multiple people'
       : (contact?.name || 'Contact')
-  // Format amount input as number with commas
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawVal = e.target.value.replace(/\D/g, '')
-    setAmount(rawVal)
-  }
-
-  const getFormattedAmount = () => {
-    if (!amount) return ''
-    return Number(amount).toLocaleString('en-US')
-  }
 
   // Toggle helpers
   const handleToggleDate = () => {
@@ -185,7 +176,7 @@ export default function AddExpenseBase({
                 <input
                   type="text"
                   inputMode="decimal"
-                  value={getFormattedAmount()}
+                  value={formattedAmount}
                   onChange={handleAmountChange}
                   className="w-full bg-transparent border-0 outline-none text-[32px] font-extrabold text-foreground placeholder:text-divider font-sans leading-none py-1"
                   placeholder="0"
