@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import MonthFilterDropdown from './month-filter-dropdown'
+import MonthFilterDropdown from './month-filter-drawer'
 import { formatCurrency } from '@/lib/currency'
 import type { CategoryBreakdownItem } from '../types'
 
@@ -95,8 +95,8 @@ export default function CategoryBreakdownCard({
 
       <div className="flex items-center justify-between gap-4">
         {/* Left Side: SVG Pie Chart */}
-        <div className="relative size-42 flex items-center justify-center shrink-0">
-          <svg viewBox="0 0 160 160" className="size-40 overflow-visible">
+        <div className="relative w-[38%] aspect-square flex items-center justify-center shrink-0 min-w-[100px] max-w-[150px]">
+          <svg viewBox="0 0 160 160" className="w-full h-full overflow-visible">
             {slices.map((slice) => {
               const isHovered = hoveredIndex === slice.idx
               const labelColor = slice.cat.label === 'Food' ? '#ffffff' : '#1A1A1A'

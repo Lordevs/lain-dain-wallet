@@ -1,5 +1,4 @@
 import { MoreVertical } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import FlowHeader from '@/components/shared/flow-header'
 import { useNewContactFlow } from './hooks/use-new-contact-flow'
@@ -18,13 +17,6 @@ const STEP_TITLES: Record<NewFlowStep, string> = {
   success: '',
 }
 
-const slideVariants = {
-  initial: { opacity: 0, x: 20 },
-  animate: { opacity: 1, x: 0 },
-  exit: { opacity: 0, x: -20 },
-  transition: { duration: 0.22 },
-}
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 /**
@@ -32,8 +24,7 @@ const slideVariants = {
  *
  * Responsibilities:
  *  1. Owns the flow state via `useNewContactFlow`.
- *  2. Renders the shared FlowHeader (hidden on success screen).
- *  3. Animates between the 4 step components with framer-motion.
+ *  2. Renders the shared FlowHeader.
  *
  * All business logic lives in `useNewContactFlow`.
  * All UI lives in the individual step components.
@@ -41,32 +32,18 @@ const slideVariants = {
 export default function NewContactScreen() {
   const flow = useNewContactFlow()
 
-  const getStepSubtitle = () => {
-    if (flow.step === 'add_members') {
-      return `${flow.selectedContacts.length} selected`
-    }
-    if (flow.step === 'group_details') {
-      return `${flow.selectedContacts.length} members`
-    }
-    return undefined
-  }
-
   return (
-    <div className="flex flex-col flex-1 bg-[#FEFAF1] h-screen max-h-dvh relative select-none overflow-hidden">
-      {/* Header — hidden on success screen (it has its own back button) */}
-
+    <div className="flex flex-col flex-1 bg-background h-screen overflow-hidden text-foreground">
+      {/* Header */}
       <FlowHeader
         title={STEP_TITLES[flow.step]}
-        subtitle={getStepSubtitle()}
         onBack={flow.goBack}
         rightSlot={
-          flow.step === 'choice' ? (
+          flow.step === 'add_members' ? (
             <Button
-              type="button"
-              variant="outline"
+              variant="ghost"
               size="icon"
-              aria-label="More options"
-              className="size-10 border-0 rounded-full bg-[#0000000A]! text-foreground shrink-0"
+              className="w-10 h-10 text-muted-foreground bg-transparent border-0 cursor-pointer outline-none hover:bg-hover-bg rounded-full flex items-center justify-center"
             >
               <MoreVertical size={18} />
             </Button>
@@ -74,32 +51,29 @@ export default function NewContactScreen() {
         }
       />
 
-      {/* Animated step transitions */}
-      <AnimatePresence mode="wait">
-        {flow.step === 'choice' && (
-          <motion.div key="choice" {...slideVariants} className="flex-1 flex flex-col overflow-hidden">
-            <ChoiceStep flow={flow} />
-          </motion.div>
-        )}
+      {flow.step === 'choice' && (
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <ChoiceStep flow={flow} />
+        </div>
+      )}
 
-        {flow.step === 'add_members' && (
-          <motion.div key="add_members" {...slideVariants} className="flex-1 flex flex-col overflow-hidden">
-            <AddMembersStep flow={flow} />
-          </motion.div>
-        )}
+      {flow.step === 'add_members' && (
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <AddMembersStep flow={flow} />
+        </div>
+      )}
 
-        {flow.step === 'group_details' && (
-          <motion.div key="group_details" {...slideVariants} className="flex-1 flex flex-col overflow-hidden">
-            <GroupDetailsStep flow={flow} />
-          </motion.div>
-        )}
+      {flow.step === 'group_details' && (
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <GroupDetailsStep flow={flow} />
+        </div>
+      )}
 
-        {flow.step === 'success' && (
-          <motion.div key="success" {...slideVariants} className="flex-1 flex flex-col">
-            <GroupSuccessStep flow={flow} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {flow.step === 'success' && (
+        <div className="flex-1 flex flex-col">
+          <GroupSuccessStep flow={flow} />
+        </div>
+      )}
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import { FileText, ChevronRight, ChevronDown, Users, Check } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { useAuthStore } from '@/store/use-auth-store'
@@ -58,15 +59,19 @@ export default function AddExpenseBase({
   onSuccessComplete,
   onBack,
 }: AddExpenseBaseProps) {
+  const navigate = useNavigate()
+  const search = useSearch({ strict: false }) as any
+  const subDrawer = search?.subDrawer
+
   // State management
   const { amount, handleAmountChange, formattedAmount } = useFormattedAmountInput(initialData?.amount || '')
   const [description, setDescription] = useState(initialData?.description || '')
   const [selectedCategory, setSelectedCategory] = useState(initialData?.category || '')
   const [dateValue, setDateValue] = useState(initialData?.dateValue || 'Today')
   const [receiptFile, setReceiptFile] = useState<{ name: string; size: string; dataUrl?: string } | null>(null)
-  const [showReceiptOverlay, setShowReceiptOverlay] = useState(false)
+  const showReceiptOverlay = subDrawer === 'receipt'
   const [noteText, setNoteText] = useState('')
-  const [showNoteOverlay, setShowNoteOverlay] = useState(false)
+  const showNoteOverlay = subDrawer === 'note'
   const [showSuccess, setShowSuccess] = useState(false)
   const [showDateDrawer, setShowDateDrawer] = useState(false)
 
@@ -96,11 +101,15 @@ export default function AddExpenseBase({
   }
 
   const handleToggleReceipt = () => {
-    setShowReceiptOverlay(true)
+    (navigate as any)({
+      search: (prev: any) => ({ ...prev, subDrawer: 'receipt' })
+    })
   }
 
   const handleToggleNote = () => {
-    setShowNoteOverlay(true)
+    (navigate as any)({
+      search: (prev: any) => ({ ...prev, subDrawer: 'note' })
+    })
   }
 
   // Submit entry handler
@@ -315,10 +324,10 @@ export default function AddExpenseBase({
         amount={Number(amount) || 0}
         description={description}
         category={selectedCategory}
-        onClose={() => setShowReceiptOverlay(false)}
+        onClose={() => { (navigate as any)({ search: (prev: any) => { const next = { ...prev }; delete next.subDrawer; return next } }); }}
         onSave={(file) => {
-          setReceiptFile(file)
-          setShowReceiptOverlay(false)
+          setReceiptFile(file);
+          (navigate as any)({ search: (prev: any) => { const next = { ...prev }; delete next.subDrawer; return next } });
         }}
         initialFile={receiptFile}
       />
@@ -330,10 +339,10 @@ export default function AddExpenseBase({
         description={description}
         category={selectedCategory}
         initialNote={noteText}
-        onClose={() => setShowNoteOverlay(false)}
+        onClose={() => { (navigate as any)({ search: (prev: any) => { const next = { ...prev }; delete next.subDrawer; return next } }); }}
         onSave={(text) => {
-          setNoteText(text)
-          setShowNoteOverlay(false)
+          setNoteText(text);
+          (navigate as any)({ search: (prev: any) => { const next = { ...prev }; delete next.subDrawer; return next } });
         }}
       />
 

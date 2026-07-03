@@ -7,7 +7,7 @@ import { FILTER_DATA } from './data/mock-data'
 import ExpenseSummaryCard from './components/expense-summary-card'
 import ViewReportsCard from './components/view-reports-card'
 import ExpenseList from '@/components/shared/expense-list'
-import MonthFilterDropdown from './components/month-filter-dropdown'
+import MonthFilterDropdown from './components/month-filter-drawer'
 import FlowHeader from '@/components/shared/flow-header'
 import AddEntryScreen from '@/features/personal/add-entry-screen'
 
@@ -70,7 +70,7 @@ export default function PersonalScreen() {
       />
 
       {/* Main Content Scroll Container */}
-      <div className="flex flex-col">
+      <div className="flex flex-col pb-44">
         {/* Card 1: Spent Stat Card */}
         <ExpenseSummaryCard summary={currentData.summary} />
 
@@ -98,13 +98,13 @@ export default function PersonalScreen() {
           <ExpenseList
             expenses={currentData.expenses}
             amountColor="green"
-            onItemClick={() => {}}
+            onItemClick={() => { }}
           />
         </div>
       </div>
 
       {/* Absolute Bottom Action Button */}
-      <div className="absolute bottom-0 left-0 right-0 px-6 py-4 bg-[#FEFAF1]/90 border-t border-[#EFE7DD]/30 backdrop-blur-sm z-10">
+      <div className="absolute bottom-[76px] left-0 right-0 px-6 py-4 bg-[#FEFAF1]/90 border-t border-[#EFE7DD]/30 backdrop-blur-sm z-10">
         <Button
           type="button"
           onClick={() => openDrawer('add-expense')}

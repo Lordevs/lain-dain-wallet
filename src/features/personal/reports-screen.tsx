@@ -3,7 +3,7 @@ import { REPORTS_MOCK_DATA } from './data/mock-data'
 import ExpenseSummaryCard from './components/expense-summary-card'
 import CategoryBreakdownCard from './components/category-breakdown-card'
 import MonthlySpendingCard from './components/monthly-spending-card'
-import MonthFilterDropdown from './components/month-filter-dropdown'
+import MonthFilterDropdown from './components/month-filter-drawer'
 import FlowHeader from '@/components/shared/flow-header'
 
 type ReportPeriodKey = 'april_2026' | 'march_2026' | 'february_2026'
