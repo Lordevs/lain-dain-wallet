@@ -8,6 +8,7 @@ import LedgerTabs, { type LedgerTab } from './components/ledger-tabs'
 import SectionHeader from './components/section-header'
 import ContactLedgerCard from './components/contact-ledger-card'
 import Fab from './components/fab'
+import { useShallow } from 'zustand/react/shallow'
 import { useContactStore, selectBalanceSummary, selectReceivables, selectPayables } from '@/store/use-contact-store'
 import { Drawer, DrawerContent } from '@/components/ui/drawer'
 import LedgerBreakdownScreen from '@/features/contacts/ledger-breakdown-screen'
@@ -24,9 +25,9 @@ export default function DashboardScreen() {
   const [filterType, setFilterType] = useState<'all' | 'people' | 'groups'>('all')
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest')
 
-  const balanceSummary = useContactStore(selectBalanceSummary)
-  const receivables = useContactStore(selectReceivables)
-  const payables = useContactStore(selectPayables)
+  const balanceSummary = useContactStore(useShallow(selectBalanceSummary))
+  const receivables = useContactStore(useShallow(selectReceivables))
+  const payables = useContactStore(useShallow(selectPayables))
 
   const closeDrawer = () => {
     navigate({
