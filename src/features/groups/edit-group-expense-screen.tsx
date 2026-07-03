@@ -82,7 +82,7 @@ export default function EditGroupExpenseScreen({ groupId, txId, onClose, onSucce
       const updatedNetAmount = contact.netAmount + (contactOwesAmount - oldAmount)
 
       // Use original name/amount to locate the tag before it was changed
-      let updatedTags = [...contact.tags]
+      const updatedTags = [...contact.tags]
       const tagIndex = updatedTags.findIndex((t) => t.name === oldName || t.amount === oldAmount)
       if (tagIndex !== -1) {
         updatedTags[tagIndex] = {

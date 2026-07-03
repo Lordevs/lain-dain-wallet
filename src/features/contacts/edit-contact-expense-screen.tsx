@@ -84,7 +84,7 @@ export default function EditContactExpenseScreen({ contactId, txId, onClose, onS
     const updatedNetAmount = contact.netAmount + diff
 
     // Update tags array
-    let updatedTags = [...contact.tags]
+    const updatedTags = [...contact.tags]
     const tagIndex = updatedTags.findIndex((t) => t.name === oldName || t.name === (data.description || 'New Split Expense'))
     if (tagIndex !== -1) {
       updatedTags[tagIndex] = {
