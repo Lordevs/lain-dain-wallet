@@ -1,5 +1,4 @@
-import { useState, useMemo, useRef } from 'react'
-import { useParams, useNavigate, useSearch } from '@tanstack/react-router'
+import { useSearch } from '@tanstack/react-router'
 import { MoreVertical, Camera, Pencil, Plus, LogOut, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
@@ -9,40 +8,44 @@ import ProfilePicturePanel from '@/components/shared/profile-picture-panel'
 import OutstandingBalanceDrawer from '@/components/shared/outstanding-balance-drawer'
 import ConfirmActionDrawer from '@/components/shared/confirm-action-drawer'
 import { ROUTES } from '@/constants/routes'
-import { useContactStore } from '@/store/use-contact-store'
 import { Drawer, DrawerContent } from '@/components/ui/drawer'
 import SmartSettleScreen from '@/features/groups/smart-settle-screen'
 import RecurringPaymentsScreen from '@/features/groups/recurring-payments-screen'
-
-/** A group member with a numeric balance field (positive = owes you, negative = you owe) */
-interface GroupMember {
-  id: string
-  name: string
-  initials: string
-  avatarColor: string
-  balance: number          // Numeric source of truth — never parse owesText for logic
-  owesText: string         // Display-only derived string
-  isAdmin: boolean
-  isPending: boolean
-}
-
-/** Build the display string from numeric balance */
-function buildOwesText(member: Omit<GroupMember, 'owesText'>): string {
-  if (member.id === 'you') return 'Admin · Group creator'
-  if (member.isPending) return 'Member · Invited via link'
-  if (member.balance > 0) return `Member · Owes you Rs. ${member.balance.toLocaleString('en-US')}`
-  if (member.balance < 0) return `Member · You owe Rs. ${Math.abs(member.balance).toLocaleString('en-US')}`
-  return `${member.isAdmin ? 'Admin' : 'Member'} · On Lain Dain`
-}
-
-function makeMember(partial: Omit<GroupMember, 'owesText'>): GroupMember {
-  return { ...partial, owesText: buildOwesText(partial) }
-}
+import { useGroupSettings } from './hooks/use-group-settings'
+import EditGroupNamePanel from './components/edit-group-name-panel'
 
 export default function GroupSettingsScreen() {
-  const { id } = useParams({ from: '/groups/$id/settings' })
-  const navigate = useNavigate({ from: '/groups/$id/settings' })
   const { drawer } = useSearch({ from: '/groups/$id/settings' })
+
+  const {
+    contact,
+    smartSettleEnabled,
+    setSmartSettleEnabled,
+    groupPhoto,
+    setGroupPhoto,
+    isPhotoPanelOpen,
+    setIsPhotoPanelOpen,
+    groupName,
+    isNamePanelOpen,
+    setIsNamePanelOpen,
+    tempGroupName,
+    setTempGroupName,
+    members,
+    selectedMemberId,
+    setSelectedMemberId,
+    drawerConfig,
+    setDrawerConfig,
+    pendingAfterClose,
+    selectedMember,
+    handleToggleAdmin,
+    handleRemoveMember,
+    handleBlockReport,
+    handleLeaveGroup,
+    handleDeleteGroup,
+    handleSaveGroupName,
+    groupInitials,
+    navigate,
+  } = useGroupSettings()
 
   const closeDrawer = () => {
     navigate({
@@ -67,193 +70,6 @@ export default function GroupSettingsScreen() {
     })
   }
 
-  const contacts = useContactStore((state) => state.contacts)
-  const contact = useMemo(() => {
-    return contacts.find((c) => c.id === id)
-  }, [id, contacts])
-
-  // Local state for Smart Settle toggle
-  const [smartSettleEnabled, setSmartSettleEnabled] = useState(true)
-
-  // Local state for Group Cover Photo
-  const [groupPhoto, setGroupPhoto] = useState<string | null>(null)
-  const [isPhotoPanelOpen, setIsPhotoPanelOpen] = useState(false)
-
-  // Local state for Group Name editing
-  const [groupName, setGroupName] = useState(contact?.name || 'Murree Trip')
-  const [isNamePanelOpen, setIsNamePanelOpen] = useState(false)
-  const [tempGroupName, setTempGroupName] = useState(contact?.name || 'Murree Trip')
-
-  // Local dynamic state for members list — uses numeric balance, not display strings
-  const [members, setMembers] = useState<GroupMember[]>([
-    makeMember({ id: 'you', name: 'You', initials: 'MH', avatarColor: 'bg-[#0B683A] text-white', balance: 0, isAdmin: true, isPending: false }),
-    makeMember({ id: 'ali', name: 'Ali Hassan', initials: 'AH', avatarColor: 'bg-[#2F80ED] text-white', balance: 2000, isAdmin: false, isPending: false }),
-    makeMember({ id: 'sara', name: 'Sara Khan', initials: 'SK', avatarColor: 'bg-[#C96A1B] text-white', balance: 0, isAdmin: true, isPending: false }),
-    makeMember({ id: 'hassan', name: 'Hassan', initials: 'HS', avatarColor: 'bg-[#4F5D75] text-white', balance: 0, isAdmin: false, isPending: false }),
-    makeMember({ id: 'usman', name: 'Usman Shah', initials: 'US', avatarColor: 'bg-[#5C6BC0] text-white', balance: 0, isAdmin: false, isPending: true }),
-  ])
-
-  // State to manage Member Options Drawer
-  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null)
-
-  // Local state for Confirm and Outstanding Balance Drawers
-  const [drawerConfig, setDrawerConfig] = useState<{
-    type: 'outstanding' | 'confirm' | null
-    title: string
-    warningText?: string
-    confirmTitle?: string
-    confirmDescription?: string
-    buttonText?: string
-    buttonVariant?: 'warning' | 'danger' | 'primary'
-    onAction?: () => void
-  }>({
-    type: null,
-    title: '',
-  })
-
-  /**
-   * Pending action to run after the outstanding drawer fully closes.
-   * Avoids setTimeout hacks — fired from onOpenChange(false) callback.
-   */
-  const pendingAfterClose = useRef<(() => void) | null>(null)
-
-  const selectedMember = useMemo(() => {
-    return members.find((m) => m.id === selectedMemberId) || null
-  }, [members, selectedMemberId])
-
-  const handleToggleAdmin = (memberId: string) => {
-    setMembers((prev) =>
-      prev.map((m) => {
-        if (m.id !== memberId) return m
-        const nextAdmin = !m.isAdmin
-        const updated = { ...m, isAdmin: nextAdmin }
-        return { ...updated, owesText: buildOwesText(updated) }
-      })
-    )
-  }
-
-  const handleRemoveMember = (memberId: string) => {
-    setSelectedMemberId(null) // Close member options drawer
-    const member = members.find((m) => m.id === memberId)
-    if (!member) return
-
-    if (member.balance !== 0) {
-      // Member has outstanding balance — show outstanding drawer first
-      setDrawerConfig({
-        type: 'outstanding',
-        title: 'Permanently Remove the Member from the group',
-        warningText: 'This member has unsettled balances in the group. Ask them to settle first before they can be removed.',
-        buttonText: 'Settle Balance',
-        onAction: () => {
-          // Settle numerically, re-derive display text
-          setMembers((prev) =>
-            prev.map((m) => {
-              if (m.id !== memberId) return m
-              const updated = { ...m, balance: 0 }
-              return { ...updated, owesText: buildOwesText(updated) }
-            })
-          )
-          // Queue confirm drawer to open after outstanding drawer closes
-          pendingAfterClose.current = () => {
-            setDrawerConfig({
-              type: 'confirm',
-              title: 'Permanently Remove the Member from the group',
-              confirmTitle: 'Remove the account Permanently–',
-              confirmDescription: "They'll lose access to the group and its expenses. Their past contributions will remain visible to other members.",
-              buttonText: 'Confirm',
-              onAction: () => {
-                setMembers((prev) => prev.filter((m) => m.id !== memberId))
-              },
-            })
-          }
-        },
-      })
-    } else {
-      setDrawerConfig({
-        type: 'confirm',
-        title: 'Permanently Remove the Member from the group',
-        confirmTitle: 'Remove the account Permanently–',
-        confirmDescription: "They'll lose access to the group and its expenses. Their past contributions will remain visible to other members.",
-        buttonText: 'Confirm',
-        onAction: () => {
-          setMembers((prev) => prev.filter((m) => m.id !== memberId))
-        },
-      })
-    }
-  }
-
-  const handleBlockReport = (memberId: string) => {
-    setMembers((prev) => prev.filter((m) => m.id !== memberId))
-  }
-
-  const handleLeaveGroup = () => {
-    // Use numeric balance field — never parse display strings for logic
-    const hasBalances = members.some((m) => m.id !== 'you' && m.balance > 0)
-
-    if (hasBalances) {
-      setDrawerConfig({
-        type: 'outstanding',
-        title: 'Leave the Murree Group Permanently',
-        warningText: `You have unsettled balances in ${groupName}. You must settle all balances before you can leave the group.`,
-        buttonText: 'Settle Balance',
-        onAction: () => {
-          // Settle all balances numerically — do NOT mutate imported contact object
-          setMembers((prev) =>
-            prev.map((m) => {
-              if (m.balance <= 0) return m
-              const updated = { ...m, balance: 0 }
-              return { ...updated, owesText: buildOwesText(updated) }
-            })
-          )
-          // Queue confirm drawer via ref — no setTimeout
-          pendingAfterClose.current = () => {
-            setDrawerConfig({
-              type: 'confirm',
-              title: 'Leave the Murree Group Permanently',
-              confirmTitle: 'Leave Group permanently?',
-              confirmDescription: "You'll lose access to this group and its expenses. Other members will still see your past contributions.",
-              buttonText: 'Confirm',
-              onAction: () => navigate({ to: ROUTES.DASHBOARD }),
-            })
-          }
-        },
-      })
-    } else {
-      setDrawerConfig({
-        type: 'confirm',
-        title: 'Leave the Murree Group Permanently',
-        confirmTitle: 'Leave Group permanently?',
-        confirmDescription: "You'll lose access to this group and its expenses. Other members will still see your past contributions.",
-        buttonText: 'Confirm',
-        onAction: () => navigate({ to: ROUTES.DASHBOARD }),
-      })
-    }
-  }
-
-  const handleDeleteGroup = () => {
-    setDrawerConfig({
-      type: 'confirm',
-      title: 'Delete Group Permanently',
-      confirmTitle: 'Delete Group permanently?',
-      confirmDescription: 'This will permanently delete this group and all its expenses for all members. This action cannot be undone.',
-      buttonText: 'Delete',
-      buttonVariant: 'danger',
-      onAction: () => {
-        if (contact) {
-          useContactStore.getState().deleteContact(contact.id)
-        }
-        navigate({ to: ROUTES.DASHBOARD })
-      },
-    })
-  }
-
-  const handleSaveGroupName = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!tempGroupName.trim()) return
-    setGroupName(tempGroupName.trim())
-    setIsNamePanelOpen(false)
-  }
-
   if (!contact || contact.type !== 'group') {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-[#FEFAF1]">
@@ -276,13 +92,6 @@ export default function GroupSettingsScreen() {
       navigate({ to: ROUTES.GROUP_DETAILS, params: { id: contact.id } })
     }
   }
-
-  // Derive group initials for fallback preview
-  const groupInitials = groupName
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
 
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-12 select-none text-left">
@@ -590,45 +399,14 @@ export default function GroupSettingsScreen() {
       />
 
       {/* Edit Group Name Panel */}
-      {isNamePanelOpen && (
-        <div className="fixed inset-0 z-70 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto animate-in fade-in slide-in-from-right duration-200 text-[#1A1A1A]">
-          <FlowHeader
-            title="Edit Group Name"
-            onBack={() => setIsNamePanelOpen(false)}
-          />
+      <EditGroupNamePanel
+        isOpen={isNamePanelOpen}
+        tempGroupName={tempGroupName}
+        onTempGroupNameChange={setTempGroupName}
+        onSave={handleSaveGroupName}
+        onClose={() => setIsNamePanelOpen(false)}
+      />
 
-          <form onSubmit={handleSaveGroupName} className="flex-1 flex flex-col justify-between px-6 pb-8 pt-2">
-            <div className="space-y-6">
-              {/* Name Input */}
-              <div className="space-y-1.5 text-left mt-4">
-                <label className="text-[11px] font-semibold tracking-widest text-[#6B6B6B] uppercase px-1">
-                  Group Name
-                </label>
-                <div className="bg-white border-[0.8px] border-[#E8E4DC] focus-within:border-[#0B683A73] rounded-[16px] px-5 py-4 transition-all shadow-[0px_2px_10px_0px_rgba(0,0,0,0.05)]">
-                  <input
-                    type="text"
-                    value={tempGroupName}
-                    onChange={(e) => setTempGroupName(e.target.value)}
-                    className="outline-none border-0 w-full text-[15px] font-medium text-[#1A1A1A] p-0 bg-transparent"
-                    required
-                    placeholder="Enter group name"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Save Button */}
-            <div>
-              <button
-                type="submit"
-                className="w-full h-14 bg-[#0B683A] text-white rounded-full font-bold text-base shadow-[0px_8px_20px_rgba(11,104,58,0.3)] active:scale-[0.98] transition-all flex items-center justify-center cursor-pointer border-0"
-              >
-                Save Name
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
       {/* Drawer Overlays */}
       <Drawer direction="right" open={drawer === 'smart-settle'} onOpenChange={(open) => !open && closeDrawer()}>
         <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=right]:w-full data-[vaul-drawer-direction=right]:max-w-full data-[vaul-drawer-direction=right]:rounded-none data-[vaul-drawer-direction=right]:border-0 data-[vaul-drawer-direction=right]:h-full">

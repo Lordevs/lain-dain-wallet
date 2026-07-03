@@ -11,7 +11,7 @@ try {
       if (parts.length >= 2) {
         const key = parts[0].trim();
         const value = parts.slice(1).join('=').trim().replace(/^['"]|['"]$/g, '');
-        if (key && !key.startsWith('#')) {
+        if (key && !key.startsWith('#') && process.env[key] === undefined) {
           process.env[key] = value;
         }
       }
