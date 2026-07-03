@@ -79,14 +79,14 @@ export default function OtpForm({
                 maxLength={6}
                 value={otpValue}
                 onChange={(val) => setOtpValue(val)}
-                containerClassName="w-full flex justify-between"
+                containerClassName="w-full flex justify-center"
               >
-                <InputOTPGroup className="gap-2.5 w-full flex justify-between">
+                <InputOTPGroup className="gap-1.5 min-[360px]:gap-2 min-[400px]:gap-2.5 w-full flex justify-between">
                   {Array.from({ length: 6 }).map((_, idx) => (
                     <InputOTPSlot
                       key={idx}
                       index={idx}
-                      className="w-13 h-[68px] rounded-[18px] text-center text-2xl font-bold text-foreground transition-all shrink-0"
+                      className="flex-1 max-w-[52px] h-[68px] rounded-[18px] text-center text-2xl font-bold text-foreground transition-all"
                     />
                   ))}
                 </InputOTPGroup>
