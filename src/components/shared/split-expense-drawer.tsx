@@ -1,17 +1,16 @@
-import { useState, useMemo } from 'react'
-import { X, Check, Scale, AlertTriangle, Info, Users, TextAlignJustify, RefreshCw } from 'lucide-react'
-import { cn, getInitials } from '@/lib/utils'
-import { useAuthStore } from '@/store/use-auth-store'
+import { useState } from 'react'
+import { X, Check, Scale, Info, TextAlignJustify, RefreshCw } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import {
   Drawer,
   DrawerContent,
   DrawerClose,
   FULLSCREEN_DRAWER_CN,
 } from '@/components/ui/drawer'
-import {
-  Avatar,
-  AvatarFallback,
-} from '@/components/ui/avatar'
+import { useSplitExpense, type SplitData } from './split-expense/use-split-expense'
+import EqualSplitView from './split-expense/equal-split-view'
+import UnequalSplitView from './split-expense/unequal-split-view'
+import AdjustmentSplitView from './split-expense/adjustment-split-view'
 
 const DivideCircleIcon = ({ className }: { className?: string }) => (
   <svg
@@ -50,61 +49,7 @@ interface SplitExpenseDrawerProps {
   startsOn?: string
 }
 
-export interface SplitData {
-  type: 'equal' | 'unequal' | 'adjustment'
-  selectedMembers: string[] // e.g. ['you', 'contact']
-  unequalAmounts: Record<string, number>
-  adjustmentAmounts: Record<string, number>
-}
-
-interface SplitMember {
-  id: string
-  name: string
-  initials: string
-  avatarColor: string
-  isOrganizer: boolean
-}
-
-function getInitialSplitState(
-  members: SplitMember[],
-  initialSplitData: SplitData | null,
-  amount: number
-): {
-  splitType: 'equal' | 'unequal' | 'adjustment'
-  selectedMembers: string[]
-  unequalAmounts: Record<string, string>
-  adjustmentAmounts: Record<string, string>
-} {
-  if (initialSplitData) {
-    const unequalAmounts: Record<string, string> = {}
-    const adjustmentAmounts: Record<string, string> = {}
-    members.forEach((m) => {
-      unequalAmounts[m.id] = String(initialSplitData.unequalAmounts[m.id] ?? 0)
-      adjustmentAmounts[m.id] = String(initialSplitData.adjustmentAmounts[m.id] ?? 0)
-    })
-    return {
-      splitType: initialSplitData.type,
-      selectedMembers: initialSplitData.selectedMembers,
-      unequalAmounts,
-      adjustmentAmounts,
-    }
-  }
-
-  // Defaults: Equal split select all members
-  const defaultShare = String(Math.round(amount / members.length))
-  const unequalAmounts: Record<string, string> = {}
-  const adjustmentAmounts: Record<string, string> = {}
-  members.forEach((m) => {
-    unequalAmounts[m.id] = defaultShare
-    adjustmentAmounts[m.id] = '0'
-  })
-  return {
-    splitType: 'equal',
-    selectedMembers: members.map((m) => m.id),
-    unequalAmounts,
-    adjustmentAmounts,
-  }
-}
+export type { SplitData }
 
 export default function SplitExpenseDrawer({
   isOpen,
@@ -125,7 +70,7 @@ export default function SplitExpenseDrawer({
 }: SplitExpenseDrawerProps) {
   // Bumped whenever isOpen transitions to true, forcing SplitExpenseDrawerContent to
   // remount with fresh initial state - the idiomatic replacement for a "resync on open"
-  // effect (see https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes).
+  // effect.
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen)
   const [openKey, setOpenKey] = useState(0)
   if (isOpen !== prevIsOpen) {
@@ -172,125 +117,33 @@ function SplitExpenseDrawerContent({
   frequency = 'Monthly',
   startsOn = '',
 }: Omit<SplitExpenseDrawerProps, 'isOpen' | 'onClose'>) {
-  const userProfile = useAuthStore((state) => state.userProfile)
-  const youInitials = getInitials(userProfile?.name || 'You')
-
-  // Resolve members list dynamically based on group or single contact
-  const isGroup = useMemo(() => {
-    return contactName.toLowerCase().includes('trip') || contactName.toLowerCase().includes('family') || contactName.toLowerCase().includes('group')
-  }, [contactName])
-
-  const members = useMemo(() => {
-    return isGroup
-      ? [
-        { id: 'you', name: 'You', initials: youInitials, avatarColor: 'bg-positive', isOrganizer: true },
-        { id: 'ali', name: 'Ali Hassan', initials: 'AH', avatarColor: 'bg-[#2F80ED]', isOrganizer: false },
-        { id: 'sara', name: 'Sara Khan', initials: 'SK', avatarColor: 'bg-orange-payable', isOrganizer: false },
-        { id: 'hassan', name: 'Hassan', initials: 'HS', avatarColor: 'bg-[#475569]', isOrganizer: false },
-      ]
-      : [
-        { id: 'you', name: 'You', initials: youInitials, avatarColor: 'bg-positive', isOrganizer: true },
-        { id: 'contact', name: contactName, initials: contactInitials, avatarColor: contactAvatarColor || 'bg-[#2F80ED]', isOrganizer: false },
-      ]
-  }, [isGroup, contactName, contactInitials, contactAvatarColor, youInitials])
-
-  const initial = getInitialSplitState(members, initialSplitData, amount)
-  const [splitType, setSplitType] = useState<'equal' | 'unequal' | 'adjustment'>(initial.splitType)
-  const [selectedMembers, setSelectedMembers] = useState<string[]>(initial.selectedMembers)
-  const [unequalAmounts, setUnequalAmounts] = useState<Record<string, string>>(initial.unequalAmounts)
-  const [adjustmentAmounts, setAdjustmentAmounts] = useState<Record<string, string>>(initial.adjustmentAmounts)
-
-  // --- Computations ---
-  const totalAmount = amount || 0
-
-  // 1. Equal Split calculation
-  const numSelected = selectedMembers.length
-  const equalSplitAmount = numSelected > 0 ? Math.round(totalAmount / numSelected) : 0
-
-  // 2. Unequal Split validation
-  const unequalSum = members.reduce((sum, m) => sum + (Number(unequalAmounts[m.id]) || 0), 0)
-  const unequalRemaining = totalAmount - unequalSum
-
-  // 3. Adjustment Split calculation
-  const totalAdjustments = members.reduce((sum, m) => sum + (Number(adjustmentAmounts[m.id]) || 0), 0)
-  // Base split amount after removing individual adjustments
-  const baseSplitAmount = Math.max(0, totalAmount - totalAdjustments)
-  const basePerPerson = Math.round(baseSplitAmount / members.length)
-
-  const getAdjustmentFinalAmount = (memberId: string) => {
-    const adjVal = Number(adjustmentAmounts[memberId]) || 0
-    return basePerPerson + adjVal
-  }
-
-  // --- Handlers ---
-  const handleToggleEqualMember = (memberId: string) => {
-    setSelectedMembers((prev) => {
-      if (prev.includes(memberId)) {
-        if (prev.length === 1) return prev
-        return prev.filter((m) => m !== memberId)
-      } else {
-        return [...prev, memberId]
-      }
-    })
-  }
-
-  const handleUnequalChange = (memberId: string, val: string) => {
-    const rawVal = val.replace(/\D/g, '')
-    setUnequalAmounts((prev) => ({
-      ...prev,
-      [memberId]: rawVal,
-    }))
-  }
-
-  const handleAdjustmentChange = (memberId: string, val: string) => {
-    const rawVal = val.replace(/\D/g, '')
-    setAdjustmentAmounts((prev) => ({
-      ...prev,
-      [memberId]: rawVal,
-    }))
-  }
-
-  const handleResetUnequal = () => {
-    const resetValues: Record<string, string> = {}
-    members.forEach((m) => {
-      resetValues[m.id] = '0'
-    })
-    setUnequalAmounts(resetValues)
-  }
-
-  const handleResetAdjustment = () => {
-    const resetValues: Record<string, string> = {}
-    members.forEach((m) => {
-      resetValues[m.id] = '0'
-    })
-    setAdjustmentAmounts(resetValues)
-  }
-
-  const handleConfirm = () => {
-    if (splitType === 'unequal' && unequalRemaining !== 0) return
-
-    const dynamicUnequal: Record<string, number> = {}
-    const dynamicAdjustment: Record<string, number> = {}
-
-    members.forEach((m) => {
-      dynamicUnequal[m.id] = splitType === 'unequal'
-        ? (Number(unequalAmounts[m.id]) || 0)
-        : splitType === 'equal' && selectedMembers.includes(m.id)
-          ? equalSplitAmount
-          : 0
-
-      dynamicAdjustment[m.id] = splitType === 'adjustment'
-        ? (Number(adjustmentAmounts[m.id]) || 0)
-        : 0
-    })
-
-    onSave({
-      type: splitType,
-      selectedMembers: splitType === 'equal' ? selectedMembers : members.map((m) => m.id),
-      unequalAmounts: dynamicUnequal,
-      adjustmentAmounts: dynamicAdjustment,
-    })
-  }
+  const {
+    members,
+    splitType,
+    setSplitType,
+    selectedMembers,
+    setSelectedMembers,
+    unequalAmounts,
+    adjustmentAmounts,
+    totalAmount,
+    numSelected,
+    equalSplitAmount,
+    unequalRemaining,
+    getAdjustmentFinalAmount,
+    handleToggleEqualMember,
+    handleUnequalChange,
+    handleAdjustmentChange,
+    handleResetUnequal,
+    handleResetAdjustment,
+    handleConfirm,
+  } = useSplitExpense({
+    amount,
+    contactName,
+    contactInitials,
+    contactAvatarColor,
+    initialSplitData,
+    onSave,
+  })
 
   return (
     <>
@@ -350,9 +203,8 @@ function SplitExpenseDrawerContent({
 
       <hr className="border-divider border-b-[0.8px] w-full shrink-0" />
 
-      {/* Main Content Container (non-scrollable) */}
+      {/* Main Content Container */}
       <div className="flex-1 flex flex-col px-6 pt-5 bg-white overflow-hidden">
-
         {/* Split Type Selector */}
         <span className="text-[15px] font-semibold text-[#5C5C5C] text-left mb-3 block shrink-0">Split type</span>
         <div className="flex gap-2.5 w-full mb-5 shrink-0">
@@ -424,176 +276,42 @@ function SplitExpenseDrawerContent({
           </div>
         </div>
 
-        {/* Equal split summary row */}
+        {/* Mode specific views */}
         {splitType === 'equal' && (
-          <div className="flex items-center gap-2 mb-4 shrink-0 select-none text-left">
-            <div className="w-6 h-6 rounded-full bg-positive flex items-center justify-center text-white shrink-0">
-              <Users size={12} className="text-white" />
-            </div>
-            <span className="text-[13px] font-bold text-foreground">
-              {numSelected} people <span className="text-muted-foreground font-semibold">· Rs. {equalSplitAmount.toLocaleString('en-US')} each</span>
-            </span>
-          </div>
+          <EqualSplitView
+            members={members}
+            selectedMembers={selectedMembers}
+            equalSplitAmount={equalSplitAmount}
+            numSelected={numSelected}
+            onToggleMember={handleToggleEqualMember}
+            onSelectAllToggle={() => {
+              const allSelected = selectedMembers.length === members.length
+              setSelectedMembers(allSelected ? ['you'] : members.map((m) => m.id))
+            }}
+          />
         )}
 
-        {/* Unequal split warning row */}
         {splitType === 'unequal' && (
-          <div className="flex items-center justify-between text-xs font-bold text-[#C0392B] px-1 mb-4 select-none shrink-0">
-            <span className="flex items-center gap-1.5">
-              <AlertTriangle size={14} className="text-[#C0392B] fill-[#C0392B]/10" />
-              Rs. {Math.abs(unequalRemaining).toLocaleString('en-US')} {unequalRemaining > 0 ? 'remaining' : 'over split'}
-            </span>
-            <span className="text-muted-faint">Total: Rs. {totalAmount.toLocaleString('en-US')}</span>
-          </div>
+          <UnequalSplitView
+            members={members}
+            unequalAmounts={unequalAmounts}
+            unequalRemaining={unequalRemaining}
+            totalAmount={totalAmount}
+            onUnequalChange={handleUnequalChange}
+            onReset={handleResetUnequal}
+          />
         )}
 
-        {/* Adjustment split overview row */}
         {splitType === 'adjustment' && (
-          <div className="flex items-center justify-between mb-4 shrink-0 select-none text-left">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-positive flex items-center justify-center text-white shrink-0">
-                <Users size={12} className="text-white" />
-              </div>
-              <span className="text-[13px] font-bold text-foreground">
-                {members.length} people
-              </span>
-            </div>
-            <span className="text-xs text-muted-faint font-semibold">Total: Rs. {totalAmount.toLocaleString('en-US')}</span>
-          </div>
+          <AdjustmentSplitView
+            members={members}
+            adjustmentAmounts={adjustmentAmounts}
+            totalAmount={totalAmount}
+            getAdjustmentFinalAmount={getAdjustmentFinalAmount}
+            onAdjustmentChange={handleAdjustmentChange}
+            onReset={handleResetAdjustment}
+          />
         )}
-
-        {/* Members Heading Row */}
-        <div className="flex items-center justify-between mb-2 shrink-0 select-none">
-          <span className="text-xs font-bold text-muted-foreground">
-            {splitType === 'equal' && 'Members'}
-            {splitType === 'unequal' && 'Set amount per person'}
-            {splitType === 'adjustment' && 'Members'}
-          </span>
-          {splitType === 'equal' && (
-            <button
-              type="button"
-              onClick={() => {
-                const allSelected = selectedMembers.length === members.length
-                setSelectedMembers(allSelected ? ['you'] : members.map((m) => m.id))
-              }}
-              className="text-xs font-bold text-positive bg-transparent border-0 cursor-pointer flex items-center gap-1.5 outline-none hover:opacity-85"
-            >
-              Select all
-              <Check size={14} className="border border-positive rounded p-0.5 size-4" />
-            </button>
-          )}
-          {splitType === 'unequal' && (
-            <button
-              type="button"
-              onClick={handleResetUnequal}
-              className="flex items-center gap-1 text-positive font-bold text-xs bg-transparent border-0 cursor-pointer outline-none hover:opacity-85"
-            >
-              Reset
-            </button>
-          )}
-          {splitType === 'adjustment' && (
-            <button
-              type="button"
-              onClick={handleResetAdjustment}
-              className="flex items-center gap-1 text-[#C0392B] font-bold text-xs bg-transparent border-0 cursor-pointer outline-none hover:opacity-85"
-            >
-              Reset
-            </button>
-          )}
-        </div>
-
-        {/* Scrollable Members List Box */}
-        <div className="flex-1 overflow-y-auto border-[0.8px] rounded-lg border-divider divide-y divide-divider bg-white mb-2 select-none">
-          {members.map((member) => {
-            const isSelected = selectedMembers.includes(member.id)
-
-            return (
-              <div
-                key={member.id}
-                className={cn(
-                  "px-6 py-4 flex items-center justify-between transition-colors",
-                  (splitType === 'equal' || splitType === 'unequal') ? 'bg-[#FDF8F4]' : 'bg-transparent'
-                )}
-              >
-                <div className="flex items-center gap-3 text-left">
-                  {splitType === 'equal' && (
-                    <button
-                      type="button"
-                      onClick={() => handleToggleEqualMember(member.id)}
-                      className="size-5 rounded border-0 p-0 flex items-center justify-center shrink-0 cursor-pointer outline-none active:scale-95"
-                    >
-                      {isSelected ? (
-                        <div className="size-5 rounded-[6px] bg-positive flex items-center justify-center text-white">
-                          <Check size={12} strokeWidth={4} className="text-white" />
-                        </div>
-                      ) : (
-                        <div className="size-5 rounded-[6px] border-[1.5px] border-[#D4CFC8] bg-transparent" />
-                      )}
-                    </button>
-                  )}
-                  <div className="relative">
-                    <Avatar className="size-10 shrink-0 font-extrabold text-sm text-white select-none">
-                      <AvatarFallback className={cn("rounded-full flex items-center justify-center border-0 text-white font-extrabold text-sm", member.avatarColor)}>
-                        {member.initials}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#14A558] border border-white rounded-full" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="font-semibold text-sm text-foreground">{member.name}</span>
-                    {member.isOrganizer && (
-                      <span className="text-[10px] text-positive font-bold bg-[#E5F2EB] px-1.5 py-0.5 rounded-full mt-0.5 self-start leading-none">
-                        Organizer
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Right side controls */}
-                {splitType === 'equal' && (
-                  <span className={cn('font-semibold text-sm text-foreground', !isSelected && 'opacity-30')}>
-                    Rs. {isSelected ? equalSplitAmount.toLocaleString('en-US') : '0'}
-                  </span>
-                )}
-                {splitType === 'unequal' && (
-                  <div className="flex items-center gap-1 bg-white px-3 py-1.5 rounded-[12px] border-[0.8px] border-divider shadow-[0px_1px_4px_rgba(0,0,0,0.02)]">
-                    <span className="text-xs text-muted-faint font-bold">Rs.</span>
-                    <input
-                      type="text"
-                      inputMode='decimal'
-                      value={unequalAmounts[member.id]}
-                      onChange={(e) => handleUnequalChange(member.id, e.target.value)}
-                      className="w-18 bg-transparent border-0 outline-none text-sm font-extrabold text-foreground text-right font-sans py-0"
-                    />
-                  </div>
-                )}
-                {splitType === 'adjustment' && (
-                  <div className="flex items-center gap-6">
-                    <div className="flex flex-col text-right">
-                      <span className="text-[10px] text-muted-faint font-semibold">Final Amount</span>
-                      <span className="text-sm font-extrabold text-positive mt-0.5">
-                        Rs. {getAdjustmentFinalAmount(member.id).toLocaleString('en-US')}
-                      </span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] text-muted-faint font-semibold mb-1 text-left">owes extra</span>
-                      <div className="flex items-center gap-1 bg-white px-3 py-1.5 rounded-[12px] border-[0.8px] border-divider shadow-[0px_1px_4px_rgba(0,0,0,0.02)]">
-                        <span className="text-xs text-muted-faint font-bold">Rs.</span>
-                        <input
-                          type="text"
-                          inputMode='decimal'
-                          value={adjustmentAmounts[member.id]}
-                          onChange={(e) => handleAdjustmentChange(member.id, e.target.value)}
-                          className="w-14 bg-transparent border-0 outline-none text-xs font-extrabold text-foreground text-right font-sans py-0"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
 
         {/* Repeats Status Message (Full-width bar below list) */}
         {isRecurring && (

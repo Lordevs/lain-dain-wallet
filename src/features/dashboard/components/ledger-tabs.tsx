@@ -20,13 +20,13 @@ export default function LedgerTabs({ activeTab, onTabChange }: LedgerTabsProps) 
         onValueChange={(val) => onTabChange(val as LedgerTab)}
         className="w-full"
       >
-        <TabsList className="flex w-full bg-[#FFFFFF] border-[0.8px] border-[#E8E4DC] p-1 rounded-full shadow-[0px_1px_4px_0px_#0000000F] h-13! items-center">
+        <TabsList className="flex w-full bg-white border-[0.8px] border-border-card p-1 rounded-full shadow-[0px_1px_4px_0px_#0000000F] h-13! items-center">
           <TabsTrigger
             value="receivables"
             id="tab-receivables"
             className={cn(
               "flex-1 h-11! rounded-full text-sm font-bold transition-all duration-200 cursor-pointer border-0",
-              "text-[#9A9590] hover:text-foreground",
+              "text-muted-faint hover:text-foreground",
               "data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-[0px_3px_12px_0px_#0B683A4D]"
             )}
           >
@@ -37,8 +37,8 @@ export default function LedgerTabs({ activeTab, onTabChange }: LedgerTabsProps) 
             id="tab-payables"
             className={cn(
               "flex-1 h-11! rounded-full text-sm font-bold transition-all duration-200 cursor-pointer border-0",
-              "text-[#9A9590] hover:text-foreground",
-              "data-[state=active]:bg-[#C3550A] data-[state=active]:text-white data-[state=active]:shadow-[0px_3px_12px_0px_#B453094D]"
+              "text-muted-faint hover:text-foreground",
+              "data-[state=active]:bg-tertiary data-[state=active]:text-white data-[state=active]:shadow-[0px_3px_12px_0px_#B453094D]"
             )}
           >
             Payables

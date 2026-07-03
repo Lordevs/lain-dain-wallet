@@ -37,7 +37,7 @@ export default function SectionHeader({
           id="filter-btn"
           variant="outline"
           className={cn(
-            'w-9 h-9 rounded-full bg-white! border-[1.08px] border-[#EFE7DD] flex items-center justify-center text-[#9A9590] hover:text-foreground hover:bg-white transition-colors shadow-[0px_2px_8px_0px_#0000000A] p-0 shrink-0 cursor-pointer',
+            'w-9 h-9 rounded-full bg-white! border-[1.08px] border-border-card flex items-center justify-center text-muted-faint hover:text-foreground hover:bg-white transition-colors shadow-[0px_2px_8px_0px_#0000000A] p-0 shrink-0 cursor-pointer',
             isFilterActive && 'border-primary text-primary bg-primary/5 hover:bg-primary/5',
           )}
           aria-label="Filter"

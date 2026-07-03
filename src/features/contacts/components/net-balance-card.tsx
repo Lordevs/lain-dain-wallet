@@ -25,9 +25,9 @@ export default function NetBalanceCard({
   const isNegative = amount < 0
 
   const colorClass = cn(
-    isPositive && 'text-[#0B683A]',
-    isNegative && 'text-[#C96A1B]',
-    amount === 0 && 'text-[#1A1A1A]'
+    isPositive && 'text-positive',
+    isNegative && 'text-orange-payable',
+    amount === 0 && 'text-foreground'
   )
 
   const formattedVal = formatCurrency(Math.abs(amount), currency)
@@ -35,7 +35,7 @@ export default function NetBalanceCard({
   return (
     <div
       className={cn(
-        'bg-white rounded-[24px] border border-[#EFE7DD] shadow-[0px_4px_16px_0px_#00000008] p-6 flex flex-col justify-center',
+        'bg-white rounded-[24px] border border-border-card shadow-[0px_4px_16px_0px_#00000008] p-6 flex flex-col justify-center',
         className
       )}
     >
@@ -44,13 +44,13 @@ export default function NetBalanceCard({
           {formattedVal}
         </span>
         {label && (
-          <span className="text-[#9A9590] text-[15px] font-semibold ml-2.5">
+          <span className="text-muted-faint text-[15px] font-semibold ml-2.5">
             {label}
           </span>
         )}
       </div>
       {description && (
-        <p className="text-[#9A9590] text-sm font-semibold mt-3">
+        <p className="text-muted-faint text-sm font-semibold mt-3">
           {description}
         </p>
       )}

@@ -23,7 +23,7 @@ function SelectionCheckbox({ checked }: { checked: boolean }) {
         'w-6 h-6 rounded-full transition-all flex items-center justify-center border-[2.25px]',
         checked
           ? 'bg-primary border-primary text-white'
-          : 'border-[#D4CFC8] bg-transparent',
+          : 'border-divider bg-transparent',
       )}
     >
       {checked && <Check size={14} strokeWidth={3} />}
@@ -52,7 +52,7 @@ export default function ChoiceStep({ flow }: ChoiceStepProps) {
       />
 
       {/* Quick Actions — New Group */}
-      <div className="bg-white border-[1.26px] border-[#EFE7DD] rounded-xl shadow-[0px_2px_8px_0px_#00000005] mb-5 overflow-hidden shrink-0">
+      <div className="bg-white border-[1.26px] border-border-card rounded-xl shadow-[0px_2px_8px_0px_#00000005] mb-5 overflow-hidden shrink-0">
         {/* New Group */}
         <QuickActionButton
           title="New Group"
@@ -87,13 +87,13 @@ export default function ChoiceStep({ flow }: ChoiceStepProps) {
             <ContactListItem
               key={contact.id}
               contact={contact}
-              contactNameClassName='text-[#A8A39C] font-medium'
-              subtitle={<span className="text-[#6B6B6B]">{contact.phone}</span>}
+              contactNameClassName='text-muted-foreground/70 font-medium'
+              subtitle={<span className="text-muted-foreground">{contact.phone}</span>}
               rightSlot={
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 rounded-[10px] border-[1.26px] border-[#D4CFC8] text-xs font-bold px-4 bg-transparent! text-[#6B6B6B]"
+                  className="h-8 rounded-[10px] border-[1.26px] border-divider text-xs font-bold px-4 bg-transparent! text-muted-foreground"
                 >
                   Invite
                 </Button>
@@ -119,8 +119,8 @@ export default function ChoiceStep({ flow }: ChoiceStepProps) {
       {/* Security footer */}
       {!hasSelection && (
         <div className="flex items-center justify-center gap-1.5 py-4 shrink-0">
-          <Shield size={16} className="text-[#6B6B6B] shrink-0" />
-          <span className="text-xs font-medium text-[#6B6B6B]">
+          <Shield size={16} className="text-muted-foreground shrink-0" />
+          <span className="text-xs font-medium text-muted-foreground">
             All expenses are private and secure
           </span>
         </div>
