@@ -3,8 +3,8 @@ import { useParams, useNavigate } from '@tanstack/react-router'
 import { ChevronLeft, Pencil, Trash2, FileText, Coffee, HelpCircle, Check } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
-import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
-import { TRANSACTION_STORE } from '@/features/contacts/data/transaction-store'
+import { useContactStore } from '@/store/use-contact-store'
+import { useTransactionStore } from '@/store/use-transaction-store'
 import { ROUTES } from '@/constants/routes'
 import { CATEGORIES } from '@/features/personal/components/category-picker'
 import receiptMockup from '@/assets/receipt_mockup.png'
@@ -18,9 +18,9 @@ const getCategoryEmoji = (id: string) => {
     case 'bills': return '🧾'
     case 'entertainment': return '🎬'
     case 'health': return '🏥'
-    case 'fuel': return '⛽'
+    case 'education': return '🎓'
     case 'food': return '🍔'
-    case 'payment': return '🤝'
+    case 'payment': return '💵'
     default: return '📦'
   }
 }
@@ -33,15 +33,7 @@ interface TransactionDetailScreenProps {
 }
 
 export default function TransactionDetailScreen(props: TransactionDetailScreenProps) {
-  // Read path parameters if we are in route context (they will be empty in props/drawer context)
-  let id = ''
-  try {
-    const params = useParams({ strict: false })
-    id = (params as any).id || ''
-  } catch (e) {
-    // strict parameter is false, so it shouldn't throw, but catch just in case.
-  }
-
+  const { id } = useParams({ strict: false })
   const navigate = useNavigate()
 
   // All hooks must be declared before any conditional return to satisfy Rules of Hooks
@@ -62,9 +54,10 @@ export default function TransactionDetailScreen(props: TransactionDetailScreenPr
   let tx = null
 
   const resolvedTxId = props.txId || id
+  const transactionsByContact = useTransactionStore((state) => state.transactionsByContact)
 
-  for (const contactId in TRANSACTION_STORE) {
-    const t = TRANSACTION_STORE[contactId].find((item) => item.id === resolvedTxId)
+  for (const contactId in transactionsByContact) {
+    const t = transactionsByContact[contactId].find((item) => item.id === resolvedTxId)
     if (t) {
       foundContactId = contactId
       tx = t
@@ -73,7 +66,8 @@ export default function TransactionDetailScreen(props: TransactionDetailScreenPr
   }
 
   // Find contact
-  const contact = [...MOCK_RECEIVABLES, ...MOCK_PAYABLES].find((c) => c.id === foundContactId)
+  const contacts = useContactStore((state) => state.contacts)
+  const contact = contacts.find((c) => c.id === foundContactId)
 
   if (!tx || !contact) {
     return (
@@ -332,17 +326,23 @@ export default function TransactionDetailScreen(props: TransactionDetailScreenPr
         <button
           type="button"
           onClick={() => {
-            // Remove from TRANSACTION_STORE
-            if (TRANSACTION_STORE[contact.id]) {
-              TRANSACTION_STORE[contact.id] = TRANSACTION_STORE[contact.id].filter((t) => t.id !== tx.id)
+            if (tx && contact) {
+              // Remove from useTransactionStore
+              useTransactionStore.getState().deleteTransaction(contact.id, tx.id)
+
+              // Update contact netAmount balance and tags array
+              const updatedTags = contact.tags.filter((t) => t.name !== tx.name && t.amount !== tx.amount)
+              const updatedNetAmount = contact.netAmount - tx.amount
+              useContactStore.getState().updateContact(contact.id, {
+                netAmount: updatedNetAmount,
+                tags: updatedTags,
+                ledgerCount: updatedTags.length
+              })
             }
-            // Update contact netAmount balance
-            contact.netAmount -= tx.amount
-            contact.ledgerCount = contact.tags.length
 
             if (props.onDelete) {
               props.onDelete()
-            } else {
+            } else if (contact) {
               if (contact.type === 'group') {
                 navigate({ to: ROUTES.GROUP_DETAILS, params: { id: contact.id } })
               } else {

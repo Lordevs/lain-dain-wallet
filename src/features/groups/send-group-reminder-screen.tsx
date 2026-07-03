@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { User } from 'lucide-react'
-import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
+import { useContactStore } from '@/store/use-contact-store'
 import { formatPKR } from '@/lib/currency'
 import FlowHeader from '@/components/shared/flow-header'
 import SuccessCheck from '@/components/shared/success-check'
@@ -16,8 +16,9 @@ interface SendGroupReminderScreenProps {
 export default function SendGroupReminderScreen({ groupId, onClose }: SendGroupReminderScreenProps) {
   const [showSuccess, setShowSuccess] = useState(false)
 
-  // Find group by id from mock data
-  const contact = [...MOCK_RECEIVABLES, ...MOCK_PAYABLES].find((c) => c.id === groupId)
+  // Find group by id from store
+  const contacts = useContactStore((state) => state.contacts)
+  const contact = contacts.find((c) => c.id === groupId)
 
   if (!contact || contact.type !== 'group') {
     return (

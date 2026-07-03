@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { FileText, ChevronRight, ChevronDown, Users, Check } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, getInitials } from '@/lib/utils'
+import { useAuthStore } from '@/store/use-auth-store'
 import { Button } from '@/components/ui/button'
 import FlowHeader from '@/components/shared/flow-header'
 import CategoryPicker, { CATEGORIES } from '@/features/personal/components/category-picker'
@@ -78,6 +79,9 @@ export default function AddExpenseBase({
     adjustmentAmounts: { you: 0, contact: 0 },
   })
   const [showSplit, setShowSplit] = useState(false)
+
+  const userProfile = useAuthStore((state) => state.userProfile)
+  const youInitials = getInitials(userProfile?.name || 'You')
 
   const payerName = paidBy === 'you'
     ? 'You'
@@ -228,7 +232,7 @@ export default function AddExpenseBase({
                   {paidBy === 'multiple' ? (
                     <div className="flex -space-x-2 shrink-0">
                       <div className="size-6 rounded-full border border-white bg-[#0B683A] text-white flex items-center justify-center font-extrabold text-[8px] select-none shadow-sm">
-                        MH
+                        {youInitials}
                       </div>
                       <div className="size-6 rounded-full border border-white bg-[#2F80ED] text-white flex items-center justify-center font-extrabold text-[8px] select-none shadow-sm">
                         AH
@@ -242,7 +246,7 @@ export default function AddExpenseBase({
                       "size-6 rounded-full text-white flex items-center justify-center font-extrabold text-[9px] select-none shadow-sm",
                       paidBy === 'you' ? "bg-[#0B683A]" : (contact.avatarColor || 'bg-[#2F80ED]')
                     )}>
-                      {paidBy === 'you' ? 'MH' : contact.initials}
+                      {paidBy === 'you' ? youInitials : contact.initials}
                     </div>
                   )}
 

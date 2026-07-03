@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import AddExpenseBase, { type ConfirmExpenseData } from '@/components/shared/add-expense-base'
-import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
-import { TRANSACTION_STORE } from '@/features/contacts/data/transaction-store'
+import { useContactStore } from '@/store/use-contact-store'
+import { useTransactionStore } from '@/store/use-transaction-store'
 import { calculateContactOwesAmount } from '@/lib/split'
 
 interface AddContactExpenseScreenProps {
@@ -13,8 +13,9 @@ interface AddContactExpenseScreenProps {
 export default function AddContactExpenseScreen({ contactId, onClose, onSuccess }: AddContactExpenseScreenProps) {
   const [newTxId, setNewTxId] = useState<string | null>(null)
 
-  // Find contact by id from mock data
-  const contact = [...MOCK_RECEIVABLES, ...MOCK_PAYABLES].find((c) => c.id === contactId)
+  // Find contact by id from store
+  const contacts = useContactStore((state) => state.contacts)
+  const contact = contacts.find((c) => c.id === contactId)
 
   if (!contact) {
     return (
@@ -45,23 +46,11 @@ export default function AddContactExpenseScreen({ contactId, onClose, onSuccess 
 
     const contactOwesAmount = calculateContactOwesAmount(parsedAmount, paidBy as 'you' | 'contact', splitData)
 
-    // Add to contact's tags breakdown history
-    const newTag = {
-      name: data.description || 'New Split Expense',
-      amount: contactOwesAmount,
-    }
-    contact.tags.push(newTag)
-    contact.netAmount += contactOwesAmount
-    contact.ledgerCount = contact.tags.length
-
     // Add to TRANSACTION_STORE
-    if (!TRANSACTION_STORE[contact.id]) {
-      TRANSACTION_STORE[contact.id] = []
-    }
     const now = new Date()
     const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
     const generatedId = 'tx-' + Date.now()
-    TRANSACTION_STORE[contact.id].push({
+    const newTx = {
       id: generatedId,
       name: data.description || 'New Split Expense',
       subtitle: paidBy === 'you' ? 'You paid' : `${contact.name.split(' ')[0]} paid`,
@@ -70,6 +59,20 @@ export default function AddContactExpenseScreen({ contactId, onClose, onSuccess 
       rightSubtitle: `Today, ${timeStr}`,
       splitType: splitData.type,
       dateValue: data.dateValue
+    }
+    useTransactionStore.getState().addTransaction(contact.id, newTx)
+
+    // Add to contact's tags breakdown history
+    const newTag = {
+      name: data.description || 'New Split Expense',
+      amount: contactOwesAmount,
+    }
+    const updatedTags = [...contact.tags, newTag]
+    const updatedNetAmount = contact.netAmount + contactOwesAmount
+    useContactStore.getState().updateContact(contact.id, {
+      tags: updatedTags,
+      netAmount: updatedNetAmount,
+      ledgerCount: updatedTags.length
     })
 
     setNewTxId(generatedId)

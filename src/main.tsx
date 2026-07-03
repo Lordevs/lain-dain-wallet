@@ -3,9 +3,10 @@ import { createRoot } from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { routeTree } from './routeTree.gen'
+import ErrorFallback from './components/layout/error-fallback'
 import './index.css'
 
-const router = createRouter({ routeTree })
+const router = createRouter({ routeTree, defaultErrorComponent: ErrorFallback })
 const queryClient = new QueryClient()
 
 declare module '@tanstack/react-router' {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Check, X, Info, Users, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, getInitials } from '@/lib/utils'
+import { useAuthStore } from '@/store/use-auth-store'
 import {
   Drawer,
   DrawerContent,
@@ -39,6 +40,10 @@ export default function PaidByDrawer({
   // Amount inputs for multiple payers
   const [payerAmounts, setPayerAmounts] = useState<Record<string, string>>({})
 
+  const userProfile = useAuthStore((state) => state.userProfile)
+  const youName = userProfile?.name || 'You'
+  const youInitials = getInitials(youName)
+
   // Resolve members list dynamically based on group or single contact
   const isGroup = useMemo(() => {
     return contactName.toLowerCase().includes('trip') || contactName.toLowerCase().includes('family') || contactName.toLowerCase().includes('group')
@@ -47,16 +52,16 @@ export default function PaidByDrawer({
   const members = useMemo(() => {
     return isGroup
       ? [
-        { id: 'you', name: 'You', subname: 'Muhammad Huzaifa', initials: 'MH', avatarColor: 'bg-[#0B683A]' },
+        { id: 'you', name: 'You', subname: youName, initials: youInitials, avatarColor: 'bg-[#0B683A]' },
         { id: 'ali', name: 'Ali Hassan', subname: 'Ali Hassan', initials: 'AH', avatarColor: 'bg-[#2F80ED]' },
         { id: 'sara', name: 'Sara Khan', subname: 'Sara Khan', initials: 'SK', avatarColor: 'bg-[#C96A1B]' },
         { id: 'hassan', name: 'Hassan', subname: 'Hassan', initials: 'HS', avatarColor: 'bg-[#475569]' },
       ]
       : [
-        { id: 'you', name: 'You', subname: 'Muhammad Huzaifa', initials: 'MH', avatarColor: 'bg-[#0B683A]' },
+        { id: 'you', name: 'You', subname: youName, initials: youInitials, avatarColor: 'bg-[#0B683A]' },
         { id: 'contact', name: contactName, subname: contactName, initials: contactInitials, avatarColor: contactAvatarColor || 'bg-[#2F80ED]' },
       ]
-  }, [isGroup, contactName, contactInitials, contactAvatarColor])
+  }, [isGroup, contactName, contactInitials, contactAvatarColor, youName, youInitials])
 
   useEffect(() => {
     if (isOpen) {

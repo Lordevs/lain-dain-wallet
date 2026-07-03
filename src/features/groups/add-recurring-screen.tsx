@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { FileText, ChevronRight, ChevronDown, Calendar, Users, Check, Camera, Edit3, ChevronLeft, User, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import CategoryPicker, { CATEGORIES } from '@/features/personal/components/category-picker'
@@ -10,7 +10,7 @@ import AddNoteFlow from '@/components/shared/add-note-flow'
 import SuccessCheck from '@/components/shared/success-check'
 import { useRecurringStore, type RecurringPaymentRecord } from '@/store/use-recurring-store'
 import { getMemberName } from '@/features/groups/data/group-members'
-import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
+import { useContactStore } from '@/store/use-contact-store'
 
 interface AddRecurringScreenProps {
   groupId: string
@@ -23,9 +23,10 @@ export default function AddRecurringScreen({ groupId, editPaymentId, onClose, on
   const { getPayments, addPayment, updatePayment } = useRecurringStore()
 
   // Find the group details
+  const contacts = useContactStore((state) => state.contacts)
   const group = useMemo(() => {
-    return [...MOCK_RECEIVABLES, ...MOCK_PAYABLES].find((c) => c.id === groupId)
-  }, [groupId])
+    return contacts.find((c) => c.id === groupId)
+  }, [groupId, contacts])
 
   // Look up payment if editing from the Zustand store
   const editingPayment = useMemo(() => {
@@ -33,19 +34,21 @@ export default function AddRecurringScreen({ groupId, editPaymentId, onClose, on
     return getPayments(groupId).find((p) => p.id === editPaymentId) ?? null
   }, [groupId, editPaymentId, getPayments])
 
-  // Form states
-  const [amount, setAmount] = useState('')
-  const [description, setDescription] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('bills')
-  const [frequency, setFrequency] = useState<'Monthly' | 'Weekly'>('Monthly')
-  const [dateValue, setDateValue] = useState('15 June 2026')
-  const [paidBy, setPaidBy] = useState('you')
-  const [splitData, setSplitData] = useState<SplitData>({
-    type: 'equal',
+  // Form states - lazily seeded from editingPayment on mount. This component is only ever
+  // mounted fresh when the drawer opens (see recurring-payments-screen.tsx), so a plain
+  // lazy initializer is enough; no effect is needed to resync on reopen.
+  const [amount, setAmount] = useState(() => editingPayment ? String(editingPayment.amount) : '')
+  const [description, setDescription] = useState(() => editingPayment?.name ?? '')
+  const [selectedCategory, setSelectedCategory] = useState(() => editingPayment?.category ?? 'bills')
+  const [frequency, setFrequency] = useState<'Monthly' | 'Weekly'>(() => editingPayment?.frequency ?? 'Monthly')
+  const [dateValue, setDateValue] = useState(() => editingPayment?.startsOn ?? '15 June 2026')
+  const [paidBy, setPaidBy] = useState(() => editingPayment?.paidById ?? 'you')
+  const [splitData, setSplitData] = useState<SplitData>(() => ({
+    type: editingPayment?.splitType || 'equal',
     selectedMembers: ['you', 'contact'],
     unequalAmounts: { you: 0, contact: 0 },
     adjustmentAmounts: { you: 0, contact: 0 },
-  })
+  }))
 
   // Attachment overlay states
   const [receiptFile, setReceiptFile] = useState<{ name: string; size: string; dataUrl?: string } | null>(null)
@@ -58,24 +61,6 @@ export default function AddRecurringScreen({ groupId, editPaymentId, onClose, on
   const [showReceiptOverlay, setShowReceiptOverlay] = useState(false)
   const [showNoteOverlay, setShowNoteOverlay] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
-
-  // Populate form if editing
-  useEffect(() => {
-    if (editingPayment) {
-      setAmount(String(editingPayment.amount))
-      setDescription(editingPayment.name)
-      setSelectedCategory(editingPayment.category)
-      setFrequency(editingPayment.frequency)
-      setDateValue(editingPayment.startsOn)
-      setPaidBy(editingPayment.paidById)
-      setSplitData({
-        type: editingPayment.splitType || 'equal',
-        selectedMembers: ['you', 'contact'],
-        unequalAmounts: { you: 0, contact: 0 },
-        adjustmentAmounts: { you: 0, contact: 0 },
-      })
-    }
-  }, [editingPayment])
 
   // Resolve payer full name from shared members list
   const payerName = useMemo(() => getMemberName(paidBy), [paidBy])

@@ -7,7 +7,7 @@ import path from "path"
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    tanstackRouter({ target: 'react', routesDirectory: './src/routes', generatedRouteTree: './src/routeTree.gen.ts' }),
+    tanstackRouter({ target: 'react', routesDirectory: './src/routes', generatedRouteTree: './src/routeTree.gen.ts', autoCodeSplitting: true }),
     react(),
     tailwindcss(),
   ],

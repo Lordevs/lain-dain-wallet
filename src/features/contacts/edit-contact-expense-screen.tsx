@@ -1,6 +1,6 @@
 import AddExpenseBase, { type ConfirmExpenseData } from '@/components/shared/add-expense-base'
-import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
-import { TRANSACTION_STORE } from '@/features/contacts/data/transaction-store'
+import { useContactStore } from '@/store/use-contact-store'
+import { useTransactionStore } from '@/store/use-transaction-store'
 import { calculateContactOwesAmount } from '@/lib/split'
 
 interface EditContactExpenseScreenProps {
@@ -11,8 +11,9 @@ interface EditContactExpenseScreenProps {
 }
 
 export default function EditContactExpenseScreen({ contactId, txId, onClose, onSuccess }: EditContactExpenseScreenProps) {
-  // Find contact by id from mock data
-  const contact = [...MOCK_RECEIVABLES, ...MOCK_PAYABLES].find((c) => c.id === contactId)
+  // Find contact by id from store
+  const contacts = useContactStore((state) => state.contacts)
+  const contact = contacts.find((c) => c.id === contactId)
 
   if (!contact) {
     return (
@@ -31,7 +32,7 @@ export default function EditContactExpenseScreen({ contactId, txId, onClose, onS
   }
 
   // Find the transaction record to edit from TRANSACTION_STORE
-  const txList = TRANSACTION_STORE[contact.id] || []
+  const txList = useTransactionStore.getState().transactionsByContact[contact.id] || []
   const tx = txList.find((t) => t.id === txId)
 
   // Prefill data configuration from tx record
@@ -61,18 +62,13 @@ export default function EditContactExpenseScreen({ contactId, txId, onClose, onS
 
     const contactOwesAmount = calculateContactOwesAmount(parsedAmount, paidBy as 'you' | 'contact', splitData)
 
+    const oldContactOwesAmount = tx ? tx.amount : 0
+    const oldName = tx ? tx.name : ''
+
     // Update store
-    const txIndex = txList.findIndex((t) => t.id === txId)
-    let oldContactOwesAmount = 0
-    let oldName = ''
-
-    if (txIndex !== -1) {
-      const oldTx = txList[txIndex]
-      oldContactOwesAmount = oldTx.amount
-      oldName = oldTx.name
-
-      txList[txIndex] = {
-        ...oldTx,
+    if (tx) {
+      const updatedTx = {
+        ...tx,
         name: data.description || 'Edited Expense',
         amount: contactOwesAmount,
         category: data.category as any,
@@ -80,23 +76,32 @@ export default function EditContactExpenseScreen({ contactId, txId, onClose, onS
         splitType: splitData.type,
         dateValue: data.dateValue
       }
+      useTransactionStore.getState().updateTransaction(contact.id, updatedTx)
     }
 
     // Update contact's netAmount balance
     const diff = contactOwesAmount - oldContactOwesAmount
-    contact.netAmount += diff
+    const updatedNetAmount = contact.netAmount + diff
 
     // Update tags array
-    const tagIndex = contact.tags.findIndex((t) => t.name === oldName || t.name === (data.description || 'New Split Expense'))
+    let updatedTags = [...contact.tags]
+    const tagIndex = updatedTags.findIndex((t) => t.name === oldName || t.name === (data.description || 'New Split Expense'))
     if (tagIndex !== -1) {
-      contact.tags[tagIndex].name = data.description || 'Edited Expense'
-      contact.tags[tagIndex].amount = contactOwesAmount
+      updatedTags[tagIndex] = {
+        name: data.description || 'Edited Expense',
+        amount: contactOwesAmount
+      }
     } else {
-      contact.tags.push({
+      updatedTags.push({
         name: data.description || 'Edited Expense',
         amount: contactOwesAmount
       })
     }
+
+    useContactStore.getState().updateContact(contact.id, {
+      netAmount: updatedNetAmount,
+      tags: updatedTags
+    })
   }
 
   return (

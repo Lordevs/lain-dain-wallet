@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { X, Check, Scale, AlertTriangle, Info, Users, TextAlignJustify, RefreshCw } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, getInitials } from '@/lib/utils'
+import { useAuthStore } from '@/store/use-auth-store'
 import {
   Drawer,
   DrawerContent,
@@ -84,6 +85,9 @@ export default function SplitExpenseDrawer({
   // Adjustment Split State: Extra adjustment amounts
   const [adjustmentAmounts, setAdjustmentAmounts] = useState<Record<string, string>>({})
 
+  const userProfile = useAuthStore((state) => state.userProfile)
+  const youInitials = getInitials(userProfile?.name || 'You')
+
   // Resolve members list dynamically based on group or single contact
   const isGroup = useMemo(() => {
     return contactName.toLowerCase().includes('trip') || contactName.toLowerCase().includes('family') || contactName.toLowerCase().includes('group')
@@ -92,16 +96,16 @@ export default function SplitExpenseDrawer({
   const members = useMemo(() => {
     return isGroup
       ? [
-        { id: 'you', name: 'You', initials: 'MH', avatarColor: 'bg-[#0B683A]', isOrganizer: true },
+        { id: 'you', name: 'You', initials: youInitials, avatarColor: 'bg-[#0B683A]', isOrganizer: true },
         { id: 'ali', name: 'Ali Hassan', initials: 'AH', avatarColor: 'bg-[#2F80ED]', isOrganizer: false },
         { id: 'sara', name: 'Sara Khan', initials: 'SK', avatarColor: 'bg-[#C96A1B]', isOrganizer: false },
         { id: 'hassan', name: 'Hassan', initials: 'HS', avatarColor: 'bg-[#475569]', isOrganizer: false },
       ]
       : [
-        { id: 'you', name: 'You', initials: 'MH', avatarColor: 'bg-[#0B683A]', isOrganizer: true },
+        { id: 'you', name: 'You', initials: youInitials, avatarColor: 'bg-[#0B683A]', isOrganizer: true },
         { id: 'contact', name: contactName, initials: contactInitials, avatarColor: contactAvatarColor || 'bg-[#2F80ED]', isOrganizer: false },
       ]
-  }, [isGroup, contactName, contactInitials, contactAvatarColor])
+  }, [isGroup, contactName, contactInitials, contactAvatarColor, youInitials])
 
   // Sync state with initial data or defaults when drawer opens
   useEffect(() => {

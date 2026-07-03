@@ -9,7 +9,7 @@ import ProfilePicturePanel from '@/components/shared/profile-picture-panel'
 import OutstandingBalanceDrawer from '@/components/shared/outstanding-balance-drawer'
 import ConfirmActionDrawer from '@/components/shared/confirm-action-drawer'
 import { ROUTES } from '@/constants/routes'
-import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
+import { useContactStore } from '@/store/use-contact-store'
 import { Drawer, DrawerContent } from '@/components/ui/drawer'
 import SmartSettleScreen from '@/features/groups/smart-settle-screen'
 import RecurringPaymentsScreen from '@/features/groups/recurring-payments-screen'
@@ -67,10 +67,10 @@ export default function GroupSettingsScreen() {
     })
   }
 
-  // Find contact by id from mock data (read-only — never mutate imported objects)
+  const contacts = useContactStore((state) => state.contacts)
   const contact = useMemo(() => {
-    return [...MOCK_RECEIVABLES, ...MOCK_PAYABLES].find((c) => c.id === id)
-  }, [id])
+    return contacts.find((c) => c.id === id)
+  }, [id, contacts])
 
   // Local state for Smart Settle toggle
   const [smartSettleEnabled, setSmartSettleEnabled] = useState(true)
@@ -238,7 +238,12 @@ export default function GroupSettingsScreen() {
       confirmDescription: 'This will permanently delete this group and all its expenses for all members. This action cannot be undone.',
       buttonText: 'Delete',
       buttonVariant: 'danger',
-      onAction: () => navigate({ to: ROUTES.DASHBOARD }),
+      onAction: () => {
+        if (contact) {
+          useContactStore.getState().deleteContact(contact.id)
+        }
+        navigate({ to: ROUTES.DASHBOARD })
+      },
     })
   }
 

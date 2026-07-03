@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { ROUTES } from '@/constants/routes'
-import { MOCK_CONTACTS, MOCK_CATEGORIES } from '../data/mock-data'
-import type { AppContact, NewFlowStep } from '../types'
+import { MOCK_CATEGORIES } from '../data/mock-data'
+import { useContactStore, type Contact } from '@/store/use-contact-store'
+import type { NewFlowStep } from '../types'
 
 // ─── Public interface of the hook ─────────────────────────────────────────────
 
@@ -15,9 +16,9 @@ export interface NewContactFlowState {
   // ── Contact selection ────────────────────────────────────────────────────────
   selectedContacts: string[]
   /** Full contact objects matching selectedContacts ids */
-  selectedList: AppContact[]
+  selectedList: Contact[]
   /** MOCK_CONTACTS filtered by current searchQuery */
-  filteredContacts: AppContact[]
+  filteredContacts: Contact[]
   toggleContact: (id: string) => void
   removeContact: (id: string) => void
 
@@ -53,6 +54,8 @@ export interface NewContactFlowState {
  */
 export function useNewContactFlow(): NewContactFlowState {
   const navigate = useNavigate()
+  const contacts = useContactStore((state) => state.contacts)
+  const addContact = useContactStore((state) => state.addContact)
 
   const [step, setStep] = useState<NewFlowStep>('choice')
   const [selectedContacts, setSelectedContacts] = useState<string[]>([])
@@ -65,11 +68,13 @@ export function useNewContactFlow(): NewContactFlowState {
 
   // ── Derived ──────────────────────────────────────────────────────────────────
 
-  const filteredContacts = MOCK_CONTACTS.filter((c) =>
+  const selectableContacts = contacts.filter((c) => c.type === 'person')
+
+  const filteredContacts = selectableContacts.filter((c) =>
     c.name.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
-  const selectedList = MOCK_CONTACTS.filter((c) => selectedContacts.includes(c.id))
+  const selectedList = contacts.filter((c) => selectedContacts.includes(c.id))
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
 
@@ -115,7 +120,20 @@ export function useNewContactFlow(): NewContactFlowState {
   }
 
   const createGroup = () => {
-    if (groupName.trim()) setStep('success')
+    if (groupName.trim()) {
+      const newGroup: Contact = {
+        id: 'g-' + Date.now(),
+        name: groupName,
+        initials: groupName.slice(0, 2).toUpperCase(),
+        avatarColor: groupAvatar || 'bg-[#01592B]',
+        ledgerCount: selectedContacts.length + 1,
+        netAmount: 0,
+        tags: [],
+        type: 'group',
+      }
+      addContact(newGroup)
+      setStep('success')
+    }
   }
 
   return {

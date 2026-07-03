@@ -8,7 +8,7 @@ import LedgerTabs, { type LedgerTab } from './components/ledger-tabs'
 import SectionHeader from './components/section-header'
 import ContactLedgerCard from './components/contact-ledger-card'
 import Fab from './components/fab'
-import { MOCK_BALANCE, MOCK_RECEIVABLES, MOCK_PAYABLES } from './data/mock-data'
+import { useContactStore, selectBalanceSummary, selectReceivables, selectPayables } from '@/store/use-contact-store'
 import { Drawer, DrawerContent } from '@/components/ui/drawer'
 import LedgerBreakdownScreen from '@/features/contacts/ledger-breakdown-screen'
 
@@ -23,6 +23,10 @@ export default function DashboardScreen() {
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState<'all' | 'people' | 'groups'>('all')
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest')
+
+  const balanceSummary = useContactStore(selectBalanceSummary)
+  const receivables = useContactStore(selectReceivables)
+  const payables = useContactStore(selectPayables)
 
   const closeDrawer = () => {
     navigate({
@@ -45,7 +49,7 @@ export default function DashboardScreen() {
     })
   }
 
-  const contacts = activeTab === 'receivables' ? MOCK_RECEIVABLES : MOCK_PAYABLES
+  const contacts = activeTab === 'receivables' ? receivables : payables
 
   // Filter based on selected content type (person/group)
   const typedContacts = contacts.filter((c) => {
@@ -56,8 +60,18 @@ export default function DashboardScreen() {
 
   // Sort contacts based on selected sort order
   const sortedContacts = [...typedContacts].sort((a, b) => {
-    if (sortBy === 'newest') return Number(b.id) - Number(a.id)
-    if (sortBy === 'oldest') return Number(a.id) - Number(b.id)
+    if (sortBy === 'newest') {
+      const idA = isNaN(Number(a.id)) ? a.id : Number(a.id)
+      const idB = isNaN(Number(b.id)) ? b.id : Number(b.id)
+      if (typeof idA === 'number' && typeof idB === 'number') return idB - idA
+      return String(idB).localeCompare(String(idA))
+    }
+    if (sortBy === 'oldest') {
+      const idA = isNaN(Number(a.id)) ? a.id : Number(a.id)
+      const idB = isNaN(Number(b.id)) ? b.id : Number(b.id)
+      if (typeof idA === 'number' && typeof idB === 'number') return idA - idB
+      return String(idA).localeCompare(String(idB))
+    }
     if (sortBy === 'highest') return Math.abs(b.netAmount) - Math.abs(a.netAmount)
     if (sortBy === 'lowest') return Math.abs(a.netAmount) - Math.abs(b.netAmount)
     return 0
@@ -97,7 +111,7 @@ export default function DashboardScreen() {
       </div>
 
       {/* Balance Summary Card */}
-      <BalanceSummaryCard summary={MOCK_BALANCE} />
+      <BalanceSummaryCard summary={balanceSummary} />
 
       {/* Tab Switcher */}
       <LedgerTabs activeTab={activeTab} onTabChange={setActiveTab} />

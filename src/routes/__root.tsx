@@ -5,7 +5,7 @@ import { SplashScreen } from '@capacitor/splash-screen'
 import { useAuthStore } from '@/store/use-auth-store'
 import { ROUTES } from '@/constants/routes'
 import AppShell from '@/components/layout/app-shell'
-import coinGif from '@/assets/coin.gif'
+import coinAnimation from '@/assets/coin.webp'
 
 function RootComponent() {
   const [showSplash, setShowSplash] = useState(true)
@@ -36,7 +36,7 @@ function RootComponent() {
           <div className="relative flex flex-col items-center shrink-0 mb-24">
             <div className="w-[250px] h-[250px] flex items-center justify-center">
               <img
-                src={coinGif}
+                src={coinAnimation}
                 alt="Lain Dain Coin"
                 className="w-full h-full object-contain animate-bounce-slow"
               />

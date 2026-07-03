@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useParams, useNavigate, Navigate, useSearch } from '@tanstack/react-router'
 import { Bell } from 'lucide-react'
-import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
+import { useContactStore } from '@/store/use-contact-store'
 import ContactAvatar from '@/components/shared/contact-avatar'
 import { ROUTES } from '@/constants/routes'
 import { formatPKR } from '@/lib/currency'
@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
 import ExpenseList, { type ExpenseListData } from '@/components/shared/expense-list'
 import { type ExpenseCategory } from '@/components/shared/expense-item'
-import { getContactTransactions } from '@/features/contacts/data/transaction-store'
+import { useTransactionStore } from '@/store/use-transaction-store'
 import { Drawer, DrawerContent, FULLSCREEN_DRAWER_CN } from '@/components/ui/drawer'
 import SendReminderScreen from '@/features/contacts/send-reminder-screen'
 import LedgerBreakdownScreen from '@/features/contacts/ledger-breakdown-screen'
@@ -30,60 +30,26 @@ interface TransactionItem extends ExpenseListData {
   className?: string
 }
 
-// Helper mock data generator for transactions grouped by date sections
-const GET_TRANSACTIONS = (contactId: string, contactName: string): {
-  Today: TransactionItem[]
-  Yesterday: TransactionItem[]
-  Earlier: TransactionItem[]
-} => {
-  const list = getContactTransactions(contactId, contactName)
-  const firstName = contactName.split(' ')[0]
-
-  const items: TransactionItem[] = list.map((record) => {
-    const displaySubtitle = record.category === 'payment' ? (
-      <div className="flex flex-col text-left">
-        <span className="text-[#6B6B6B] text-[12px] font-normal">You paid {firstName}</span>
-        <span className="text-[12px] text-[#6B6B6B] font-normal">Balance adjusted</span>
-      </div>
-    ) : record.subtitle
-
-    return {
-      ...record,
-      subtitle: displaySubtitle
-    }
-  })
-
-  const today: TransactionItem[] = []
-  const yesterday: TransactionItem[] = []
-  const earlier: TransactionItem[] = []
-
-  items.forEach((item) => {
-    const sub = item.rightSubtitle.toLowerCase()
-    if (sub.includes('today') || sub.includes('pm') || sub.includes('am')) {
-      today.push(item)
-    } else if (sub.includes('yesterday')) {
-      yesterday.push(item)
-    } else {
-      earlier.push(item)
-    }
-  })
-
-  return {
-    Today: today,
-    Yesterday: yesterday,
-    Earlier: earlier,
-  }
-}
-
 /**
- * ContactDetailScreen — displays detailed breakdown of ledgers for a selected contact.
- * Includes back button, avatar, overall stat card, timeline-grouped transactions list, and bottom actions.
+ * ContactDetailScreen — manages individual contact ledger detail view.
+ * Handles split-bill transactions, settlements, breakdowns, and reminders.
  */
 export default function ContactDetailScreen() {
   const { id } = useParams({ from: '/contacts/$id/' })
   const navigate = useNavigate({ from: '/contacts/$id/' })
   const { drawer, txId } = useSearch({ from: '/contacts/$id/' })
   const [showSettleUp, setShowSettleUp] = useState(false)
+
+  const openDrawer = (dName: 'breakdown' | 'reminder' | 'transaction' | 'add-expense' | 'edit-expense', tid?: string) => {
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        drawer: dName,
+        txId: tid,
+      }),
+      replace: true,
+    })
+  }
 
   const closeDrawer = () => {
     navigate({
@@ -97,19 +63,9 @@ export default function ContactDetailScreen() {
     })
   }
 
-  const openDrawer = (name: 'reminder' | 'breakdown' | 'add-expense' | 'edit-expense' | 'transaction', tid?: string) => {
-    navigate({
-      search: (prev) => ({
-        ...prev,
-        drawer: name,
-        txId: tid,
-      }),
-      replace: true,
-    })
-  }
-
-  // Find contact by id from mock data
-  const contact = [...MOCK_RECEIVABLES, ...MOCK_PAYABLES].find((c) => c.id === id)
+  // Find contact by id from store
+  const contacts = useContactStore((state) => state.contacts)
+  const contact = contacts.find((c) => c.id === id)
 
   if (!contact) {
     return (
@@ -152,8 +108,46 @@ export default function ContactDetailScreen() {
       ? 'text-[#C96A1B]'
       : 'text-[#1A1A1A]'
 
+  const transactionState = useTransactionStore((state) => state.transactionsByContact)
+
   // Get grouped transaction history
-  const transactions = useMemo(() => GET_TRANSACTIONS(id, contact.name), [id, contact.name])
+  const transactions = useMemo(() => {
+    const list = useTransactionStore.getState().getContactTransactions(id, contact.name)
+    const firstName = contact.name.split(' ')[0]
+
+    const items: TransactionItem[] = list.map((record) => {
+      const displaySubtitle = record.category === 'payment' ? (
+        <div className="flex flex-col text-left">
+          <span className="text-[#6B6B6B] text-[12px] font-normal">You paid {firstName}</span>
+          <span className="text-[#0B683A] text-[12px] font-semibold">{record.subtitle}</span>
+        </div>
+      ) : record.subtitle
+
+      return {
+        id: record.id,
+        name: record.name,
+        subtitle: displaySubtitle,
+        amount: Math.abs(record.amount),
+        category: record.category as any,
+        rightSubtitle: record.rightSubtitle,
+        showChevron: record.showChevron,
+        className: record.className,
+        amountColor: record.amount > 0 ? 'green' : record.amount < 0 ? 'orange' : 'black',
+      }
+    })
+
+    return {
+      Today: items.filter((item) => item.rightSubtitle.toLowerCase().includes('today') || item.rightSubtitle.toLowerCase().includes('pm') || item.rightSubtitle.toLowerCase().includes('am')),
+      Yesterday: items.filter((item) => item.rightSubtitle.toLowerCase().includes('yesterday')),
+      Earlier: items.filter(
+        (item) =>
+          !item.rightSubtitle.toLowerCase().includes('today') &&
+          !item.rightSubtitle.toLowerCase().includes('pm') &&
+          !item.rightSubtitle.toLowerCase().includes('am') &&
+          !item.rightSubtitle.toLowerCase().includes('yesterday')
+      ),
+    }
+  }, [id, contact.name, transactionState])
 
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24 relative select-none">

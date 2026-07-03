@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { User } from 'lucide-react'
-import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
+import { useContactStore } from '@/store/use-contact-store'
 import { formatPKR } from '@/lib/currency'
 import FlowHeader from '@/components/shared/flow-header'
 import SuccessCheck from '@/components/shared/success-check'
@@ -19,8 +19,9 @@ interface SendReminderScreenProps {
 export default function SendReminderScreen({ contactId, onClose }: SendReminderScreenProps) {
   const [showSuccess, setShowSuccess] = useState(false)
 
-  // Find contact by id from mock data
-  const contact = [...MOCK_RECEIVABLES, ...MOCK_PAYABLES].find((c) => c.id === contactId)
+  // Find contact by id from store
+  const contacts = useContactStore((state) => state.contacts)
+  const contact = contacts.find((c) => c.id === contactId)
 
   if (!contact) {
     return (

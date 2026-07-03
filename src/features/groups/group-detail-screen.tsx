@@ -2,14 +2,14 @@ import { useMemo, useState } from 'react'
 import { useParams, useNavigate, useSearch } from '@tanstack/react-router'
 import { MoreVertical, Bell, ChevronRight, Building2, Handshake, HelpCircle, ArrowUp, ArrowDown } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
+import { useContactStore } from '@/store/use-contact-store'
 import { ROUTES } from '@/constants/routes'
 import { formatPKR } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
 import ExpenseList, { type ExpenseListData } from '@/components/shared/expense-list'
 import { type ExpenseCategory } from '@/components/shared/expense-item'
-import { getContactTransactions } from '@/features/contacts/data/transaction-store'
+import { useTransactionStore } from '@/store/use-transaction-store'
 import ContactList from '@/components/shared/contact-list'
 import ContactListItem from '@/components/shared/contact-list-item'
 import SettleUpPanel from '@/features/notifications/components/settle-up-panel'
@@ -32,51 +32,6 @@ interface TransactionItem extends ExpenseListData {
   className?: string
 }
 
-// Helper mock data generator for transactions grouped by date sections
-const GET_TRANSACTIONS = (contactId: string, contactName: string): {
-  Today: TransactionItem[]
-  Yesterday: TransactionItem[]
-  Earlier: TransactionItem[]
-} => {
-  const list = getContactTransactions(contactId, contactName)
-  const firstName = contactName.split(' ')[0]
-
-  const items: TransactionItem[] = list.map((record) => {
-    const displaySubtitle = record.category === 'payment' ? (
-      <div className="flex flex-col text-left">
-        <span className="text-[#6B6B6B] text-[12px] font-normal">You paid {firstName}</span>
-        <span className="text-[12px] text-[#9A9590] mt-0.5 font-normal">Balance adjusted</span>
-      </div>
-    ) : record.subtitle
-
-    return {
-      ...record,
-      subtitle: displaySubtitle
-    }
-  })
-
-  const today: TransactionItem[] = []
-  const yesterday: TransactionItem[] = []
-  const earlier: TransactionItem[] = []
-
-  items.forEach((item) => {
-    const sub = item.rightSubtitle.toLowerCase()
-    if (sub.includes('today') || sub.includes('pm') || sub.includes('am')) {
-      today.push(item)
-    } else if (sub.includes('yesterday')) {
-      yesterday.push(item)
-    } else {
-      earlier.push(item)
-    }
-  })
-
-  return {
-    Today: today,
-    Yesterday: yesterday,
-    Earlier: earlier,
-  }
-}
-
 const getCategoryDetails = (catId: string) => {
   if (catId === 'payment') {
     return {
@@ -95,7 +50,7 @@ const getCategoryDetails = (catId: string) => {
 }
 
 /**
- * GroupDetailScreen — displays detailed breakdown of ledgers for a selected group.
+ * GroupDetailScreen — handles detailed views and features for groups.
  */
 const cardVariants = {
   initial: (direction: 'left' | 'right') => ({
@@ -117,6 +72,17 @@ export default function GroupDetailScreen() {
   const navigate = useNavigate({ from: '/groups/$id/' })
   const { drawer, txId } = useSearch({ from: '/groups/$id/' })
 
+  const openDrawer = (name: 'reminder' | 'add-expense' | 'edit-expense' | 'transaction', tid?: string) => {
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        drawer: name,
+        txId: tid,
+      }),
+      replace: true,
+    })
+  }
+
   const closeDrawer = () => {
     navigate({
       search: (prev) => {
@@ -129,33 +95,9 @@ export default function GroupDetailScreen() {
     })
   }
 
-  const openDrawer = (name: 'reminder' | 'add-expense' | 'edit-expense' | 'transaction', tid?: string) => {
-    navigate({
-      search: (prev) => ({
-        ...prev,
-        drawer: name,
-        txId: tid,
-      }),
-      replace: true,
-    })
-  }
-
-  // Find contact by id from mock data
-  const contact = [...MOCK_RECEIVABLES, ...MOCK_PAYABLES].find((c) => c.id === id)
-
-  if (!contact || contact.type !== 'group') {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-[#FEFAF1]">
-        <p className="text-muted-foreground text-sm mb-4">Group not found</p>
-        <button
-          onClick={() => navigate({ to: ROUTES.DASHBOARD })}
-          className="text-primary font-bold hover:underline border-0 bg-transparent cursor-pointer"
-        >
-          Go Back
-        </button>
-      </div>
-    )
-  }
+  // Find contact by id from store
+  const contacts = useContactStore((state) => state.contacts)
+  const contact = contacts.find((c) => c.id === id)
 
   // State to filter by category
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -167,8 +109,56 @@ export default function GroupDetailScreen() {
   const [activeCardIndex, setActiveCardIndex] = useState(0)
   const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('left')
 
+  const transactionState = useTransactionStore((state) => state.transactionsByContact)
+
   // Get grouped transaction history
-  const transactions = useMemo(() => GET_TRANSACTIONS(id, contact.name), [id, contact.name])
+  const transactions = useMemo(() => {
+    if (!contact) return { Today: [], Yesterday: [], Earlier: [] }
+    const list = useTransactionStore.getState().getContactTransactions(id, contact.name)
+    const firstName = contact.name.split(' ')[0]
+
+    const items: TransactionItem[] = list.map((record) => {
+      const displaySubtitle = record.category === 'payment' ? (
+        <div className="flex flex-col text-left">
+          <span className="text-[#6B6B6B] text-[12px] font-normal">You paid {firstName}</span>
+          <span className="text-[12px] text-[#9A9590] mt-0.5 font-normal">Balance adjusted</span>
+        </div>
+      ) : record.subtitle
+
+      return {
+        id: record.id,
+        name: record.name,
+        subtitle: displaySubtitle,
+        amount: Math.abs(record.amount),
+        category: record.category as any,
+        rightSubtitle: record.rightSubtitle,
+        showChevron: record.showChevron,
+        className: record.className,
+        amountColor: record.amount > 0 ? 'green' : record.amount < 0 ? 'orange' : 'black',
+      }
+    })
+
+    const today: TransactionItem[] = []
+    const yesterday: TransactionItem[] = []
+    const earlier: TransactionItem[] = []
+
+    items.forEach((item) => {
+      const sub = item.rightSubtitle.toLowerCase()
+      if (sub.includes('today') || sub.includes('pm') || sub.includes('am')) {
+        today.push(item)
+      } else if (sub.includes('yesterday')) {
+        yesterday.push(item)
+      } else {
+        earlier.push(item)
+      }
+    })
+
+    return {
+      Today: today,
+      Yesterday: yesterday,
+      Earlier: earlier,
+    }
+  }, [id, contact?.name, transactionState])
 
   // Flat combined list of expenses with custom category icon, background highlights, and chevron overrides matching the mockup
   const groupExpensesData = useMemo(() => {
@@ -283,6 +273,20 @@ export default function GroupDetailScreen() {
       }
     ]
   }, [id])
+
+  if (!contact || contact.type !== 'group') {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-[#FEFAF1]">
+        <p className="text-muted-foreground text-sm mb-4">Group not found</p>
+        <button
+          onClick={() => navigate({ to: ROUTES.DASHBOARD })}
+          className="text-primary font-bold hover:underline border-0 bg-transparent cursor-pointer"
+        >
+          Go Back
+        </button>
+      </div>
+    )
+  }
 
   const isGroupReceivable = contact.netAmount > 0
   const formattedGroupVal = formatPKR(Math.abs(contact.netAmount))

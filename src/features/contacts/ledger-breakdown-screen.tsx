@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Users, AlertTriangle, Smile, Info } from 'lucide-react'
-import { MOCK_RECEIVABLES, MOCK_PAYABLES } from '@/features/dashboard/data/mock-data'
+import { useContactStore } from '@/store/use-contact-store'
 import { ROUTES } from '@/constants/routes'
 import { formatPKR } from '@/lib/currency'
 import { cn } from '@/lib/utils'
@@ -52,7 +52,8 @@ export default function LedgerBreakdownScreen({ contactId, onClose }: LedgerBrea
   }
 
   // Find contact in mock data
-  const contact = [...MOCK_RECEIVABLES, ...MOCK_PAYABLES].find((c) => c.id === contactId)
+  const contacts = useContactStore((state) => state.contacts)
+  const contact = contacts.find((c) => c.id === contactId)
 
   if (!contact) {
     return (
@@ -114,8 +115,7 @@ export default function LedgerBreakdownScreen({ contactId, onClose }: LedgerBrea
         params: { id: contact.id },
       })
     } else {
-      const allLedgers = [...MOCK_RECEIVABLES, ...MOCK_PAYABLES]
-      const foundGroup = allLedgers.find(
+      const foundGroup = contacts.find(
         (g) => g.type === 'group' && (
           tagName.toLowerCase().includes(g.name.toLowerCase()) ||
           g.name.toLowerCase().includes(tagName.toLowerCase())
