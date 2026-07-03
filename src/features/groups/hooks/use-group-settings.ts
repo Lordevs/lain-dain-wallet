@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react'
-import { useParams, useNavigate } from '@tanstack/react-router'
+import { useParams, useNavigate, useSearch } from '@tanstack/react-router'
 import { useContactStore } from '@/store/use-contact-store'
 import { ROUTES } from '@/constants/routes'
 
@@ -46,11 +46,14 @@ export function useGroupSettings() {
     return contacts.find((c) => c.id === id)
   }, [id, contacts])
 
+  const search = useSearch({ from: '/groups/$id/settings' }) as any
+  const drawer = search?.drawer
+
   const [smartSettleEnabled, setSmartSettleEnabled] = useState(true)
   const [groupPhoto, setGroupPhoto] = useState<string | null>(null)
-  const [isPhotoPanelOpen, setIsPhotoPanelOpen] = useState(false)
+  const isPhotoPanelOpen = drawer === 'edit-photo'
   const [groupName, setGroupName] = useState(contact?.name || 'Murree Trip')
-  const [isNamePanelOpen, setIsNamePanelOpen] = useState(false)
+  const isNamePanelOpen = drawer === 'edit-name'
   const [tempGroupName, setTempGroupName] = useState(contact?.name || 'Murree Trip')
 
   const [members, setMembers] = useState<GroupMember[]>([
@@ -197,7 +200,13 @@ export function useGroupSettings() {
     e.preventDefault()
     if (!tempGroupName.trim()) return
     setGroupName(tempGroupName.trim())
-    setIsNamePanelOpen(false)
+    navigate({
+      search: (prev: any) => {
+        const next = { ...prev }
+        delete next.drawer
+        return next
+      }
+    })
   }
 
   const groupInitials = groupName
@@ -213,11 +222,9 @@ export function useGroupSettings() {
     groupPhoto,
     setGroupPhoto,
     isPhotoPanelOpen,
-    setIsPhotoPanelOpen,
     groupName,
     setGroupName,
     isNamePanelOpen,
-    setIsNamePanelOpen,
     tempGroupName,
     setTempGroupName,
     members,

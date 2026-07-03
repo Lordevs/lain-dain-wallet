@@ -9,7 +9,6 @@ import ProfilePicturePanel from '@/components/shared/profile-picture-panel'
 import OutstandingBalanceDrawer from '@/components/shared/outstanding-balance-drawer'
 import ConfirmActionDrawer from '@/components/shared/confirm-action-drawer'
 import { ROUTES } from '@/constants/routes'
-import { Drawer, DrawerContent } from '@/components/ui/drawer'
 import SmartSettleScreen from '@/features/groups/smart-settle-screen'
 import RecurringPaymentsScreen from '@/features/groups/recurring-payments-screen'
 import { useGroupSettings } from './hooks/use-group-settings'
@@ -26,10 +25,8 @@ export default function GroupSettingsScreen() {
     groupPhoto,
     setGroupPhoto,
     isPhotoPanelOpen,
-    setIsPhotoPanelOpen,
     groupName,
     isNamePanelOpen,
-    setIsNamePanelOpen,
     tempGroupName,
     setTempGroupName,
     members,
@@ -144,7 +141,7 @@ export default function GroupSettingsScreen() {
           <div className="flex items-center gap-3 mt-4">
             <button
               type="button"
-              onClick={() => setIsPhotoPanelOpen(true)}
+              onClick={() => navigate({ search: (prev) => ({ ...prev, drawer: 'edit-photo' as const }) })}
               className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#0B683A33] bg-[#E4F2EB] text-[#0B683A] text-xs font-bold transition-all hover:bg-[#E4F2EB]/80 shrink-0 cursor-pointer outline-none"
             >
               <Camera size={14} className="text-[#0B683A]" strokeWidth={2.5} />
@@ -154,7 +151,9 @@ export default function GroupSettingsScreen() {
               type="button"
               onClick={() => {
                 setTempGroupName(groupName)
-                setIsNamePanelOpen(true)
+                navigate({
+                  search: (prev) => ({ ...prev, drawer: 'edit-name' as const })
+                })
               }}
               className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#0B683A33] bg-[#E4F2EB] text-[#0B683A] text-xs font-bold transition-all hover:bg-[#E4F2EB]/80 shrink-0 cursor-pointer outline-none"
             >
@@ -372,7 +371,13 @@ export default function GroupSettingsScreen() {
           label="Current group photo"
           initials={groupInitials}
           currentAvatar={groupPhoto}
-          onClose={() => setIsPhotoPanelOpen(false)}
+          onClose={() => navigate({
+            search: (prev) => {
+              const next = { ...prev }
+              delete next.drawer
+              return next
+            }
+          })}
           onSave={(newPhoto) => setGroupPhoto(newPhoto)}
         />
       )}
@@ -414,25 +419,24 @@ export default function GroupSettingsScreen() {
         tempGroupName={tempGroupName}
         onTempGroupNameChange={setTempGroupName}
         onSave={handleSaveGroupName}
-        onClose={() => setIsNamePanelOpen(false)}
+        onClose={() => {
+          navigate({
+            search: (prev) => {
+              const next = { ...prev }
+              delete next.drawer
+              return next
+            }
+          })
+        }}
       />
 
-      {/* Drawer Overlays */}
-      <Drawer direction="right" open={drawer === 'smart-settle'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=right]:w-full data-[vaul-drawer-direction=right]:max-w-full data-[vaul-drawer-direction=right]:rounded-none data-[vaul-drawer-direction=right]:border-0 data-[vaul-drawer-direction=right]:h-full">
-          {drawer === 'smart-settle' && contact && (
-            <SmartSettleScreen onClose={closeDrawer} />
-          )}
-        </DrawerContent>
-      </Drawer>
+      {drawer === 'smart-settle' && contact && (
+        <SmartSettleScreen onClose={closeDrawer} />
+      )}
 
-      <Drawer direction="left" open={drawer === 'recurring'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=left]:w-full data-[vaul-drawer-direction=left]:max-w-full data-[vaul-drawer-direction=left]:rounded-none data-[vaul-drawer-direction=left]:border-0 data-[vaul-drawer-direction=left]:h-full">
-          {drawer === 'recurring' && contact && (
-            <RecurringPaymentsScreen groupId={contact.id} onClose={closeDrawer} />
-          )}
-        </DrawerContent>
-      </Drawer>
+      {drawer === 'recurring' && contact && (
+        <RecurringPaymentsScreen groupId={contact.id} onClose={closeDrawer} />
+      )}
     </div>
   )
 }

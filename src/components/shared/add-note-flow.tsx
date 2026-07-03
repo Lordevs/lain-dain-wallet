@@ -64,7 +64,7 @@ function AddNoteFlowContent({
   }
 
   return (
-    <div className="fixed inset-0 z-70 bg-background flex flex-col select-none overflow-y-auto animate-in fade-in slide-in-from-bottom duration-75">
+    <div className="fixed inset-0 z-70 bg-background flex flex-col select-none overflow-y-auto">
       {/* Header */}
       <FlowHeader
         title="Add Note"

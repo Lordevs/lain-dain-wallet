@@ -18,7 +18,7 @@ export default function EditGroupNamePanel({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-70 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto animate-in fade-in slide-in-from-right duration-200 text-[#1A1A1A]">
+    <div className="fixed inset-0 z-70 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto text-[#1A1A1A]">
       <FlowHeader
         title="Edit Group Name"
         onBack={onClose}

@@ -54,7 +54,7 @@ export default function SendGroupReminderScreen({ groupId, onClose }: SendGroupR
   }
 
   return (
-    <div className="flex flex-col flex-1 bg-[#FEFAF1] h-full pb-24 relative select-none overflow-y-auto">
+    <div className="fixed inset-0 z-60 flex flex-col bg-[#FEFAF1] select-none overflow-hidden text-[#1A1A1A]">
       {/* Header */}
       <FlowHeader
         title="Send Reminder"

@@ -117,7 +117,7 @@ export default function TransactionDetailScreen(props: TransactionDetailScreenPr
   }
 
   return (
-    <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen select-none text-[#1A1A1A] pb-24 relative">
+    <div className="fixed inset-0 z-60 flex flex-col bg-[#FEFAF1] select-none text-[#1A1A1A] pb-24">
       {/* Toast Alert overlay */}
       <AnimatePresence>
         {toast && (

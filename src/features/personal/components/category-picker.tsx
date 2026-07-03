@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import {
   Bus,
   ShoppingBag,
@@ -97,23 +96,15 @@ export default function CategoryPicker({
       </button>
 
       {/* Add Category Flow Overlay */}
-      <AnimatePresence>
-        {showAddCategory && (
-          <motion.div
-            initial={{ opacity: 0, y: '100%' }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: '100%' }}
-            transition={{ duration: 0.075, ease: 'easeOut' }}
-            className="fixed inset-0 z-50 bg-[#FEFAF1]"
-          >
-            <AddCategoryFlow
-              isOpen={showAddCategory}
-              onClose={() => setShowAddCategory(false)}
-              onSave={handleSaveCategory}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {showAddCategory && (
+        <div className="fixed inset-0 z-50 bg-[#FEFAF1]">
+          <AddCategoryFlow
+            isOpen={showAddCategory}
+            onClose={() => setShowAddCategory(false)}
+            onSave={handleSaveCategory}
+          />
+        </div>
+      )}
     </div>
   )
 }

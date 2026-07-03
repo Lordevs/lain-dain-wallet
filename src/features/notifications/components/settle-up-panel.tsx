@@ -163,7 +163,7 @@ export default function SettleUpPanel({
   }
 
   return (
-    <div className="fixed inset-0 z-60 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto pb-32 text-[#1A1A1A] animate-in fade-in slide-in-from-right duration-200">
+    <div className="fixed inset-0 z-60 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto pb-32 text-[#1A1A1A]">
       {/* Header */}
       <FlowHeader
         title="Settle Up"

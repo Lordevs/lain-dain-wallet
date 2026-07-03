@@ -8,7 +8,6 @@ import FlowHeader from '@/components/shared/flow-header'
 import ContactList from '@/components/shared/contact-list'
 import ContactListItem from '@/components/shared/contact-list-item'
 import SettleUpPanel from '@/features/notifications/components/settle-up-panel'
-import { Drawer, DrawerContent, FULLSCREEN_DRAWER_CN } from '@/components/ui/drawer'
 import SendGroupReminderScreen from '@/features/groups/send-group-reminder-screen'
 import AddGroupExpenseScreen from '@/features/groups/add-group-expense-screen'
 import EditGroupExpenseScreen from '@/features/groups/edit-group-expense-screen'
@@ -287,51 +286,35 @@ export default function GroupDetailScreen() {
         </>
       )}
 
-      <Drawer open={drawer === 'reminder'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className={FULLSCREEN_DRAWER_CN}>
-          {drawer === 'reminder' && (
-            <SendGroupReminderScreen groupId={contact.id} onClose={closeDrawer} />
-          )}
-        </DrawerContent>
-      </Drawer>
+      {drawer === 'reminder' && (
+        <SendGroupReminderScreen groupId={contact.id} onClose={closeDrawer} />
+      )}
 
-      <Drawer open={drawer === 'add-expense'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className={FULLSCREEN_DRAWER_CN}>
-          {drawer === 'add-expense' && (
-            <AddGroupExpenseScreen
-              groupId={contact.id}
-              onClose={closeDrawer}
-              onSuccess={(newId) => openDrawer('transaction', newId)}
-            />
-          )}
-        </DrawerContent>
-      </Drawer>
+      {drawer === 'add-expense' && (
+        <AddGroupExpenseScreen
+          groupId={contact.id}
+          onClose={closeDrawer}
+          onSuccess={(newId) => openDrawer('transaction', newId)}
+        />
+      )}
 
-      <Drawer open={drawer === 'transaction'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className={FULLSCREEN_DRAWER_CN}>
-          {drawer === 'transaction' && txId && (
-            <TransactionDetailScreen
-              txId={txId}
-              onClose={closeDrawer}
-              onDelete={closeDrawer}
-              onEdit={() => openDrawer('edit-expense', txId)}
-            />
-          )}
-        </DrawerContent>
-      </Drawer>
+      {drawer === 'transaction' && txId && (
+        <TransactionDetailScreen
+          txId={txId}
+          onClose={closeDrawer}
+          onDelete={closeDrawer}
+          onEdit={() => openDrawer('edit-expense', txId)}
+        />
+      )}
 
-      <Drawer open={drawer === 'edit-expense'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className={FULLSCREEN_DRAWER_CN}>
-          {drawer === 'edit-expense' && txId && (
-            <EditGroupExpenseScreen
-              groupId={contact.id}
-              txId={txId}
-              onClose={() => openDrawer('transaction', txId)}
-              onSuccess={closeDrawer}
-            />
-          )}
-        </DrawerContent>
-      </Drawer>
+      {drawer === 'edit-expense' && txId && (
+        <EditGroupExpenseScreen
+          groupId={contact.id}
+          txId={txId}
+          onClose={() => openDrawer('transaction', txId)}
+          onSuccess={closeDrawer}
+        />
+      )}
     </div>
   )
 }

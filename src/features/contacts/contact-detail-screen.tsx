@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
 import ExpenseList, { type TransactionListItem } from '@/components/shared/expense-list'
 import { useTransactionStore } from '@/store/use-transaction-store'
-import { Drawer, DrawerContent, FULLSCREEN_DRAWER_CN } from '@/components/ui/drawer'
 import SendReminderScreen from '@/features/contacts/send-reminder-screen'
 import LedgerBreakdownScreen from '@/features/contacts/ledger-breakdown-screen'
 import AddContactExpenseScreen from '@/features/contacts/add-contact-expense-screen'
@@ -287,59 +286,39 @@ export default function ContactDetailScreen() {
         />
       )}
 
-      <Drawer open={drawer === 'reminder'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className={FULLSCREEN_DRAWER_CN}>
-          {drawer === 'reminder' && (
-            <SendReminderScreen contactId={contact.id} onClose={closeDrawer} />
-          )}
-        </DrawerContent>
-      </Drawer>
+      {drawer === 'reminder' && (
+        <SendReminderScreen contactId={contact.id} onClose={closeDrawer} />
+      )}
 
-      <Drawer direction="right" open={drawer === 'breakdown'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=right]:w-full data-[vaul-drawer-direction=right]:max-w-full data-[vaul-drawer-direction=right]:rounded-none data-[vaul-drawer-direction=right]:border-0 data-[vaul-drawer-direction=right]:h-full">
-          {drawer === 'breakdown' && (
-            <LedgerBreakdownScreen contactId={contact.id} onClose={closeDrawer} />
-          )}
-        </DrawerContent>
-      </Drawer>
+      {drawer === 'breakdown' && (
+        <LedgerBreakdownScreen contactId={contact.id} onClose={closeDrawer} />
+      )}
 
-      <Drawer open={drawer === 'add-expense'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className={FULLSCREEN_DRAWER_CN}>
-          {drawer === 'add-expense' && (
-            <AddContactExpenseScreen
-              contactId={contact.id}
-              onClose={closeDrawer}
-              onSuccess={(newId) => openDrawer('transaction', newId)}
-            />
-          )}
-        </DrawerContent>
-      </Drawer>
+      {drawer === 'add-expense' && (
+        <AddContactExpenseScreen
+          contactId={contact.id}
+          onClose={closeDrawer}
+          onSuccess={(newId) => openDrawer('transaction', newId)}
+        />
+      )}
 
-      <Drawer open={drawer === 'edit-expense'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className={FULLSCREEN_DRAWER_CN}>
-          {drawer === 'edit-expense' && txId && (
-            <EditContactExpenseScreen
-              contactId={contact.id}
-              txId={txId}
-              onClose={() => openDrawer('transaction', txId)}
-              onSuccess={closeDrawer}
-            />
-          )}
-        </DrawerContent>
-      </Drawer>
+      {drawer === 'edit-expense' && txId && (
+        <EditContactExpenseScreen
+          contactId={contact.id}
+          txId={txId}
+          onClose={() => openDrawer('transaction', txId)}
+          onSuccess={closeDrawer}
+        />
+      )}
 
-      <Drawer open={drawer === 'transaction'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className={FULLSCREEN_DRAWER_CN}>
-          {drawer === 'transaction' && txId && (
-            <TransactionDetailScreen
-              txId={txId}
-              onClose={closeDrawer}
-              onEdit={() => openDrawer('edit-expense', txId)}
-              onDelete={closeDrawer}
-            />
-          )}
-        </DrawerContent>
-      </Drawer>
+      {drawer === 'transaction' && txId && (
+        <TransactionDetailScreen
+          txId={txId}
+          onClose={closeDrawer}
+          onEdit={() => openDrawer('edit-expense', txId)}
+          onDelete={closeDrawer}
+        />
+      )}
     </div>
   )
 }

@@ -113,7 +113,7 @@ export default function AddRecurringScreen({ groupId, editPaymentId, onClose, on
   return (
     <form
       onSubmit={handleSave}
-      className="flex flex-col flex-1 bg-background h-full select-none justify-between text-left overflow-y-auto"
+      className="fixed inset-0 z-60 flex flex-col bg-background select-none justify-between text-left overflow-y-auto"
     >
       <div className="flex flex-col flex-1 pb-4">
         <RecurringFormHeader

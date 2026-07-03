@@ -5,7 +5,6 @@ import FlowHeader from '@/components/shared/flow-header'
 import { useRecurringStore } from '@/store/use-recurring-store'
 import { MOCK_GROUP_MEMBERS } from '@/features/groups/data/group-members'
 import { cn } from '@/lib/utils'
-import { Drawer, DrawerContent } from '@/components/ui/drawer'
 import AddRecurringScreen from '@/features/groups/add-recurring-screen'
 
 
@@ -105,7 +104,7 @@ export default function RecurringPaymentsScreen({ groupId, onClose }: RecurringP
   }
 
   return (
-    <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24 select-none text-left">
+    <div className="fixed inset-0 z-60 flex flex-col bg-[#FEFAF1] pb-24 select-none text-left">
       {/* Page Header */}
       <FlowHeader
         title="Recurring Payments"
@@ -237,19 +236,14 @@ export default function RecurringPaymentsScreen({ groupId, onClose }: RecurringP
         </button>
       </div>
 
-      {/* Nested Add Recurring Payment Drawer */}
-      <Drawer direction="right" open={isAddRecurringOpen} onOpenChange={(open) => !open && closeAddRecurringDrawer()}>
-        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=left]:w-full data-[vaul-drawer-direction=left]:max-w-full data-[vaul-drawer-direction=left]:rounded-none data-[vaul-drawer-direction=left]:border-0 data-[vaul-drawer-direction=left]:h-full">
-          {isAddRecurringOpen && (
-            <AddRecurringScreen
-              groupId={groupId}
-              editPaymentId={editPaymentId}
-              onClose={closeAddRecurringDrawer}
-              onSuccess={closeAddRecurringDrawer}
-            />
-          )}
-        </DrawerContent>
-      </Drawer>
+      {isAddRecurringOpen && (
+        <AddRecurringScreen
+          groupId={groupId}
+          editPaymentId={editPaymentId}
+          onClose={closeAddRecurringDrawer}
+          onSuccess={closeAddRecurringDrawer}
+        />
+      )}
     </div>
   )
 }

@@ -10,7 +10,6 @@ import ContactLedgerCard from './components/contact-ledger-card'
 import Fab from './components/fab'
 import { useShallow } from 'zustand/react/shallow'
 import { useContactStore, selectBalanceSummary, selectReceivables, selectPayables } from '@/store/use-contact-store'
-import { Drawer, DrawerContent } from '@/components/ui/drawer'
 import LedgerBreakdownScreen from '@/features/contacts/ledger-breakdown-screen'
 
 
@@ -167,14 +166,9 @@ export default function DashboardScreen() {
       {/* Floating Action Button */}
       <Fab onClick={() => navigate({ to: ROUTES.NEW_CONTACT })} />
 
-      {/* Ledger Breakdown Drawer */}
-      <Drawer direction="right" open={drawer === 'breakdown'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=right]:w-full data-[vaul-drawer-direction=right]:max-w-full data-[vaul-drawer-direction=right]:rounded-none data-[vaul-drawer-direction=right]:border-0 data-[vaul-drawer-direction=right]:h-full">
-          {drawer === 'breakdown' && contactId && (
-            <LedgerBreakdownScreen contactId={contactId} onClose={closeDrawer} />
-          )}
-        </DrawerContent>
-      </Drawer>
+      {drawer === 'breakdown' && contactId && (
+        <LedgerBreakdownScreen contactId={contactId} onClose={closeDrawer} />
+      )}
     </div>
   )
 }

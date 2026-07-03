@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import { Pencil } from 'lucide-react'
 import FlowHeader from '@/components/shared/flow-header'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -11,6 +12,8 @@ interface EditProfilePanelProps {
 }
 
 export default function EditProfilePanel({ onClose, onSuccess }: EditProfilePanelProps) {
+  const navigate = useNavigate()
+  const search = useSearch({ from: '/settings' }) as any
   const { userProfile, setProfile } = useAuthStore()
 
   // Form states prefilled from store
@@ -18,7 +21,7 @@ export default function EditProfilePanel({ onClose, onSuccess }: EditProfilePane
   const [email, setEmail] = useState(userProfile?.email || '')
   const [avatar, setAvatar] = useState<string | null>(userProfile?.avatar || null)
 
-  const [isProfilePicOpen, setIsProfilePicOpen] = useState(false)
+  const isProfilePicOpen = !!search?.editPhoto
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,7 +45,7 @@ export default function EditProfilePanel({ onClose, onSuccess }: EditProfilePane
     .slice(0, 2)
 
   return (
-    <div className="fixed inset-0 z-60 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto animate-in fade-in slide-in-from-right duration-200 text-[#1A1A1A]">
+    <div className="fixed inset-0 z-60 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto text-[#1A1A1A]">
       <FlowHeader
         title="Edit Profile"
         onBack={onClose}
@@ -66,7 +69,7 @@ export default function EditProfilePanel({ onClose, onSuccess }: EditProfilePane
               {/* Pencil Icon Button */}
               <button
                 type="button"
-                onClick={() => setIsProfilePicOpen(true)}
+                onClick={() => (navigate as any)({ search: (prev: any) => ({ ...prev, editPhoto: true }) })}
                 className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#0B683A] text-white border-2 border-white flex items-center justify-center shadow-md cursor-pointer active:scale-95 transition-all"
                 aria-label="Upload profile image"
               >
@@ -76,7 +79,7 @@ export default function EditProfilePanel({ onClose, onSuccess }: EditProfilePane
 
             <button
               type="button"
-              onClick={() => setIsProfilePicOpen(true)}
+              onClick={() => (navigate as any)({ search: (prev: any) => ({ ...prev, editPhoto: true }) })}
               className="text-[#0B683A] font-semibold text-[15px] cursor-pointer mt-2.5 block text-center"
             >
               Change Profile Icon
@@ -147,12 +150,11 @@ export default function EditProfilePanel({ onClose, onSuccess }: EditProfilePane
         </div>
       </form>
 
-      {/* Profile Picture selector overlay */}
       {isProfilePicOpen && (
         <ProfilePicturePanel
           currentAvatar={avatar}
           initials={initials}
-          onClose={() => setIsProfilePicOpen(false)}
+          onClose={() => (navigate as any)({ search: (prev: any) => { const next = { ...prev }; delete next.editPhoto; return next } })}
           onSave={(newAvatar) => setAvatar(newAvatar)}
         />
       )}

@@ -109,10 +109,10 @@ export default function LedgerBreakdownScreen({ contactId, onClose }: LedgerBrea
     const tagName = String(tagId)
     const isOneToOne = tagName.toLowerCase().includes('1-to-1') || tagName.toLowerCase().includes('personal')
     if (isOneToOne) {
-      onClose()
       navigate({
         to: ROUTES.CONTACT_DETAILS,
         params: { id: contact.id },
+        replace: true,
       })
     } else {
       const foundGroup = contacts.find(
@@ -125,6 +125,7 @@ export default function LedgerBreakdownScreen({ contactId, onClose }: LedgerBrea
         navigate({
           to: ROUTES.GROUP_DETAILS,
           params: { id: foundGroup.id },
+          replace: true,
         })
       } else {
         showToast(`Group ledger details not found.`)
@@ -133,7 +134,7 @@ export default function LedgerBreakdownScreen({ contactId, onClose }: LedgerBrea
   }
 
   return (
-    <div className="flex flex-col flex-1 bg-[#FEFAF1] h-full relative select-none pb-10 overflow-y-auto">
+    <div className="fixed inset-0 z-60 flex flex-col bg-[#FEFAF1] select-none pb-10 overflow-y-auto text-[#1A1A1A]">
       {/* Toast Alert overlay */}
       <AnimatePresence>
         {toast && (

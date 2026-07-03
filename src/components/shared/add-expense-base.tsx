@@ -137,7 +137,7 @@ export default function AddExpenseBase({
   return (
     <form
       onSubmit={handleFormSubmit}
-      className="flex flex-col h-screen max-h-screen bg-background select-none justify-between overflow-hidden relative"
+      className="fixed inset-0 z-60 flex flex-col bg-background select-none justify-between overflow-hidden"
     >
       {/* Header */}
       <FlowHeader

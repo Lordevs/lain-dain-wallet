@@ -9,7 +9,6 @@ import { type NotificationItem } from './types'
 import SettleUpPanel from './components/settle-up-panel'
 import PaymentConfirmationPanel from './components/payment-confirmation-panel'
 import PaymentDisputePanel from './components/payment-dispute-panel'
-import { Drawer, DrawerContent } from '@/components/ui/drawer'
 import SendReminderScreen from '@/features/contacts/send-reminder-screen'
 import LedgerBreakdownScreen from '@/features/contacts/ledger-breakdown-screen'
 
@@ -379,21 +378,13 @@ export default function NotificationsScreen() {
         />
       )}
 
-      <Drawer open={drawer === 'reminder'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=bottom]:h-full! data-[vaul-drawer-direction=bottom]:max-h-full! data-[vaul-drawer-direction=bottom]:rounded-none! data-[vaul-drawer-direction=bottom]:border-0! data-[vaul-drawer-direction=bottom]:mt-0! [&>div:first-child]:hidden!">
-          {drawer === 'reminder' && contactId && (
-            <SendReminderScreen contactId={contactId} onClose={closeDrawer} />
-          )}
-        </DrawerContent>
-      </Drawer>
+      {drawer === 'reminder' && contactId && (
+        <SendReminderScreen contactId={contactId} onClose={closeDrawer} />
+      )}
 
-      <Drawer open={drawer === 'breakdown'} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] h-[95vh] max-h-[95vh]">
-          {drawer === 'breakdown' && contactId && (
-            <LedgerBreakdownScreen contactId={contactId} onClose={closeDrawer} />
-          )}
-        </DrawerContent>
-      </Drawer>
+      {drawer === 'breakdown' && contactId && (
+        <LedgerBreakdownScreen contactId={contactId} onClose={closeDrawer} />
+      )}
     </div>
   )
 }

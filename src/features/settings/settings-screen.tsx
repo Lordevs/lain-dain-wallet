@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import {
   ChevronRight,
   User,
@@ -24,13 +24,15 @@ import DeleteAccountPanel from './components/delete-account-panel'
 // ─── Main Screen Component ─────────────────────────────────────────────────────
 export default function SettingsScreen() {
   const navigate = useNavigate()
+  const search = useSearch({ from: '/settings' }) as any
   const { userProfile, logout } = useAuthStore()
 
   // Local state for interactive settings mockup
   const [pushNotifications, setPushNotifications] = useState(true)
   const [autoReminders, setAutoReminders] = useState(true)
   const [reminderInterval, setReminderInterval] = useState<'week' | 'two_weeks'>('week')
-  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
+  
+  const isEditProfileOpen = search?.subPanel === 'edit-profile'
   const [isReportIssueOpen, setIsReportIssueOpen] = useState(false)
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
   const [isDeleteAccountOpen, setIsDeleteAccountOpen] = useState(false)
@@ -117,7 +119,7 @@ export default function SettingsScreen() {
             </h3>
             <div className="bg-white border-[1.5px] border-[#E8E4DC] rounded-[18px] shadow-[0px_2px_10px_0px_#0000000D] overflow-hidden">
               <button
-                onClick={() => setIsEditProfileOpen(true)}
+                onClick={() => (navigate as any)({ search: (prev: any) => ({ ...prev, subPanel: 'edit-profile' }) })}
                 className="w-full flex items-center justify-between p-5 text-left active:bg-[#FEFAF1]/80 transition-colors cursor-pointer outline-none"
               >
                 <div className="flex items-center gap-4">
@@ -290,10 +292,9 @@ export default function SettingsScreen() {
         </div>
       </div>
 
-      {/* Edit Profile sliding panel overlay */}
       {isEditProfileOpen && (
         <EditProfilePanel
-          onClose={() => setIsEditProfileOpen(false)}
+          onClose={() => (navigate as any)({ search: (prev: any) => { const next = { ...prev }; delete next.subPanel; return next } })}
           onSuccess={(msg) => showToast(msg, 'success')}
         />
       )}

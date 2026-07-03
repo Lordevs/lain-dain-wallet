@@ -38,7 +38,7 @@ export default function PaymentConfirmationPanel({
   const amountVal = amountMatch ? `Rs. ${amountMatch[1]}` : 'Rs. 2,000'
 
   return (
-    <div className="fixed inset-0 z-60 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto pb-36 animate-in fade-in slide-in-from-right duration-200 text-[#1A1A1A]">
+    <div className="fixed inset-0 z-60 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto pb-36 text-[#1A1A1A]">
       {/* Header */}
       <FlowHeader
         title="Payment Confirmation"
