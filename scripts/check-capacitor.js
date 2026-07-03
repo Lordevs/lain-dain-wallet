@@ -30,17 +30,17 @@ if (!fs.existsSync(configPath)) {
 const content = fs.readFileSync(configPath, 'utf8');
 
 // 1. Check if CAPACITOR_LIVE_RELOAD is set to true in the build environment
-// if (process.env.CAPACITOR_LIVE_RELOAD === 'true') {
-//   console.error('❌ Error: CAPACITOR_LIVE_RELOAD is set to "true" in the build environment.');
-//   console.error('Production/release builds must load static assets from the dist directory.');
-//   process.exit(1);
-// }
+if (process.env.CAPACITOR_LIVE_RELOAD === 'true') {
+  console.error('❌ Error: CAPACITOR_LIVE_RELOAD is set to "true" in the build environment.');
+  console.error('Production/release builds must load static assets from the dist directory.');
+  process.exit(1);
+}
 
 // 2. Extra safety: Parse the file to ensure the server URL is not hardcoded (non-gated) in the configuration object.
-// if (content.includes('url:') && !content.includes('process.env.CAPACITOR_LIVE_RELOAD')) {
-//   console.error('❌ Error: Gated URL check failed.');
-//   console.error('capacitor.config.ts contains a hardcoded server URL without being gated by process.env.CAPACITOR_LIVE_RELOAD.');
-//   process.exit(1);
-// }
+if (content.includes('url:') && !content.includes('process.env.CAPACITOR_LIVE_RELOAD')) {
+  console.error('❌ Error: Gated URL check failed.');
+  console.error('capacitor.config.ts contains a hardcoded server URL without being gated by process.env.CAPACITOR_LIVE_RELOAD.');
+  process.exit(1);
+}
 
 console.log('✅ capacitor.config.ts check passed');
