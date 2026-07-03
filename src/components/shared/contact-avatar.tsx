@@ -21,7 +21,7 @@ interface ContactAvatarProps {
   initials: string
   /**
    * Tailwind classes for the fallback background & text color.
-   * e.g. "bg-[#E8F5E9] text-[#0B683A]"
+   * e.g. "bg-[#E8F5E9] text-positive"
    */
   avatarColor: string
   /** URL to the contact's profile photo (optional) */

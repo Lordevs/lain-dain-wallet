@@ -82,7 +82,7 @@ export default function AddReceiptFlow({
   }
 
   return (
-    <div className="fixed inset-0 z-70 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto animate-in fade-in slide-in-from-bottom duration-75">
+    <div className="fixed inset-0 z-70 bg-background flex flex-col select-none overflow-y-auto animate-in fade-in slide-in-from-bottom duration-75">
       {/* Hidden Native File Input */}
       <input
         type="file"
@@ -102,7 +102,7 @@ export default function AddReceiptFlow({
             <button
               type="button"
               onClick={handleDone}
-              className="text-[#0B683A] font-extrabold text-base bg-transparent border-0 cursor-pointer p-2 outline-none hover:opacity-85 transition-opacity"
+              className="text-positive font-extrabold text-base bg-transparent border-0 cursor-pointer p-2 outline-none hover:opacity-85 transition-opacity"
             >
               Done
             </button>
@@ -115,7 +115,7 @@ export default function AddReceiptFlow({
         <div className="flex flex-col gap-6">
           {/* Transaction Summary Card (Empty State) */}
           {!tempFile && (
-            <div className="w-full bg-white rounded-2xl border-[0.8px] border-[#EBEBEB] p-4 flex items-center gap-3.5 shadow-[0px_2px_10px_rgba(0,0,0,0.03)] select-none">
+            <div className="w-full bg-white rounded-2xl border-[0.8px] border-divider p-4 flex items-center gap-3.5 shadow-[0px_2px_10px_rgba(0,0,0,0.03)] select-none">
               {/* Category Icon Container */}
               <div
                 style={{ backgroundColor: `${categoryColor}1A` }}
@@ -125,10 +125,10 @@ export default function AddReceiptFlow({
               </div>
               {/* Labels */}
               <div className="flex flex-col text-left">
-                <span className="font-extrabold text-[15px] text-[#1A1A1A]">
+                <span className="font-extrabold text-[15px] text-foreground">
                   {categoryLabel} • Rs. {formattedAmount}
                 </span>
-                <span className="text-xs text-[#6B6B6B] font-semibold mt-0.5">
+                <span className="text-xs text-muted-foreground font-semibold mt-0.5">
                   {description || 'No description added'}
                 </span>
               </div>
@@ -143,11 +143,11 @@ export default function AddReceiptFlow({
               onClick={triggerFileSelect}
               className="w-full h-72 rounded-[24px] border-[1.5px] border-dashed border-[#C0BCAE] bg-white flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-white/70 outline-none"
             >
-              <div className="w-16 h-16 rounded-[18px] bg-[#E4F2EB] flex items-center justify-center">
-                <Camera size={26} className="text-[#0B683A]" strokeWidth={1.5} />
+              <div className="w-16 h-16 rounded-[18px] bg-positive-soft-bg flex items-center justify-center">
+                <Camera size={26} className="text-positive" strokeWidth={1.5} />
               </div>
-              <span className="text-base font-extrabold text-[#1A1A1A] mt-4">Upload Receipt</span>
-              <span className="text-[13px] text-[#9A9590] mt-1 font-semibold">
+              <span className="text-base font-extrabold text-foreground mt-4">Upload Receipt</span>
+              <span className="text-[13px] text-muted-faint mt-1 font-semibold">
                 Tap to take photo or choose from gallery
               </span>
             </button>
@@ -165,10 +165,10 @@ export default function AddReceiptFlow({
               </button>
 
               <FileText size={56} className="text-[#A2B5AD]" strokeWidth={1.25} />
-              <span className="text-base font-extrabold text-[#1A1A1A] mt-4 px-6 text-center truncate max-w-full">
+              <span className="text-base font-extrabold text-foreground mt-4 px-6 text-center truncate max-w-full">
                 {tempFile.name}
               </span>
-              <span className="text-[13px] text-[#9A9590] mt-1 font-semibold">
+              <span className="text-[13px] text-muted-faint mt-1 font-semibold">
                 {tempFile.size} • Uploaded
               </span>
             </div>
@@ -185,30 +185,30 @@ export default function AddReceiptFlow({
                 <button
                   type="button"
                   onClick={triggerFileSelect}
-                  className="flex-1 bg-white rounded-2xl border-[0.8px] border-[#EBEBEB] py-5 flex flex-col items-center justify-center cursor-pointer hover:bg-[#F7F5F0] transition-colors outline-none"
+                  className="flex-1 bg-white rounded-2xl border-[0.8px] border-divider py-5 flex flex-col items-center justify-center cursor-pointer hover:bg-hover-bg transition-colors outline-none"
                 >
-                  <Camera size={22} className="text-[#0B683A]" strokeWidth={1.5} />
-                  <span className="text-[13px] font-extrabold text-[#1A1A1A] mt-2">Camera</span>
+                  <Camera size={22} className="text-positive" strokeWidth={1.5} />
+                  <span className="text-[13px] font-extrabold text-foreground mt-2">Camera</span>
                 </button>
 
                 {/* Gallery Card */}
                 <button
                   type="button"
                   onClick={triggerFileSelect}
-                  className="flex-1 bg-white rounded-2xl border-[0.8px] border-[#EBEBEB] py-5 flex flex-col items-center justify-center cursor-pointer hover:bg-[#F7F5F0] transition-colors outline-none"
+                  className="flex-1 bg-white rounded-2xl border-[0.8px] border-divider py-5 flex flex-col items-center justify-center cursor-pointer hover:bg-hover-bg transition-colors outline-none"
                 >
-                  <ImageIcon size={22} className="text-[#0B683A]" strokeWidth={1.5} />
-                  <span className="text-[13px] font-extrabold text-[#1A1A1A] mt-2">Gallery</span>
+                  <ImageIcon size={22} className="text-positive" strokeWidth={1.5} />
+                  <span className="text-[13px] font-extrabold text-foreground mt-2">Gallery</span>
                 </button>
 
                 {/* Files Card */}
                 <button
                   type="button"
                   onClick={triggerFileSelect}
-                  className="flex-1 bg-white rounded-2xl border-[0.8px] border-[#EBEBEB] py-5 flex flex-col items-center justify-center cursor-pointer hover:bg-[#F7F5F0] transition-colors outline-none"
+                  className="flex-1 bg-white rounded-2xl border-[0.8px] border-divider py-5 flex flex-col items-center justify-center cursor-pointer hover:bg-hover-bg transition-colors outline-none"
                 >
-                  <FileText size={22} className="text-[#0B683A]" strokeWidth={1.5} />
-                  <span className="text-[13px] font-extrabold text-[#1A1A1A] mt-2">Files</span>
+                  <FileText size={22} className="text-positive" strokeWidth={1.5} />
+                  <span className="text-[13px] font-extrabold text-foreground mt-2">Files</span>
                 </button>
               </div>
 
@@ -216,7 +216,7 @@ export default function AddReceiptFlow({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full h-14 rounded-full border-[0.8px] border-[#EBEBEB] bg-white text-[#6B6B6B] font-bold text-base cursor-pointer hover:bg-[#F7F5F0] transition-all flex items-center justify-center outline-none"
+                className="w-full h-14 rounded-full border-[0.8px] border-divider bg-white text-muted-foreground font-bold text-base cursor-pointer hover:bg-hover-bg transition-all flex items-center justify-center outline-none"
               >
                 Skip for now
               </button>
@@ -228,7 +228,7 @@ export default function AddReceiptFlow({
               <button
                 type="button"
                 onClick={triggerFileSelect}
-                className="flex-1 h-13 rounded-full border-[0.8px] border-[#EBEBEB] bg-white text-[#1A1A1A] font-bold text-sm cursor-pointer hover:bg-[#F7F5F0] transition-all flex items-center justify-center gap-2 outline-none"
+                className="flex-1 h-13 rounded-full border-[0.8px] border-divider bg-white text-foreground font-bold text-sm cursor-pointer hover:bg-hover-bg transition-all flex items-center justify-center gap-2 outline-none"
               >
                 <RotateCcw size={16} strokeWidth={2.5} />
                 Replace

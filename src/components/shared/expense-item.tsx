@@ -24,11 +24,11 @@ const CATEGORY_VISUALS = {
     bgClass: 'bg-[#FFEBEB]',
   },
   fuel: {
-    icon: <Fuel size={24} className="text-[#C96A1B]" />,
+    icon: <Fuel size={24} className="text-orange-payable" />,
     bgClass: 'bg-[#FFF3E6]',
   },
   shopping: {
-    icon: <ShoppingCart size={24} className="text-[#0B683A]" />,
+    icon: <ShoppingCart size={24} className="text-positive" />,
     bgClass: 'bg-[#ECF6F0]',
   },
   transport: {
@@ -36,11 +36,11 @@ const CATEGORY_VISUALS = {
     bgClass: 'bg-[#E3F2FD]',
   },
   payment: {
-    icon: <Handshake size={24} className="text-[#01592B]" />,
+    icon: <Handshake size={24} className="text-primary" />,
     bgClass: 'bg-[#B8DECA]',
   },
   other: {
-    icon: <Layers size={24} className="text-[#9A9590]" />,
+    icon: <Layers size={24} className="text-muted-faint" />,
     bgClass: 'bg-[#F5F3ED]',
   },
 } as const
@@ -67,13 +67,13 @@ export default function ExpenseItem({
 
   // Resolve text color for the amount
   const colorClass = category === 'payment'
-    ? 'text-[#0B683A]'
+    ? 'text-positive'
     : cn(
-      amountColor === 'green' && 'text-[#0B683A]',
-      amountColor === 'orange' && 'text-[#C96A1B]',
-      amountColor === 'black' && 'text-[#1A1A1A]',
+      amountColor === 'green' && 'text-positive',
+      amountColor === 'orange' && 'text-orange-payable',
+      amountColor === 'black' && 'text-foreground',
       amountColor === 'default' && (
-        amount > 0 ? 'text-[#0B683A]' : amount < 0 ? 'text-[#C96A1B]' : 'text-[#1A1A1A]'
+        amount > 0 ? 'text-positive' : amount < 0 ? 'text-orange-payable' : 'text-foreground'
       )
     )
 
@@ -101,11 +101,11 @@ export default function ExpenseItem({
         <div>
           <p className={cn(
             "font-bold text-[15px] leading-tight",
-            category === 'payment' ? "text-[#0B683A]" : "text-[#1A1A1A]"
+            category === 'payment' ? "text-positive" : "text-foreground"
           )}>
             {name}
           </p>
-          <div className="text-[12px] text-[#6B6B6B] mt-1 font-normal leading-normal whitespace-pre-line">
+          <div className="text-[12px] text-muted-foreground mt-1 font-normal leading-normal whitespace-pre-line">
             {subtitle}
           </div>
         </div>
@@ -118,12 +118,12 @@ export default function ExpenseItem({
             {displayAmount}
           </span>
           {rightSubtitle && (
-            <span className="text-[11px] text-[#6B6B6B] mt-1 font-normal leading-none">
+            <span className="text-[11px] text-muted-foreground mt-1 font-normal leading-none">
               {rightSubtitle}
             </span>
           )}
         </div>
-        {showChevron && <ChevronRight size={16} className="text-[#EBEBEB]" />}
+        {showChevron && <ChevronRight size={16} className="text-divider" />}
       </div>
     </div>
   )

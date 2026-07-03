@@ -10,7 +10,7 @@ export interface ContactInfo {
   id: string
   name: string
   initials: string
-  /** Tailwind classes e.g. "bg-[#E8F5E9] text-[#0B683A]" */
+  /** Tailwind classes e.g. "bg-[#E8F5E9] text-positive" */
   avatarColor: string
   /** Optional profile photo URL — falls back to initials when absent */
   src?: string

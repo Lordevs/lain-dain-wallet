@@ -19,7 +19,7 @@ export default function SuccessCheck({ onComplete }: SuccessCheckProps) {
         className="w-32 h-32 rounded-full bg-[#DCEFE4] shadow-[0px_8.68px_34.74px_0px_#0B683A33] flex items-center justify-center active:scale-95 transition-transform cursor-pointer"
         onClick={onComplete}
       >
-        <Check size={48} className="text-[#0B683A]" strokeWidth={3} />
+        <Check size={48} className="text-positive" strokeWidth={3} />
       </div>
     </div>
   )

@@ -35,7 +35,7 @@ export default function MemberOptionsDrawer({
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DrawerContent className="bg-white rounded-t-[32px] border-t-0 pb-6 text-left focus:outline-none">
         {/* Header - Member Info */}
-        <div className="flex items-center gap-3.5 px-6 pt-5 pb-5 border-b border-[#EFE7DD]/60">
+        <div className="flex items-center gap-3.5 px-6 pt-5 pb-5 border-b border-border-card/60">
           <ContactAvatar
             initials={member.initials}
             avatarColor={member.avatarColor}
@@ -43,17 +43,17 @@ export default function MemberOptionsDrawer({
             size="md"
           />
           <div className="flex flex-col text-left">
-            <h4 className="font-extrabold text-[16px] text-[#1A1A1A]">
+            <h4 className="font-extrabold text-[16px] text-foreground">
               {member.name}
             </h4>
-            <span className="text-[12px] text-[#6B6B6B] font-medium mt-0.5">
+            <span className="text-[12px] text-muted-foreground font-medium mt-0.5">
               {member.owesText || `${member.isAdmin ? 'Admin' : 'Member'} · On Lain Dain`}
             </span>
           </div>
         </div>
 
         {/* Action List Options */}
-        <div className="flex flex-col divide-y divide-[#EFE7DD]/60">
+        <div className="flex flex-col divide-y divide-border-card/60">
           {/* Make / Remove Admin */}
           {onToggleAdmin && (
             <button
@@ -64,10 +64,10 @@ export default function MemberOptionsDrawer({
               }}
               className="flex items-center gap-4 px-6 py-4 hover:bg-muted/5 transition-colors cursor-pointer border-0 bg-transparent text-left w-full outline-none"
             >
-              <div className="w-11 h-11 rounded-[14px] bg-[#E8F5E9] flex items-center justify-center text-[#0B683A] shrink-0">
+              <div className="w-11 h-11 rounded-[14px] bg-[#E8F5E9] flex items-center justify-center text-positive shrink-0">
                 <ShieldCheck size={20} strokeWidth={2.5} />
               </div>
-              <span className="font-bold text-[15px] text-[#1A1A1A]">
+              <span className="font-bold text-[15px] text-foreground">
                 {member.isAdmin ? 'Remove Admin' : 'Make Admin'}
               </span>
             </button>
@@ -83,10 +83,10 @@ export default function MemberOptionsDrawer({
               }}
               className="flex items-center gap-4 px-6 py-4 hover:bg-muted/5 transition-colors cursor-pointer border-0 bg-transparent text-left w-full outline-none"
             >
-              <div className="w-11 h-11 rounded-[14px] bg-[#FFF5F0] flex items-center justify-center text-[#C96A1B] shrink-0">
+              <div className="w-11 h-11 rounded-[14px] bg-[#FFF5F0] flex items-center justify-center text-orange-payable shrink-0">
                 <UserMinus size={20} strokeWidth={2.5} />
               </div>
-              <span className="font-bold text-[15px] text-[#C96A1B]">
+              <span className="font-bold text-[15px] text-orange-payable">
                 Remove from Group
               </span>
             </button>
@@ -102,10 +102,10 @@ export default function MemberOptionsDrawer({
               }}
               className="flex items-center gap-4 px-6 py-4 hover:bg-muted/5 transition-colors cursor-pointer border-0 bg-transparent text-left w-full outline-none"
             >
-              <div className="w-11 h-11 rounded-[14px] bg-[#FFF5F0] flex items-center justify-center text-[#C96A1B] shrink-0">
+              <div className="w-11 h-11 rounded-[14px] bg-[#FFF5F0] flex items-center justify-center text-orange-payable shrink-0">
                 <Ban size={20} strokeWidth={2.5} />
               </div>
-              <span className="font-bold text-[15px] text-[#C96A1B]">
+              <span className="font-bold text-[15px] text-orange-payable">
                 Block & Report
               </span>
             </button>

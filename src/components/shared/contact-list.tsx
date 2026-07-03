@@ -31,13 +31,13 @@ export default function ContactList({
         <h2
           className={cn(
             'text-xs font-bold uppercase tracking-wider mb-3',
-            titleColor === 'primary' ? 'text-primary' : 'text-[#6B6B6B]',
+            titleColor === 'primary' ? 'text-primary' : 'text-muted-foreground',
           )}
         >
           {title}
         </h2>
       )}
-      <div className="bg-white border border-[#EFE7DD] rounded-xl divide-y divide-[#EFE7DD] overflow-hidden">
+      <div className="bg-white border border-border-card rounded-xl divide-y divide-border-card overflow-hidden">
         {children}
       </div>
     </div>

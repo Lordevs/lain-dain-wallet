@@ -68,7 +68,7 @@ export default function AddCategoryFlow({
   }
 
   return (
-    <div className="flex flex-col h-full select-none overflow-y-auto pb-8 text-[#1A1A1A] font-sans">
+    <div className="flex flex-col h-full select-none overflow-y-auto pb-8 text-foreground font-sans">
       {/* Header */}
       <div className="flex items-center justify-between px-6 pt-5 pb-3 relative shrink-0">
         <button
@@ -76,10 +76,10 @@ export default function AddCategoryFlow({
           onClick={onClose}
           className="size-10 flex items-center justify-start cursor-pointer bg-transparent border-0 outline-none"
         >
-          <ChevronLeft size={20} className="text-[#1A1A1A]" />
+          <ChevronLeft size={20} className="text-foreground" />
         </button>
         
-        <h3 className="text-lg font-extrabold text-[#1A1A1A]">
+        <h3 className="text-lg font-extrabold text-foreground">
           Add Category
         </h3>
 
@@ -87,7 +87,7 @@ export default function AddCategoryFlow({
           type="button"
           onClick={handleSave}
           disabled={!categoryName.trim()}
-          className="text-[#0B683A] font-extrabold text-base bg-transparent border-0 cursor-pointer p-2 outline-none hover:opacity-80 disabled:opacity-40 transition-all"
+          className="text-positive font-extrabold text-base bg-transparent border-0 cursor-pointer p-2 outline-none hover:opacity-80 disabled:opacity-40 transition-all"
         >
           Save
         </button>
@@ -97,21 +97,21 @@ export default function AddCategoryFlow({
       <div className="flex-1 px-6 py-4 flex flex-col gap-6 text-left">
         {/* Category Name input */}
         <div className="flex flex-col">
-          <span className="text-[11px] font-bold text-[#9A9590] uppercase tracking-wider mb-2">
+          <span className="text-[11px] font-bold text-muted-faint uppercase tracking-wider mb-2">
             Category Name
           </span>
           <input
             type="text"
             value={categoryName}
             onChange={(e) => setCategoryName(e.target.value)}
-            className="w-full h-14 px-4 rounded-[16px] border border-[#0B683A] bg-white text-base font-semibold text-[#1A1A1A] outline-none"
+            className="w-full h-14 px-4 rounded-[16px] border border-positive bg-white text-base font-semibold text-foreground outline-none"
             placeholder="Enter category name"
           />
         </div>
 
         {/* Choose Icon Grid */}
         <div className="flex flex-col">
-          <span className="text-[11px] font-bold text-[#9A9590] uppercase tracking-wider mb-3">
+          <span className="text-[11px] font-bold text-muted-faint uppercase tracking-wider mb-3">
             Choose Icon
           </span>
           <div className="grid grid-cols-5 gap-3">
@@ -126,8 +126,8 @@ export default function AddCategoryFlow({
                   onClick={() => setSelectedIconIndex(idx)}
                   className={`aspect-square rounded-[16px] flex items-center justify-center cursor-pointer transition-all border outline-none ${
                     isSelected
-                      ? 'bg-[#E4F2EB] border-[#0B683A] text-[#0B683A]'
-                      : 'bg-white border-[#EBEBEB] text-[#6B6B6B] hover:bg-[#F7F5F0]'
+                      ? 'bg-positive-soft-bg border-positive text-positive'
+                      : 'bg-white border-divider text-muted-foreground hover:bg-hover-bg'
                   }`}
                 >
                   <IconComp size={20} strokeWidth={1.5} />
@@ -139,7 +139,7 @@ export default function AddCategoryFlow({
 
         {/* Choose Color Row */}
         <div className="flex flex-col">
-          <span className="text-[11px] font-bold text-[#9A9590] uppercase tracking-wider mb-3">
+          <span className="text-[11px] font-bold text-muted-faint uppercase tracking-wider mb-3">
             Choose Colour
           </span>
           <div className="flex items-center gap-3.5 flex-wrap">
@@ -152,7 +152,7 @@ export default function AddCategoryFlow({
                   type="button"
                   onClick={() => setSelectedColor(col)}
                   className={`w-9 h-9 rounded-full cursor-pointer transition-transform active:scale-95 border-2 ${
-                    isSelected ? 'border-[#1A1A1A] scale-105' : 'border-transparent'
+                    isSelected ? 'border-foreground scale-105' : 'border-transparent'
                   }`}
                   style={{ backgroundColor: col }}
                 />
@@ -163,11 +163,11 @@ export default function AddCategoryFlow({
 
         {/* Preview Panel */}
         <div className="flex flex-col">
-          <span className="text-[11px] font-bold text-[#9A9590] uppercase tracking-wider mb-3">
+          <span className="text-[11px] font-bold text-muted-faint uppercase tracking-wider mb-3">
             Preview
           </span>
-          <div className="w-full bg-white rounded-[24px] border border-[#EBEBEB] p-5 flex items-center justify-between shadow-[0px_2px_8px_rgba(0,0,0,0.01)]">
-            <span className="text-sm font-semibold text-[#6B6B6B]">
+          <div className="w-full bg-white rounded-[24px] border border-divider p-5 flex items-center justify-between shadow-[0px_2px_8px_rgba(0,0,0,0.01)]">
+            <span className="text-sm font-semibold text-muted-foreground">
               How it will look:
             </span>
             <div
@@ -192,7 +192,7 @@ export default function AddCategoryFlow({
           type="button"
           onClick={handleSave}
           disabled={!categoryName.trim()}
-          className="w-full h-14 rounded-[20px] bg-[#0B683A] text-white font-extrabold text-base cursor-pointer shadow-[0px_4px_16px_rgba(11,104,58,0.15)] hover:bg-[#0B683A]/95 disabled:opacity-40 transition-all flex items-center justify-center outline-none border-0 mt-2"
+          className="w-full h-14 rounded-[20px] bg-positive text-white font-extrabold text-base cursor-pointer shadow-[0px_4px_16px_rgba(11,104,58,0.15)] hover:bg-positive/95 disabled:opacity-40 transition-all flex items-center justify-center outline-none border-0 mt-2"
         >
           Save Category
         </button>

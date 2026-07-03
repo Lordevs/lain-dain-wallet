@@ -25,7 +25,7 @@ export default function SearchBar({
     <div className={cn('relative w-full', className)}>
       <Search
         size={17}
-        className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590] pointer-events-none z-10"
+        className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-faint pointer-events-none z-10"
       />
       <Input
         id={id}
@@ -33,7 +33,7 @@ export default function SearchBar({
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
         placeholder={placeholder}
-        className="w-full h-12 pl-11 pr-4 rounded-full bg-white! border-[1.08px] border-[#EFE7DD] text-sm text-foreground placeholder:text-[#9A9590] outline-none focus:border-primary/40 focus-visible:border-primary/40 focus:ring-2 focus-visible:ring-2 focus-visible:ring-primary/10 focus:ring-primary/10 transition-all"
+        className="w-full h-12 pl-11 pr-4 rounded-full bg-white! border-[1.08px] border-border-card text-sm text-foreground placeholder:text-muted-faint outline-none focus:border-primary/40 focus-visible:border-primary/40 focus:ring-2 focus-visible:ring-2 focus-visible:ring-primary/10 focus:ring-primary/10 transition-all"
       />
     </div>
   )

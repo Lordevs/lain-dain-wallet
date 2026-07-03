@@ -135,7 +135,7 @@ export default function AddExpenseBase({
 
   if (showSuccess) {
     return (
-      <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen select-none justify-between">
+      <div className="flex flex-col flex-1 bg-background min-h-screen select-none justify-between">
         <SuccessCheck onComplete={onSuccessComplete} />
       </div>
     )
@@ -146,7 +146,7 @@ export default function AddExpenseBase({
   return (
     <form
       onSubmit={handleFormSubmit}
-      className="flex flex-col h-screen max-h-screen bg-[#FEFAF1] select-none justify-between overflow-hidden relative"
+      className="flex flex-col h-screen max-h-screen bg-background select-none justify-between overflow-hidden relative"
     >
       {/* Header */}
       <FlowHeader
@@ -158,7 +158,7 @@ export default function AddExpenseBase({
             <button
               type="submit"
               disabled={isFormInvalid}
-              className="text-[#0B683A] font-extrabold text-base bg-transparent border-0 cursor-pointer p-2 outline-none transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+              className="text-positive font-extrabold text-base bg-transparent border-0 cursor-pointer p-2 outline-none transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Check size={22} strokeWidth={2.5} />
             </button>
@@ -172,11 +172,11 @@ export default function AddExpenseBase({
         <div className="px-6 flex flex-col mt-4">
           {/* Amount Section */}
           <div className="flex flex-col">
-            <span className="text-sm font-medium text-[#6B6B6B] tracking-wider mb-2">
+            <span className="text-sm font-medium text-muted-foreground tracking-wider mb-2">
               AMOUNT
             </span>
-            <div className="flex rounded-[18px] border-[0.8px] border-[#EBEBEB] overflow-hidden bg-white shadow-[0px_2px_10px_0px_#0000000D] h-18 items-stretch">
-              <div className="flex items-center justify-center bg-[#FFF9E6] px-5 border-r border-[#EBEBEB] select-none shrink-0">
+            <div className="flex rounded-[18px] border-[0.8px] border-divider overflow-hidden bg-white shadow-[0px_2px_10px_0px_#0000000D] h-18 items-stretch">
+              <div className="flex items-center justify-center bg-[#FFF9E6] px-5 border-r border-divider select-none shrink-0">
                 <span className="text-base font-extrabold text-secondary leading-none">
                   Rs.
                 </span>
@@ -187,7 +187,7 @@ export default function AddExpenseBase({
                   inputMode="decimal"
                   value={getFormattedAmount()}
                   onChange={handleAmountChange}
-                  className="w-full bg-transparent border-0 outline-none text-[32px] font-extrabold text-[#1A1A1A] placeholder:text-[#EBEBEB] font-sans leading-none py-1"
+                  className="w-full bg-transparent border-0 outline-none text-[32px] font-extrabold text-foreground placeholder:text-divider font-sans leading-none py-1"
                   placeholder="0"
                   required
                 />
@@ -197,16 +197,16 @@ export default function AddExpenseBase({
 
           {/* Description Section */}
           <div className="flex flex-col mt-6">
-            <span className="text-sm font-medium text-[#6B6B6B] tracking-wider mb-2">
+            <span className="text-sm font-medium text-muted-foreground tracking-wider mb-2">
               {showPaidByAndSplit ? 'What was this for?' : 'WHAT IS THIS FOR?'}
             </span>
-            <div className="flex items-center gap-3 rounded-[18px] border-[0.8px] border-[#0B683A73] bg-white shadow-[0px_2px_10px_0px_#0000000D] h-14 px-4">
-              <FileText size={18} className="text-[#0B683A] shrink-0" strokeWidth={1.5} />
+            <div className="flex items-center gap-3 rounded-[18px] border-[0.8px] border-positive/45 bg-white shadow-[0px_2px_10px_0px_#0000000D] h-14 px-4">
+              <FileText size={18} className="text-positive shrink-0" strokeWidth={1.5} />
               <input
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="flex-1 bg-transparent border-0 outline-none text-[15px] font-bold text-[#1A1A1A] placeholder:text-[#9A9590] py-1"
+                className="flex-1 bg-transparent border-0 outline-none text-[15px] font-bold text-foreground placeholder:text-muted-faint py-1"
                 placeholder={showPaidByAndSplit ? 'What was this for?' : 'Dinner at Monal'}
                 required
               />
@@ -223,69 +223,69 @@ export default function AddExpenseBase({
                 className={cn(
                   "flex-1 rounded-[20px] border p-4 flex items-center justify-between cursor-pointer transition-all outline-none",
                   paidBy === 'multiple'
-                    ? "bg-[#E4F2EB]/35 border-[#0B683A4D] hover:bg-[#E4F2EB]/50"
-                    : "bg-white border-[#EBEBEB] hover:bg-[#F7F5F0]"
+                    ? "bg-positive-soft-bg/35 border-positive/30 hover:bg-positive-soft-bg/50"
+                    : "bg-white border-divider hover:bg-hover-bg"
                 )}
               >
                 <div className="flex items-center gap-3">
                   {/* Avatars */}
                   {paidBy === 'multiple' ? (
                     <div className="flex -space-x-2 shrink-0">
-                      <div className="size-6 rounded-full border border-white bg-[#0B683A] text-white flex items-center justify-center font-extrabold text-[8px] select-none shadow-sm">
+                      <div className="size-6 rounded-full border border-white bg-positive text-white flex items-center justify-center font-extrabold text-[8px] select-none shadow-sm">
                         {youInitials}
                       </div>
                       <div className="size-6 rounded-full border border-white bg-[#2F80ED] text-white flex items-center justify-center font-extrabold text-[8px] select-none shadow-sm">
                         AH
                       </div>
-                      <div className="size-6 rounded-full border border-white bg-[#C96A1B] text-white flex items-center justify-center font-extrabold text-[8px] select-none shadow-sm">
+                      <div className="size-6 rounded-full border border-white bg-orange-payable text-white flex items-center justify-center font-extrabold text-[8px] select-none shadow-sm">
                         SK
                       </div>
                     </div>
                   ) : (
                     <div className={cn(
                       "size-6 rounded-full text-white flex items-center justify-center font-extrabold text-[9px] select-none shadow-sm",
-                      paidBy === 'you' ? "bg-[#0B683A]" : (contact.avatarColor || 'bg-[#2F80ED]')
+                      paidBy === 'you' ? "bg-positive" : (contact.avatarColor || 'bg-[#2F80ED]')
                     )}>
                       {paidBy === 'you' ? youInitials : contact.initials}
                     </div>
                   )}
 
                   <div className="flex flex-col text-left">
-                    <span className="text-[11px] text-[#6B6B6B] font-semibold leading-none">Paid by</span>
+                    <span className="text-[11px] text-muted-foreground font-semibold leading-none">Paid by</span>
                     <span className={cn(
                       "text-[14px] font-black mt-1.5 leading-none",
-                      paidBy === 'multiple' ? "text-[#0B683A]" : "text-[#1A1A1A]"
+                      paidBy === 'multiple' ? "text-positive" : "text-foreground"
                     )}>
                       {paidBy === 'multiple' ? '3 people' : payerName}
                     </span>
                   </div>
                 </div>
-                <ChevronRight size={14} className={paidBy === 'multiple' ? "text-[#0B683A]" : "text-[#9A9590]"} />
+                <ChevronRight size={14} className={paidBy === 'multiple' ? "text-positive" : "text-muted-faint"} />
               </button>
 
               {/* Split Type */}
               <button
                 type="button"
                 onClick={() => setShowSplit(true)}
-                className="flex-1 bg-white rounded-[20px] border border-[#EBEBEB] p-4 flex items-center justify-between cursor-pointer hover:bg-[#F7F5F0] transition-colors outline-none"
+                className="flex-1 bg-white rounded-[20px] border border-divider p-4 flex items-center justify-between cursor-pointer hover:bg-hover-bg transition-colors outline-none"
               >
                 <div className="flex items-center gap-3">
-                  <Users size={18} className="text-[#6B6B6B]" strokeWidth={1.5} />
+                  <Users size={18} className="text-muted-foreground" strokeWidth={1.5} />
                   <div className="flex flex-col text-left">
-                    <span className="text-[11px] text-[#6B6B6B] font-semibold leading-none">Split Type</span>
-                    <span className="text-[14px] font-black text-[#1A1A1A] mt-1.5 leading-none">
+                    <span className="text-[11px] text-muted-foreground font-semibold leading-none">Split Type</span>
+                    <span className="text-[14px] font-black text-foreground mt-1.5 leading-none">
                       {splitData.type === 'equal' ? 'Equal' : splitData.type === 'unequal' ? 'Unequal' : 'Adjustment'}
                     </span>
                   </div>
                 </div>
-                <ChevronDown size={14} className="text-[#9A9590]" />
+                <ChevronDown size={14} className="text-muted-faint" />
               </button>
             </div>
           )}
 
           {/* Category Section */}
           <div className="flex flex-col mt-6">
-            <span className="text-sm font-medium text-[#6B6B6B] tracking-wider mb-3">
+            <span className="text-sm font-medium text-muted-foreground tracking-wider mb-3">
               CATEGORY
             </span>
             <CategoryPicker
@@ -295,7 +295,7 @@ export default function AddExpenseBase({
           </div>
         </div>
 
-        <div className="flex flex-col shrink-0 bg-[#FEFAF1] border-t border-[#EBEBEB]/20 py-3">
+        <div className="flex flex-col shrink-0 bg-background border-t border-divider/20 py-3">
           <AttachmentTabs
             dateValue={dateValue}
             receiptAttached={!!receiptFile}

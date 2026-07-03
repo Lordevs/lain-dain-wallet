@@ -58,7 +58,7 @@ export default function FlowHeader({
           <button
             type="button"
             onClick={handleBack}
-            className="size-10 rounded-full border-[0.8px] border-[#EBEBEB] bg-white shadow-[0px_1px_4px_#0000000F] flex items-center justify-center text-foreground transition-all cursor-pointer outline-none shrink-0"
+            className="size-10 rounded-full border-[0.8px] border-divider bg-white shadow-[0px_1px_4px_#0000000F] flex items-center justify-center text-foreground transition-all cursor-pointer outline-none shrink-0"
             aria-label="Go back"
           >
             <ChevronLeft size={20} strokeWidth={2.5} />
@@ -67,7 +67,7 @@ export default function FlowHeader({
           <button
             type="button"
             onClick={handleBack}
-            className="flex items-center justify-center p-2 text-[#1A1A1A] cursor-pointer bg-transparent border-0 outline-none -ml-2 shrink-0"
+            className="flex items-center justify-center p-2 text-foreground cursor-pointer bg-transparent border-0 outline-none -ml-2 shrink-0"
             aria-label="Go back"
           >
             <ChevronLeft size={24} strokeWidth={2.5} />
@@ -79,12 +79,12 @@ export default function FlowHeader({
 
         {/* Title & Subtitle */}
         <div className="flex flex-col text-left">
-          <h1 className="text-xl font-extrabold! text-[#1A1A1A] leading-tight select-none">
+          <h1 className="text-xl font-extrabold! text-foreground leading-tight select-none">
             {title}
           </h1>
           {subtitle && (
             <span
-              className={`text-xs mt-0.5 font-bold leading-none ${isSelectedSubtitle ? 'text-[#0B683A]' : 'text-[#6B6B6B]'
+              className={`text-xs mt-0.5 font-bold leading-none ${isSelectedSubtitle ? 'text-positive' : 'text-muted-foreground'
                 }`}
             >
               {subtitle}

@@ -29,20 +29,20 @@ export default function OutstandingBalanceDrawer({
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DrawerContent className="bg-white rounded-t-[32px] pb-9 border-t-0 h-auto max-h-[90vh]">
         <DrawerHeader className="flex-row items-center justify-between px-6 pt-5 pb-3">
-          <h3 className="text-[17px] font-bold text-[#1A1A1A] text-left">
+          <h3 className="text-[17px] font-bold text-foreground text-left">
             {title}
           </h3>
           <DrawerClose asChild>
             <button
               type="button"
-              className="w-9 h-9 rounded-full bg-[#F5F5F5] text-[#6B6B6B] flex items-center justify-center cursor-pointer active:scale-95 transition-all outline-none border-0 shrink-0"
+              className="w-9 h-9 rounded-full bg-[#F5F5F5] text-muted-foreground flex items-center justify-center cursor-pointer active:scale-95 transition-all outline-none border-0 shrink-0"
               aria-label="Close"
             >
               <X size={16} strokeWidth={2.5} />
             </button>
           </DrawerClose>
         </DrawerHeader>
-        <hr className="border-[#EBEBEB] border-b-[0.8px] w-full shrink-0" />
+        <hr className="border-divider border-b-[0.8px] w-full shrink-0" />
 
         <div className="flex flex-col px-6 pt-6 pb-2">
           {/* Warning box */}
@@ -53,7 +53,7 @@ export default function OutstandingBalanceDrawer({
                 {warningTitle}
               </h4>
             </div>
-            <p className="text-[18px] text-[#6B6B6B] font-normal">
+            <p className="text-[18px] text-muted-foreground font-normal">
               {warningText}
             </p>
           </div>

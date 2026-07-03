@@ -40,7 +40,7 @@ export default function ProfilePicturePanel({
   }
 
   return (
-    <div className="fixed inset-0 z-70 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto animate-in fade-in slide-in-from-right duration-200 text-[#1A1A1A]">
+    <div className="fixed inset-0 z-70 bg-background flex flex-col select-none overflow-y-auto animate-in fade-in slide-in-from-right duration-200 text-foreground">
       <FlowHeader
         title={title}
         onBack={onClose}
@@ -59,7 +59,7 @@ export default function ProfilePicturePanel({
                 </AvatarFallback>
               )}
             </Avatar>
-            <span className="text-[14px] font-medium text-[#6B6B6B] mt-4 block text-center animate-pulse">
+            <span className="text-[14px] font-medium text-muted-foreground mt-4 block text-center animate-pulse">
               {label}
             </span>
           </div>
@@ -74,7 +74,7 @@ export default function ProfilePicturePanel({
 
           {/* Options Card */}
           <div>
-            <h3 className="text-[11px] font-semibold tracking-widest text-[#6B6B6B] uppercase mb-2 px-1">
+            <h3 className="text-[11px] font-semibold tracking-widest text-muted-foreground uppercase mb-2 px-1">
               Choose Photo
             </h3>
             <div className="bg-white border-[0.8px] border-[#E8E4DC] rounded-[18px] shadow-[0px_2px_10px_0px_rgba(0,0,0,0.05)] overflow-hidden divide-y divide-[#E8E4DC]">
@@ -83,30 +83,30 @@ export default function ProfilePicturePanel({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full flex items-center justify-between p-4 text-left active:bg-[#FEFAF1]/80 transition-colors cursor-pointer outline-none"
+                className="w-full flex items-center justify-between p-4 text-left active:bg-background/80 transition-colors cursor-pointer outline-none"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-[13px] bg-[#E4F2EB] flex items-center justify-center text-primary shrink-0">
+                  <div className="w-11 h-11 rounded-[13px] bg-positive-soft-bg flex items-center justify-center text-primary shrink-0">
                     <Camera size={20} strokeWidth={2.2} />
                   </div>
-                  <span className="text-[15px] font-semibold text-[#1A1A1A]">Take a Photo</span>
+                  <span className="text-[15px] font-semibold text-foreground">Take a Photo</span>
                 </div>
-                <ChevronRight size={18} className="text-[#9A9590]" strokeWidth={2.5} />
+                <ChevronRight size={18} className="text-muted-faint" strokeWidth={2.5} />
               </button>
 
               {/* Choose from Gallery */}
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full flex items-center justify-between p-4 text-left active:bg-[#FEFAF1]/80 transition-colors cursor-pointer outline-none"
+                className="w-full flex items-center justify-between p-4 text-left active:bg-background/80 transition-colors cursor-pointer outline-none"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-[13px] bg-[#E4F2EB] flex items-center justify-center text-primary shrink-0">
+                  <div className="w-11 h-11 rounded-[13px] bg-positive-soft-bg flex items-center justify-center text-primary shrink-0">
                     <ImageIcon size={20} strokeWidth={2.2} />
                   </div>
-                  <span className="text-[15px] font-semibold text-[#1A1A1A]">Choose from Gallery</span>
+                  <span className="text-[15px] font-semibold text-foreground">Choose from Gallery</span>
                 </div>
-                <ChevronRight size={18} className="text-[#9A9590]" strokeWidth={2.5} />
+                <ChevronRight size={18} className="text-muted-faint" strokeWidth={2.5} />
               </button>
 
             </div>
@@ -118,7 +118,7 @@ export default function ProfilePicturePanel({
           <button
             type="button"
             onClick={handleSave}
-            className="w-full h-14 bg-[#0B683A] text-white rounded-full font-bold text-base shadow-[0px_8px_20px_rgba(11,104,58,0.3)] active:scale-[0.98] transition-all flex items-center justify-center cursor-pointer"
+            className="w-full h-14 bg-positive text-white rounded-full font-bold text-base shadow-[0px_8px_20px_rgba(11,104,58,0.3)] active:scale-[0.98] transition-all flex items-center justify-center cursor-pointer"
           >
             Save Photo
           </button>

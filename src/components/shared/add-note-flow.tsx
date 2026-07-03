@@ -65,7 +65,7 @@ export default function AddNoteFlow({
   }
 
   return (
-    <div className="fixed inset-0 z-70 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto animate-in fade-in slide-in-from-bottom duration-75">
+    <div className="fixed inset-0 z-70 bg-background flex flex-col select-none overflow-y-auto animate-in fade-in slide-in-from-bottom duration-75">
       {/* Header */}
       <FlowHeader
         title="Add Note"
@@ -75,7 +75,7 @@ export default function AddNoteFlow({
           <button
             type="button"
             onClick={handleSave}
-            className="text-[#0B683A] font-semibold text-sm bg-transparent border-0 cursor-pointer p-2 outline-none hover:opacity-85 transition-opacity"
+            className="text-positive font-semibold text-sm bg-transparent border-0 cursor-pointer p-2 outline-none hover:opacity-85 transition-opacity"
           >
             Done
           </button>
@@ -86,7 +86,7 @@ export default function AddNoteFlow({
         {/* Upper/Content Section */}
         <div className="flex flex-col">
           {/* Transaction Summary Card */}
-          <div className="w-full bg-white rounded-lg border-[0.8px] border-[#EBEBEB] p-4 flex items-center gap-3.5 shadow-[0px_1px_4px_0px_#0000000A] select-none mb-6">
+          <div className="w-full bg-white rounded-lg border-[0.8px] border-divider p-4 flex items-center gap-3.5 shadow-[0px_1px_4px_0px_#0000000A] select-none mb-6">
             {/* Category Icon */}
             <div
               style={{ backgroundColor: `${categoryColor}1A` }}
@@ -96,10 +96,10 @@ export default function AddNoteFlow({
             </div>
             {/* Labels */}
             <div className="flex flex-col text-left">
-              <span className="font-semibold text-sm text-[#1A1A1A]">
+              <span className="font-semibold text-sm text-foreground">
                 {categoryLabel}
               </span>
-              <span className="text-xs text-[#6B6B6B] font-normal mt-0.5">
+              <span className="text-xs text-muted-foreground font-normal mt-0.5">
                 Rs. {formattedAmount} · {description || 'No description added'}
               </span>
             </div>
@@ -107,24 +107,24 @@ export default function AddNoteFlow({
 
           {/* Text Area Section */}
           <div className="flex flex-col text-left">
-            <span className="text-[11px] font-semibold text-[#6B6B6B] tracking-wider mb-2 select-none uppercase">
+            <span className="text-[11px] font-semibold text-muted-foreground tracking-wider mb-2 select-none uppercase">
               YOUR NOTE
             </span>
             <textarea
               value={noteText}
               onChange={handleTextChange}
               placeholder="Enter your note here..."
-              className="w-full h-36 px-4 py-3 bg-white border-[0.8px] border-[#D9D9D9] rounded-lg text-[15px] outline-none text-[#1A1A1A] resize-none font-medium placeholder:text-[#9A9590] shadow-[0px_1px_4px_0px_#0000000A] focus:border-[#0B683A73] transition-colors"
+              className="w-full h-36 px-4 py-3 bg-white border-[0.8px] border-[#D9D9D9] rounded-lg text-[15px] outline-none text-foreground resize-none font-medium placeholder:text-muted-faint shadow-[0px_1px_4px_0px_#0000000A] focus:border-positive/45 transition-colors"
             />
             {/* Character count remaining */}
-            <span className="text-xs text-[#6B6B6B] mt-3 font-normal">
+            <span className="text-xs text-muted-foreground mt-3 font-normal">
               {charactersRemaining} characters remaining
             </span>
           </div>
 
           {/* Quick Notes Section */}
           <div className="flex flex-col text-left mt-6">
-            <span className="text-xs font-bold text-[#6B6B6B] tracking-wider mb-3 select-none uppercase">
+            <span className="text-xs font-bold text-muted-foreground tracking-wider mb-3 select-none uppercase">
               QUICK NOTES
             </span>
             <div className="flex flex-wrap gap-2.5">
@@ -138,7 +138,7 @@ export default function AddNoteFlow({
                   key={pillText}
                   type="button"
                   onClick={() => handleQuickNoteClick(pillText)}
-                  className="flex items-center justify-center bg-white rounded-full border-[0.8px] border-[#EBEBEB] px-4 py-2.5 text-[13px] font-semibold text-[#6B6B6B] cursor-pointer hover:bg-[#F7F5F0] transition-colors outline-none"
+                  className="flex items-center justify-center bg-white rounded-full border-[0.8px] border-divider px-4 py-2.5 text-[13px] font-semibold text-muted-foreground cursor-pointer hover:bg-hover-bg transition-colors outline-none"
                 >
                   {pillText}
                 </button>
@@ -152,7 +152,7 @@ export default function AddNoteFlow({
           <button
             type="button"
             onClick={handleSave}
-            className="w-full h-14 rounded-[18px] bg-[#0B683A] text-white font-extrabold text-base cursor-pointer shadow-[0px_6.29px_20.13px_0px_#0B683A4D] hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none"
+            className="w-full h-14 rounded-[18px] bg-positive text-white font-extrabold text-base cursor-pointer shadow-[0px_6.29px_20.13px_0px_#0B683A4D] hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none"
           >
             Save Note
           </button>

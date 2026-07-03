@@ -104,12 +104,12 @@ export default function CurrencySelectDrawer({
         <button
           type="button"
           className={cn(
-            'w-full h-11 flex items-center justify-between px-4 rounded-full bg-white! border-[1.26px] border-[#EFE7DD] text-xs font-bold text-foreground cursor-pointer transition-all outline-none',
+            'w-full h-11 flex items-center justify-between px-4 rounded-full bg-white! border-[1.26px] border-border-card text-xs font-bold text-foreground cursor-pointer transition-all outline-none',
             className
           )}
         >
           <div className="flex items-center gap-1.5">
-            <Banknote size={16} className="text-[#6B6B6B]" />
+            <Banknote size={16} className="text-muted-foreground" />
             <span className="uppercase text-muted-foreground font-semibold">
               Currency:
             </span>
@@ -117,10 +117,10 @@ export default function CurrencySelectDrawer({
               {value.toUpperCase()}
             </span>
           </div>
-          <ChevronDown size={16} className="text-[#6B6B6B]" />
+          <ChevronDown size={16} className="text-muted-foreground" />
         </button>
       </DrawerTrigger>
-      <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] h-[65dvh] max-h-[65dvh]">
+      <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-foreground h-[65dvh] max-h-[65dvh]">
         {/* Drawer Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0">
           <h2 className="text-[19px] font-extrabold text-foreground">
@@ -131,12 +131,12 @@ export default function CurrencySelectDrawer({
               type="button"
               className="size-8 rounded-full bg-[#0000000A] text-foreground flex items-center justify-center cursor-pointer hover:bg-muted/40 transition-all border-0 focus:outline-none"
             >
-              <X size={16} className="text-[#6B6B6B]" />
+              <X size={16} className="text-muted-foreground" />
             </button>
           </DrawerClose>
         </div>
 
-        <hr className="border-[#EFE7DD] border-b-[1.26px] w-full" />
+        <hr className="border-border-card border-b-[1.26px] w-full" />
 
         {/* Search Input */}
         <div className="relative mx-5 my-4 shrink-0">
@@ -146,7 +146,7 @@ export default function CurrencySelectDrawer({
             placeholder="Search currency..."
             value={currencySearch}
             onChange={(e) => setCurrencySearch(e.target.value)}
-            className="w-full h-11 pl-11 pr-4 rounded-md bg-[#F7F5F0] border-[1.5px] border-[#EBEBEB] text-sm text-foreground placeholder:text-[#9A9590] focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary transition-all outline-none"
+            className="w-full h-11 pl-11 pr-4 rounded-md bg-hover-bg border-[1.5px] border-divider text-sm text-foreground placeholder:text-muted-faint focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary transition-all outline-none"
           />
         </div>
 
@@ -158,7 +158,7 @@ export default function CurrencySelectDrawer({
             setIsCurrencyOpen(false)
             setCurrencySearch('')
           }}
-          className="overflow-y-auto divide-y-[1.5px]! divide-[#EBEBEB] pb-8 gap-0"
+          className="overflow-y-auto divide-y-[1.5px]! divide-divider pb-8 gap-0"
         >
           {filteredCurrencies.map((cur) => {
             const isSelected = value.toLowerCase() === cur.code.toLowerCase()
@@ -199,7 +199,7 @@ export default function CurrencySelectDrawer({
                     >
                       {cur.name}
                     </ItemTitle>
-                    <ItemDescription className="text-[11px] text-[#9A9590] mt-0.5 font-medium leading-none">
+                    <ItemDescription className="text-[11px] text-muted-faint mt-0.5 font-medium leading-none">
                       {visuals.subText}
                     </ItemDescription>
                   </ItemContent>

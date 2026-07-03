@@ -46,7 +46,7 @@ export default function SelectedMembersStrip({
           className="relative flex flex-col items-center shrink-0"
         >
           <div className="relative">
-            <div className="p-0.5 rounded-full border-[2.2px] border-primary bg-[#FEFAF1]">
+            <div className="p-0.5 rounded-full border-[2.2px] border-primary bg-background">
               <ContactAvatar
                 initials={contact.initials}
                 avatarColor={contact.avatarColor}
@@ -60,7 +60,7 @@ export default function SelectedMembersStrip({
                 size="icon"
                 onClick={() => onRemove(contact.id)}
                 aria-label={`Remove ${contact.name}`}
-                className="absolute bottom-0 right-0 size-4 rounded-full bg-[#EF4444] hover:bg-[#EF4444]/90 text-white shrink-0 shadow-sm border-[1.5px] border-[#FEFAF1] flex items-center justify-center"
+                className="absolute bottom-0 right-0 size-4 rounded-full bg-[#EF4444] hover:bg-[#EF4444]/90 text-white shrink-0 shadow-sm border-[1.5px] border-background flex items-center justify-center"
               >
                 <X className="size-2.5" />
               </Button>

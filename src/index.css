@@ -80,6 +80,16 @@ select {
   --orange-soft-bg: #FFF3E6;
   --orange-dispute: #E85D1C;
 
+  /* Positive amount / "you're owed" green - distinct from --primary */
+  --positive: #0B683A;
+  --positive-soft-bg: #E4F2EB;
+
+  /* Neutral surfaces reused across shared components */
+  --divider: #EBEBEB;
+  --muted-faint: #9A9590;
+  --border-card: #EFE7DD;
+  --hover-bg: #F7F5F0;
+
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -171,6 +181,14 @@ h2 {
   --color-orange-payable: var(--orange-payable);
   --color-orange-soft-bg: var(--orange-soft-bg);
   --color-orange-dispute: var(--orange-dispute);
+
+  /* Positive amount + shared neutral surfaces */
+  --color-positive: var(--positive);
+  --color-positive-soft-bg: var(--positive-soft-bg);
+  --color-divider: var(--divider);
+  --color-muted-faint: var(--muted-faint);
+  --color-border-card: var(--border-card);
+  --color-hover-bg: var(--hover-bg);
 
   /* Custom Shadows */
   --shadow-button-custom: var(--button-shadow);

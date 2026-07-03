@@ -47,7 +47,7 @@ export default function ExpenseList({
   return (
     <div
       className={cn(
-        'bg-white rounded-[24px] border-[0.8px] border-[#EBEBEB] overflow-hidden shadow-[0px_4px_16px_rgba(0,0,0,0.02)] divide-y divide-[#EBEBEB]',
+        'bg-white rounded-[24px] border-[0.8px] border-divider overflow-hidden shadow-[0px_4px_16px_rgba(0,0,0,0.02)] divide-y divide-divider',
         className
       )}
     >

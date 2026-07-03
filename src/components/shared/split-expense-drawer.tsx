@@ -96,13 +96,13 @@ export default function SplitExpenseDrawer({
   const members = useMemo(() => {
     return isGroup
       ? [
-        { id: 'you', name: 'You', initials: youInitials, avatarColor: 'bg-[#0B683A]', isOrganizer: true },
+        { id: 'you', name: 'You', initials: youInitials, avatarColor: 'bg-positive', isOrganizer: true },
         { id: 'ali', name: 'Ali Hassan', initials: 'AH', avatarColor: 'bg-[#2F80ED]', isOrganizer: false },
-        { id: 'sara', name: 'Sara Khan', initials: 'SK', avatarColor: 'bg-[#C96A1B]', isOrganizer: false },
+        { id: 'sara', name: 'Sara Khan', initials: 'SK', avatarColor: 'bg-orange-payable', isOrganizer: false },
         { id: 'hassan', name: 'Hassan', initials: 'HS', avatarColor: 'bg-[#475569]', isOrganizer: false },
       ]
       : [
-        { id: 'you', name: 'You', initials: youInitials, avatarColor: 'bg-[#0B683A]', isOrganizer: true },
+        { id: 'you', name: 'You', initials: youInitials, avatarColor: 'bg-positive', isOrganizer: true },
         { id: 'contact', name: contactName, initials: contactInitials, avatarColor: contactAvatarColor || 'bg-[#2F80ED]', isOrganizer: false },
       ]
   }, [isGroup, contactName, contactInitials, contactAvatarColor, youInitials])
@@ -241,12 +241,12 @@ export default function SplitExpenseDrawer({
           <DrawerClose asChild>
             <button
               type="button"
-              className="size-8 rounded-full bg-[#FEFAF1] border border-[#EBEBEB] text-foreground flex items-center justify-center cursor-pointer hover:bg-muted/10 outline-none focus:outline-none"
+              className="size-8 rounded-full bg-background border border-divider text-foreground flex items-center justify-center cursor-pointer hover:bg-muted/10 outline-none focus:outline-none"
             >
-              <X size={16} className="text-[#6B6B6B]" />
+              <X size={16} className="text-muted-foreground" />
             </button>
           </DrawerClose>
-          <h3 className="text-lg font-extrabold text-[#1A1A1A] absolute left-1/2 -translate-x-1/2">Split Expense</h3>
+          <h3 className="text-lg font-extrabold text-foreground absolute left-1/2 -translate-x-1/2">Split Expense</h3>
           <button
             type="button"
             onClick={handleConfirm}
@@ -254,15 +254,15 @@ export default function SplitExpenseDrawer({
             className={cn(
               'size-8 rounded-full flex items-center justify-center border-0 outline-none cursor-pointer transition-opacity',
               splitType === 'unequal' && unequalRemaining !== 0
-                ? 'bg-[#E0E0E0] text-[#9A9590] cursor-not-allowed opacity-50'
-                : 'bg-[#DCEFE4] text-[#0B683A] hover:opacity-85'
+                ? 'bg-[#E0E0E0] text-muted-faint cursor-not-allowed opacity-50'
+                : 'bg-[#DCEFE4] text-positive hover:opacity-85'
             )}
           >
             <Check size={16} strokeWidth={3} />
           </button>
         </div>
 
-        <hr className="border-[#EBEBEB] border-b-[0.8px] w-full shrink-0" />
+        <hr className="border-divider border-b-[0.8px] w-full shrink-0" />
 
         {/* Transaction Summary Row */}
         <div className="w-full px-6 py-4.5 flex items-center justify-between bg-white select-none shrink-0">
@@ -276,21 +276,21 @@ export default function SplitExpenseDrawer({
             </div>
             {/* Labels */}
             <div className="flex flex-col text-left">
-              <span className="font-bold text-[17px] text-[#1A1A1A] tracking-tight leading-tight">
+              <span className="font-bold text-[17px] text-foreground tracking-tight leading-tight">
                 {description || 'No description added'}
               </span>
-              <span className="text-[13px] text-[#6B6B6B] font-normal mt-1 leading-none">
+              <span className="text-[13px] text-muted-foreground font-normal mt-1 leading-none">
                 {categoryLabel} · Today
               </span>
             </div>
           </div>
           {/* Amount */}
-          <span className="text-xl font-bold text-[#1A1A1A]">
+          <span className="text-xl font-bold text-foreground">
             Rs. {totalAmount.toLocaleString('en-US')}
           </span>
         </div>
 
-        <hr className="border-[#EBEBEB] border-b-[0.8px] w-full shrink-0" />
+        <hr className="border-divider border-b-[0.8px] w-full shrink-0" />
 
         {/* Main Content Container (non-scrollable) */}
         <div className="flex-1 flex flex-col px-6 pt-5 bg-white overflow-hidden">
@@ -308,8 +308,8 @@ export default function SplitExpenseDrawer({
               className={cn(
                 'flex-1 flex items-center justify-center gap-2 py-3 rounded-full text-xs font-semibold cursor-pointer transition-all outline-none border',
                 splitType === 'equal'
-                  ? 'bg-[#0B683A] text-white border-[#0B683A] shadow-sm'
-                  : 'bg-white text-[#5C5C5C] border-[#EBEBEB] hover:bg-gray-50/50 hover:text-[#1A1A1A] hover:border-gray-300'
+                  ? 'bg-positive text-white border-positive shadow-sm'
+                  : 'bg-white text-[#5C5C5C] border-divider hover:bg-gray-50/50 hover:text-foreground hover:border-gray-300'
               )}
             >
               <Scale size={16} strokeWidth={2.5} />
@@ -323,8 +323,8 @@ export default function SplitExpenseDrawer({
               className={cn(
                 'flex-1 flex items-center justify-center gap-2 py-3 rounded-full text-xs font-semibold cursor-pointer transition-all outline-none border',
                 splitType === 'unequal'
-                  ? 'bg-[#0B683A] text-white border-[#0B683A] shadow-sm'
-                  : 'bg-white text-[#5C5C5C] border-[#EBEBEB] hover:bg-gray-50/50 hover:text-[#1A1A1A] hover:border-gray-300'
+                  ? 'bg-positive text-white border-positive shadow-sm'
+                  : 'bg-white text-[#5C5C5C] border-divider hover:bg-gray-50/50 hover:text-foreground hover:border-gray-300'
               )}
             >
               <DivideCircleIcon className="size-4" />
@@ -338,8 +338,8 @@ export default function SplitExpenseDrawer({
               className={cn(
                 'flex-1 flex items-center justify-center gap-2 p-3 rounded-full text-xs font-semibold cursor-pointer transition-all outline-none border',
                 splitType === 'adjustment'
-                  ? 'bg-[#0B683A] text-white border-[#0B683A] shadow-sm'
-                  : 'bg-white text-[#5C5C5C] border-[#EBEBEB] hover:bg-gray-50/50 hover:text-[#1A1A1A] hover:border-gray-300'
+                  ? 'bg-positive text-white border-positive shadow-sm'
+                  : 'bg-white text-[#5C5C5C] border-divider hover:bg-gray-50/50 hover:text-foreground hover:border-gray-300'
               )}
             >
               <TextAlignJustify className="size-4" />
@@ -349,16 +349,16 @@ export default function SplitExpenseDrawer({
 
           {/* Banner Info Box */}
           <div className="w-full bg-[#E8F5EE] rounded-[14px] p-[18px] flex gap-4 text-left mb-6 items-center shrink-0">
-            <div className="size-11 rounded-full bg-[#0B683A] flex items-center justify-center shrink-0">
+            <div className="size-11 rounded-full bg-positive flex items-center justify-center shrink-0">
               <Info size={20} className="text-white" strokeWidth={2.5} />
             </div>
             <div className="flex flex-col justify-center">
-              <span className="font-bold text-sm text-[#1A1A1A] leading-tight">
+              <span className="font-bold text-sm text-foreground leading-tight">
                 {splitType === 'equal' && 'Amounts adjusted Equally'}
                 {splitType === 'unequal' && 'Split by Exact Amounts'}
                 {splitType === 'adjustment' && 'Amounts adjusted automatically'}
               </span>
-              <span className="text-xs text-[#6B6B6B] mt-1 font-normal leading-tight">
+              <span className="text-xs text-muted-foreground mt-1 font-normal leading-tight">
                 {splitType === 'equal' && 'Equally splitted across each member.'}
                 {splitType === 'unequal' && 'Specify exactly how much each person owes.'}
                 {splitType === 'adjustment' && 'Enter adjustments to reflect who owes extra.'}
@@ -369,11 +369,11 @@ export default function SplitExpenseDrawer({
           {/* Equal split summary row */}
           {splitType === 'equal' && (
             <div className="flex items-center gap-2 mb-4 shrink-0 select-none text-left">
-              <div className="w-6 h-6 rounded-full bg-[#0B683A] flex items-center justify-center text-white shrink-0">
+              <div className="w-6 h-6 rounded-full bg-positive flex items-center justify-center text-white shrink-0">
                 <Users size={12} className="text-white" />
               </div>
-              <span className="text-[13px] font-bold text-[#1A1A1A]">
-                {numSelected} people <span className="text-[#6B6B6B] font-semibold">· Rs. {equalSplitAmount.toLocaleString('en-US')} each</span>
+              <span className="text-[13px] font-bold text-foreground">
+                {numSelected} people <span className="text-muted-foreground font-semibold">· Rs. {equalSplitAmount.toLocaleString('en-US')} each</span>
               </span>
             </div>
           )}
@@ -385,7 +385,7 @@ export default function SplitExpenseDrawer({
                 <AlertTriangle size={14} className="text-[#C0392B] fill-[#C0392B]/10" />
                 Rs. {Math.abs(unequalRemaining).toLocaleString('en-US')} {unequalRemaining > 0 ? 'remaining' : 'over split'}
               </span>
-              <span className="text-[#9A9590]">Total: Rs. {totalAmount.toLocaleString('en-US')}</span>
+              <span className="text-muted-faint">Total: Rs. {totalAmount.toLocaleString('en-US')}</span>
             </div>
           )}
 
@@ -393,20 +393,20 @@ export default function SplitExpenseDrawer({
           {splitType === 'adjustment' && (
             <div className="flex items-center justify-between mb-4 shrink-0 select-none text-left">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-[#0B683A] flex items-center justify-center text-white shrink-0">
+                <div className="w-6 h-6 rounded-full bg-positive flex items-center justify-center text-white shrink-0">
                   <Users size={12} className="text-white" />
                 </div>
-                <span className="text-[13px] font-bold text-[#1A1A1A]">
+                <span className="text-[13px] font-bold text-foreground">
                   {members.length} people
                 </span>
               </div>
-              <span className="text-xs text-[#9A9590] font-semibold">Total: Rs. {totalAmount.toLocaleString('en-US')}</span>
+              <span className="text-xs text-muted-faint font-semibold">Total: Rs. {totalAmount.toLocaleString('en-US')}</span>
             </div>
           )}
 
           {/* Members Heading Row */}
           <div className="flex items-center justify-between mb-2 shrink-0 select-none">
-            <span className="text-xs font-bold text-[#6B6B6B]">
+            <span className="text-xs font-bold text-muted-foreground">
               {splitType === 'equal' && 'Members'}
               {splitType === 'unequal' && 'Set amount per person'}
               {splitType === 'adjustment' && 'Members'}
@@ -418,17 +418,17 @@ export default function SplitExpenseDrawer({
                   const allSelected = selectedMembers.length === members.length
                   setSelectedMembers(allSelected ? ['you'] : members.map((m) => m.id))
                 }}
-                className="text-xs font-bold text-[#0B683A] bg-transparent border-0 cursor-pointer flex items-center gap-1.5 outline-none hover:opacity-85"
+                className="text-xs font-bold text-positive bg-transparent border-0 cursor-pointer flex items-center gap-1.5 outline-none hover:opacity-85"
               >
                 Select all
-                <Check size={14} className="border border-[#0B683A] rounded p-0.5 size-4" />
+                <Check size={14} className="border border-positive rounded p-0.5 size-4" />
               </button>
             )}
             {splitType === 'unequal' && (
               <button
                 type="button"
                 onClick={handleResetUnequal}
-                className="flex items-center gap-1 text-[#0B683A] font-bold text-xs bg-transparent border-0 cursor-pointer outline-none hover:opacity-85"
+                className="flex items-center gap-1 text-positive font-bold text-xs bg-transparent border-0 cursor-pointer outline-none hover:opacity-85"
               >
                 Reset
               </button>
@@ -445,7 +445,7 @@ export default function SplitExpenseDrawer({
           </div>
 
           {/* Scrollable Members List Box */}
-          <div className="flex-1 overflow-y-auto border-[0.8px] rounded-lg border-[#EBEBEB] divide-y divide-[#EBEBEB] bg-white mb-2 select-none">
+          <div className="flex-1 overflow-y-auto border-[0.8px] rounded-lg border-divider divide-y divide-divider bg-white mb-2 select-none">
             {members.map((member) => {
               const isSelected = selectedMembers.includes(member.id)
 
@@ -465,7 +465,7 @@ export default function SplitExpenseDrawer({
                         className="size-5 rounded border-0 p-0 flex items-center justify-center shrink-0 cursor-pointer outline-none active:scale-95"
                       >
                         {isSelected ? (
-                          <div className="size-5 rounded-[6px] bg-[#0B683A] flex items-center justify-center text-white">
+                          <div className="size-5 rounded-[6px] bg-positive flex items-center justify-center text-white">
                             <Check size={12} strokeWidth={4} className="text-white" />
                           </div>
                         ) : (
@@ -482,9 +482,9 @@ export default function SplitExpenseDrawer({
                       <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#14A558] border border-white rounded-full" />
                     </div>
                     <div className="flex flex-col">
-                      <span className="font-semibold text-sm text-[#1A1A1A]">{member.name}</span>
+                      <span className="font-semibold text-sm text-foreground">{member.name}</span>
                       {member.isOrganizer && (
-                        <span className="text-[10px] text-[#0B683A] font-bold bg-[#E5F2EB] px-1.5 py-0.5 rounded-full mt-0.5 self-start leading-none">
+                        <span className="text-[10px] text-positive font-bold bg-[#E5F2EB] px-1.5 py-0.5 rounded-full mt-0.5 self-start leading-none">
                           Organizer
                         </span>
                       )}
@@ -493,40 +493,40 @@ export default function SplitExpenseDrawer({
 
                   {/* Right side controls */}
                   {splitType === 'equal' && (
-                    <span className={cn('font-semibold text-sm text-[#1A1A1A]', !isSelected && 'opacity-30')}>
+                    <span className={cn('font-semibold text-sm text-foreground', !isSelected && 'opacity-30')}>
                       Rs. {isSelected ? equalSplitAmount.toLocaleString('en-US') : '0'}
                     </span>
                   )}
                   {splitType === 'unequal' && (
-                    <div className="flex items-center gap-1 bg-white px-3 py-1.5 rounded-[12px] border-[0.8px] border-[#EBEBEB] shadow-[0px_1px_4px_rgba(0,0,0,0.02)]">
-                      <span className="text-xs text-[#9A9590] font-bold">Rs.</span>
+                    <div className="flex items-center gap-1 bg-white px-3 py-1.5 rounded-[12px] border-[0.8px] border-divider shadow-[0px_1px_4px_rgba(0,0,0,0.02)]">
+                      <span className="text-xs text-muted-faint font-bold">Rs.</span>
                       <input
                         type="text"
                         inputMode='decimal'
                         value={unequalAmounts[member.id]}
                         onChange={(e) => handleUnequalChange(member.id, e.target.value)}
-                        className="w-18 bg-transparent border-0 outline-none text-sm font-extrabold text-[#1A1A1A] text-right font-sans py-0"
+                        className="w-18 bg-transparent border-0 outline-none text-sm font-extrabold text-foreground text-right font-sans py-0"
                       />
                     </div>
                   )}
                   {splitType === 'adjustment' && (
                     <div className="flex items-center gap-6">
                       <div className="flex flex-col text-right">
-                        <span className="text-[10px] text-[#9A9590] font-semibold">Final Amount</span>
-                        <span className="text-sm font-extrabold text-[#0B683A] mt-0.5">
+                        <span className="text-[10px] text-muted-faint font-semibold">Final Amount</span>
+                        <span className="text-sm font-extrabold text-positive mt-0.5">
                           Rs. {getAdjustmentFinalAmount(member.id).toLocaleString('en-US')}
                         </span>
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[10px] text-[#9A9590] font-semibold mb-1 text-left">owes extra</span>
-                        <div className="flex items-center gap-1 bg-white px-3 py-1.5 rounded-[12px] border-[0.8px] border-[#EBEBEB] shadow-[0px_1px_4px_rgba(0,0,0,0.02)]">
-                          <span className="text-xs text-[#9A9590] font-bold">Rs.</span>
+                        <span className="text-[10px] text-muted-faint font-semibold mb-1 text-left">owes extra</span>
+                        <div className="flex items-center gap-1 bg-white px-3 py-1.5 rounded-[12px] border-[0.8px] border-divider shadow-[0px_1px_4px_rgba(0,0,0,0.02)]">
+                          <span className="text-xs text-muted-faint font-bold">Rs.</span>
                           <input
                             type="text"
                             inputMode='decimal'
                             value={adjustmentAmounts[member.id]}
                             onChange={(e) => handleAdjustmentChange(member.id, e.target.value)}
-                            className="w-14 bg-transparent border-0 outline-none text-xs font-extrabold text-[#1A1A1A] text-right font-sans py-0"
+                            className="w-14 bg-transparent border-0 outline-none text-xs font-extrabold text-foreground text-right font-sans py-0"
                           />
                         </div>
                       </div>
@@ -539,8 +539,8 @@ export default function SplitExpenseDrawer({
 
           {/* Repeats Status Message (Full-width bar below list) */}
           {isRecurring && (
-            <div className="flex items-center gap-2 px-6 py-3.5 bg-[#F4FAF7] text-[#0B683A] text-[13.5px] font-bold border-b border-[#EBEBEB] -mx-6 mb-2 select-none">
-              <RefreshCw size={14} className="text-[#0B683A]" strokeWidth={2.5} />
+            <div className="flex items-center gap-2 px-6 py-3.5 bg-[#F4FAF7] text-positive text-[13.5px] font-bold border-b border-divider -mx-6 mb-2 select-none">
+              <RefreshCw size={14} className="text-positive" strokeWidth={2.5} />
               <span>
                 Repeats {frequency.toLowerCase()} · Starting {startsOn}
               </span>
@@ -562,7 +562,7 @@ export default function SplitExpenseDrawer({
             <button
               type="button"
               onClick={handleConfirm}
-              className="w-full h-14 rounded-full bg-[#0B683A] text-white font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
+              className="w-full h-14 rounded-full bg-positive text-white font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
             >
               Confirm
             </button>

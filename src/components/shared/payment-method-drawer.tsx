@@ -22,8 +22,8 @@ const METHODS = [
     title: 'Cash',
     subtitle: 'Paid in person',
     icon: Banknote,
-    iconBg: 'bg-[#E4F2EB]',
-    iconColor: 'text-[#0B683A]',
+    iconBg: 'bg-positive-soft-bg',
+    iconColor: 'text-positive',
   },
   {
     id: 'bank',
@@ -55,7 +55,7 @@ const METHODS = [
     subtitle: 'Cheque, crypto, etc.',
     icon: Upload,
     iconBg: 'bg-[#F5F5F5]',
-    iconColor: 'text-[#6B6B6B]',
+    iconColor: 'text-muted-foreground',
   },
 ] as const
 
@@ -77,30 +77,30 @@ export default function PaymentMethodDrawer({
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
-      <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A]">
+      <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-foreground">
         {/* Header */}
         <div className="px-6 pt-6 pb-4 shrink-0 flex items-start justify-between">
           <div className="flex flex-col text-left">
-            <h3 className="text-[17px] font-bold text-[#1A1A1A]">Payment Method</h3>
-            <span className="text-xs text-[#6B6B6B] font-medium">
+            <h3 className="text-[17px] font-bold text-foreground">Payment Method</h3>
+            <span className="text-xs text-muted-foreground font-medium">
               How was this settled?
             </span>
           </div>
           <DrawerClose asChild>
             <button
               type="button"
-              className="size-8 rounded-full bg-[#F7F5F0] flex items-center justify-center cursor-pointer outline-none focus:outline-none"
+              className="size-8 rounded-full bg-hover-bg flex items-center justify-center cursor-pointer outline-none focus:outline-none"
             >
-              <X size={16} className="text-[#6B6B6B]" />
+              <X size={16} className="text-muted-foreground" />
             </button>
           </DrawerClose>
         </div>
 
-        <hr className="border-[#EBEBEB] border-b-[0.8px] w-full shrink-0" />
+        <hr className="border-divider border-b-[0.8px] w-full shrink-0" />
 
         {/* Option list */}
         <div className="flex-1 overflow-y-auto">
-          <div className="divide-y-[1.5px]! divide-[#EBEBEB] text-left">
+          <div className="divide-y-[1.5px]! divide-divider text-left">
             {METHODS.map((method) => {
               const isSelected = tempValue === method.id
               const IconComponent = method.icon
@@ -122,10 +122,10 @@ export default function PaymentMethodDrawer({
                     </div>
 
                     <div className="flex flex-col text-left">
-                      <span className={cn("font-semibold text-[15px] text-[#1A1A1A] leading-tight", isSelected ? "text-[#0B683A]" : "")}>
+                      <span className={cn("font-semibold text-[15px] text-foreground leading-tight", isSelected ? "text-positive" : "")}>
                         {method.title}
                       </span>
-                      <span className="text-xs text-[#6B6B6B] font-normal mt-1 leading-none">
+                      <span className="text-xs text-muted-foreground font-normal mt-1 leading-none">
                         {method.subtitle}
                       </span>
                     </div>
@@ -133,11 +133,11 @@ export default function PaymentMethodDrawer({
 
                   {/* Custom Radio check dot indicator */}
                   {isSelected ? (
-                    <div className="w-6 h-6 rounded-full bg-[#0B683A] flex items-center justify-center text-white shrink-0 shadow-sm animate-in zoom-in-75 duration-150">
+                    <div className="w-6 h-6 rounded-full bg-positive flex items-center justify-center text-white shrink-0 shadow-sm animate-in zoom-in-75 duration-150">
                       <Check size={13} strokeWidth={3} className="text-white" />
                     </div>
                   ) : (
-                    <div className="w-6 h-6 rounded-full border-2 border-[#EBEBEB] bg-white shrink-0" />
+                    <div className="w-6 h-6 rounded-full border-2 border-divider bg-white shrink-0" />
                   )}
                 </button>
               )
@@ -146,7 +146,7 @@ export default function PaymentMethodDrawer({
         </div>
 
         {/* Pinned Bottom Confirm Button */}
-        <div className="px-6 py-5 bg-white shrink-0 border-t-[1.5px] border-[#EBEBEB]">
+        <div className="px-6 py-5 bg-white shrink-0 border-t-[1.5px] border-divider">
           <button
             type="button"
             onClick={() => {
