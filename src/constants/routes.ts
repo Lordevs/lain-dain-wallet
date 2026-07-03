@@ -8,7 +8,6 @@ export const ROUTES = {
   TRANSACTIONS: '/transactions',
   TRANSACTION_DETAILS: '/transactions/$id',
   NOTIFICATIONS: '/notifications',
-  PROFILE: '/profile',
   PERSONAL: '/personal',
   PERSONAL_REPORTS: '/personal/reports',
   GROUP_DETAILS: '/groups/$id',
