@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import FlowHeader from '@/components/shared/flow-header'
 import { CATEGORIES } from '../../features/personal/components/category-picker'
 
@@ -14,8 +14,14 @@ interface AddNoteFlowProps {
 
 const MAX_CHARACTERS = 300
 
-export default function AddNoteFlow({
-  isOpen,
+export default function AddNoteFlow(props: AddNoteFlowProps) {
+  // Only mounted while open, so AddNoteFlowContent always starts fresh from the
+  // current initialNote - no effect needed to resync on reopen.
+  if (!props.isOpen) return null
+  return <AddNoteFlowContent {...props} />
+}
+
+function AddNoteFlowContent({
   amount,
   description,
   category,
@@ -24,13 +30,6 @@ export default function AddNoteFlow({
   onSave,
 }: AddNoteFlowProps) {
   const [noteText, setNoteText] = useState(initialNote)
-
-  // Sync state when drawer is opened or initialNote changes
-  useEffect(() => {
-    setNoteText(initialNote)
-  }, [initialNote, isOpen])
-
-  if (!isOpen) return null
 
   // Resolve category details
   const activeCategory = CATEGORIES.find((cat) => cat.id === category) || CATEGORIES.find((cat) => cat.id === 'other')

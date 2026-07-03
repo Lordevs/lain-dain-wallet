@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { Check, X, Info, Users, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { useAuthStore } from '@/store/use-auth-store'
@@ -34,11 +34,44 @@ export default function PaidByDrawer({
   contactAvatarColor,
   amount = 5000,
 }: PaidByDrawerProps) {
-  const [view, setView] = useState<'selection' | 'multiple'>('selection')
-  const [tempValue, setTempValue] = useState<string>(selectedValue)
+  // Bumped whenever isOpen transitions to true, forcing PaidByDrawerContent to remount
+  // with fresh initial state - the idiomatic replacement for a "resync on open" effect.
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen)
+  const [openKey, setOpenKey] = useState(0)
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen)
+    if (isOpen) setOpenKey((k) => k + 1)
+  }
 
-  // Amount inputs for multiple payers
-  const [payerAmounts, setPayerAmounts] = useState<Record<string, string>>({})
+  return (
+    <Drawer open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+      <DrawerContent className={FULLSCREEN_DRAWER_CN}>
+        <PaidByDrawerContent
+          key={openKey}
+          onClose={onClose}
+          onSelect={onSelect}
+          selectedValue={selectedValue}
+          contactName={contactName}
+          contactInitials={contactInitials}
+          contactAvatarColor={contactAvatarColor}
+          amount={amount}
+        />
+      </DrawerContent>
+    </Drawer>
+  )
+}
+
+function PaidByDrawerContent({
+  onClose,
+  onSelect,
+  selectedValue,
+  contactName,
+  contactInitials,
+  contactAvatarColor,
+  amount,
+}: Omit<PaidByDrawerProps, 'isOpen' | 'amount'> & { amount: number }) {
+  const [view, setView] = useState<'selection' | 'multiple'>(selectedValue === 'multiple' ? 'multiple' : 'selection')
+  const [tempValue, setTempValue] = useState<string>(selectedValue)
 
   const userProfile = useAuthStore((state) => state.userProfile)
   const youName = userProfile?.name || 'You'
@@ -63,23 +96,19 @@ export default function PaidByDrawer({
       ]
   }, [isGroup, contactName, contactInitials, contactAvatarColor, youName, youInitials])
 
-  useEffect(() => {
-    if (isOpen) {
-      setView(selectedValue === 'multiple' ? 'multiple' : 'selection')
-      setTempValue(selectedValue)
-
-      const initialAmounts: Record<string, string> = {}
-      members.forEach((m) => {
-        if (selectedValue === 'multiple') {
-          const share = Math.round(amount / members.length)
-          initialAmounts[m.id] = share.toString()
-        } else {
-          initialAmounts[m.id] = m.id === selectedValue ? amount.toString() : ''
-        }
-      })
-      setPayerAmounts(initialAmounts)
-    }
-  }, [isOpen, selectedValue, members, amount])
+  // Amount inputs for multiple payers - seeded once from the initial selection/amount
+  const [payerAmounts, setPayerAmounts] = useState<Record<string, string>>(() => {
+    const initialAmounts: Record<string, string> = {}
+    members.forEach((m) => {
+      if (selectedValue === 'multiple') {
+        const share = Math.round(amount / members.length)
+        initialAmounts[m.id] = share.toString()
+      } else {
+        initialAmounts[m.id] = m.id === selectedValue ? amount.toString() : ''
+      }
+    })
+    return initialAmounts
+  })
 
   // Calculated multi-payer assignments
   const totalAmount = amount || 5000
@@ -119,148 +148,57 @@ export default function PaidByDrawer({
   }
 
   return (
-    <Drawer open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
-      <DrawerContent className={FULLSCREEN_DRAWER_CN}>
-
-        {/* Drawer Header */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-3 shrink-0 relative">
-          {view === 'multiple' ? (
+    <>
+      {/* Drawer Header */}
+      <div className="flex items-center justify-between px-6 pt-5 pb-3 shrink-0 relative">
+        {view === 'multiple' ? (
+          <button
+            type="button"
+            onClick={() => setView('selection')}
+            className="size-8 rounded-full bg-background border border-divider text-foreground flex items-center justify-center cursor-pointer hover:bg-muted/10 outline-none focus:outline-none"
+          >
+            <ChevronLeft size={16} className="text-muted-foreground" />
+          </button>
+        ) : (
+          <DrawerClose asChild>
             <button
               type="button"
-              onClick={() => setView('selection')}
               className="size-8 rounded-full bg-background border border-divider text-foreground flex items-center justify-center cursor-pointer hover:bg-muted/10 outline-none focus:outline-none"
             >
-              <ChevronLeft size={16} className="text-muted-foreground" />
+              <X size={16} className="text-muted-foreground" />
             </button>
-          ) : (
-            <DrawerClose asChild>
-              <button
-                type="button"
-                className="size-8 rounded-full bg-background border border-divider text-foreground flex items-center justify-center cursor-pointer hover:bg-muted/10 outline-none focus:outline-none"
-              >
-                <X size={16} className="text-muted-foreground" />
-              </button>
-            </DrawerClose>
-          )}
-          <h3 className="text-lg font-extrabold text-foreground absolute left-1/2 -translate-x-1/2">
-            Paid by
-          </h3>
-          <div className="size-8" />
-        </div>
-
-        <hr className="border-divider border-b-[0.8px] w-full shrink-0" />
-
-        {/* View 1: Selector List */}
-        {view === 'selection' && (
-          <>
-            <div className="text-[13px] font-semibold text-muted-faint px-6 pt-4 text-left shrink-0">
-              Who paid for this expense?
-            </div>
-
-            <div className="flex-1 px-6 my-4 overflow-y-auto">
-              <div className="bg-background rounded-[24px] border-[0.8px] border-divider overflow-hidden shadow-[0px_4px_16px_rgba(0,0,0,0.02)] divide-y divide-divider text-left">
-                {/* Dynamic Member Buttons */}
-                {members.map((member) => {
-                  const isSelected = tempValue === member.id
-                  return (
-                    <button
-                      key={member.id}
-                      type="button"
-                      onClick={() => setTempValue(member.id)}
-                      className={cn(
-                        'w-full flex items-center justify-between py-4.5 px-5 text-left border-0 cursor-pointer transition-colors outline-none',
-                        isSelected ? 'bg-[#FFF9E6]' : 'bg-transparent'
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Avatar className="size-10 shrink-0 font-extrabold text-sm text-white select-none shadow-sm">
-                          <AvatarFallback className={cn("rounded-full flex items-center justify-center border-0 text-white font-extrabold text-sm", member.avatarColor)}>
-                            {member.initials}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col text-left">
-                          <span className="font-semibold text-sm text-foreground leading-tight">
-                            {member.name} {member.id === 'you' && '(default)'}
-                          </span>
-                          <span className="text-[11px] text-muted-foreground font-medium mt-1 leading-none">
-                            Paid the full amount
-                          </span>
-                        </div>
-                      </div>
-                      {isSelected && (
-                        <div className="w-6 h-6 rounded-full bg-positive flex items-center justify-center text-white shrink-0">
-                          <Check size={14} strokeWidth={3} className="text-white" />
-                        </div>
-                      )}
-                    </button>
-                  )
-                })}
-
-                {/* Multiple People Option Button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTempValue('multiple')
-                    setView('multiple')
-                  }}
-                  className={cn(
-                    'w-full flex items-center justify-between py-4.5 px-5 text-left border-0 cursor-pointer transition-colors outline-none',
-                    tempValue === 'multiple' ? 'bg-[#FFF9E6]' : 'bg-transparent'
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="size-10 rounded-full bg-[#7D3C98] flex items-center justify-center text-white shrink-0 shadow-sm">
-                      <Users size={18} strokeWidth={2} />
-                    </div>
-                    <div className="flex flex-col text-left">
-                      <span className="font-semibold text-sm text-foreground leading-tight">
-                        Multiple people
-                      </span>
-                      <span className="text-[11px] text-muted-foreground font-medium mt-1 leading-none">
-                        More than one person paid
-                      </span>
-                    </div>
-                  </div>
-                  <ChevronRight size={16} className="text-muted-faint" />
-                </button>
-              </div>
-            </div>
-
-            {/* Bottom Tip Info Box */}
-            <div className="mx-6 mb-2 p-4 rounded-[20px] bg-positive-soft-bg/50 border border-positive/12 flex gap-3 text-left shrink-0">
-              <Info size={16} className="text-positive shrink-0 mt-0.5" />
-              <span className="text-[12px] font-semibold text-positive leading-normal">
-                Use <strong className="font-extrabold">Multiple people</strong> when more than one person contributed to pay the bill.
-              </span>
-            </div>
-          </>
+          </DrawerClose>
         )}
+        <h3 className="text-lg font-extrabold text-foreground absolute left-1/2 -translate-x-1/2">
+          Paid by
+        </h3>
+        <div className="size-8" />
+      </div>
 
-        {/* View 2: Multiple Payers Details Grid */}
-        {view === 'multiple' && (
-          <>
-            <div className="flex flex-col px-6 pt-4 text-left shrink-0">
-              <span className="text-[13px] font-semibold text-muted-foreground">
-                How much did each person pay?
-              </span>
-              <div className="flex items-center justify-between mt-3 mb-2">
-                <span className={cn("text-[13px] font-bold", totalUnassigned === 0 ? "text-positive" : "text-orange-payable")}>
-                  {totalUnassigned === 0
-                    ? `Rs. ${totalAmount.toLocaleString('en-US')} assigned`
-                    : `Rs. ${totalAssigned.toLocaleString('en-US')} assigned`
-                  }
-                </span>
-                <span className="text-[13px] font-semibold text-muted-faint">
-                  of Rs. {totalAmount.toLocaleString('en-US')}
-                </span>
-              </div>
-            </div>
+      <hr className="border-divider border-b-[0.8px] w-full shrink-0" />
 
-            <div className="flex-1 overflow-y-auto divide-y divide-divider text-left">
+      {/* View 1: Selector List */}
+      {view === 'selection' && (
+        <>
+          <div className="text-[13px] font-semibold text-muted-faint px-6 pt-4 text-left shrink-0">
+            Who paid for this expense?
+          </div>
+
+          <div className="flex-1 px-6 my-4 overflow-y-auto">
+            <div className="bg-background rounded-[24px] border-[0.8px] border-divider overflow-hidden shadow-[0px_4px_16px_rgba(0,0,0,0.02)] divide-y divide-divider text-left">
+              {/* Dynamic Member Buttons */}
               {members.map((member) => {
-                const hasValue = Number(payerAmounts[member.id]) > 0
+                const isSelected = tempValue === member.id
                 return (
-                  <div key={member.id} className="px-6 py-4 flex items-center justify-between">
+                  <button
+                    key={member.id}
+                    type="button"
+                    onClick={() => setTempValue(member.id)}
+                    className={cn(
+                      'w-full flex items-center justify-between py-4.5 px-5 text-left border-0 cursor-pointer transition-colors outline-none',
+                      isSelected ? 'bg-[#FFF9E6]' : 'bg-transparent'
+                    )}
+                  >
                     <div className="flex items-center gap-3">
                       <Avatar className="size-10 shrink-0 font-extrabold text-sm text-white select-none shadow-sm">
                         <AvatarFallback className={cn("rounded-full flex items-center justify-center border-0 text-white font-extrabold text-sm", member.avatarColor)}>
@@ -269,69 +207,157 @@ export default function PaidByDrawer({
                       </Avatar>
                       <div className="flex flex-col text-left">
                         <span className="font-semibold text-sm text-foreground leading-tight">
-                          {member.name}
+                          {member.name} {member.id === 'you' && '(default)'}
                         </span>
-                        {member.subname && member.subname !== member.name && (
-                          <span className="text-[11px] text-muted-faint font-medium mt-1 leading-none">
-                            {member.subname}
-                          </span>
-                        )}
+                        <span className="text-[11px] text-muted-foreground font-medium mt-1 leading-none">
+                          Paid the full amount
+                        </span>
                       </div>
                     </div>
-
-                    {/* Input Box */}
-                    <div className={cn(
-                      "w-28 h-12 rounded-[14px] border-[1.5px] flex items-center px-4 transition-all focus-within:border-positive/35 focus-within:bg-[#F5FBF7]",
-                      hasValue
-                        ? "border-positive/30 bg-white"
-                        : "border-border-card bg-hover-bg"
-                    )}>
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        placeholder="Rs. 0"
-                        value={getFormattedMemberAmount(member.id)}
-                        onChange={(e) => handleAmountChange(member.id, e.target.value)}
-                        className="w-full text-right outline-none bg-transparent font-extrabold text-sm text-foreground placeholder:text-muted-faint/50"
-                      />
-                    </div>
-                  </div>
+                    {isSelected && (
+                      <div className="w-6 h-6 rounded-full bg-positive flex items-center justify-center text-white shrink-0">
+                        <Check size={14} strokeWidth={3} className="text-white" />
+                      </div>
+                    )}
+                  </button>
                 )
               })}
-            </div>
-          </>
-        )}
 
-        {/* Pinned Bottom Confirm Action Button */}
-        <div className="flex flex-col shrink-0 bg-white border-t border-border-card/40">
-          {view === 'multiple' && totalUnassigned > 0 && (
-            <div className="mx-6 py-3 flex items-center justify-between">
-              <span className="text-[13px] font-bold text-orange-payable flex items-center gap-1.5">
-                <AlertTriangle size={15} className="text-orange-payable" />
-                Rs. {totalUnassigned.toLocaleString('en-US')} still unassigned
-              </span>
+              {/* Multiple People Option Button */}
               <button
                 type="button"
-                onClick={handleAutofill}
-                className="text-[13px] font-extrabold text-positive bg-transparent border-0 cursor-pointer p-1 hover:underline outline-none"
+                onClick={() => {
+                  setTempValue('multiple')
+                  setView('multiple')
+                }}
+                className={cn(
+                  'w-full flex items-center justify-between py-4.5 px-5 text-left border-0 cursor-pointer transition-colors outline-none',
+                  tempValue === 'multiple' ? 'bg-[#FFF9E6]' : 'bg-transparent'
+                )}
               >
-                Auto-fill
+                <div className="flex items-center gap-3">
+                  <div className="size-10 rounded-full bg-[#7D3C98] flex items-center justify-center text-white shrink-0 shadow-sm">
+                    <Users size={18} strokeWidth={2} />
+                  </div>
+                  <div className="flex flex-col text-left">
+                    <span className="font-semibold text-sm text-foreground leading-tight">
+                      Multiple people
+                    </span>
+                    <span className="text-[11px] text-muted-foreground font-medium mt-1 leading-none">
+                      More than one person paid
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight size={16} className="text-muted-faint" />
               </button>
             </div>
-          )}
+          </div>
 
-          <div className="px-6 py-5">
+          {/* Bottom Tip Info Box */}
+          <div className="mx-6 mb-2 p-4 rounded-[20px] bg-positive-soft-bg/50 border border-positive/12 flex gap-3 text-left shrink-0">
+            <Info size={16} className="text-positive shrink-0 mt-0.5" />
+            <span className="text-[12px] font-semibold text-positive leading-normal">
+              Use <strong className="font-extrabold">Multiple people</strong> when more than one person contributed to pay the bill.
+            </span>
+          </div>
+        </>
+      )}
+
+      {/* View 2: Multiple Payers Details Grid */}
+      {view === 'multiple' && (
+        <>
+          <div className="flex flex-col px-6 pt-4 text-left shrink-0">
+            <span className="text-[13px] font-semibold text-muted-foreground">
+              How much did each person pay?
+            </span>
+            <div className="flex items-center justify-between mt-3 mb-2">
+              <span className={cn("text-[13px] font-bold", totalUnassigned === 0 ? "text-positive" : "text-orange-payable")}>
+                {totalUnassigned === 0
+                  ? `Rs. ${totalAmount.toLocaleString('en-US')} assigned`
+                  : `Rs. ${totalAssigned.toLocaleString('en-US')} assigned`
+                }
+              </span>
+              <span className="text-[13px] font-semibold text-muted-faint">
+                of Rs. {totalAmount.toLocaleString('en-US')}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto divide-y divide-divider text-left">
+            {members.map((member) => {
+              const hasValue = Number(payerAmounts[member.id]) > 0
+              return (
+                <div key={member.id} className="px-6 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="size-10 shrink-0 font-extrabold text-sm text-white select-none shadow-sm">
+                      <AvatarFallback className={cn("rounded-full flex items-center justify-center border-0 text-white font-extrabold text-sm", member.avatarColor)}>
+                        {member.initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col text-left">
+                      <span className="font-semibold text-sm text-foreground leading-tight">
+                        {member.name}
+                      </span>
+                      {member.subname && member.subname !== member.name && (
+                        <span className="text-[11px] text-muted-faint font-medium mt-1 leading-none">
+                          {member.subname}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Input Box */}
+                  <div className={cn(
+                    "w-28 h-12 rounded-[14px] border-[1.5px] flex items-center px-4 transition-all focus-within:border-positive/35 focus-within:bg-[#F5FBF7]",
+                    hasValue
+                      ? "border-positive/30 bg-white"
+                      : "border-border-card bg-hover-bg"
+                  )}>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="Rs. 0"
+                      value={getFormattedMemberAmount(member.id)}
+                      onChange={(e) => handleAmountChange(member.id, e.target.value)}
+                      className="w-full text-right outline-none bg-transparent font-extrabold text-sm text-foreground placeholder:text-muted-faint/50"
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
+
+      {/* Pinned Bottom Confirm Action Button */}
+      <div className="flex flex-col shrink-0 bg-white border-t border-border-card/40">
+        {view === 'multiple' && totalUnassigned > 0 && (
+          <div className="mx-6 py-3 flex items-center justify-between">
+            <span className="text-[13px] font-bold text-orange-payable flex items-center gap-1.5">
+              <AlertTriangle size={15} className="text-orange-payable" />
+              Rs. {totalUnassigned.toLocaleString('en-US')} still unassigned
+            </span>
             <button
               type="button"
-              onClick={handleConfirmAction}
-              disabled={view === 'multiple' && totalUnassigned !== 0}
-              className="w-full h-14 rounded-[20px] bg-positive text-white font-extrabold text-base cursor-pointer shadow-[0px_4px_16px_rgba(11,104,58,0.15)] hover:opacity-95 disabled:opacity-50 transition-all flex items-center justify-center outline-none border-0"
+              onClick={handleAutofill}
+              className="text-[13px] font-extrabold text-positive bg-transparent border-0 cursor-pointer p-1 hover:underline outline-none"
             >
-              Confirm
+              Auto-fill
             </button>
           </div>
+        )}
+
+        <div className="px-6 py-5">
+          <button
+            type="button"
+            onClick={handleConfirmAction}
+            disabled={view === 'multiple' && totalUnassigned !== 0}
+            className="w-full h-14 rounded-[20px] bg-positive text-white font-extrabold text-base cursor-pointer shadow-[0px_4px_16px_rgba(11,104,58,0.15)] hover:opacity-95 disabled:opacity-50 transition-all flex items-center justify-center outline-none border-0"
+          >
+            Confirm
+          </button>
         </div>
-      </DrawerContent>
-    </Drawer>
+      </div>
+    </>
   )
 }

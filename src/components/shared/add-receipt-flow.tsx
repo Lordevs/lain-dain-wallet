@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { Camera, Image as ImageIcon, FileText, RotateCcw, Trash2, X } from 'lucide-react'
 import FlowHeader from '@/components/shared/flow-header'
 import { CATEGORIES } from '../../features/personal/components/category-picker'
@@ -19,8 +19,14 @@ interface AddReceiptFlowProps {
   initialFile?: ReceiptFile | null
 }
 
-export default function AddReceiptFlow({
-  isOpen,
+export default function AddReceiptFlow(props: AddReceiptFlowProps) {
+  // Only mounted while open, so AddReceiptFlowContent always starts fresh from the
+  // current initialFile - no effect needed to resync on reopen.
+  if (!props.isOpen) return null
+  return <AddReceiptFlowContent {...props} />
+}
+
+function AddReceiptFlowContent({
   amount,
   description,
   category,
@@ -30,13 +36,6 @@ export default function AddReceiptFlow({
 }: AddReceiptFlowProps) {
   const [tempFile, setTempFile] = useState<ReceiptFile | null>(initialFile)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  // Sync state if initialFile changes
-  useEffect(() => {
-    setTempFile(initialFile)
-  }, [initialFile, isOpen])
-
-  if (!isOpen) return null
 
   // Resolve category details
   const activeCategory = CATEGORIES.find((cat) => cat.id === category) || CATEGORIES.find((cat) => cat.id === 'other')
