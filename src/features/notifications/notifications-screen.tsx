@@ -6,15 +6,12 @@ import SuccessCheck from '@/components/shared/success-check'
 import NotificationCard, { type NotificationAction } from './components/notification-card'
 import { useNotifications } from './hooks/use-notifications'
 import { type NotificationItem } from './types'
-import SettleUpPanel from './components/settle-up-panel'
 import PaymentConfirmationPanel from './components/payment-confirmation-panel'
 import PaymentDisputePanel from './components/payment-dispute-panel'
-import SendReminderScreen from '@/features/contacts/send-reminder-screen'
-import LedgerBreakdownScreen from '@/features/contacts/ledger-breakdown-screen'
 
 export default function NotificationsScreen() {
   const navigate = useNavigate({ from: '/notifications/' })
-  const { drawer, contactId, txId } = useSearch({ from: '/notifications/' })
+  const { drawer, txId } = useSearch({ from: '/notifications/' })
   const openedInSessionRef = useRef(false)
 
   const closeDrawer = () => {
@@ -28,7 +25,6 @@ export default function NotificationsScreen() {
         search: (prev: any) => {
           const next = { ...prev }
           delete next.drawer
-          delete next.contactId
           delete next.txId
           return next
         },
@@ -38,7 +34,7 @@ export default function NotificationsScreen() {
   }
 
   const openDrawer = (
-    dName: 'reminder' | 'breakdown' | 'settle-up' | 'confirm' | 'dispute',
+    dName: 'confirm' | 'dispute',
     cid: string
   ) => {
     openedInSessionRef.current = true
@@ -46,9 +42,7 @@ export default function NotificationsScreen() {
       search: (prev: any) => ({
         ...prev,
         drawer: dName,
-        // If it's reminder or breakdown, store as contactId. Otherwise store as txId.
-        contactId: (dName === 'reminder' || dName === 'breakdown') ? cid : prev.contactId,
-        txId: (dName !== 'reminder' && dName !== 'breakdown') ? cid : prev.txId,
+        txId: cid,
       }),
       replace: !!drawer,
     })
@@ -61,7 +55,6 @@ export default function NotificationsScreen() {
     toastMessage,
     triggerToast,
     handleIgnore,
-    handleSettle,
     handleSettleComplete,
     handleConfirmReceived,
     handleConfirmComplete,
@@ -70,7 +63,6 @@ export default function NotificationsScreen() {
   } = useNotifications()
 
   // Panel visibility states resolved from search query params
-  const activeSettleUpNotification = drawer === 'settle-up' ? notifications.find((n) => n.id === txId) || null : null
   const activeConfirmNotification = drawer === 'confirm' ? notifications.find((n) => n.id === txId) || null : null
   const activeDisputeNotification = drawer === 'dispute' ? notifications.find((n) => n.id === txId) || null : null
 
@@ -123,7 +115,7 @@ export default function NotificationsScreen() {
             variant: 'green',
             onClick: (e) => {
               e.stopPropagation()
-              openDrawer('settle-up', item.id)
+              navigate({ to: ROUTES.SETTLE_UP, search: { notificationId: item.id } })
             },
           },
           {
@@ -221,15 +213,21 @@ export default function NotificationsScreen() {
     if (item.type === 'edited') {
       navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: item.txId || item.id } })
     } else if (item.type === 'request') {
-      openDrawer('settle-up', item.id)
+      navigate({ to: ROUTES.SETTLE_UP, search: { notificationId: item.id } })
     } else if (item.type === 'confirmation') {
       openDrawer('confirm', item.id)
     } else if (item.type === 'dispute') {
       openDrawer('dispute', item.id)
     } else if (item.type === 'reminder') {
-      openDrawer('reminder', '1')
+      navigate({
+        to: ROUTES.CONTACT_REMINDER,
+        params: { id: '1' },
+      })
     } else {
-      openDrawer('breakdown', '1')
+      navigate({
+        to: ROUTES.CONTACT_BREAKDOWN,
+        params: { id: '1' },
+      })
     }
   }
 
@@ -334,17 +332,6 @@ export default function NotificationsScreen() {
         )}
       </div>
 
-      {/* Sliding Settle Up Panel */}
-      {activeSettleUpNotification && (
-        <SettleUpPanel
-          notification={activeSettleUpNotification}
-          onClose={closeDrawer}
-          onConfirm={() => {
-            handleSettle(activeSettleUpNotification.id)
-            closeDrawer()
-          }}
-        />
-      )}
 
       {/* Sliding Payment Confirmation Panel */}
       {activeConfirmNotification && (
@@ -378,13 +365,6 @@ export default function NotificationsScreen() {
         />
       )}
 
-      {drawer === 'reminder' && contactId && (
-        <SendReminderScreen contactId={contactId} onClose={closeDrawer} />
-      )}
-
-      {drawer === 'breakdown' && contactId && (
-        <LedgerBreakdownScreen contactId={contactId} onClose={closeDrawer} />
-      )}
     </div>
   )
 }

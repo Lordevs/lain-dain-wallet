@@ -1,27 +1,37 @@
+import { useParams, useNavigate } from '@tanstack/react-router'
 import AddExpenseBase, { type ConfirmExpenseData } from '@/components/shared/add-expense-base'
 import { useContactStore } from '@/store/use-contact-store'
 import { useTransactionStore } from '@/store/use-transaction-store'
 import { calculateContactOwesAmount } from '@/lib/split'
+import { ROUTES } from '@/constants/routes'
 
-interface EditContactExpenseScreenProps {
-  contactId: string
-  txId: string
-  onClose: () => void
-  onSuccess: () => void
-}
+export default function EditContactExpenseScreen() {
+  const { id: txId } = useParams({ from: '/transactions/$id/edit' })
+  const navigate = useNavigate()
 
-export default function EditContactExpenseScreen({ contactId, txId, onClose, onSuccess }: EditContactExpenseScreenProps) {
-  // Find contact by id from store
+  const transactionsByContact = useTransactionStore((state) => state.transactionsByContact)
+  let foundContactId = ''
+  let tx = null
+
+  for (const cId in transactionsByContact) {
+    const t = transactionsByContact[cId].find((item) => item.id === txId)
+    if (t) {
+      foundContactId = cId
+      tx = t
+      break
+    }
+  }
+
   const contacts = useContactStore((state) => state.contacts)
-  const contact = contacts.find((c) => c.id === contactId)
+  const contact = contacts.find((c) => c.id === foundContactId)
 
-  if (!contact) {
+  if (!contact || !tx) {
     return (
       <div className="flex items-center justify-center p-6 bg-[#FEFAF1] h-[50vh]">
         <div className="text-center">
-          <p className="text-lg font-bold text-[#1A1A1A]">Contact not found</p>
+          <p className="text-lg font-bold text-[#1A1A1A]">Transaction or Contact not found</p>
           <button
-            onClick={onClose}
+            onClick={() => window.history.back()}
             className="mt-4 px-4 py-2 bg-positive text-white rounded-full font-bold border-0 cursor-pointer"
           >
             Close
@@ -30,10 +40,6 @@ export default function EditContactExpenseScreen({ contactId, txId, onClose, onS
       </div>
     )
   }
-
-  // Find the transaction record to edit from TRANSACTION_STORE
-  const txList = useTransactionStore.getState().transactionsByContact[contact.id] || []
-  const tx = txList.find((t) => t.id === txId)
 
   // Prefill data configuration from tx record
   const initialData = {
@@ -102,6 +108,12 @@ export default function EditContactExpenseScreen({ contactId, txId, onClose, onS
       netAmount: updatedNetAmount,
       tags: updatedTags
     })
+
+    navigate({
+      to: ROUTES.TRANSACTION_DETAILS,
+      params: { id: tx.id },
+      replace: true,
+    })
   }
 
   return (
@@ -116,8 +128,14 @@ export default function EditContactExpenseScreen({ contactId, txId, onClose, onS
       }}
       initialData={initialData}
       onConfirm={handleConfirm}
-      onSuccessComplete={onSuccess}
-      onBack={onClose}
+      onSuccessComplete={() => {
+        navigate({
+          to: ROUTES.TRANSACTION_DETAILS,
+          params: { id: tx.id },
+          replace: true,
+        })
+      }}
+      onBack={() => window.history.back()}
     />
   )
 }

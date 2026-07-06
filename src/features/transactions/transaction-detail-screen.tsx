@@ -25,15 +25,8 @@ const getCategoryEmoji = (id: string) => {
   }
 }
 
-interface TransactionDetailScreenProps {
-  txId?: string
-  onClose?: () => void
-  onEdit?: () => void
-  onDelete?: () => void
-}
-
-export default function TransactionDetailScreen(props: TransactionDetailScreenProps) {
-  const { id } = useParams({ strict: false })
+export default function TransactionDetailScreen() {
+  const { id } = useParams({ from: '/transactions/$id' })
   const navigate = useNavigate()
 
   // All hooks must be declared before any conditional return to satisfy Rules of Hooks
@@ -53,7 +46,7 @@ export default function TransactionDetailScreen(props: TransactionDetailScreenPr
   let foundContactId = ''
   let tx = null
 
-  const resolvedTxId = props.txId || id
+  const resolvedTxId = id
   const transactionsByContact = useTransactionStore((state) => state.transactionsByContact)
 
   for (const contactId in transactionsByContact) {
@@ -75,8 +68,8 @@ export default function TransactionDetailScreen(props: TransactionDetailScreenPr
         <p className="text-muted-foreground text-sm mb-4">Transaction not found</p>
         <button
           onClick={() => {
-            if (props.onClose) {
-              props.onClose()
+            if (window.history.length > 1) {
+              window.history.back()
             } else {
               navigate({ to: '/' })
             }
@@ -117,7 +110,7 @@ export default function TransactionDetailScreen(props: TransactionDetailScreenPr
   }
 
   return (
-    <div className="fixed inset-0 z-60 flex flex-col bg-[#FEFAF1] select-none text-[#1A1A1A] pb-24">
+    <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24 relative select-none text-[#1A1A1A]">
       {/* Toast Alert overlay */}
       <AnimatePresence>
         {toast && (
@@ -139,8 +132,8 @@ export default function TransactionDetailScreen(props: TransactionDetailScreenPr
       <div className="flex items-center px-6 pt-5 pb-3 relative shrink-0">
         <button
           onClick={() => {
-            if (props.onClose) {
-              props.onClose()
+            if (window.history.length > 1) {
+              window.history.back()
             } else {
               if (contact.type === 'group') {
                 navigate({ to: ROUTES.GROUP_DETAILS, params: { id: contact.id } })
@@ -302,18 +295,10 @@ export default function TransactionDetailScreen(props: TransactionDetailScreenPr
           <button
             type="button"
             onClick={() => {
-              if (props.onEdit) {
-                props.onEdit()
-              } else {
-                (navigate as any)({
-                  to: '/contacts/$id',
-                  params: { id: foundContactId || contact.id },
-                  search: {
-                    drawer: 'edit-expense',
-                    txId: tx.id
-                  }
-                })
-              }
+              navigate({
+                to: ROUTES.TRANSACTION_EDIT,
+                params: { id: tx.id }
+              })
             }}
             className="flex-1 h-14 rounded-[20px] bg-white border border-[#EFE7DD] text-[#6B6B6B] font-extrabold text-base cursor-pointer shadow-sm hover:bg-muted/5 transition-colors flex items-center justify-center gap-2 outline-none"
           >
@@ -339,9 +324,7 @@ export default function TransactionDetailScreen(props: TransactionDetailScreenPr
                 })
               }
 
-              if (props.onDelete) {
-                props.onDelete()
-              } else if (contact) {
+              if (contact) {
                 if (contact.type === 'group') {
                   navigate({ to: ROUTES.GROUP_DETAILS, params: { id: contact.id } })
                 } else {

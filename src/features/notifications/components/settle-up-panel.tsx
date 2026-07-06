@@ -1,3 +1,7 @@
+import { useSearch } from '@tanstack/react-router'
+import { useContactStore } from '@/store/use-contact-store'
+import { useNotifications } from '@/features/notifications/hooks/use-notifications'
+import { type NotificationItem } from '../types'
 import { useState } from 'react'
 import { Check, Users, ChevronDown, Banknote, CreditCard, Smile, Shield, Upload, Calendar, Camera, Pencil, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -7,33 +11,80 @@ import PaymentMethodDrawer, { type PaymentMethodType } from '@/components/shared
 import SelectDateDrawer from '@/components/shared/select-date-drawer'
 import AddReceiptFlow from '@/components/shared/add-receipt-flow'
 import AddNoteFlow from '@/components/shared/add-note-flow'
-import { type NotificationItem } from '../types'
-
-interface SettleUpPanelProps {
-  notification: NotificationItem
-  onClose: () => void
-  onConfirm: () => void
-  mode?: 'group' | 'contact'
-}
-
 interface ReceiptFile {
   name: string
   size: string
   dataUrl?: string
 }
 
-/**
- * SettleUpPanel — sliding screen overlay editor to resolve payments.
- * Dynamically parses the request details to customize balances, names, and shares.
- * Supports Pay and Receive modes, interactive bottom drawers, and receipt/note flows.
- */
-export default function SettleUpPanel({
-  notification,
-  onClose,
-  onConfirm,
-  mode = 'group',
-}: SettleUpPanelProps) {
+export default function SettleUpPanel() {
+  const { contactId, groupId, notificationId } = useSearch({ from: '/settle-up' })
+  const { notifications, handleSettleComplete } = useNotifications()
+
+  let contact = null
+  let mode: 'contact' | 'group' = 'group'
+  let notification: NotificationItem | null = null
+
+  if (contactId) {
+    const contacts = useContactStore((state) => state.contacts)
+    contact = contacts.find((c) => c.id === contactId)
+    mode = 'contact'
+    if (contact) {
+      const personalTag = contact.tags.find(
+        (t) => t.name.toLowerCase().includes('1-to-1') || t.name.toLowerCase().includes('personal')
+      )
+      const personalAmount = personalTag ? personalTag.amount : contact.netAmount
+      notification = {
+        id: 'contact-settle',
+        tag: 'Payment requested',
+        title: `${contact.name} requested Rs. ${Math.abs(personalAmount)}`,
+        subtitle: contact.name,
+        time: 'Just now',
+        type: 'request',
+        section: 'action_needed',
+        theme: 'green'
+      }
+    }
+  } else if (groupId) {
+    const contacts = useContactStore((state) => state.contacts)
+    contact = contacts.find((c) => c.id === groupId)
+    mode = 'group'
+    if (contact) {
+      notification = {
+        id: 'group-settle',
+        tag: 'Payment requested',
+        title: `${contact.name} requested Rs. ${contact.netAmount}`,
+        subtitle: contact.name,
+        time: 'Just now',
+        type: 'request',
+        section: 'action_needed',
+        theme: 'green'
+      }
+    }
+  } else if (notificationId) {
+    notification = notifications.find((n) => n.id === notificationId) || null
+    if (notification) {
+      mode = notification.subtitle.toLowerCase().includes('for:') || notification.subtitle.toLowerCase().includes('murree') ? 'group' : 'contact'
+    }
+  }
+
   const [activeTab, setActiveTab] = useState<'pay' | 'receive'>('pay')
+
+  if (!notification) {
+    return (
+      <div className="flex items-center justify-center p-6 bg-[#FEFAF1] h-[50vh]">
+        <div className="text-center">
+          <p className="text-lg font-bold text-[#1A1A1A]">Payment request not found</p>
+          <button
+            onClick={() => window.history.back()}
+            className="mt-4 px-4 py-2 bg-positive text-white rounded-full font-bold border-0 cursor-pointer"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   // Parse dynamic requester data
   let requesterName = notification.title.split(' ')[0] || 'Muzaffar'
@@ -117,7 +168,10 @@ export default function SettleUpPanel({
   }
 
   const handleSuccessComplete = () => {
-    onConfirm()
+    if (notificationId) {
+      handleSettleComplete(notificationId)
+    }
+    window.history.back()
   }
 
   // Fallback to "B" for Muzaffar to match the mockup exactly
@@ -156,18 +210,18 @@ export default function SettleUpPanel({
 
   if (showSuccess) {
     return (
-      <div className="fixed inset-0 z-60 bg-[#FEFAF1] flex flex-col select-none justify-center">
+      <div className="flex flex-col flex-1 min-h-screen bg-[#FEFAF1] select-none justify-center">
         <SuccessCheck onComplete={handleSuccessComplete} />
       </div>
     )
   }
 
   return (
-    <div className="fixed inset-0 z-60 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto pb-32 text-[#1A1A1A]">
+    <div className="flex flex-col flex-1 min-h-screen bg-[#FEFAF1] select-none pb-32 text-[#1A1A1A]">
       {/* Header */}
       <FlowHeader
         title="Settle Up"
-        onBack={onClose}
+        onBack={() => window.history.back()}
         backVariant="circle"
         rightSlot={
           <Check

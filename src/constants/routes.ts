@@ -3,8 +3,9 @@ export const ROUTES = {
   AUTH: '/auth',
   SETTINGS: '/settings',
   CONTACTS: '/contacts',
-  CONTACT_DETAILS: '/contacts/$id',
   NEW_CONTACT: '/contacts/new',
+  CONTACT_DETAILS: '/contacts/$id',
+  CONTACT_BREAKDOWN: '/contacts/$id/breakdown',
   TRANSACTIONS: '/transactions',
   TRANSACTION_DETAILS: '/transactions/$id',
   NOTIFICATIONS: '/notifications',
@@ -20,5 +21,9 @@ export const ROUTES = {
   PERSONAL_BUDGET_LIMIT: '/personal/budget-limit',
   PERSONAL_CATEGORY_BUDGETS: '/personal/category-budgets',
   PERSONAL_SET_CATEGORY_LIMIT: '/personal/category-budgets/$catId',
+  CONTACT_REMINDER: '/contacts/$id/reminder',
+  CONTACT_ADD_EXPENSE: '/contacts/$id/add-expense',
+  TRANSACTION_EDIT: '/transactions/$id/edit',
+  SETTLE_UP: '/settle-up',
 } as const
 

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useParams } from '@tanstack/react-router'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Users, AlertTriangle, Smile, Info } from 'lucide-react'
 import { useContactStore } from '@/store/use-contact-store'
@@ -35,12 +35,8 @@ const getTagStyle = (tagName: string) => {
   }
 }
 
-interface LedgerBreakdownScreenProps {
-  contactId: string
-  onClose: () => void
-}
-
-export default function LedgerBreakdownScreen({ contactId, onClose }: LedgerBreakdownScreenProps) {
+export default function LedgerBreakdownScreen() {
+  const { id: contactId } = useParams({ from: '/contacts/$id/breakdown' })
   const navigate = useNavigate()
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null)
 
@@ -60,7 +56,7 @@ export default function LedgerBreakdownScreen({ contactId, onClose }: LedgerBrea
       <div className="flex flex-col items-center justify-center p-6 bg-[#FEFAF1] h-[50vh]">
         <p className="text-muted-foreground text-sm mb-4">Contact not found</p>
         <button
-          onClick={onClose}
+          onClick={() => window.history.back()}
           className="text-primary font-bold hover:underline border-0 bg-transparent cursor-pointer"
         >
           Close
@@ -132,7 +128,7 @@ export default function LedgerBreakdownScreen({ contactId, onClose }: LedgerBrea
   }
 
   return (
-    <div className="fixed inset-0 z-60 flex flex-col bg-[#FEFAF1] select-none pb-10 overflow-y-auto text-[#1A1A1A]">
+    <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-10 relative select-none text-[#1A1A1A]">
       {/* Toast Alert overlay */}
       <AnimatePresence>
         {toast && (
@@ -153,7 +149,7 @@ export default function LedgerBreakdownScreen({ contactId, onClose }: LedgerBrea
       {/* Unified Header */}
       <FlowHeader
         title={contact.name}
-        onBack={onClose}
+        onBack={() => window.history.back()}
         backVariant="minimal"
         avatar={
           <div className="relative shrink-0 flex items-center">

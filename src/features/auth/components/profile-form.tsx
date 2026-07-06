@@ -19,6 +19,8 @@ import GenderSelectorDrawer from '@/components/shared/gender-selector-drawer'
 import OccupationSelectorDrawer from '@/components/shared/occupation-selector-drawer'
 import CountrySelectorDrawer from '@/components/shared/country-selector-drawer'
 
+import { useAuthStore } from '@/store/use-auth-store'
+
 /** Exported so auth-screen.tsx can type its handleProfileSubmit handler */
 export interface ProfileFormData {
   age: string
@@ -42,13 +44,15 @@ interface FormValues {
 }
 
 export default function ProfileForm({ onSubmit }: ProfileFormProps) {
+  const defaultCountry = useAuthStore((s) => s.tempCountryCode?.name) || ''
+
   const { control, handleSubmit, watch } = useForm<FormValues>({
     defaultValues: {
       dob: undefined,
       gender: '',
       email: '',
       occupation: '',
-      country: '',
+      country: defaultCountry,
     },
   })
 

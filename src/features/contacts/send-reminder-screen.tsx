@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useParams } from '@tanstack/react-router'
 import { User } from 'lucide-react'
 import { useContactStore } from '@/store/use-contact-store'
 import { formatPKR } from '@/lib/currency'
@@ -11,12 +12,8 @@ import SuccessCheck from '@/components/shared/success-check'
  * balance amount, and a bottom Amber button. On confirm, shows SuccessCheck animation
  * before routing back.
  */
-interface SendReminderScreenProps {
-  contactId: string
-  onClose: () => void
-}
-
-export default function SendReminderScreen({ contactId, onClose }: SendReminderScreenProps) {
+export default function SendReminderScreen() {
+  const { id: contactId } = useParams({ from: '/contacts/$id/reminder' })
   const [showSuccess, setShowSuccess] = useState(false)
 
   // Find contact by id from store
@@ -28,7 +25,7 @@ export default function SendReminderScreen({ contactId, onClose }: SendReminderS
       <div className="flex flex-col items-center justify-center p-6 bg-[#FEFAF1] select-none text-[#1A1A1A] h-[50vh]">
         <p className="text-muted-foreground text-sm mb-4">Contact not found</p>
         <button
-          onClick={onClose}
+          onClick={() => window.history.back()}
           className="text-primary font-bold hover:underline border-0 bg-transparent cursor-pointer"
         >
           Close
@@ -50,7 +47,7 @@ export default function SendReminderScreen({ contactId, onClose }: SendReminderS
   }
 
   const handleSuccessComplete = () => {
-    onClose()
+    window.history.back()
   }
 
   if (showSuccess) {
@@ -62,11 +59,11 @@ export default function SendReminderScreen({ contactId, onClose }: SendReminderS
   }
 
   return (
-    <div className="fixed inset-0 z-60 flex flex-col bg-[#FEFAF1] select-none overflow-hidden text-[#1A1A1A]">
+    <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-20 relative select-none overflow-hidden text-[#1A1A1A]">
       {/* Header */}
       <FlowHeader
         title="Send Reminder"
-        onBack={onClose}
+        onBack={() => window.history.back()}
         backVariant="circle"
       />
 

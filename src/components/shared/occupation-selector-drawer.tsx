@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Drawer,
   DrawerContent,
@@ -46,6 +46,19 @@ export default function OccupationSelectorDrawer({
   const initialState = getInitialState()
   const [tempOccupation, setTempOccupation] = useState(initialState.occupation)
   const [tempCustom, setTempCustom] = useState(initialState.custom)
+  const customInputContainerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (tempOccupation === 'Other') {
+      // Small timeout to allow render to complete so the element is fully laid out
+      setTimeout(() => {
+        customInputContainerRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest'
+        })
+      }, 80)
+    }
+  }, [tempOccupation])
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -70,10 +83,10 @@ export default function OccupationSelectorDrawer({
               const isSelected = tempOccupation === opt
               return (
                 <button
-                  key={opt}
-                  type="button"
-                  onClick={() => setTempOccupation(opt)}
-                  className="w-full flex items-center justify-between py-4 px-6 border-b border-[#EBEBEB] text-left text-base font-semibold transition-colors outline-none cursor-pointer hover:bg-gray-50/50"
+                   key={opt}
+                   type="button"
+                   onClick={() => setTempOccupation(opt)}
+                   className="w-full flex items-center justify-between py-4 px-6 border-b border-[#EBEBEB] text-left text-base font-semibold transition-colors outline-none cursor-pointer hover:bg-gray-50/50"
                 >
                   <span>{opt}</span>
                   <div className={cn(
@@ -88,7 +101,7 @@ export default function OccupationSelectorDrawer({
           </div>
 
           {tempOccupation === 'Other' && (
-            <div className="px-6 py-4 flex flex-col gap-2.5 text-left bg-white">
+            <div ref={customInputContainerRef} className="px-6 py-4 flex flex-col gap-2.5 text-left bg-white">
               <label className="text-[13px] font-bold text-[#1A1A1A]">Tell us what you do</label>
               <Input
                 type="text"

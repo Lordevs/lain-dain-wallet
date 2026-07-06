@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react'
-import { useNavigate, useSearch } from '@tanstack/react-router'
+import { useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import { ROUTES } from '@/constants/routes'
 import AppHeader from '@/components/layout/app-header'
 import SearchBar from '@/components/shared/search-bar'
@@ -11,7 +11,6 @@ import SearchResultsOverlay from './components/search-results-overlay'
 import Fab from './components/fab'
 import { useShallow } from 'zustand/react/shallow'
 import { useContactStore, selectBalanceSummary, selectReceivables, selectPayables } from '@/store/use-contact-store'
-import LedgerBreakdownScreen from '@/features/contacts/ledger-breakdown-screen'
 
 
 /**
@@ -20,13 +19,11 @@ import LedgerBreakdownScreen from '@/features/contacts/ledger-breakdown-screen'
  */
 export default function DashboardScreen() {
   const navigate = useNavigate({ from: '/' })
-  const { drawer, contactId } = useSearch({ from: '/' })
   const [activeTab, setActiveTab] = useState<LedgerTab>('receivables')
   const [search, setSearch] = useState('')
   const [isSearchActive, setIsSearchActive] = useState(false)
   const [filterType, setFilterType] = useState<'all' | 'people' | 'groups'>('all')
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest')
-  const openedInSessionRef = useRef(false)
 
   const balanceSummary = useContactStore(useShallow(selectBalanceSummary))
   const receivables = useContactStore(useShallow(selectReceivables))
@@ -34,37 +31,6 @@ export default function DashboardScreen() {
 
   // All contacts (receivables + payables) for search
   const allContacts = useContactStore(useShallow((s) => s.contacts))
-
-  const closeDrawer = () => {
-    if (!drawer) return
-
-    if (openedInSessionRef.current) {
-      openedInSessionRef.current = false
-      window.history.back()
-    } else {
-      navigate({
-        search: (prev) => {
-          const next = { ...prev }
-          delete next.drawer
-          delete next.contactId
-          return next
-        },
-        replace: true,
-      })
-    }
-  }
-
-  const openDrawer = (cid: string) => {
-    openedInSessionRef.current = true
-    navigate({
-      search: (prev) => ({
-        ...prev,
-        drawer: 'breakdown',
-        contactId: cid,
-      }),
-      replace: !!drawer,
-    })
-  }
 
   const handleSearchFocus = () => {
     setIsSearchActive(true)
@@ -160,7 +126,10 @@ export default function DashboardScreen() {
           contacts={allContacts}
           onPersonClick={(id) => {
             handleSearchClose()
-            openDrawer(id)
+            navigate({
+              to: ROUTES.CONTACT_BREAKDOWN,
+              params: { id },
+            })
           }}
           onClose={handleSearchClose}
         />
@@ -191,7 +160,10 @@ export default function DashboardScreen() {
                   contact={contact}
                   onClick={() => {
                     if (contact.type === 'person') {
-                      openDrawer(contact.id)
+                      navigate({
+                        to: ROUTES.CONTACT_BREAKDOWN,
+                        params: { id: contact.id },
+                      })
                     } else {
                       navigate({
                         to: ROUTES.GROUP_DETAILS,
@@ -211,10 +183,6 @@ export default function DashboardScreen() {
           {/* Floating Action Button */}
           <Fab onClick={() => navigate({ to: ROUTES.NEW_CONTACT })} />
         </>
-      )}
-
-      {drawer === 'breakdown' && contactId && (
-        <LedgerBreakdownScreen contactId={contactId} onClose={closeDrawer} />
       )}
     </div>
   )

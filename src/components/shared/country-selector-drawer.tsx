@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Drawer,
   DrawerContent,
@@ -21,14 +21,33 @@ export default function CountrySelectorDrawer({
   onChange,
 }: CountrySelectorDrawerProps) {
   const standardOptions = [
-    'Pakistan',
-    'India',
-    'United Arab Emirates',
-    'Saudi Arabia',
-    'United Kingdom',
-    'United States',
+    'Afghanistan',
+    'Azerbaijan',
+    'Bahrain',
+    'Bangladesh',
     'Canada',
-    'Australia'
+    'China',
+    'India',
+    'Iran',
+    'Iraq',
+    'Kuwait',
+    'Malaysia',
+    'Maldives',
+    'Mauritius',
+    'Nepal',
+    'Oman',
+    'Pakistan',
+    'Palestine',
+    'Qatar',
+    'Saudi Arabia',
+    'Singapore',
+    'South Africa',
+    'Sri Lanka',
+    'Thailand',
+    'Turkey',
+    'United Arab Emirates',
+    'United Kingdom',
+    'United States'
   ]
 
   const getInitialState = () => {
@@ -46,6 +65,18 @@ export default function CountrySelectorDrawer({
   const initialState = getInitialState()
   const [tempCountry, setTempCountry] = useState(initialState.country)
   const [tempCustom, setTempCustom] = useState(initialState.custom)
+  const customInputContainerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (tempCountry === 'Other') {
+      setTimeout(() => {
+        customInputContainerRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest'
+        })
+      }, 80)
+    }
+  }, [tempCountry])
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -70,10 +101,10 @@ export default function CountrySelectorDrawer({
               const isSelected = tempCountry === opt
               return (
                 <button
-                  key={opt}
-                  type="button"
-                  onClick={() => setTempCountry(opt)}
-                  className="w-full flex items-center justify-between py-4 px-6 border-b border-[#E0E0E0] text-left text-base font-semibold transition-colors outline-none cursor-pointer hover:bg-gray-50/50"
+                   key={opt}
+                   type="button"
+                   onClick={() => setTempCountry(opt)}
+                   className="w-full flex items-center justify-between py-4 px-6 border-b border-[#E0E0E0] text-left text-base font-semibold transition-colors outline-none cursor-pointer hover:bg-gray-50/50"
                 >
                   <span>{opt}</span>
                   <div className={cn(
@@ -88,7 +119,7 @@ export default function CountrySelectorDrawer({
           </div>
 
           {tempCountry === 'Other' && (
-            <div className="px-6 py-4 flex flex-col gap-2.5 text-left bg-white">
+            <div ref={customInputContainerRef} className="px-6 py-4 flex flex-col gap-2.5 text-left bg-white">
               <label className="text-[13px] font-bold text-[#1A1A1A]">Tell us your country</label>
               <Input
                 type="text"

@@ -1,5 +1,5 @@
-import { useMemo, useState, useRef } from 'react'
-import { useParams, useNavigate, Navigate, useSearch } from '@tanstack/react-router'
+import { useMemo } from 'react'
+import { useParams, useNavigate, Navigate } from '@tanstack/react-router'
 import { Bell } from 'lucide-react'
 import { useContactStore } from '@/store/use-contact-store'
 import ContactAvatar from '@/components/shared/contact-avatar'
@@ -9,12 +9,6 @@ import { cn } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
 import ExpenseList, { type TransactionListItem } from '@/components/shared/expense-list'
 import { useTransactionStore } from '@/store/use-transaction-store'
-import SendReminderScreen from '@/features/contacts/send-reminder-screen'
-import LedgerBreakdownScreen from '@/features/contacts/ledger-breakdown-screen'
-import AddContactExpenseScreen from '@/features/contacts/add-contact-expense-screen'
-import EditContactExpenseScreen from '@/features/contacts/edit-contact-expense-screen'
-import TransactionDetailScreen from '@/features/transactions/transaction-detail-screen'
-import SettleUpPanel from '@/features/notifications/components/settle-up-panel'
 
 
 /**
@@ -24,40 +18,6 @@ import SettleUpPanel from '@/features/notifications/components/settle-up-panel'
 export default function ContactDetailScreen() {
   const { id } = useParams({ from: '/contacts/$id/' })
   const navigate = useNavigate({ from: '/contacts/$id/' })
-  const { drawer, txId } = useSearch({ from: '/contacts/$id/' })
-  const [showSettleUp, setShowSettleUp] = useState(false)
-  const openedInSessionRef = useRef(false)
-
-  const openDrawer = (dName: 'breakdown' | 'reminder' | 'transaction' | 'add-expense' | 'edit-expense', tid?: string) => {
-    openedInSessionRef.current = true
-    navigate({
-      search: (prev) => ({
-        ...prev,
-        drawer: dName,
-        txId: tid,
-      }),
-      replace: !!drawer,
-    })
-  }
-
-  const closeDrawer = () => {
-    if (!drawer) return
-
-    if (openedInSessionRef.current) {
-      openedInSessionRef.current = false
-      window.history.back()
-    } else {
-      navigate({
-        search: (prev) => {
-          const next = { ...prev }
-          delete next.drawer
-          delete next.txId
-          return next
-        },
-        replace: true,
-      })
-    }
-  }
 
   // Find contact by id from store
   const contacts = useContactStore((state) => state.contacts)
@@ -182,7 +142,10 @@ export default function ContactDetailScreen() {
           {isPositive && (
             <button
               type="button"
-              onClick={() => openDrawer('reminder')}
+              onClick={() => navigate({
+                to: ROUTES.CONTACT_REMINDER,
+                params: { id: contact.id },
+              })}
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-[#0B683A4D] bg-[#E4F2EB] text-positive text-xs font-bold transition-all hover:bg-[#E4F2EB]/80 shrink-0 cursor-pointer outline-none"
             >
               <Bell size={13} className="text-positive" strokeWidth={2.5} />
@@ -211,7 +174,7 @@ export default function ContactDetailScreen() {
             <ExpenseList
               expenses={transactions.Today}
               onItemClick={(tid) => {
-                openDrawer('transaction', tid.toString())
+                navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: tid.toString() } })
               }}
             />
           </div>
@@ -224,7 +187,7 @@ export default function ContactDetailScreen() {
             <ExpenseList
               expenses={transactions.Yesterday}
               onItemClick={(tid) => {
-                openDrawer('transaction', tid.toString())
+                navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: tid.toString() } })
               }}
             />
           </div>
@@ -237,7 +200,7 @@ export default function ContactDetailScreen() {
             <ExpenseList
               expenses={transactions.Earlier}
               onItemClick={(tid) => {
-                openDrawer('transaction', tid.toString())
+                navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: tid.toString() } })
               }}
             />
           </div>
@@ -249,7 +212,10 @@ export default function ContactDetailScreen() {
         {/* + Add Expense */}
         <button
           type="button"
-          onClick={() => openDrawer('add-expense')}
+          onClick={() => navigate({
+            to: ROUTES.CONTACT_ADD_EXPENSE,
+            params: { id: contact.id }
+          })}
           className="flex-1 h-12 rounded-full bg-positive text-white font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
         >
           Add Expense
@@ -258,67 +224,12 @@ export default function ContactDetailScreen() {
         {/* Settle Up */}
         <button
           type="button"
-          onClick={() => setShowSettleUp(true)}
+          onClick={() => navigate({ to: ROUTES.SETTLE_UP, search: { contactId: contact.id } })}
           className="flex-1 h-12 rounded-full bg-[#FDB105] text-[#1A1A1A] font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
         >
           Settle Up
         </button>
       </div>
-
-      {/* Settle Up sliding drawer flow */}
-      {showSettleUp && (
-        <SettleUpPanel
-          mode="contact"
-          notification={{
-            id: 'contact-settle',
-            tag: 'Payment requested',
-            title: `${contact.name} requested Rs. ${Math.abs(personalAmount)}`,
-            subtitle: contact.name,
-            time: 'Just now',
-            type: 'request',
-            section: 'action_needed',
-            theme: 'green'
-          }}
-          onClose={() => setShowSettleUp(false)}
-          onConfirm={() => {
-            setShowSettleUp(false)
-          }}
-        />
-      )}
-
-      {drawer === 'reminder' && (
-        <SendReminderScreen contactId={contact.id} onClose={closeDrawer} />
-      )}
-
-      {drawer === 'breakdown' && (
-        <LedgerBreakdownScreen contactId={contact.id} onClose={closeDrawer} />
-      )}
-
-      {drawer === 'add-expense' && (
-        <AddContactExpenseScreen
-          contactId={contact.id}
-          onClose={closeDrawer}
-          onSuccess={(newId) => openDrawer('transaction', newId)}
-        />
-      )}
-
-      {drawer === 'edit-expense' && txId && (
-        <EditContactExpenseScreen
-          contactId={contact.id}
-          txId={txId}
-          onClose={() => openDrawer('transaction', txId)}
-          onSuccess={closeDrawer}
-        />
-      )}
-
-      {drawer === 'transaction' && txId && (
-        <TransactionDetailScreen
-          txId={txId}
-          onClose={closeDrawer}
-          onEdit={() => openDrawer('edit-expense', txId)}
-          onDelete={closeDrawer}
-        />
-      )}
     </div>
   )
 }

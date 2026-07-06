@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettleUpRouteImport } from './routes/settle-up'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PersonalRouteImport } from './routes/personal'
 import { Route as NotificationsRouteImport } from './routes/notifications'
@@ -31,11 +32,20 @@ import { Route as ContactsIdRouteImport } from './routes/contacts/$id'
 import { Route as PersonalCategoryBudgetsIndexRouteImport } from './routes/personal/category-budgets.index'
 import { Route as GroupsIdIndexRouteImport } from './routes/groups/$id.index'
 import { Route as ContactsIdIndexRouteImport } from './routes/contacts/$id.index'
+import { Route as TransactionsIdEditRouteImport } from './routes/transactions/$id.edit'
 import { Route as PersonalCategoryBudgetsCatIdRouteImport } from './routes/personal/category-budgets.$catId'
 import { Route as GroupsIdSettingsRouteImport } from './routes/groups/$id.settings'
 import { Route as GroupsIdRecurringRouteImport } from './routes/groups/$id.recurring'
+import { Route as ContactsIdReminderRouteImport } from './routes/contacts/$id.reminder'
+import { Route as ContactsIdBreakdownRouteImport } from './routes/contacts/$id.breakdown'
+import { Route as ContactsIdAddExpenseRouteImport } from './routes/contacts/$id.add-expense'
 import { Route as GroupsIdRecurringIndexRouteImport } from './routes/groups/$id.recurring.index'
 
+const SettleUpRoute = SettleUpRouteImport.update({
+  id: '/settle-up',
+  path: '/settle-up',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -147,6 +157,11 @@ const ContactsIdIndexRoute = ContactsIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ContactsIdRoute,
 } as any)
+const TransactionsIdEditRoute = TransactionsIdEditRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => TransactionsIdRoute,
+} as any)
 const PersonalCategoryBudgetsCatIdRoute =
   PersonalCategoryBudgetsCatIdRouteImport.update({
     id: '/category-budgets/$catId',
@@ -163,6 +178,21 @@ const GroupsIdRecurringRoute = GroupsIdRecurringRouteImport.update({
   path: '/recurring',
   getParentRoute: () => GroupsIdRoute,
 } as any)
+const ContactsIdReminderRoute = ContactsIdReminderRouteImport.update({
+  id: '/reminder',
+  path: '/reminder',
+  getParentRoute: () => ContactsIdRoute,
+} as any)
+const ContactsIdBreakdownRoute = ContactsIdBreakdownRouteImport.update({
+  id: '/breakdown',
+  path: '/breakdown',
+  getParentRoute: () => ContactsIdRoute,
+} as any)
+const ContactsIdAddExpenseRoute = ContactsIdAddExpenseRouteImport.update({
+  id: '/add-expense',
+  path: '/add-expense',
+  getParentRoute: () => ContactsIdRoute,
+} as any)
 const GroupsIdRecurringIndexRoute = GroupsIdRecurringIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -174,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof NotificationsRouteWithChildren
   '/personal': typeof PersonalRouteWithChildren
   '/settings': typeof SettingsRoute
+  '/settle-up': typeof SettleUpRoute
   '/contacts/$id': typeof ContactsIdRouteWithChildren
   '/contacts/new': typeof ContactsNewRoute
   '/groups/$id': typeof GroupsIdRouteWithChildren
@@ -183,15 +214,19 @@ export interface FileRoutesByFullPath {
   '/personal/hide-ledgers': typeof PersonalHideLedgersRoute
   '/personal/reports': typeof PersonalReportsRoute
   '/personal/settings': typeof PersonalSettingsRoute
-  '/transactions/$id': typeof TransactionsIdRoute
+  '/transactions/$id': typeof TransactionsIdRouteWithChildren
   '/auth/': typeof AuthIndexRoute
   '/contacts/': typeof ContactsIndexRoute
   '/notifications/': typeof NotificationsIndexRoute
   '/personal/': typeof PersonalIndexRoute
   '/transactions/': typeof TransactionsIndexRoute
+  '/contacts/$id/add-expense': typeof ContactsIdAddExpenseRoute
+  '/contacts/$id/breakdown': typeof ContactsIdBreakdownRoute
+  '/contacts/$id/reminder': typeof ContactsIdReminderRoute
   '/groups/$id/recurring': typeof GroupsIdRecurringRouteWithChildren
   '/groups/$id/settings': typeof GroupsIdSettingsRoute
   '/personal/category-budgets/$catId': typeof PersonalCategoryBudgetsCatIdRoute
+  '/transactions/$id/edit': typeof TransactionsIdEditRoute
   '/contacts/$id/': typeof ContactsIdIndexRoute
   '/groups/$id/': typeof GroupsIdIndexRoute
   '/personal/category-budgets/': typeof PersonalCategoryBudgetsIndexRoute
@@ -200,6 +235,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRoute
+  '/settle-up': typeof SettleUpRoute
   '/contacts/new': typeof ContactsNewRoute
   '/personal/budget-limit': typeof PersonalBudgetLimitRoute
   '/personal/categories': typeof PersonalCategoriesRoute
@@ -207,14 +243,18 @@ export interface FileRoutesByTo {
   '/personal/hide-ledgers': typeof PersonalHideLedgersRoute
   '/personal/reports': typeof PersonalReportsRoute
   '/personal/settings': typeof PersonalSettingsRoute
-  '/transactions/$id': typeof TransactionsIdRoute
+  '/transactions/$id': typeof TransactionsIdRouteWithChildren
   '/auth': typeof AuthIndexRoute
   '/contacts': typeof ContactsIndexRoute
   '/notifications': typeof NotificationsIndexRoute
   '/personal': typeof PersonalIndexRoute
   '/transactions': typeof TransactionsIndexRoute
+  '/contacts/$id/add-expense': typeof ContactsIdAddExpenseRoute
+  '/contacts/$id/breakdown': typeof ContactsIdBreakdownRoute
+  '/contacts/$id/reminder': typeof ContactsIdReminderRoute
   '/groups/$id/settings': typeof GroupsIdSettingsRoute
   '/personal/category-budgets/$catId': typeof PersonalCategoryBudgetsCatIdRoute
+  '/transactions/$id/edit': typeof TransactionsIdEditRoute
   '/contacts/$id': typeof ContactsIdIndexRoute
   '/groups/$id': typeof GroupsIdIndexRoute
   '/personal/category-budgets': typeof PersonalCategoryBudgetsIndexRoute
@@ -226,6 +266,7 @@ export interface FileRoutesById {
   '/notifications': typeof NotificationsRouteWithChildren
   '/personal': typeof PersonalRouteWithChildren
   '/settings': typeof SettingsRoute
+  '/settle-up': typeof SettleUpRoute
   '/contacts/$id': typeof ContactsIdRouteWithChildren
   '/contacts/new': typeof ContactsNewRoute
   '/groups/$id': typeof GroupsIdRouteWithChildren
@@ -235,15 +276,19 @@ export interface FileRoutesById {
   '/personal/hide-ledgers': typeof PersonalHideLedgersRoute
   '/personal/reports': typeof PersonalReportsRoute
   '/personal/settings': typeof PersonalSettingsRoute
-  '/transactions/$id': typeof TransactionsIdRoute
+  '/transactions/$id': typeof TransactionsIdRouteWithChildren
   '/auth/': typeof AuthIndexRoute
   '/contacts/': typeof ContactsIndexRoute
   '/notifications/': typeof NotificationsIndexRoute
   '/personal/': typeof PersonalIndexRoute
   '/transactions/': typeof TransactionsIndexRoute
+  '/contacts/$id/add-expense': typeof ContactsIdAddExpenseRoute
+  '/contacts/$id/breakdown': typeof ContactsIdBreakdownRoute
+  '/contacts/$id/reminder': typeof ContactsIdReminderRoute
   '/groups/$id/recurring': typeof GroupsIdRecurringRouteWithChildren
   '/groups/$id/settings': typeof GroupsIdSettingsRoute
   '/personal/category-budgets/$catId': typeof PersonalCategoryBudgetsCatIdRoute
+  '/transactions/$id/edit': typeof TransactionsIdEditRoute
   '/contacts/$id/': typeof ContactsIdIndexRoute
   '/groups/$id/': typeof GroupsIdIndexRoute
   '/personal/category-budgets/': typeof PersonalCategoryBudgetsIndexRoute
@@ -256,6 +301,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/personal'
     | '/settings'
+    | '/settle-up'
     | '/contacts/$id'
     | '/contacts/new'
     | '/groups/$id'
@@ -271,9 +317,13 @@ export interface FileRouteTypes {
     | '/notifications/'
     | '/personal/'
     | '/transactions/'
+    | '/contacts/$id/add-expense'
+    | '/contacts/$id/breakdown'
+    | '/contacts/$id/reminder'
     | '/groups/$id/recurring'
     | '/groups/$id/settings'
     | '/personal/category-budgets/$catId'
+    | '/transactions/$id/edit'
     | '/contacts/$id/'
     | '/groups/$id/'
     | '/personal/category-budgets/'
@@ -282,6 +332,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/settings'
+    | '/settle-up'
     | '/contacts/new'
     | '/personal/budget-limit'
     | '/personal/categories'
@@ -295,8 +346,12 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/personal'
     | '/transactions'
+    | '/contacts/$id/add-expense'
+    | '/contacts/$id/breakdown'
+    | '/contacts/$id/reminder'
     | '/groups/$id/settings'
     | '/personal/category-budgets/$catId'
+    | '/transactions/$id/edit'
     | '/contacts/$id'
     | '/groups/$id'
     | '/personal/category-budgets'
@@ -307,6 +362,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/personal'
     | '/settings'
+    | '/settle-up'
     | '/contacts/$id'
     | '/contacts/new'
     | '/groups/$id'
@@ -322,9 +378,13 @@ export interface FileRouteTypes {
     | '/notifications/'
     | '/personal/'
     | '/transactions/'
+    | '/contacts/$id/add-expense'
+    | '/contacts/$id/breakdown'
+    | '/contacts/$id/reminder'
     | '/groups/$id/recurring'
     | '/groups/$id/settings'
     | '/personal/category-budgets/$catId'
+    | '/transactions/$id/edit'
     | '/contacts/$id/'
     | '/groups/$id/'
     | '/personal/category-budgets/'
@@ -336,10 +396,11 @@ export interface RootRouteChildren {
   NotificationsRoute: typeof NotificationsRouteWithChildren
   PersonalRoute: typeof PersonalRouteWithChildren
   SettingsRoute: typeof SettingsRoute
+  SettleUpRoute: typeof SettleUpRoute
   ContactsIdRoute: typeof ContactsIdRouteWithChildren
   ContactsNewRoute: typeof ContactsNewRoute
   GroupsIdRoute: typeof GroupsIdRouteWithChildren
-  TransactionsIdRoute: typeof TransactionsIdRoute
+  TransactionsIdRoute: typeof TransactionsIdRouteWithChildren
   AuthIndexRoute: typeof AuthIndexRoute
   ContactsIndexRoute: typeof ContactsIndexRoute
   TransactionsIndexRoute: typeof TransactionsIndexRoute
@@ -347,6 +408,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/settle-up': {
+      id: '/settle-up'
+      path: '/settle-up'
+      fullPath: '/settle-up'
+      preLoaderRoute: typeof SettleUpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -501,6 +569,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactsIdIndexRouteImport
       parentRoute: typeof ContactsIdRoute
     }
+    '/transactions/$id/edit': {
+      id: '/transactions/$id/edit'
+      path: '/edit'
+      fullPath: '/transactions/$id/edit'
+      preLoaderRoute: typeof TransactionsIdEditRouteImport
+      parentRoute: typeof TransactionsIdRoute
+    }
     '/personal/category-budgets/$catId': {
       id: '/personal/category-budgets/$catId'
       path: '/category-budgets/$catId'
@@ -521,6 +596,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/groups/$id/recurring'
       preLoaderRoute: typeof GroupsIdRecurringRouteImport
       parentRoute: typeof GroupsIdRoute
+    }
+    '/contacts/$id/reminder': {
+      id: '/contacts/$id/reminder'
+      path: '/reminder'
+      fullPath: '/contacts/$id/reminder'
+      preLoaderRoute: typeof ContactsIdReminderRouteImport
+      parentRoute: typeof ContactsIdRoute
+    }
+    '/contacts/$id/breakdown': {
+      id: '/contacts/$id/breakdown'
+      path: '/breakdown'
+      fullPath: '/contacts/$id/breakdown'
+      preLoaderRoute: typeof ContactsIdBreakdownRouteImport
+      parentRoute: typeof ContactsIdRoute
+    }
+    '/contacts/$id/add-expense': {
+      id: '/contacts/$id/add-expense'
+      path: '/add-expense'
+      fullPath: '/contacts/$id/add-expense'
+      preLoaderRoute: typeof ContactsIdAddExpenseRouteImport
+      parentRoute: typeof ContactsIdRoute
     }
     '/groups/$id/recurring/': {
       id: '/groups/$id/recurring/'
@@ -573,10 +669,16 @@ const PersonalRouteWithChildren = PersonalRoute._addFileChildren(
 )
 
 interface ContactsIdRouteChildren {
+  ContactsIdAddExpenseRoute: typeof ContactsIdAddExpenseRoute
+  ContactsIdBreakdownRoute: typeof ContactsIdBreakdownRoute
+  ContactsIdReminderRoute: typeof ContactsIdReminderRoute
   ContactsIdIndexRoute: typeof ContactsIdIndexRoute
 }
 
 const ContactsIdRouteChildren: ContactsIdRouteChildren = {
+  ContactsIdAddExpenseRoute: ContactsIdAddExpenseRoute,
+  ContactsIdBreakdownRoute: ContactsIdBreakdownRoute,
+  ContactsIdReminderRoute: ContactsIdReminderRoute,
   ContactsIdIndexRoute: ContactsIdIndexRoute,
 }
 
@@ -611,15 +713,28 @@ const GroupsIdRouteWithChildren = GroupsIdRoute._addFileChildren(
   GroupsIdRouteChildren,
 )
 
+interface TransactionsIdRouteChildren {
+  TransactionsIdEditRoute: typeof TransactionsIdEditRoute
+}
+
+const TransactionsIdRouteChildren: TransactionsIdRouteChildren = {
+  TransactionsIdEditRoute: TransactionsIdEditRoute,
+}
+
+const TransactionsIdRouteWithChildren = TransactionsIdRoute._addFileChildren(
+  TransactionsIdRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   NotificationsRoute: NotificationsRouteWithChildren,
   PersonalRoute: PersonalRouteWithChildren,
   SettingsRoute: SettingsRoute,
+  SettleUpRoute: SettleUpRoute,
   ContactsIdRoute: ContactsIdRouteWithChildren,
   ContactsNewRoute: ContactsNewRoute,
   GroupsIdRoute: GroupsIdRouteWithChildren,
-  TransactionsIdRoute: TransactionsIdRoute,
+  TransactionsIdRoute: TransactionsIdRouteWithChildren,
   AuthIndexRoute: AuthIndexRoute,
   ContactsIndexRoute: ContactsIndexRoute,
   TransactionsIndexRoute: TransactionsIndexRoute,
