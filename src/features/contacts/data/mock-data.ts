@@ -78,7 +78,7 @@ export const MOCK_CATEGORIES: ContactCategory[] = [
     description: 'Work / office',
     icon: '💼',
     bgColor: 'bg-[#E8F5E9]',
-    iconColor: 'text-[#0B683A]',
+    iconColor: 'text-positive',
   },
   {
     id: 'cat4',

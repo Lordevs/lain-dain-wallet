@@ -11,8 +11,11 @@ import { Calendar } from '@/components/ui/calendar'
 interface SelectDateDrawerProps {
   isOpen: boolean
   onClose: () => void
-  onSelect: (dateText: string) => void
-  selectedValue: string // 'today' | 'yesterday' or standard display date
+  onSelect?: (dateText: string) => void
+  onSelectDate?: (date: Date) => void
+  selectedValue?: string // 'today' | 'yesterday' or standard display date
+  selectedDateValue?: Date
+  type?: 'expense' | 'dob'
 }
 
 // May 2026 default references
@@ -42,7 +45,10 @@ export default function SelectDateDrawer({
   isOpen,
   onClose,
   onSelect,
-  selectedValue,
+  onSelectDate,
+  selectedValue = 'today',
+  selectedDateValue,
+  type = 'expense',
 }: SelectDateDrawerProps) {
   // Bumped whenever isOpen transitions to true, forcing SelectDateDrawerContent to remount
   // with fresh initial state - the idiomatic replacement for a "resync on open" effect.
@@ -60,7 +66,10 @@ export default function SelectDateDrawer({
           key={openKey}
           onClose={onClose}
           onSelect={onSelect}
+          onSelectDate={onSelectDate}
           selectedValue={selectedValue}
+          selectedDateValue={selectedDateValue}
+          type={type}
         />
       </DrawerContent>
     </Drawer>
@@ -70,12 +79,23 @@ export default function SelectDateDrawer({
 function SelectDateDrawerContent({
   onClose,
   onSelect,
-  selectedValue,
+  onSelectDate,
+  selectedValue = 'today',
+  selectedDateValue,
+  type = 'expense',
 }: Omit<SelectDateDrawerProps, 'isOpen'>) {
-  const initial = getInitialDateState(selectedValue)
-  const [selectedDate, setSelectedDate] = useState<Date>(initial.selectedDate)
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date(DEFAULT_YEAR, DEFAULT_MONTH_INDEX, 1))
-  const [activePill, setActivePill] = useState<DatePill>(initial.activePill)
+  const isDob = type === 'dob'
+
+  // Initialize selected date based on type
+  const initialDate = isDob
+    ? (selectedDateValue || new Date(2000, 0, 1))
+    : getInitialDateState(selectedValue).selectedDate
+
+  const initialPill = isDob ? 'custom' : getInitialDateState(selectedValue).activePill
+
+  const [selectedDate, setSelectedDate] = useState<Date>(initialDate)
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date(initialDate.getFullYear(), initialDate.getMonth(), 1))
+  const [activePill, setActivePill] = useState<DatePill>(initialPill)
 
   // Handle pill quick select clicks
   const handlePillClick = (type: 'today' | 'yesterday' | 'custom') => {
@@ -99,11 +119,30 @@ function SelectDateDrawerContent({
       d1.getFullYear() === d2.getFullYear()
   }
 
+  const handleConfirmSelect = () => {
+    if (isDob) {
+      onSelectDate?.(selectedDate)
+    } else {
+      const displayDate = activePill === 'today' ? 'today' : activePill === 'yesterday' ? 'yesterday' : `${selectedDate.getDate()} ${getMonthName(selectedDate)}`
+      onSelect?.(displayDate)
+    }
+    onClose()
+  }
+
+  const formatButtonText = () => {
+    if (isDob) {
+      return `Select ${selectedDate.getDate()} ${getMonthName(selectedDate)} ${selectedDate.getFullYear()}`
+    }
+    return `Select ${selectedDate.getDate()} ${getMonthName(selectedDate)}`
+  }
+
   return (
     <>
       {/* Drawer Header */}
       <div className="px-6 pt-5 pb-3 shrink-0 flex items-center justify-between">
-        <h3 className="text-[17px] font-bold text-foreground text-left">Select Date</h3>
+        <h3 className="text-[17px] font-bold text-foreground text-left">
+          {isDob ? 'Select Date of Birth' : 'Select Date'}
+        </h3>
         <DrawerClose asChild>
           <button
             type="button"
@@ -126,25 +165,34 @@ function SelectDateDrawerContent({
             onSelect={(date) => {
               if (date) {
                 setSelectedDate(date)
-                if (isSameDay(date, TODAY_MOCK_DATE)) {
-                  setActivePill('today')
-                } else if (isSameDay(date, YESTERDAY_MOCK_DATE)) {
-                  setActivePill('yesterday')
-                } else {
-                  setActivePill('custom')
+                if (!isDob) {
+                  if (isSameDay(date, TODAY_MOCK_DATE)) {
+                    setActivePill('today')
+                  } else if (isSameDay(date, YESTERDAY_MOCK_DATE)) {
+                    setActivePill('yesterday')
+                  } else {
+                    setActivePill('custom')
+                  }
                 }
               }
             }}
             month={currentMonth}
             onMonthChange={setCurrentMonth}
-            disabled={[
-              new Date(DEFAULT_YEAR, DEFAULT_MONTH_INDEX, 2),
-              new Date(DEFAULT_YEAR, DEFAULT_MONTH_INDEX, 8),
-              new Date(DEFAULT_YEAR, DEFAULT_MONTH_INDEX, 9),
-              new Date(DEFAULT_YEAR, DEFAULT_MONTH_INDEX, 15),
-              new Date(DEFAULT_YEAR, DEFAULT_MONTH_INDEX, 21),
-              new Date(DEFAULT_YEAR, DEFAULT_MONTH_INDEX, 28)
-            ]}
+            disabled={
+              isDob
+                ? (date) => date > new Date()
+                : [
+                    new Date(DEFAULT_YEAR, DEFAULT_MONTH_INDEX, 2),
+                    new Date(DEFAULT_YEAR, DEFAULT_MONTH_INDEX, 8),
+                    new Date(DEFAULT_YEAR, DEFAULT_MONTH_INDEX, 9),
+                    new Date(DEFAULT_YEAR, DEFAULT_MONTH_INDEX, 15),
+                    new Date(DEFAULT_YEAR, DEFAULT_MONTH_INDEX, 21),
+                    new Date(DEFAULT_YEAR, DEFAULT_MONTH_INDEX, 28)
+                  ]
+            }
+            captionLayout={isDob ? 'dropdown' : 'label'}
+            startMonth={isDob ? new Date(1920, 0) : undefined}
+            endMonth={isDob ? new Date() : undefined}
             showOutsideDays={false}
             classNames={{
               root: 'w-full',
@@ -180,58 +228,56 @@ function SelectDateDrawerContent({
         </div>
 
         {/* Quick Filter Select Pills */}
-        <div className="flex items-center gap-2 mt-4 w-full shrink-0">
-          <button
-            type="button"
-            onClick={() => handlePillClick('today')}
-            className={cn(
-              'px-4 py-2 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none',
-              activePill === 'today'
-                ? 'bg-positive-soft-bg border-positive/20 text-primary'
-                : 'bg-hover-bg border-divider text-muted-foreground'
-            )}
-          >
-            Today
-          </button>
-          <button
-            type="button"
-            onClick={() => handlePillClick('yesterday')}
-            className={cn(
-              'px-4 py-2 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none',
-              activePill === 'yesterday'
-                ? 'bg-positive-soft-bg border-positive/20 text-primary'
-                : 'bg-hover-bg border-divider text-muted-foreground'
-            )}
-          >
-            Yesterday
-          </button>
-          <button
-            type="button"
-            onClick={() => handlePillClick('custom')}
-            className={cn(
-              'px-4 py-2 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none',
-              activePill === 'custom'
-                ? 'bg-positive-soft-bg border-positive/20 text-primary'
-                : 'bg-hover-bg border-divider text-muted-foreground'
-            )}
-          >
-            Custom
-          </button>
-        </div>
+        {!isDob && (
+          <div className="flex items-center gap-2 mt-4 w-full shrink-0">
+            <button
+              type="button"
+              onClick={() => handlePillClick('today')}
+              className={cn(
+                'px-4 py-2 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none',
+                activePill === 'today'
+                  ? 'bg-positive-soft-bg border-positive/20 text-primary'
+                  : 'bg-hover-bg border-divider text-muted-foreground'
+              )}
+            >
+              Today
+            </button>
+            <button
+              type="button"
+              onClick={() => handlePillClick('yesterday')}
+              className={cn(
+                'px-4 py-2 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none',
+                activePill === 'yesterday'
+                  ? 'bg-positive-soft-bg border-positive/20 text-primary'
+                  : 'bg-hover-bg border-divider text-muted-foreground'
+              )}
+            >
+              Yesterday
+            </button>
+            <button
+              type="button"
+              onClick={() => handlePillClick('custom')}
+              className={cn(
+                'px-4 py-2 rounded-full border text-xs font-bold transition-all cursor-pointer outline-none',
+                activePill === 'custom'
+                  ? 'bg-positive-soft-bg border-positive/20 text-primary'
+                  : 'bg-hover-bg border-divider text-muted-foreground'
+              )}
+            >
+              Custom
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Pinned Bottom Selection Confirm Bar */}
       <div className="px-6 py-4 bg-white shrink-0">
         <button
           type="button"
-          onClick={() => {
-            const displayDate = activePill === 'today' ? 'today' : activePill === 'yesterday' ? 'yesterday' : `${selectedDate.getDate()} ${getMonthName(selectedDate)}`
-            onSelect(displayDate)
-            onClose()
-          }}
-          className="w-full h-14 rounded-full bg-secondary text-white font-extrabold text-base cursor-pointer active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
+          onClick={handleConfirmSelect}
+          className="w-full h-14 rounded-full bg-[#0B683A] hover:bg-[#0B683A]/95 text-white font-extrabold text-base cursor-pointer active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
         >
-          Select {selectedDate.getDate()} {getMonthName(selectedDate)}
+          {formatButtonText()}
         </button>
       </div>
     </>

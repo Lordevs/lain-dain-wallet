@@ -106,7 +106,7 @@ export function useGroupLedger(id: string) {
           ...expense,
           amountColor: 'green' as const,
           showChevron: false,
-          className: 'bg-[#ECF6F0] hover:bg-[#ECF6F0]/90 text-[#0B683A]'
+          className: 'bg-[#ECF6F0] hover:bg-[#ECF6F0]/90 text-positive'
         }
       }
 
@@ -149,7 +149,7 @@ export function useGroupLedger(id: string) {
           id: 'gb1',
           name: 'Ali Hassan',
           initials: 'AH',
-          avatarColor: 'bg-[#E8F5E9] text-[#0B683A]',
+          avatarColor: 'bg-[#E8F5E9] text-positive',
           subtitle: 'Has to pay you',
           direction: 'in' as const,
           amount: 3500,

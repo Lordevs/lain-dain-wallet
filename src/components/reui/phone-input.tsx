@@ -195,7 +195,7 @@ function CountrySelect({
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[#9A9590]">+{BasePhoneInput.getCountryCallingCode(item.value)}</span>
-                    {isSelected && <Check size={16} className="text-[#0B683A] stroke-[3px]" />}
+                    {isSelected && <Check size={16} className="text-positive stroke-[3px]" />}
                   </div>
                 </button>
               )

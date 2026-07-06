@@ -112,7 +112,7 @@ export default function RecurringPaymentsScreen({ groupId, onClose }: RecurringP
         backVariant="circle"
       />
 
-      <div className="px-5 flex flex-col gap-5 overflow-y-auto mt-3">
+      <div className="px-5 flex flex-col gap-5 overflow-y-auto mt-3 flex-1 min-h-0">
         {/* Summary Cards */}
         <div className="flex items-center gap-4">
           {/* Monthly Total Card */}
@@ -120,7 +120,7 @@ export default function RecurringPaymentsScreen({ groupId, onClose }: RecurringP
             <span className="text-[12px] font-bold text-[#6B6B6B] tracking-wider uppercase">
               Monthly total
             </span>
-            <span className="text-[22px] font-extrabold text-[#0B683A] mt-1.5 leading-none">
+            <span className="text-[22px] font-extrabold text-positive mt-1.5 leading-none">
               Rs. {monthlyTotal.toLocaleString('en-US')}
             </span>
           </div>
@@ -188,7 +188,7 @@ export default function RecurringPaymentsScreen({ groupId, onClose }: RecurringP
                         {/* Next Billing Date */}
                         <p className={cn(
                           "text-[12px] font-extrabold mt-1.5 leading-none",
-                          isSoon ? "text-[#C96A1B]" : "text-[#0B683A]"
+                          isSoon ? "text-[#C96A1B]" : "text-positive"
                         )}>
                           Next: {p.nextBillingDate}
                         </p>
@@ -201,10 +201,10 @@ export default function RecurringPaymentsScreen({ groupId, onClose }: RecurringP
                       <button
                         type="button"
                         onClick={() => handleEdit(p.id)}
-                        className="w-9 h-9 bg-[#E4F2EB] text-[#0B683A] rounded-[10px] flex items-center justify-center cursor-pointer active:scale-95 border-0 hover:bg-[#E4F2EB]/80 transition-all outline-none"
+                        className="w-9 h-9 bg-[#E4F2EB] text-positive rounded-[10px] flex items-center justify-center cursor-pointer active:scale-95 border-0 hover:bg-[#E4F2EB]/80 transition-all outline-none"
                         title="Edit"
                       >
-                        <Pencil size={15} strokeWidth={2.5} className="text-[#0B683A]" />
+                        <Pencil size={15} strokeWidth={2.5} className="text-positive" />
                       </button>
                       {/* Delete Button */}
                       <button
@@ -225,11 +225,11 @@ export default function RecurringPaymentsScreen({ groupId, onClose }: RecurringP
       </div>
 
       {/* Absolute Bottom Actions Bar */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 bg-linear-to-t from-[#FEFAF1] via-[#FEFAF1] to-transparent shrink-0 pointer-events-none z-10">
+      <div className="fixed bottom-3 left-3 right-3 z-10">
         <button
           type="button"
           onClick={() => (navigate as any)({ search: (prev: any) => ({ ...prev, subDrawer: 'add-recurring' }) })}
-          className="w-full h-14 bg-[#0B683A] text-white rounded-full font-bold text-base shadow-[0px_8px_20px_rgba(11,104,58,0.3)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer border-0 pointer-events-auto"
+          className="w-full h-14 bg-positive text-white rounded-full font-bold text-base active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer border-0 pointer-events-auto"
         >
           <Plus size={18} strokeWidth={3} />
           Add New

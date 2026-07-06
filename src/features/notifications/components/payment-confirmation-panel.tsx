@@ -115,13 +115,13 @@ export default function PaymentConfirmationPanel({
       </div>
 
       {/* Sticky Bottom Options Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-10 px-6 pt-4 pb-5 bg-[#FEFAF1]/90 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
+      <div className="fixed bottom-3 left-3 right-3 z-10 flex flex-col items-center justify-center gap-3">
         <div className="w-full flex items-center gap-3.5">
           <button
             type="button"
             onClick={onConfirmReceived}
             // box-shadow: 0px 3px 10px 0px #0B683A47;
-            className="flex-1 h-14 rounded-full bg-[#0B683A] text-white font-bold text-sm cursor-pointer active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
+            className="flex-1 h-14 rounded-full bg-positive text-white font-bold text-sm cursor-pointer active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
           >
             Confirm Received
           </button>

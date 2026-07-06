@@ -98,17 +98,17 @@ export default function PersonalScreen() {
           <ExpenseList
             expenses={currentData.expenses}
             amountColor="green"
-            onItemClick={() => { }}
+            onItemClick={(id) => navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: String(id) } })}
           />
         </div>
       </div>
 
       {/* Absolute Bottom Action Button */}
-      <div className="absolute bottom-[76px] left-0 right-0 px-6 py-4 bg-[#FEFAF1]/90 border-t border-[#EFE7DD]/30 backdrop-blur-sm z-10">
+      <div className="fixed bottom-3 left-3 right-3 z-10">
         <Button
           type="button"
           onClick={() => openDrawer('add-expense')}
-          className="w-full h-14 rounded-full bg-primary shadow-[0px_6.29px_20.13px_0px_#0B683A4D] text-white font-bold text-base cursor-pointer transition-transform active:scale-[0.99]"
+          className="w-full h-14 rounded-full bg-primary text-white font-bold text-base cursor-pointer transition-transform active:scale-[0.99]"
         >
           Add Personal Expense
         </Button>

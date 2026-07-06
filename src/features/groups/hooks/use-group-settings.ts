@@ -57,7 +57,7 @@ export function useGroupSettings() {
   const [tempGroupName, setTempGroupName] = useState(contact?.name || 'Murree Trip')
 
   const [members, setMembers] = useState<GroupMember[]>([
-    makeMember({ id: 'you', name: 'You', initials: 'MH', avatarColor: 'bg-[#0B683A] text-white', balance: 0, isAdmin: true, isPending: false }),
+    makeMember({ id: 'you', name: 'You', initials: 'MH', avatarColor: 'bg-positive text-white', balance: 0, isAdmin: true, isPending: false }),
     makeMember({ id: 'ali', name: 'Ali Hassan', initials: 'AH', avatarColor: 'bg-[#2F80ED] text-white', balance: 2000, isAdmin: false, isPending: false }),
     makeMember({ id: 'sara', name: 'Sara Khan', initials: 'SK', avatarColor: 'bg-[#C96A1B] text-white', balance: 0, isAdmin: true, isPending: false }),
     makeMember({ id: 'hassan', name: 'Hassan', initials: 'HS', avatarColor: 'bg-[#4F5D75] text-white', balance: 0, isAdmin: false, isPending: false }),

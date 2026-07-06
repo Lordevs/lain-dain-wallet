@@ -71,7 +71,7 @@ export default function AddMembersStep({ flow }: AddMembersStepProps) {
 
       {/* Sticky Next button */}
       {flow.selectedContacts.length > 0 && (
-        <div className="absolute bottom-6 left-6 right-6 z-10 animate-in fade-in slide-in-from-bottom duration-200">
+        <div className="fixed bottom-3 left-3 right-3 z-10">
           <Button
             onClick={flow.nextStep}
             className="w-full h-14 rounded-full bg-primary text-white font-extrabold text-[15px] shadow-lg active:scale-[0.98] transition-transform cursor-pointer"

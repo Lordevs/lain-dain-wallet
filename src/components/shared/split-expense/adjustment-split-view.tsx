@@ -21,7 +21,7 @@ export default function AdjustmentSplitView({
   onReset,
 }: AdjustmentSplitViewProps) {
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex flex-col">
       {/* Adjustment split overview row */}
       <div className="flex items-center justify-between mb-4 shrink-0 select-none text-left">
         <div className="flex items-center gap-2">
@@ -48,7 +48,7 @@ export default function AdjustmentSplitView({
       </div>
 
       {/* Scrollable Members List Box */}
-      <div className="flex-1 overflow-y-auto border-[0.8px] rounded-lg border-divider divide-y divide-divider bg-white mb-2 select-none">
+      <div className="border-[0.8px] rounded-lg border-divider divide-y divide-divider bg-white mb-2 select-none overflow-hidden">
         {members.map((member) => {
           return (
             <div

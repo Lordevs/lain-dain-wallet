@@ -95,7 +95,7 @@ export default function PaymentDisputePanel({
       </div>
 
       {/* Sticky Bottom Options Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-10 px-6 py-4 bg-[#FEFAF1]/90 backdrop-blur-sm flex items-center gap-4">
+      <div className="fixed bottom-3 left-3 right-3 z-10 flex items-center gap-4">
         <button
           type="button"
           onClick={onPayAgain}

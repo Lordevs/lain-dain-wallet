@@ -54,7 +54,7 @@ export default function SmartSettleScreen({ onClose }: SmartSettleScreenProps) {
             onClick={() => setIsSimplified(!isSimplified)}
             className={cn(
               "relative inline-flex h-7 w-15 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none",
-              isSimplified ? "bg-[#0B683A]" : "bg-[#9A9590]"
+              isSimplified ? "bg-positive" : "bg-[#9A9590]"
             )}
           >
             {/* Toggle Status Text Inside Switch */}

@@ -10,10 +10,10 @@ export interface GroupMember {
 }
 
 export const MOCK_GROUP_MEMBERS: GroupMember[] = [
-  { id: 'you',    name: 'You',        initials: 'MH', avatarColor: 'bg-[#0B683A]' },
-  { id: 'ali',    name: 'Ali Hassan', initials: 'AH', avatarColor: 'bg-[#2F80ED]' },
-  { id: 'sara',   name: 'Sara Khan',  initials: 'SK', avatarColor: 'bg-[#C96A1B]' },
-  { id: 'hassan', name: 'Hassan',     initials: 'HS', avatarColor: 'bg-[#4F5D75]' },
+  { id: 'you', name: 'You', initials: 'MH', avatarColor: 'bg-positive' },
+  { id: 'ali', name: 'Ali Hassan', initials: 'AH', avatarColor: 'bg-[#2F80ED]' },
+  { id: 'sara', name: 'Sara Khan', initials: 'SK', avatarColor: 'bg-[#C96A1B]' },
+  { id: 'hassan', name: 'Hassan', initials: 'HS', avatarColor: 'bg-[#4F5D75]' },
 ]
 
 /** Resolve a member's display name from their id */

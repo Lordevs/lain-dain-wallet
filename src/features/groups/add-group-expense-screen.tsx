@@ -25,7 +25,7 @@ export default function AddGroupExpenseScreen({ groupId, onClose, onSuccess }: A
           <p className="text-lg font-bold text-[#1A1A1A]">Group not found</p>
           <button
             onClick={onClose}
-            className="mt-4 px-4 py-2 bg-[#0B683A] text-white rounded-full font-bold border-0 cursor-pointer"
+            className="mt-4 px-4 py-2 bg-positive text-white rounded-full font-bold border-0 cursor-pointer"
           >
             Close
           </button>

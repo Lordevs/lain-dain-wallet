@@ -204,7 +204,7 @@ function SplitExpenseDrawerContent({
       <hr className="border-divider border-b-[0.8px] w-full shrink-0" />
 
       {/* Main Content Container */}
-      <div className="flex-1 flex flex-col px-6 pt-5 bg-white overflow-hidden">
+      <div className="flex-1 flex flex-col px-6 pt-5 bg-white overflow-y-auto">
         {/* Split Type Selector */}
         <span className="text-[15px] font-semibold text-[#5C5C5C] text-left mb-3 block shrink-0">Split type</span>
         <div className="flex gap-2.5 w-full mb-5 shrink-0">

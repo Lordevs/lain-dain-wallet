@@ -70,7 +70,7 @@ export default function EditProfilePanel({ onClose, onSuccess }: EditProfilePane
               <button
                 type="button"
                 onClick={() => (navigate as any)({ search: (prev: any) => ({ ...prev, editPhoto: true }) })}
-                className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#0B683A] text-white border-2 border-white flex items-center justify-center shadow-md cursor-pointer active:scale-95 transition-all"
+                className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-positive text-white border-2 border-white flex items-center justify-center shadow-md cursor-pointer active:scale-95 transition-all"
                 aria-label="Upload profile image"
               >
                 <Pencil size={14} className="stroke-[2.5px]" />
@@ -80,7 +80,7 @@ export default function EditProfilePanel({ onClose, onSuccess }: EditProfilePane
             <button
               type="button"
               onClick={() => (navigate as any)({ search: (prev: any) => ({ ...prev, editPhoto: true }) })}
-              className="text-[#0B683A] font-semibold text-[15px] cursor-pointer mt-2.5 block text-center"
+              className="text-positive font-semibold text-[15px] cursor-pointer mt-2.5 block text-center"
             >
               Change Profile Icon
             </button>
@@ -114,7 +114,7 @@ export default function EditProfilePanel({ onClose, onSuccess }: EditProfilePane
                 <span className="text-[15px] font-medium text-[#1A1A1A]">
                   {userProfile?.phone || '+92 300 1234567'}
                 </span>
-                <span className="bg-[#E4F2EB] text-[#0B683A] text-[12px] font-bold px-3 py-1 rounded-full shrink-0 select-none">
+                <span className="bg-[#E4F2EB] text-positive text-[12px] font-bold px-3 py-1 rounded-full shrink-0 select-none">
                   Verified
                 </span>
               </div>
@@ -143,7 +143,7 @@ export default function EditProfilePanel({ onClose, onSuccess }: EditProfilePane
           <button
             type="submit"
             disabled={!name.trim()}
-            className="w-full h-14 bg-[#0B683A] text-white rounded-full font-bold text-base shadow-[0px_8px_20px_rgba(11,104,58,0.3)] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center cursor-pointer"
+            className="w-full h-14 bg-positive text-white rounded-full font-bold text-base shadow-[0px_8px_20px_rgba(11,104,58,0.3)] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center cursor-pointer"
           >
             Save Changes
           </button>

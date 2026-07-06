@@ -22,12 +22,12 @@ export default function ExpenseSummaryCard({ summary }: ExpenseSummaryCardProps)
         <span className="text-[#6B6B6B] text-sm font-medium">
           You spent this month
         </span>
-        <span className="text-5xl font-extrabold text-[#1A1A1A] leading-none mt-2">
+        <span className="text-[38px] font-black text-[#1A1A1A] leading-none mt-2">
           {format(totalSpent)}
         </span>
         <div className="flex items-center gap-1.5 px-3 py-1 bg-[#FFF9E6] rounded-full mt-3 w-fit">
           <TrendingUp size={14} className="text-tertiary" strokeWidth={2.5} />
-          <span className="text-tertiary text-[12px] font-bold">
+          <span className="text-tertiary text-xs font-semibold">
             {format(differenceAmount)} more than {differenceMonth}
           </span>
         </div>

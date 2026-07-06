@@ -98,7 +98,7 @@ const INITIAL_TRANSACTIONS: Record<string, TransactionRecord[]> = {
       category: 'payment',
       rightSubtitle: '5:40 PM',
       showChevron: true,
-      className: 'bg-[#ECF6F0] hover:bg-[#ECF6F0]/90 text-[#0B683A]',
+      className: 'bg-[#ECF6F0] hover:bg-[#ECF6F0]/90 text-positive',
       splitType: 'equal',
       dateValue: 'Today'
     },

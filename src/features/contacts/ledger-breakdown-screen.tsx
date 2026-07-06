@@ -23,8 +23,8 @@ const getTagStyle = (tagName: string) => {
   if (name.includes('trip') || name.includes('murree')) {
     return {
       bgColor: 'bg-[#E8F5E9]',
-      textColor: 'text-[#0B683A]',
-      icon: <AlertTriangle size={18} className="text-[#0B683A]" />,
+      textColor: 'text-positive',
+      icon: <AlertTriangle size={18} className="text-positive" />,
     }
   }
   // Default/Smile group style
@@ -77,7 +77,7 @@ export default function LedgerBreakdownScreen({ contactId, onClose }: LedgerBrea
   const formattedOverall = formatPKR(absOverall)
 
   const overallAmountColorClass = isPositive
-    ? 'text-[#0B683A]'
+    ? 'text-positive'
     : isNegative
       ? 'text-[#C96A1B]'
       : 'text-[#1A1A1A]'
@@ -112,7 +112,6 @@ export default function LedgerBreakdownScreen({ contactId, onClose }: LedgerBrea
       navigate({
         to: ROUTES.CONTACT_DETAILS,
         params: { id: contact.id },
-        replace: true,
       })
     } else {
       const foundGroup = contacts.find(
@@ -125,7 +124,6 @@ export default function LedgerBreakdownScreen({ contactId, onClose }: LedgerBrea
         navigate({
           to: ROUTES.GROUP_DETAILS,
           params: { id: foundGroup.id },
-          replace: true,
         })
       } else {
         showToast(`Group ledger details not found.`)
@@ -177,14 +175,14 @@ export default function LedgerBreakdownScreen({ contactId, onClose }: LedgerBrea
         <div className="bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-6 flex items-center justify-between">
           <div className="flex flex-col text-left">
             <div className="flex items-baseline gap-2">
-              <span className={cn("text-[32px] font-extrabold leading-none tracking-tight", overallAmountColorClass)}>
+              <span className={cn("text-[36px] font-black leading-none tracking-tight", overallAmountColorClass)}>
                 {formattedOverall}
               </span>
-              <span className="text-[#6B6B6B] text-[14px] font-semibold">
+              <span className="text-[#6B6B6B] text-base font-semibold">
                 overall
               </span>
             </div>
-            <span className="text-[#6B6B6B] text-[13px] font-medium mt-2">
+            <span className="text-[#6B6B6B] text-xs font-medium mt-2">
               Net across {contact.tags.length} ledgers
             </span>
           </div>
@@ -193,7 +191,7 @@ export default function LedgerBreakdownScreen({ contactId, onClose }: LedgerBrea
 
       {/* Breakdown Section */}
       <div className="px-6 flex flex-col text-left">
-        <h3 className="text-sm font-bold text-[#1A1A1A] mb-3">Breakdown by ledger</h3>
+        <h3 className="text-[17px] font-bold text-[#1A1A1A] mb-3">Breakdown by ledger</h3>
 
         <ExpenseList
           expenses={ledgerItems}

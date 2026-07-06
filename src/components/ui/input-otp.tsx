@@ -62,7 +62,7 @@ function InputOTPSlot({
         // 1. Filled State (has character, not active)
         char && !isActive && "bg-[#EEFFF6] ring ring-[#01592B] border-[#01592B]",
         // 2. Selected/Active State
-        isActive && "bg-white ring ring-[#01592B] border-[#01592B] z-10",
+        isActive && "bg-[#EEFFF6] ring ring-[#01592B] border-[#01592B] z-10",
         // 3. Empty State (no character, not active)
         !char && !isActive && "bg-white ring ring-[#EFE7DD] border-[#EFE7DD]",
         className

@@ -105,7 +105,7 @@ export default function ExpenseItem({
           )}>
             {name}
           </p>
-          <div className="text-[12px] text-muted-foreground mt-1 font-normal leading-normal whitespace-pre-line">
+          <div className="text-[13px] text-muted-foreground mt-1 font-normal leading-normal whitespace-pre-line">
             {subtitle}
           </div>
         </div>
@@ -114,7 +114,7 @@ export default function ExpenseItem({
       {/* Right side amount + chevron */}
       <div className="flex items-center gap-2">
         <div className="flex flex-col items-end text-right">
-          <span className={cn('text-[16px] font-extrabold', colorClass)}>
+          <span className={cn('text-base font-bold', colorClass)}>
             {displayAmount}
           </span>
           {rightSubtitle && (

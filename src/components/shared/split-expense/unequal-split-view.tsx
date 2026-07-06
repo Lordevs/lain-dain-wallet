@@ -21,7 +21,7 @@ export default function UnequalSplitView({
   onReset,
 }: UnequalSplitViewProps) {
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex flex-col">
       {/* Unequal split warning row */}
       <div className="flex items-center justify-between text-xs font-bold text-[#C0392B] px-1 mb-4 select-none shrink-0">
         <span className="flex items-center gap-1.5">
@@ -44,7 +44,7 @@ export default function UnequalSplitView({
       </div>
 
       {/* Scrollable Members List Box */}
-      <div className="flex-1 overflow-y-auto border-[0.8px] rounded-lg border-divider divide-y divide-divider bg-white mb-2 select-none">
+      <div className="border-[0.8px] rounded-lg border-divider divide-y divide-divider bg-white mb-2 select-none overflow-hidden">
         {members.map((member) => {
           return (
             <div

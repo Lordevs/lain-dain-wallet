@@ -142,9 +142,9 @@ export default function GroupSettingsScreen() {
             <button
               type="button"
               onClick={() => navigate({ search: (prev) => ({ ...prev, drawer: 'edit-photo' as const }) })}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#0B683A33] bg-[#E4F2EB] text-[#0B683A] text-xs font-bold transition-all hover:bg-[#E4F2EB]/80 shrink-0 cursor-pointer outline-none"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#0B683A33] bg-[#E4F2EB] text-positive text-xs font-bold transition-all hover:bg-[#E4F2EB]/80 shrink-0 cursor-pointer outline-none"
             >
-              <Camera size={14} className="text-[#0B683A]" strokeWidth={2.5} />
+              <Camera size={14} className="text-positive" strokeWidth={2.5} />
               Photo
             </button>
             <button
@@ -155,9 +155,9 @@ export default function GroupSettingsScreen() {
                   search: (prev) => ({ ...prev, drawer: 'edit-name' as const })
                 })
               }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#0B683A33] bg-[#E4F2EB] text-[#0B683A] text-xs font-bold transition-all hover:bg-[#E4F2EB]/80 shrink-0 cursor-pointer outline-none"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#0B683A33] bg-[#E4F2EB] text-positive text-xs font-bold transition-all hover:bg-[#E4F2EB]/80 shrink-0 cursor-pointer outline-none"
             >
-              <Pencil size={14} className="text-[#0B683A]" strokeWidth={2.5} />
+              <Pencil size={14} className="text-positive" strokeWidth={2.5} />
               Name
             </button>
           </div>
@@ -177,7 +177,7 @@ export default function GroupSettingsScreen() {
                   id: 'you',
                   name: 'You',
                   initials: 'MH',
-                  avatarColor: 'bg-[#0B683A] text-white',
+                  avatarColor: 'bg-positive text-white',
                 }}
                 subtitle={
                   <span className="text-[#6B6B6B] text-[12px]">
@@ -185,7 +185,7 @@ export default function GroupSettingsScreen() {
                   </span>
                 }
                 rightSlot={
-                  <span className="bg-[#ECF6F0] text-[#0B683A] text-[11px] font-bold px-3 py-1 rounded-full">
+                  <span className="bg-[#ECF6F0] text-positive text-[11px] font-bold px-3 py-1 rounded-full">
                     Admin
                   </span>
                 }
@@ -211,7 +211,7 @@ export default function GroupSettingsScreen() {
                 rightSlot={
                   <div className="flex items-center gap-2">
                     {m.isAdmin && (
-                      <span className="bg-[#ECF6F0] text-[#0B683A] text-[11px] font-bold px-3 py-1 rounded-full">
+                      <span className="bg-[#ECF6F0] text-positive text-[11px] font-bold px-3 py-1 rounded-full">
                         Admin
                       </span>
                     )}
@@ -246,11 +246,11 @@ export default function GroupSettingsScreen() {
               className="flex items-center gap-3.5 p-5 transition-colors cursor-pointer bg-white hover:bg-muted/5"
             >
               {/* Plus icon inside dashed border green circle */}
-              <div className="w-11 h-11 rounded-full border-2 border-dashed border-[#0B683A33] bg-[#E8F5E9]/30 flex items-center justify-center text-[#0B683A] shrink-0">
+              <div className="w-11 h-11 rounded-full border-2 border-dashed border-[#0B683A33] bg-[#E8F5E9]/30 flex items-center justify-center text-positive shrink-0">
                 <Plus size={20} strokeWidth={2.5} />
               </div>
               <div>
-                <p className="font-bold text-[14px] text-[#0B683A]">
+                <p className="font-bold text-[14px] text-positive">
                   Add Member
                 </p>
               </div>
@@ -289,7 +289,7 @@ export default function GroupSettingsScreen() {
                 onClick={() => setSmartSettleEnabled(!smartSettleEnabled)}
                 className={cn(
                   "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none self-start mt-0.5",
-                  smartSettleEnabled ? "bg-[#0B683A]" : "bg-[#D1D1D6]"
+                  smartSettleEnabled ? "bg-positive" : "bg-[#D1D1D6]"
                 )}
               >
                 <span

@@ -132,7 +132,7 @@ export default function AuthScreen() {
         )}
 
         {step === 'success' && (
-          <motion.div key="success" {...fadeSlideProps} className="flex-1 flex items-center justify-center">
+          <div key="success" className="flex-1 flex items-center justify-center">
             <SuccessCheck onComplete={() => {
               if (authMode === 'signin') {
                 setProfile({
@@ -148,7 +148,7 @@ export default function AuthScreen() {
                 setStep('profile')
               }
             }} />
-          </motion.div>
+          </div>
         )}
 
         {step === 'profile' && (

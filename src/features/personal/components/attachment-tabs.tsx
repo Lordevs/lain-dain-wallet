@@ -33,12 +33,12 @@ export default function AttachmentTabs({
         >
           <Calendar
             size={22}
-            className={dateValue === 'Today' ? 'text-[#0B683A]' : 'text-[#6B6B6B]'}
+            className={dateValue === 'Today' ? 'text-positive' : 'text-[#6B6B6B]'}
             strokeWidth={1.5}
           />
         </div>
         <span
-          className={`text-[13px] font-bold mt-2 transition-colors ${dateValue === 'Today' ? 'text-[#0B683A]' : 'text-[#6B6B6B]'
+          className={`text-[13px] font-bold mt-2 transition-colors ${dateValue === 'Today' ? 'text-positive' : 'text-[#6B6B6B]'
             }`}
         >
           {dateValue}

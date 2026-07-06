@@ -15,5 +15,10 @@ export const ROUTES = {
   GROUP_RECURRING: '/groups/$id/recurring',
   PERSONAL_SETTINGS: '/personal/settings',
   PERSONAL_CATEGORIES: '/personal/categories',
+  PERSONAL_HIDE_LEDGERS: '/personal/hide-ledgers',
+  PERSONAL_DEFAULT_PERIOD: '/personal/default-period',
+  PERSONAL_BUDGET_LIMIT: '/personal/budget-limit',
+  PERSONAL_CATEGORY_BUDGETS: '/personal/category-budgets',
+  PERSONAL_SET_CATEGORY_LIMIT: '/personal/category-budgets/$catId',
 } as const
 

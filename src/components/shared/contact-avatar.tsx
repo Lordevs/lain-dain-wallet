@@ -59,11 +59,11 @@ export default function ContactAvatar({
       {src && <AvatarImage src={src} alt={initials} className="object-cover" />}
       <AvatarFallback
         className={cn(
-          'rounded-full select-none border-0 flex items-center justify-center',
+          'rounded-full select-none border-0 flex items-center justify-center font-bold',
           avatarColor,
         )}
       >
-        <User className="size-[80%] fill-current" />
+        {initials || <User className="size-[80%] fill-current" />}
       </AvatarFallback>
     </Avatar>
   )

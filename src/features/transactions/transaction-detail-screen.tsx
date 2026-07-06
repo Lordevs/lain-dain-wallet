@@ -127,7 +127,7 @@ export default function TransactionDetailScreen(props: TransactionDetailScreenPr
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
             className="fixed top-6 left-6 right-6 z-120 mx-auto max-w-[380px] bg-white/90 backdrop-blur-md border border-[#EFE7DD] shadow-[0px_10px_30px_rgba(0,0,0,0.08)] rounded-2xl p-4 flex items-center gap-3"
           >
-            <div className="w-8 h-8 rounded-full bg-[#E4F2EB] flex items-center justify-center text-[#0B683A] shrink-0">
+            <div className="w-8 h-8 rounded-full bg-[#E4F2EB] flex items-center justify-center text-positive shrink-0">
               <Check size={16} strokeWidth={3} />
             </div>
             <span className="text-sm font-semibold text-[#1A1A1A]">{toast.message}</span>
@@ -225,7 +225,7 @@ export default function TransactionDetailScreen(props: TransactionDetailScreenPr
             {/* Paid By Row */}
             <div className="px-5 py-4 flex items-center justify-between">
               <span className="text-sm font-medium text-[#6B6B6B]">Paid by</span>
-              <span className="text-sm font-bold text-[#0B683A]">{paidByText}</span>
+              <span className="text-sm font-bold text-positive">{paidByText}</span>
             </div>
 
             {/* Receipt Row */}
@@ -270,7 +270,7 @@ export default function TransactionDetailScreen(props: TransactionDetailScreenPr
             {/* Item 1: You */}
             <div className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#0B683A] text-white flex items-center justify-center font-extrabold text-sm shadow-[0px_2px_8px_rgba(11,104,58,0.12)] select-none">
+                <div className="w-10 h-10 rounded-full bg-positive text-white flex items-center justify-center font-extrabold text-sm shadow-[0px_2px_8px_rgba(11,104,58,0.12)] select-none">
                   MH
                 </div>
                 <span className="font-bold text-sm text-[#1A1A1A]">You</span>
@@ -295,66 +295,66 @@ export default function TransactionDetailScreen(props: TransactionDetailScreenPr
           </div>
         </div>
 
-      </div>
 
-      {/* Absolute Bottom Actions */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-[#FEFAF1]/90 flex items-center gap-4 border-t border-[#EFE7DD]/30 backdrop-blur-sm">
-        {/* Edit Button */}
-        <button
-          type="button"
-          onClick={() => {
-            if (props.onEdit) {
-              props.onEdit()
-            } else {
-              (navigate as any)({
-                to: '/contacts/$id',
-                params: { id: foundContactId || contact.id },
-                search: {
-                  drawer: 'edit-expense',
-                  txId: tx.id
-                }
-              })
-            }
-          }}
-          className="flex-1 h-14 rounded-[20px] bg-white border border-[#EFE7DD] text-[#6B6B6B] font-extrabold text-base cursor-pointer shadow-sm hover:bg-muted/5 transition-colors flex items-center justify-center gap-2 outline-none"
-        >
-          <Pencil size={18} className="text-[#6B6B6B]" />
-          Edit
-        </button>
-
-        {/* Delete Button */}
-        <button
-          type="button"
-          onClick={() => {
-            if (tx && contact) {
-              // Remove from useTransactionStore
-              useTransactionStore.getState().deleteTransaction(contact.id, tx.id)
-
-              // Update contact netAmount balance and tags array
-              const updatedTags = contact.tags.filter((t) => t.name !== tx.name && t.amount !== tx.amount)
-              const updatedNetAmount = contact.netAmount - tx.amount
-              useContactStore.getState().updateContact(contact.id, {
-                netAmount: updatedNetAmount,
-                tags: updatedTags,
-                ledgerCount: updatedTags.length
-              })
-            }
-
-            if (props.onDelete) {
-              props.onDelete()
-            } else if (contact) {
-              if (contact.type === 'group') {
-                navigate({ to: ROUTES.GROUP_DETAILS, params: { id: contact.id } })
+        {/* Absolute Bottom Actions */}
+        <div className="fixed bottom-3 left-3 right-3 z-10 flex items-center gap-4">
+          {/* Edit Button */}
+          <button
+            type="button"
+            onClick={() => {
+              if (props.onEdit) {
+                props.onEdit()
               } else {
-                navigate({ to: ROUTES.CONTACT_DETAILS, params: { id: contact.id } })
+                (navigate as any)({
+                  to: '/contacts/$id',
+                  params: { id: foundContactId || contact.id },
+                  search: {
+                    drawer: 'edit-expense',
+                    txId: tx.id
+                  }
+                })
               }
-            }
-          }}
-          className="flex-1 h-14 rounded-[20px] bg-[#FFF3F3] border border-[#C0392B40] text-[#C0392B] font-extrabold text-base cursor-pointer shadow-sm hover:bg-[#FFF3F3]/80 transition-colors flex items-center justify-center gap-2 outline-none"
-        >
-          <Trash2 size={18} className="text-[#C0392B]" />
-          Delete
-        </button>
+            }}
+            className="flex-1 h-14 rounded-[20px] bg-white border border-[#EFE7DD] text-[#6B6B6B] font-extrabold text-base cursor-pointer shadow-sm hover:bg-muted/5 transition-colors flex items-center justify-center gap-2 outline-none"
+          >
+            <Pencil size={18} className="text-[#6B6B6B]" />
+            Edit
+          </button>
+
+          {/* Delete Button */}
+          <button
+            type="button"
+            onClick={() => {
+              if (tx && contact) {
+                // Remove from useTransactionStore
+                useTransactionStore.getState().deleteTransaction(contact.id, tx.id)
+
+                // Update contact netAmount balance and tags array
+                const updatedTags = contact.tags.filter((t) => t.name !== tx.name && t.amount !== tx.amount)
+                const updatedNetAmount = contact.netAmount - tx.amount
+                useContactStore.getState().updateContact(contact.id, {
+                  netAmount: updatedNetAmount,
+                  tags: updatedTags,
+                  ledgerCount: updatedTags.length
+                })
+              }
+
+              if (props.onDelete) {
+                props.onDelete()
+              } else if (contact) {
+                if (contact.type === 'group') {
+                  navigate({ to: ROUTES.GROUP_DETAILS, params: { id: contact.id } })
+                } else {
+                  navigate({ to: ROUTES.CONTACT_DETAILS, params: { id: contact.id } })
+                }
+              }
+            }}
+            className="flex-1 h-14 rounded-[20px] bg-[#FFF3F3] border border-[#C0392B40] text-[#C0392B] font-extrabold text-base cursor-pointer shadow-sm hover:bg-[#FFF3F3]/80 transition-colors flex items-center justify-center gap-2 outline-none"
+          >
+            <Trash2 size={18} className="text-[#C0392B]" />
+            Delete
+          </button>
+        </div>
       </div>
 
       {/* Receipt Preview Overlay */}
@@ -364,7 +364,7 @@ export default function TransactionDetailScreen(props: TransactionDetailScreenPr
             initial={{ opacity: 0, y: '100%' }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 250 }}
+            transition={{ duration: 0.12, ease: 'easeOut' }}
             className="fixed inset-0 z-50 bg-[#FEFAF1]"
           >
             <ReceiptPreviewFlow

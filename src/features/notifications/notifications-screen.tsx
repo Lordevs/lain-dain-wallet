@@ -79,20 +79,20 @@ export default function NotificationsScreen() {
     switch (type) {
       case 'settled':
         return (
-          <div className="w-10 h-10 rounded-[14px] bg-[#E4F2EB] flex items-center justify-center text-[#0B683A] border border-[#0B683A]/10">
+          <div className="w-10 h-10 rounded-[14px] bg-[#E4F2EB] flex items-center justify-center text-positive border border-positive/10">
             <Check size={20} strokeWidth={3} />
           </div>
         )
       case 'request':
         return (
-          <div className="w-10 h-10 rounded-[14px] bg-[#E4F2EB] flex items-center justify-center text-[#0B683A] border border-[#0B683A]/10">
+          <div className="w-10 h-10 rounded-[14px] bg-[#E4F2EB] flex items-center justify-center text-positive border border-positive/10">
             <Wallet size={20} strokeWidth={2} />
           </div>
         )
       case 'confirmation':
         return (
-          <div className="w-10 h-10 rounded-[14px] bg-[#E4F2EB] flex items-center justify-center text-[#0B683A] border border-[#0B683A]/10">
-            <CheckCircle2 size={20} strokeWidth={2.2} className="fill-[#0B683A]/10" />
+          <div className="w-10 h-10 rounded-[14px] bg-[#E4F2EB] flex items-center justify-center text-positive border border-positive/10">
+            <CheckCircle2 size={20} strokeWidth={2.2} className="fill-positive/10" />
           </div>
         )
       case 'reminder':
@@ -261,7 +261,7 @@ export default function NotificationsScreen() {
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24 relative select-none">
       {/* Toast Alert Indicator */}
       {toastMessage && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-[#0B683A] text-white px-5 py-2.5 rounded-full text-xs font-bold shadow-[0px_4px_16px_rgba(11,104,58,0.2)] animate-in fade-in slide-in-from-top duration-300">
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-positive text-white px-5 py-2.5 rounded-full text-xs font-bold shadow-[0px_4px_16px_rgba(11,104,58,0.2)] animate-in fade-in slide-in-from-top duration-300">
           {toastMessage}
         </div>
       )}

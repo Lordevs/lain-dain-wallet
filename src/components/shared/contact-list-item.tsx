@@ -73,8 +73,8 @@ export default function ContactListItem({
           size={avatarSize}
         />
         <div className="min-w-0">
-          <p className={cn("font-bold text-[14px] text-foreground truncate", contactNameClassName)}>{contact.name}</p>
-          {subtitle && <div className="text-xs leading-tight">{subtitle}</div>}
+          <p className={cn("font-normal text-lg text-foreground truncate", contactNameClassName)}>{contact.name}</p>
+          {subtitle && <div className="text-xs leading-tight font-medium">{subtitle}</div>}
         </div>
       </div>
 

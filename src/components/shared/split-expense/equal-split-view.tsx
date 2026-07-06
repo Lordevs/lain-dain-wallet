@@ -22,7 +22,7 @@ export default function EqualSplitView({
 }: EqualSplitViewProps) {
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex flex-col">
       {/* Equal split summary row */}
       <div className="flex items-center gap-2 mb-4 shrink-0 select-none text-left">
         <div className="w-6 h-6 rounded-full bg-positive flex items-center justify-center text-white shrink-0">
@@ -47,7 +47,7 @@ export default function EqualSplitView({
       </div>
 
       {/* Scrollable Members List Box */}
-      <div className="flex-1 overflow-y-auto border-[0.8px] rounded-lg border-divider divide-y divide-divider bg-white mb-2 select-none">
+      <div className="border-[0.8px] rounded-lg border-divider divide-y divide-divider bg-white mb-2 select-none overflow-hidden">
         {members.map((member) => {
           const isSelected = selectedMembers.includes(member.id)
 

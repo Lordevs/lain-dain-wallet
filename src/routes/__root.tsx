@@ -50,12 +50,12 @@ function RootComponent() {
           {/* Brand Logo Layout */}
           <div className="flex flex-col items-center -mt-6 shrink-0">
             <span className="text-[48px] font-bold tracking-tight">
-              <span className="text-[#0B683A]">Lain</span>{' '}
+              <span className="text-positive">Lain</span>{' '}
               <span className="text-[#FDB105]">Dain</span>
             </span>
             <div className="flex items-center gap-3.5 w-44 mt-3.5 justify-center">
               <div className="h-[0.8px] flex-1 bg-[#FDB105]/60" />
-              <span className="text-[12px] font-normal tracking-[0.25em] text-[#0B683A] uppercase leading-none">
+              <span className="text-[12px] font-normal tracking-[0.25em] text-positive uppercase leading-none">
                 Wallet
               </span>
               <div className="h-[0.8px] flex-1 bg-[#FDB105]/60" />

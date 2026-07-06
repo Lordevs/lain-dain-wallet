@@ -74,7 +74,7 @@ export default function ContactDetailScreen() {
       const displaySubtitle = record.category === 'payment' ? (
         <div className="flex flex-col text-left">
           <span className="text-[#6B6B6B] text-[12px] font-normal">You paid {firstName}</span>
-          <span className="text-[#0B683A] text-[12px] font-semibold">{record.subtitle}</span>
+          <span className="text-positive text-[12px] font-semibold">{record.subtitle}</span>
         </div>
       ) : record.subtitle
 
@@ -140,7 +140,7 @@ export default function ContactDetailScreen() {
       : 'Settle up'
 
   const amountColorClass = isPositive
-    ? 'text-[#0B683A]'
+    ? 'text-positive'
     : isNegative
       ? 'text-[#C96A1B]'
       : 'text-[#1A1A1A]'
@@ -183,9 +183,9 @@ export default function ContactDetailScreen() {
             <button
               type="button"
               onClick={() => openDrawer('reminder')}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-[#0B683A4D] bg-[#E4F2EB] text-[#0B683A] text-xs font-bold transition-all hover:bg-[#E4F2EB]/80 shrink-0 cursor-pointer outline-none"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-[#0B683A4D] bg-[#E4F2EB] text-positive text-xs font-bold transition-all hover:bg-[#E4F2EB]/80 shrink-0 cursor-pointer outline-none"
             >
-              <Bell size={13} className="text-[#0B683A]" strokeWidth={2.5} />
+              <Bell size={13} className="text-positive" strokeWidth={2.5} />
               Remind
             </button>
           )}
@@ -245,12 +245,12 @@ export default function ContactDetailScreen() {
       </div>
 
       {/* Sticky Bottom Row Buttons */}
-      <div className="fixed bottom-0 left-0 right-0 z-10 px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-[#FEFAF1]/90 flex items-center gap-4">
+      <div className="fixed bottom-3 left-3 right-3 z-10 flex items-center gap-4">
         {/* + Add Expense */}
         <button
           type="button"
           onClick={() => openDrawer('add-expense')}
-          className="flex-1 h-12 rounded-full bg-[#0B683A] text-white font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
+          className="flex-1 h-12 rounded-full bg-positive text-white font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
         >
           Add Expense
         </button>

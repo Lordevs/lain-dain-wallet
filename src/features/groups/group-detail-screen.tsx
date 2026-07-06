@@ -134,8 +134,8 @@ export default function GroupDetailScreen() {
             <div className="flex flex-col text-left">
               <div className="flex items-center justify-between mb-3 mt-1">
                 <h3 className="text-sm font-bold text-[#1A1A1A]">Balances</h3>
-                <button className="flex items-center gap-1 text-[13px] font-bold text-[#0B683A] bg-transparent border-0 cursor-pointer outline-none">
-                  View all <ChevronRight size={14} className="rotate-90 text-[#0B683A]" strokeWidth={2.5} />
+                <button className="flex items-center gap-1 text-[13px] font-bold text-positive bg-transparent border-0 cursor-pointer outline-none">
+                  View all <ChevronRight size={14} className="rotate-90 text-positive" strokeWidth={2.5} />
                 </button>
               </div>
 
@@ -143,17 +143,6 @@ export default function GroupDetailScreen() {
                 {groupBalances.map((mb) => (
                   <ContactListItem
                     key={mb.id}
-                    onClick={() => {
-                      const targetId = mb.name === 'Ali Hassan'
-                        ? '1'
-                        : mb.name === 'Sara Khan'
-                          ? '2'
-                          : '1' // Fallback to Ali Hassan (existing mock data)
-                      navigate({
-                        to: ROUTES.CONTACT_DETAILS,
-                        params: { id: targetId }
-                      })
-                    }}
                     contact={{
                       id: mb.id,
                       name: mb.name,
@@ -162,8 +151,7 @@ export default function GroupDetailScreen() {
                     }}
                     subtitle={
                       <span className={cn(
-                        "font-bold text-[12px] leading-tight",
-                        mb.direction === 'in' ? 'text-[#0B683A]' : 'text-[#C96A1B]'
+                        mb.direction === 'in' ? 'text-positive' : 'text-[#C96A1B]'
                       )}>
                         {mb.subtitle}
                       </span>
@@ -172,18 +160,17 @@ export default function GroupDetailScreen() {
                       <div className="flex items-center gap-2">
                         <div className="flex items-center gap-0.5">
                           {mb.direction === 'in' ? (
-                            <span className="text-[#0B683A] font-extrabold text-[15px]">↓</span>
+                            <span className="text-positive font-semibold text-[13px]">↓</span>
                           ) : (
-                            <span className="text-[#C96A1B] font-extrabold text-[15px]">↑</span>
+                            <span className="text-[#C96A1B] font-semibold text-[13px]">↑</span>
                           )}
                           <span className={cn(
-                            "text-[15px] font-extrabold",
-                            mb.direction === 'in' ? 'text-[#0B683A]' : 'text-[#C96A1B]'
+                            "text-[13px] font-black",
+                            mb.direction === 'in' ? 'text-positive' : 'text-[#C96A1B]'
                           )}>
                             Rs. {new Intl.NumberFormat('en-US').format(mb.amount)}
                           </span>
                         </div>
-                        <ChevronRight size={14} className="text-[#9A9590]" strokeWidth={2.5} />
                       </div>
                     }
                     className="p-4 hover:bg-muted/5 transition-all bg-white"
@@ -219,17 +206,17 @@ export default function GroupDetailScreen() {
                           <IconComp size={20} style={{ color: summary.color }} />
                         </div>
                         <div className="flex flex-col text-left">
-                          <span className="font-bold text-[15px] text-[#1A1A1A]">
+                          <span className="font-semibold text-sm text-[#1A1A1A]">
                             {summary.label}
                           </span>
-                          <span className="text-[12px] text-[#6B6B6B] font-medium mt-0.5">
+                          <span className="text-xs text-[#6B6B6B] font-normal mt-0.5">
                             {summary.count} {summary.count === 1 ? 'item' : 'items'}
                           </span>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className="font-extrabold text-[15px] text-[#1A1A1A]">
+                        <span className="font-bold text-sm text-[#1A1A1A]">
                           {formattedVal}
                         </span>
                         <ChevronRight size={16} className="text-[#9A9590]" strokeWidth={2.5} />
@@ -243,12 +230,12 @@ export default function GroupDetailScreen() {
           </div>
 
           {/* Sticky Bottom Row Buttons */}
-          <div className="fixed bottom-0 left-0 right-0 z-10 px-6 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-[#FEFAF1]/90 flex items-center gap-4 border-t border-[#EFE7DD]/30 backdrop-blur-sm">
+          <div className="fixed bottom-3 left-3 right-3 z-10 flex items-center gap-4">
             {/* + Add Expense */}
             <button
               type="button"
               onClick={() => openDrawer('add-expense')}
-              className="flex-1 h-12 rounded-full bg-[#0B683A] text-white font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
+              className="flex-1 h-12 rounded-full bg-positive text-white font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
             >
               Add Expense
             </button>

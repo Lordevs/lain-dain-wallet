@@ -7,6 +7,7 @@ import BalanceSummaryCard from './components/balance-summary-card'
 import LedgerTabs, { type LedgerTab } from './components/ledger-tabs'
 import SectionHeader from './components/section-header'
 import ContactLedgerCard from './components/contact-ledger-card'
+import SearchResultsOverlay from './components/search-results-overlay'
 import Fab from './components/fab'
 import { useShallow } from 'zustand/react/shallow'
 import { useContactStore, selectBalanceSummary, selectReceivables, selectPayables } from '@/store/use-contact-store'
@@ -22,6 +23,7 @@ export default function DashboardScreen() {
   const { drawer, contactId } = useSearch({ from: '/' })
   const [activeTab, setActiveTab] = useState<LedgerTab>('receivables')
   const [search, setSearch] = useState('')
+  const [isSearchActive, setIsSearchActive] = useState(false)
   const [filterType, setFilterType] = useState<'all' | 'people' | 'groups'>('all')
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest')
   const openedInSessionRef = useRef(false)
@@ -29,6 +31,9 @@ export default function DashboardScreen() {
   const balanceSummary = useContactStore(useShallow(selectBalanceSummary))
   const receivables = useContactStore(useShallow(selectReceivables))
   const payables = useContactStore(useShallow(selectPayables))
+
+  // All contacts (receivables + payables) for search
+  const allContacts = useContactStore(useShallow((s) => s.contacts))
 
   const closeDrawer = () => {
     if (!drawer) return
@@ -59,6 +64,15 @@ export default function DashboardScreen() {
       }),
       replace: !!drawer,
     })
+  }
+
+  const handleSearchFocus = () => {
+    setIsSearchActive(true)
+  }
+
+  const handleSearchClose = () => {
+    setSearch('')
+    setIsSearchActive(false)
   }
 
   const contacts = activeTab === 'receivables' ? receivables : payables
@@ -109,62 +123,95 @@ export default function DashboardScreen() {
 
 
   return (
-    <div className="flex flex-col flex-1 bg-[#FEFAF1]">
-      {/* App Header — Logo + Avatar */}
-      <AppHeader />
+    <div className="flex flex-col flex-1 bg-[#FEFAF1] overflow-hidden">
+      {/* App Header — Logo + Avatar (hidden when search is active) */}
+      {!isSearchActive && <AppHeader />}
 
-      {/* Search Bar */}
-      <div className="px-6 mt-3">
-        <SearchBar
-          value={search}
-          onChange={setSearch}
-          id="dashboard-search"
+      {/* Search Bar area */}
+      {isSearchActive ? (
+        /* Active Search Header using SearchBar in isActive mode */
+        <div className="px-4 py-3 shrink-0">
+          <SearchBar
+            id="dashboard-search-active"
+            value={search}
+            onChange={setSearch}
+            onBack={handleSearchClose}
+            onClear={() => setSearch('')}
+            placeholder="Search people or groups…"
+            isActive
+          />
+        </div>
+      ) : (
+        /* Passive Search Bar (tap to activate) */
+        <div className="px-6 mt-3">
+          <SearchBar
+            value=""
+            onChange={() => {}}
+            onFocus={handleSearchFocus}
+            id="dashboard-search"
+          />
+        </div>
+      )}
+
+      {/* Search Results — rendered as flex-1 sibling below the search bar */}
+      {isSearchActive ? (
+        <SearchResultsOverlay
+          query={search}
+          contacts={allContacts}
+          onPersonClick={(id) => {
+            handleSearchClose()
+            openDrawer(id)
+          }}
+          onClose={handleSearchClose}
         />
-      </div>
+      ) : (
+        /* Main Content */
+        <>
+          {/* Balance Summary Card */}
+          <BalanceSummaryCard summary={balanceSummary} />
 
-      {/* Balance Summary Card */}
-      <BalanceSummaryCard summary={balanceSummary} />
+          {/* Tab Switcher */}
+          <LedgerTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {/* Tab Switcher */}
-      <LedgerTabs activeTab={activeTab} onTabChange={setActiveTab} />
+          {/* Section Label + Filter */}
+          <SectionHeader
+            title={sectionTitle}
+            sortBy={sortBy}
+            onSortByChange={setSortBy}
+            filterType={filterType}
+            onFilterTypeChange={setFilterType}
+          />
 
-      {/* Section Label + Filter */}
-      <SectionHeader
-        title={sectionTitle}
-        sortBy={sortBy}
-        onSortByChange={setSortBy}
-        filterType={filterType}
-        onFilterTypeChange={setFilterType}
-      />
-
-      {/* Contact/Group Ledger Cards */}
-      <div className="flex flex-col gap-1.5 px-6 pb-6">
-        {filteredContacts.length > 0 ? (
-          filteredContacts.map((contact) => (
-            <ContactLedgerCard
-              key={contact.id}
-              contact={contact}
-              onClick={() => {
-                if (contact.type === 'person') {
-                  openDrawer(contact.id)
-                } else {
-                  navigate({
-                    to: ROUTES.GROUP_DETAILS,
-                    params: { id: contact.id },
-                  })
-                }
-              }}
-            />
-          ))
-        ) : (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <p className="text-muted-foreground text-sm">No results found</p>
+          {/* Contact/Group Ledger Cards */}
+          <div className="flex flex-col gap-1.5 px-6 pb-6">
+            {filteredContacts.length > 0 ? (
+              filteredContacts.map((contact) => (
+                <ContactLedgerCard
+                  key={contact.id}
+                  contact={contact}
+                  onClick={() => {
+                    if (contact.type === 'person') {
+                      openDrawer(contact.id)
+                    } else {
+                      navigate({
+                        to: ROUTES.GROUP_DETAILS,
+                        params: { id: contact.id },
+                      })
+                    }
+                  }}
+                />
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <p className="text-muted-foreground text-sm">No results found</p>
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Floating Action Button */}
-      <Fab onClick={() => navigate({ to: ROUTES.NEW_CONTACT })} />
+          {/* Floating Action Button */}
+          <Fab onClick={() => navigate({ to: ROUTES.NEW_CONTACT })} />
+        </>
+      )}
 
       {drawer === 'breakdown' && contactId && (
         <LedgerBreakdownScreen contactId={contactId} onClose={closeDrawer} />

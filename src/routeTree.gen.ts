@@ -21,12 +21,17 @@ import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as TransactionsIdRouteImport } from './routes/transactions/$id'
 import { Route as PersonalSettingsRouteImport } from './routes/personal/settings'
 import { Route as PersonalReportsRouteImport } from './routes/personal/reports'
+import { Route as PersonalHideLedgersRouteImport } from './routes/personal/hide-ledgers'
+import { Route as PersonalDefaultPeriodRouteImport } from './routes/personal/default-period'
 import { Route as PersonalCategoriesRouteImport } from './routes/personal/categories'
+import { Route as PersonalBudgetLimitRouteImport } from './routes/personal/budget-limit'
 import { Route as GroupsIdRouteImport } from './routes/groups/$id'
 import { Route as ContactsNewRouteImport } from './routes/contacts/new'
 import { Route as ContactsIdRouteImport } from './routes/contacts/$id'
+import { Route as PersonalCategoryBudgetsIndexRouteImport } from './routes/personal/category-budgets.index'
 import { Route as GroupsIdIndexRouteImport } from './routes/groups/$id.index'
 import { Route as ContactsIdIndexRouteImport } from './routes/contacts/$id.index'
+import { Route as PersonalCategoryBudgetsCatIdRouteImport } from './routes/personal/category-budgets.$catId'
 import { Route as GroupsIdSettingsRouteImport } from './routes/groups/$id.settings'
 import { Route as GroupsIdRecurringRouteImport } from './routes/groups/$id.recurring'
 import { Route as GroupsIdRecurringIndexRouteImport } from './routes/groups/$id.recurring.index'
@@ -91,9 +96,24 @@ const PersonalReportsRoute = PersonalReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => PersonalRoute,
 } as any)
+const PersonalHideLedgersRoute = PersonalHideLedgersRouteImport.update({
+  id: '/hide-ledgers',
+  path: '/hide-ledgers',
+  getParentRoute: () => PersonalRoute,
+} as any)
+const PersonalDefaultPeriodRoute = PersonalDefaultPeriodRouteImport.update({
+  id: '/default-period',
+  path: '/default-period',
+  getParentRoute: () => PersonalRoute,
+} as any)
 const PersonalCategoriesRoute = PersonalCategoriesRouteImport.update({
   id: '/categories',
   path: '/categories',
+  getParentRoute: () => PersonalRoute,
+} as any)
+const PersonalBudgetLimitRoute = PersonalBudgetLimitRouteImport.update({
+  id: '/budget-limit',
+  path: '/budget-limit',
   getParentRoute: () => PersonalRoute,
 } as any)
 const GroupsIdRoute = GroupsIdRouteImport.update({
@@ -111,6 +131,12 @@ const ContactsIdRoute = ContactsIdRouteImport.update({
   path: '/contacts/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PersonalCategoryBudgetsIndexRoute =
+  PersonalCategoryBudgetsIndexRouteImport.update({
+    id: '/category-budgets/',
+    path: '/category-budgets/',
+    getParentRoute: () => PersonalRoute,
+  } as any)
 const GroupsIdIndexRoute = GroupsIdIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -121,6 +147,12 @@ const ContactsIdIndexRoute = ContactsIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ContactsIdRoute,
 } as any)
+const PersonalCategoryBudgetsCatIdRoute =
+  PersonalCategoryBudgetsCatIdRouteImport.update({
+    id: '/category-budgets/$catId',
+    path: '/category-budgets/$catId',
+    getParentRoute: () => PersonalRoute,
+  } as any)
 const GroupsIdSettingsRoute = GroupsIdSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -145,7 +177,10 @@ export interface FileRoutesByFullPath {
   '/contacts/$id': typeof ContactsIdRouteWithChildren
   '/contacts/new': typeof ContactsNewRoute
   '/groups/$id': typeof GroupsIdRouteWithChildren
+  '/personal/budget-limit': typeof PersonalBudgetLimitRoute
   '/personal/categories': typeof PersonalCategoriesRoute
+  '/personal/default-period': typeof PersonalDefaultPeriodRoute
+  '/personal/hide-ledgers': typeof PersonalHideLedgersRoute
   '/personal/reports': typeof PersonalReportsRoute
   '/personal/settings': typeof PersonalSettingsRoute
   '/transactions/$id': typeof TransactionsIdRoute
@@ -156,15 +191,20 @@ export interface FileRoutesByFullPath {
   '/transactions/': typeof TransactionsIndexRoute
   '/groups/$id/recurring': typeof GroupsIdRecurringRouteWithChildren
   '/groups/$id/settings': typeof GroupsIdSettingsRoute
+  '/personal/category-budgets/$catId': typeof PersonalCategoryBudgetsCatIdRoute
   '/contacts/$id/': typeof ContactsIdIndexRoute
   '/groups/$id/': typeof GroupsIdIndexRoute
+  '/personal/category-budgets/': typeof PersonalCategoryBudgetsIndexRoute
   '/groups/$id/recurring/': typeof GroupsIdRecurringIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRoute
   '/contacts/new': typeof ContactsNewRoute
+  '/personal/budget-limit': typeof PersonalBudgetLimitRoute
   '/personal/categories': typeof PersonalCategoriesRoute
+  '/personal/default-period': typeof PersonalDefaultPeriodRoute
+  '/personal/hide-ledgers': typeof PersonalHideLedgersRoute
   '/personal/reports': typeof PersonalReportsRoute
   '/personal/settings': typeof PersonalSettingsRoute
   '/transactions/$id': typeof TransactionsIdRoute
@@ -174,8 +214,10 @@ export interface FileRoutesByTo {
   '/personal': typeof PersonalIndexRoute
   '/transactions': typeof TransactionsIndexRoute
   '/groups/$id/settings': typeof GroupsIdSettingsRoute
+  '/personal/category-budgets/$catId': typeof PersonalCategoryBudgetsCatIdRoute
   '/contacts/$id': typeof ContactsIdIndexRoute
   '/groups/$id': typeof GroupsIdIndexRoute
+  '/personal/category-budgets': typeof PersonalCategoryBudgetsIndexRoute
   '/groups/$id/recurring': typeof GroupsIdRecurringIndexRoute
 }
 export interface FileRoutesById {
@@ -187,7 +229,10 @@ export interface FileRoutesById {
   '/contacts/$id': typeof ContactsIdRouteWithChildren
   '/contacts/new': typeof ContactsNewRoute
   '/groups/$id': typeof GroupsIdRouteWithChildren
+  '/personal/budget-limit': typeof PersonalBudgetLimitRoute
   '/personal/categories': typeof PersonalCategoriesRoute
+  '/personal/default-period': typeof PersonalDefaultPeriodRoute
+  '/personal/hide-ledgers': typeof PersonalHideLedgersRoute
   '/personal/reports': typeof PersonalReportsRoute
   '/personal/settings': typeof PersonalSettingsRoute
   '/transactions/$id': typeof TransactionsIdRoute
@@ -198,8 +243,10 @@ export interface FileRoutesById {
   '/transactions/': typeof TransactionsIndexRoute
   '/groups/$id/recurring': typeof GroupsIdRecurringRouteWithChildren
   '/groups/$id/settings': typeof GroupsIdSettingsRoute
+  '/personal/category-budgets/$catId': typeof PersonalCategoryBudgetsCatIdRoute
   '/contacts/$id/': typeof ContactsIdIndexRoute
   '/groups/$id/': typeof GroupsIdIndexRoute
+  '/personal/category-budgets/': typeof PersonalCategoryBudgetsIndexRoute
   '/groups/$id/recurring/': typeof GroupsIdRecurringIndexRoute
 }
 export interface FileRouteTypes {
@@ -212,7 +259,10 @@ export interface FileRouteTypes {
     | '/contacts/$id'
     | '/contacts/new'
     | '/groups/$id'
+    | '/personal/budget-limit'
     | '/personal/categories'
+    | '/personal/default-period'
+    | '/personal/hide-ledgers'
     | '/personal/reports'
     | '/personal/settings'
     | '/transactions/$id'
@@ -223,15 +273,20 @@ export interface FileRouteTypes {
     | '/transactions/'
     | '/groups/$id/recurring'
     | '/groups/$id/settings'
+    | '/personal/category-budgets/$catId'
     | '/contacts/$id/'
     | '/groups/$id/'
+    | '/personal/category-budgets/'
     | '/groups/$id/recurring/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/settings'
     | '/contacts/new'
+    | '/personal/budget-limit'
     | '/personal/categories'
+    | '/personal/default-period'
+    | '/personal/hide-ledgers'
     | '/personal/reports'
     | '/personal/settings'
     | '/transactions/$id'
@@ -241,8 +296,10 @@ export interface FileRouteTypes {
     | '/personal'
     | '/transactions'
     | '/groups/$id/settings'
+    | '/personal/category-budgets/$catId'
     | '/contacts/$id'
     | '/groups/$id'
+    | '/personal/category-budgets'
     | '/groups/$id/recurring'
   id:
     | '__root__'
@@ -253,7 +310,10 @@ export interface FileRouteTypes {
     | '/contacts/$id'
     | '/contacts/new'
     | '/groups/$id'
+    | '/personal/budget-limit'
     | '/personal/categories'
+    | '/personal/default-period'
+    | '/personal/hide-ledgers'
     | '/personal/reports'
     | '/personal/settings'
     | '/transactions/$id'
@@ -264,8 +324,10 @@ export interface FileRouteTypes {
     | '/transactions/'
     | '/groups/$id/recurring'
     | '/groups/$id/settings'
+    | '/personal/category-budgets/$catId'
     | '/contacts/$id/'
     | '/groups/$id/'
+    | '/personal/category-budgets/'
     | '/groups/$id/recurring/'
   fileRoutesById: FileRoutesById
 }
@@ -369,11 +431,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PersonalReportsRouteImport
       parentRoute: typeof PersonalRoute
     }
+    '/personal/hide-ledgers': {
+      id: '/personal/hide-ledgers'
+      path: '/hide-ledgers'
+      fullPath: '/personal/hide-ledgers'
+      preLoaderRoute: typeof PersonalHideLedgersRouteImport
+      parentRoute: typeof PersonalRoute
+    }
+    '/personal/default-period': {
+      id: '/personal/default-period'
+      path: '/default-period'
+      fullPath: '/personal/default-period'
+      preLoaderRoute: typeof PersonalDefaultPeriodRouteImport
+      parentRoute: typeof PersonalRoute
+    }
     '/personal/categories': {
       id: '/personal/categories'
       path: '/categories'
       fullPath: '/personal/categories'
       preLoaderRoute: typeof PersonalCategoriesRouteImport
+      parentRoute: typeof PersonalRoute
+    }
+    '/personal/budget-limit': {
+      id: '/personal/budget-limit'
+      path: '/budget-limit'
+      fullPath: '/personal/budget-limit'
+      preLoaderRoute: typeof PersonalBudgetLimitRouteImport
       parentRoute: typeof PersonalRoute
     }
     '/groups/$id': {
@@ -397,6 +480,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/personal/category-budgets/': {
+      id: '/personal/category-budgets/'
+      path: '/category-budgets'
+      fullPath: '/personal/category-budgets/'
+      preLoaderRoute: typeof PersonalCategoryBudgetsIndexRouteImport
+      parentRoute: typeof PersonalRoute
+    }
     '/groups/$id/': {
       id: '/groups/$id/'
       path: '/'
@@ -410,6 +500,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/contacts/$id/'
       preLoaderRoute: typeof ContactsIdIndexRouteImport
       parentRoute: typeof ContactsIdRoute
+    }
+    '/personal/category-budgets/$catId': {
+      id: '/personal/category-budgets/$catId'
+      path: '/category-budgets/$catId'
+      fullPath: '/personal/category-budgets/$catId'
+      preLoaderRoute: typeof PersonalCategoryBudgetsCatIdRouteImport
+      parentRoute: typeof PersonalRoute
     }
     '/groups/$id/settings': {
       id: '/groups/$id/settings'
@@ -448,17 +545,27 @@ const NotificationsRouteWithChildren = NotificationsRoute._addFileChildren(
 )
 
 interface PersonalRouteChildren {
+  PersonalBudgetLimitRoute: typeof PersonalBudgetLimitRoute
   PersonalCategoriesRoute: typeof PersonalCategoriesRoute
+  PersonalDefaultPeriodRoute: typeof PersonalDefaultPeriodRoute
+  PersonalHideLedgersRoute: typeof PersonalHideLedgersRoute
   PersonalReportsRoute: typeof PersonalReportsRoute
   PersonalSettingsRoute: typeof PersonalSettingsRoute
   PersonalIndexRoute: typeof PersonalIndexRoute
+  PersonalCategoryBudgetsCatIdRoute: typeof PersonalCategoryBudgetsCatIdRoute
+  PersonalCategoryBudgetsIndexRoute: typeof PersonalCategoryBudgetsIndexRoute
 }
 
 const PersonalRouteChildren: PersonalRouteChildren = {
+  PersonalBudgetLimitRoute: PersonalBudgetLimitRoute,
   PersonalCategoriesRoute: PersonalCategoriesRoute,
+  PersonalDefaultPeriodRoute: PersonalDefaultPeriodRoute,
+  PersonalHideLedgersRoute: PersonalHideLedgersRoute,
   PersonalReportsRoute: PersonalReportsRoute,
   PersonalSettingsRoute: PersonalSettingsRoute,
   PersonalIndexRoute: PersonalIndexRoute,
+  PersonalCategoryBudgetsCatIdRoute: PersonalCategoryBudgetsCatIdRoute,
+  PersonalCategoryBudgetsIndexRoute: PersonalCategoryBudgetsIndexRoute,
 }
 
 const PersonalRouteWithChildren = PersonalRoute._addFileChildren(

@@ -150,7 +150,7 @@ function SortFilterForm({ sortBy, filterType, onApply, onReset }: SortFilterForm
                     <ItemTitle
                       className={cn(
                         'text-[15px] font-bold',
-                        isSelected ? 'text-[#0B683A]' : 'text-[#1A1A1A]',
+                        isSelected ? 'text-positive' : 'text-[#1A1A1A]',
                       )}
                     >
                       {option.label}
@@ -162,7 +162,7 @@ function SortFilterForm({ sortBy, filterType, onApply, onReset }: SortFilterForm
                       id={`sort-${option.value}`}
                       className={cn(
                         'w-6 h-6 border-[1.5px] shrink-0 border-[#E2DDD5]',
-                        'data-[state=checked]:bg-[#0B683A] data-[state=checked]:border-[#0B683A]'
+                        'data-[state=checked]:bg-positive data-[state=checked]:border-positive'
                       )}
                     />
                   </ItemActions>
@@ -212,7 +212,7 @@ function SortFilterForm({ sortBy, filterType, onApply, onReset }: SortFilterForm
                     <ItemTitle
                       className={cn(
                         'text-[15px] font-bold',
-                        isSelected ? 'text-[#0B683A]' : 'text-[#1A1A1A]',
+                        isSelected ? 'text-positive' : 'text-[#1A1A1A]',
                       )}
                     >
                       {option.label}
@@ -224,7 +224,7 @@ function SortFilterForm({ sortBy, filterType, onApply, onReset }: SortFilterForm
                       id={`filter-${option.value}`}
                       className={cn(
                         'w-6 h-6 border-[1.5px] shrink-0 border-[#E2DDD5]',
-                        'data-[state=checked]:bg-[#0B683A] data-[state=checked]:border-[#0B683A]'
+                        'data-[state=checked]:bg-positive data-[state=checked]:border-positive'
                       )}
                     />
                   </ItemActions>
@@ -236,7 +236,7 @@ function SortFilterForm({ sortBy, filterType, onApply, onReset }: SortFilterForm
       </div>
 
       {/* Footer - Apply Filters Button */}
-      <div className="absolute bottom-6 left-6 right-6 z-10 shrink-0">
+      <div className="fixed bottom-3 left-3 right-3 z-10">
         <Button
           type="button"
           onClick={handleApply}

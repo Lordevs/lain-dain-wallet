@@ -69,7 +69,7 @@ export default function ReportIssuePanel({ onClose, onSuccess }: ReportIssuePane
       subtitle: 'The numbers don\'t look right',
       icon: DollarSign,
       bgColor: 'bg-[#E4F2EB]',
-      iconColor: 'text-[#0B683A]',
+      iconColor: 'text-positive',
     },
     {
       id: 'agreement' as IssueType,
@@ -98,7 +98,7 @@ export default function ReportIssuePanel({ onClose, onSuccess }: ReportIssuePane
   ]
 
   return (
-    <div className="fixed inset-0 z-60 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto animate-in fade-in slide-in-from-right duration-200 text-[#1A1A1A]">
+    <div className="fixed inset-0 z-60 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto text-[#1A1A1A]">
       <FlowHeader
         title="Report an Issue"
         onBack={onClose}
@@ -128,7 +128,7 @@ export default function ReportIssuePanel({ onClose, onSuccess }: ReportIssuePane
                         <item.icon size={20} strokeWidth={2.2} />
                       </div>
                       <div>
-                        <h4 className={`text-[15px] font-bold leading-tight ${isSelected ? 'text-[#0B683A]' : 'text-[#1A1A1A]'}`}>
+                        <h4 className={`text-[15px] font-bold leading-tight ${isSelected ? 'text-positive' : 'text-[#1A1A1A]'}`}>
                           {item.title}
                         </h4>
                         <p className="text-[12px] text-[#6B6B6B] mt-1">{item.subtitle}</p>
@@ -136,7 +136,7 @@ export default function ReportIssuePanel({ onClose, onSuccess }: ReportIssuePane
                     </div>
                     <div className="shrink-0">
                       {isSelected ? (
-                        <div className="w-5 h-5 rounded-full bg-[#0B683A] text-white flex items-center justify-center">
+                        <div className="w-5 h-5 rounded-full bg-positive text-white flex items-center justify-center">
                           <Check size={12} strokeWidth={3} />
                         </div>
                       ) : (
@@ -154,7 +154,7 @@ export default function ReportIssuePanel({ onClose, onSuccess }: ReportIssuePane
             <h3 className="text-[11px] font-semibold tracking-widest text-[#6B6B6B] uppercase mb-1.5 px-1">
               Describe the issue
             </h3>
-            <div className="bg-white border-[1.5px] border-[#EBEBEB] focus-within:border-[#0B683A] rounded-[18px] overflow-hidden flex flex-col shadow-[0px_2px_10px_0px_rgba(0,0,0,0.03)] transition-all">
+            <div className="bg-white border-[1.5px] border-[#EBEBEB] focus-within:border-positive rounded-[18px] overflow-hidden flex flex-col shadow-[0px_2px_10px_0px_rgba(0,0,0,0.03)] transition-all">
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value.slice(0, maxChars))}
@@ -169,7 +169,7 @@ export default function ReportIssuePanel({ onClose, onSuccess }: ReportIssuePane
                 <button
                   type="button"
                   onClick={() => setDescription('')}
-                  className="text-[#0B683A] font-bold text-[13px] cursor-pointer outline-none bg-transparent border-0"
+                  className="text-positive font-bold text-[13px] cursor-pointer outline-none bg-transparent border-0"
                 >
                   Clear
                 </button>

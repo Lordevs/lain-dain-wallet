@@ -5,16 +5,20 @@ import { ROUTES } from '@/constants/routes'
 import FlowHeader from '@/components/shared/flow-header'
 import { Switch } from '@/components/ui/switch'
 import ConfirmActionDrawer from '@/components/shared/confirm-action-drawer'
-import SelectDateDrawer from '@/components/shared/select-date-drawer'
+import { useContactStore } from '@/store/use-contact-store'
+
+function getOrdinal(n: number) {
+  const s = ['th', 'st', 'nd', 'rd']
+  const v = n % 100
+  return n + (s[(v - 20) % 10] || s[v] || s[0])
+}
 
 export default function PersonalSettingsScreen() {
   const navigate = useNavigate()
+  const { resetDay, budgetLimit } = useContactStore()
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false)
   const [showSpendingComp, setShowSpendingComp] = useState(true)
   const [monthlyAlert, setMonthlyAlert] = useState(true)
-  const [recurringRemind, setRecurringRemind] = useState(true)
-  const [isDateDrawerOpen, setIsDateDrawerOpen] = useState(false)
-  const [defaultPeriodText, setDefaultPeriodText] = useState('This month')
 
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen select-none overflow-hidden">
@@ -25,23 +29,25 @@ export default function PersonalSettingsScreen() {
       />
 
       {/* Main Settings Scroll Container */}
-      <div className="flex-1 overflow-y-auto px-6 flex flex-col gap-1">
+      <div className="flex-1 overflow-y-auto px-6 flex flex-col gap-3">
 
         {/* DISPLAY SECTION */}
         <div className="flex flex-col text-left">
-          <h4 className="text-[11px] font-bold text-[#6B6B6B] tracking-widest mb-2.5 px-1 uppercase">
+          <h4 className="text-[11px] font-semibold text-[#6B6B6B] tracking-[0.8px] mb-0.5 px-1 uppercase">
             Display
           </h4>
-          <div className="bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] divide-y divide-[#EFE7DD] overflow-hidden text-left mb-6">
-
+          <div className="bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] divide-y divide-[#EFE7DD] overflow-hidden text-left">
             {/* Default View */}
-            <div className="p-5 flex items-center justify-between transition-colors hover:bg-muted/5 cursor-pointer">
+            <div
+              className="p-5 flex items-center justify-between transition-colors hover:bg-muted/5 cursor-pointer"
+              onClick={() => navigate({ to: ROUTES.PERSONAL_HIDE_LEDGERS })}
+            >
               <div className="flex flex-col text-left pr-4">
-                <span className="text-[15px] font-bold text-[#1A1A1A] leading-tight">Default view</span>
-                <span className="text-[12px] font-normal text-[#6B6B6B] mt-1 leading-normal">Groups or All categories first</span>
+                <span className="text-[15px] font-semibold text-[#1A1A1A] leading-tight">Hide Ledgers</span>
+                <span className="text-[12px] font-normal text-[#6B6B6B] mt-1 leading-normal">Groups or contacts added in expense</span>
               </div>
               <div className="flex items-center gap-1.5 shrink-0 select-none">
-                <span className="text-sm font-semibold text-[#6B6B6B]">Groups</span>
+                <span className="text-[13px] font-semibold text-[#6B6B6B]">View</span>
                 <ChevronRight size={14} className="text-[#6B6B6B]" strokeWidth={2.5} />
               </div>
             </div>
@@ -49,14 +55,14 @@ export default function PersonalSettingsScreen() {
             {/* Default Period */}
             <div
               className="p-5 flex items-center justify-between transition-colors hover:bg-muted/5 cursor-pointer"
-              onClick={() => setIsDateDrawerOpen(true)}
+              onClick={() => navigate({ to: ROUTES.PERSONAL_DEFAULT_PERIOD })}
             >
               <div className="flex flex-col text-left pr-4">
-                <span className="text-[15px] font-bold text-[#1A1A1A] leading-tight">Default period</span>
+                <span className="text-[15px] font-semibold text-[#1A1A1A] leading-tight">Default period</span>
                 <span className="text-[12px] font-normal text-[#6B6B6B] mt-1 leading-normal">Time range shown on open</span>
               </div>
               <div className="flex items-center gap-1.5 shrink-0 select-none">
-                <span className="text-sm font-semibold text-[#6B6B6B]">{defaultPeriodText}</span>
+                <span className="text-[13px] font-semibold text-[#6B6B6B]">{getOrdinal(resetDay)}</span>
                 <ChevronRight size={14} className="text-[#6B6B6B]" strokeWidth={2.5} />
               </div>
             </div>
@@ -67,7 +73,7 @@ export default function PersonalSettingsScreen() {
               onClick={() => setShowSpendingComp(!showSpendingComp)}
             >
               <div className="flex flex-col text-left pr-4">
-                <span className="text-[15px] font-bold text-[#1A1A1A] leading-tight">Show spending comparison</span>
+                <span className="text-[15px] font-semibold text-[#1A1A1A] leading-tight">Show spending comparison</span>
                 <span className="text-[12px] font-normal text-[#6B6B6B] mt-1 leading-normal">"Rs. X more than last month"</span>
               </div>
               <div className="shrink-0 select-none" onClick={(e) => e.stopPropagation()}>
@@ -80,10 +86,10 @@ export default function PersonalSettingsScreen() {
 
         {/* NOTIFICATIONS SECTION */}
         <div className="flex flex-col text-left">
-          <h4 className="text-[11px] font-bold text-[#6B6B6B] tracking-widest mb-2.5 px-1 uppercase">
+          <h4 className="text-[11px] font-semibold text-[#6B6B6B] tracking-[0.8px] mb-0.5 px-1 uppercase">
             Notifications
           </h4>
-          <div className="bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] divide-y divide-[#EFE7DD] overflow-hidden text-left mb-6">
+          <div className="bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] divide-y divide-[#EFE7DD] overflow-hidden text-left ">
 
             {/* Monthly spending alert */}
             <div
@@ -91,54 +97,47 @@ export default function PersonalSettingsScreen() {
               onClick={() => setMonthlyAlert(!monthlyAlert)}
             >
               <div className="flex flex-col text-left pr-4">
-                <span className="text-[15px] font-bold text-[#1A1A1A] leading-tight">Monthly spending alert</span>
+                <span className="text-[15px] font-semibold text-[#1A1A1A] leading-tight">Monthly spending alert</span>
                 <span className="text-[12px] font-normal text-[#6B6B6B] mt-1 leading-normal">Notify when nearing budget</span>
               </div>
               <div className="shrink-0 select-none" onClick={(e) => e.stopPropagation()}>
                 <Switch checked={monthlyAlert} onCheckedChange={setMonthlyAlert} size="lg" />
               </div>
             </div>
-
-            {/* Recurring payment reminders */}
-            <div
-              className="p-5 flex items-center justify-between transition-colors hover:bg-muted/5 cursor-pointer"
-              onClick={() => setRecurringRemind(!recurringRemind)}
-            >
-              <div className="flex flex-col text-left pr-4">
-                <span className="text-[15px] font-bold text-[#1A1A1A] leading-tight">Recurring payment reminders</span>
-                <span className="text-[12px] font-normal text-[#6B6B6B] mt-1 leading-normal">3 days before due date</span>
-              </div>
-              <div className="shrink-0 select-none" onClick={(e) => e.stopPropagation()}>
-                <Switch checked={recurringRemind} onCheckedChange={setRecurringRemind} size="lg" />
-              </div>
-            </div>
-
           </div>
         </div>
 
         {/* BUDGET SECTION */}
         <div className="flex flex-col text-left">
-          <h4 className="text-[11px] font-bold text-[#6B6B6B] tracking-widest mb-2.5 px-1 uppercase">
+          <h4 className="text-[11px] font-semibold text-[#6B6B6B] tracking-[0.8px] mb-0.5 px-1 uppercase">
             Budget
           </h4>
-          <div className="bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] divide-y divide-[#EFE7DD] overflow-hidden text-left mb-6">
+          <div className="bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] divide-y divide-[#EFE7DD] overflow-hidden text-left ">
 
             {/* Monthly budget limit */}
-            <div className="p-5 flex items-center justify-between transition-colors hover:bg-muted/5 cursor-pointer">
+            <div
+              className="p-5 flex items-center justify-between transition-colors hover:bg-muted/5 cursor-pointer"
+              onClick={() => navigate({ to: ROUTES.PERSONAL_BUDGET_LIMIT })}
+            >
               <div className="flex flex-col text-left pr-4">
-                <span className="text-[15px] font-bold text-[#1A1A1A] leading-tight">Monthly budget limit</span>
+                <span className="text-[15px] font-semibold text-[#1A1A1A] leading-tight">Monthly budget limit</span>
                 <span className="text-[12px] font-normal text-[#6B6B6B] mt-1 leading-normal">Get alerted if you go over</span>
               </div>
               <div className="flex items-center gap-1.5 shrink-0 select-none">
-                <span className="text-sm font-semibold text-[#6B6B6B]">Rs. 50,000</span>
+                <span className="text-[13px] font-semibold text-[#6B6B6B]">
+                  Rs. {budgetLimit.toLocaleString('en-US')}
+                </span>
                 <ChevronRight size={14} className="text-[#6B6B6B]" strokeWidth={2.5} />
               </div>
             </div>
 
             {/* Category budgets */}
-            <div className="p-5 flex items-center justify-between transition-colors hover:bg-muted/5 cursor-pointer">
+            <div
+              className="p-5 flex items-center justify-between transition-colors hover:bg-muted/5 cursor-pointer"
+              onClick={() => navigate({ to: ROUTES.PERSONAL_CATEGORY_BUDGETS })}
+            >
               <div className="flex flex-col text-left pr-4">
-                <span className="text-[15px] font-bold text-[#1A1A1A] leading-tight">Category budgets</span>
+                <span className="text-[15px] font-semibold text-[#1A1A1A] leading-tight">Category budgets</span>
                 <span className="text-[12px] font-normal text-[#6B6B6B] mt-1 leading-normal">Set limits per category</span>
               </div>
               <div className="flex items-center gap-1.5 shrink-0 select-none">
@@ -151,19 +150,19 @@ export default function PersonalSettingsScreen() {
 
         {/* DATA SECTION */}
         <div className="flex flex-col text-left">
-          <h4 className="text-[11px] font-bold text-[#6B6B6B] tracking-widest mb-2.5 px-1 uppercase">
+          <h4 className="text-[11px] font-semibold text-[#6B6B6B] tracking-[0.8px] mb-0.5 px-1 uppercase">
             Data
           </h4>
-          <div className="bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] divide-y divide-[#EFE7DD] overflow-hidden text-left mb-6">
+          <div className="bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] divide-y divide-[#EFE7DD] overflow-hidden text-left ">
 
             {/* Export All Data */}
             <div className="p-5 flex items-center justify-between transition-colors hover:bg-muted/5 cursor-pointer">
               <div className="flex items-center gap-4 min-w-0">
-                <div className="w-10 h-10 rounded-[12px] bg-[#ECF6F0] text-[#0B683A] flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-[12px] bg-[#ECF6F0] text-positive flex items-center justify-center shrink-0">
                   <Download size={18} strokeWidth={2.5} />
                 </div>
                 <div className="flex flex-col text-left min-w-0">
-                  <span className="text-[15px] font-bold text-[#1A1A1A] leading-tight">Export All Data</span>
+                  <span className="text-[15px] font-semibold text-[#1A1A1A] leading-tight">Export All Data</span>
                   <span className="text-[12px] font-normal text-[#6B6B6B] mt-1 leading-normal">CSV file of all expenses</span>
                 </div>
               </div>
@@ -178,11 +177,11 @@ export default function PersonalSettingsScreen() {
               className="p-5 flex items-center justify-between transition-colors hover:bg-muted/5 cursor-pointer"
             >
               <div className="flex items-center gap-4 min-w-0">
-                <div className="w-10 h-10 rounded-[12px] bg-[#ECF6F0] text-[#0B683A] flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-[12px] bg-[#ECF6F0] text-positive flex items-center justify-center shrink-0">
                   <AlertCircle size={18} strokeWidth={2.5} />
                 </div>
                 <div className="flex flex-col text-left min-w-0">
-                  <span className="text-[15px] font-bold text-[#1A1A1A] leading-tight">Manage Categories</span>
+                  <span className="text-[15px] font-semibold text-[#1A1A1A] leading-tight">Manage Categories</span>
                   <span className="text-[12px] font-normal text-[#6B6B6B] mt-1 leading-normal">8 categories</span>
                 </div>
               </div>
@@ -196,7 +195,7 @@ export default function PersonalSettingsScreen() {
 
         {/* DANGER ZONE SECTION */}
         <div className="flex flex-col text-left">
-          <h4 className="text-[11px] font-bold text-[#6B6B6B] tracking-widest mb-2.5 px-1 uppercase">
+          <h4 className="text-[11px] font-semibold text-[#6B6B6B] tracking-[0.8px] mb-0.5 px-1 uppercase">
             Danger Zone
           </h4>
           <div className="bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] divide-y divide-[#EFE7DD] overflow-hidden text-left mb-10">
@@ -211,7 +210,7 @@ export default function PersonalSettingsScreen() {
                   <Trash2 size={18} strokeWidth={2.5} />
                 </div>
                 <div className="flex flex-col text-left min-w-0">
-                  <span className="text-[15px] font-bold text-[#C0392B] leading-tight">Clear All Personal Expenses</span>
+                  <span className="text-[15px] font-semibold text-[#C0392B] leading-tight">Clear All Personal Expenses</span>
                   <span className="text-[12px] font-normal text-[#6B6B6B] mt-1 leading-normal">Permanently delete history</span>
                 </div>
               </div>
@@ -237,22 +236,6 @@ export default function PersonalSettingsScreen() {
         onConfirm={() => {
           setIsClearConfirmOpen(false)
         }}
-      />
-
-      {/* Date Picker Drawer */}
-      <SelectDateDrawer
-        isOpen={isDateDrawerOpen}
-        onClose={() => setIsDateDrawerOpen(false)}
-        onSelect={(dateText) => {
-          if (dateText === 'today') {
-            setDefaultPeriodText('Today')
-          } else if (dateText === 'yesterday') {
-            setDefaultPeriodText('Yesterday')
-          } else {
-            setDefaultPeriodText(dateText)
-          }
-        }}
-        selectedValue={defaultPeriodText.toLowerCase()}
       />
     </div>
   )

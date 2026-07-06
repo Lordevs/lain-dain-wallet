@@ -11,8 +11,7 @@ const HIDE_NAV_PREFIXES = [
   '/groups/$',           // Group detail (dynamic segment)
   '/transactions/$',     // Transaction detail (dynamic segment)
   '/settings',
-  '/personal/reports',   // Reports page
-  '/personal/add',       // Add personal expense flow
+  '/personal',           // Personal screen and all subroutes
 ]
 
 function shouldShowNav(pathname: string): boolean {

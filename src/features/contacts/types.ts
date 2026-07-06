@@ -9,7 +9,7 @@ export interface AppContact {
   id: string
   name: string
   initials: string
-  /** Tailwind classes e.g. "bg-[#E8F5E9] text-[#0B683A]" */
+  /** Tailwind classes e.g. "bg-[#E8F5E9] text-positive" */
   avatarColor: string
   phone?: string
   isOnLainDain?: boolean

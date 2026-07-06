@@ -31,7 +31,7 @@ export default function SettingsScreen() {
   const [pushNotifications, setPushNotifications] = useState(true)
   const [autoReminders, setAutoReminders] = useState(true)
   const [reminderInterval, setReminderInterval] = useState<'week' | 'two_weeks'>('week')
-  
+
   const isEditProfileOpen = search?.subPanel === 'edit-profile'
   const [isReportIssueOpen, setIsReportIssueOpen] = useState(false)
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
@@ -73,7 +73,7 @@ export default function SettingsScreen() {
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
             className="fixed top-6 left-6 right-6 z-100 mx-auto max-w-[380px] bg-white/90 backdrop-blur-md border border-[#EFE7DD] shadow-[0px_10px_30px_rgba(0,0,0,0.08)] rounded-2xl p-4 flex items-center gap-3"
           >
-            <div className="w-8 h-8 rounded-full bg-[#E4F2EB] flex items-center justify-center text-[#0B683A] shrink-0">
+            <div className="w-8 h-8 rounded-full bg-[#E4F2EB] flex items-center justify-center text-positive shrink-0">
               {toast.type === 'success' ? <Check size={16} strokeWidth={3} /> : <AlertCircle size={16} />}
             </div>
             <span className="text-sm font-semibold text-[#1A1A1A]">{toast.message}</span>
@@ -192,7 +192,7 @@ export default function SettingsScreen() {
                           </div>
                           <div className="shrink-0">
                             {reminderInterval === 'week' ? (
-                              <div className="w-5 h-5 rounded-full bg-[#0B683A] text-white flex items-center justify-center">
+                              <div className="w-5 h-5 rounded-full bg-positive text-white flex items-center justify-center">
                                 <Check size={12} strokeWidth={3} />
                               </div>
                             ) : (
@@ -216,7 +216,7 @@ export default function SettingsScreen() {
                           </div>
                           <div className="shrink-0">
                             {reminderInterval === 'two_weeks' ? (
-                              <div className="w-5 h-5 rounded-full bg-[#0B683A] text-white flex items-center justify-center">
+                              <div className="w-5 h-5 rounded-full bg-positive text-white flex items-center justify-center">
                                 <Check size={12} strokeWidth={3} />
                               </div>
                             ) : (

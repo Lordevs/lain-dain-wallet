@@ -160,7 +160,7 @@ export default function CategoryBreakdownCard({
                   <span className="text-[13px] font-bold text-[#1A1A1A]">
                     {formatCurrency(cat.amount, currency)}
                   </span>
-                  <span className="text-[11px] font-semibold text-[#0B683A]">
+                  <span className="text-[11px] font-semibold text-positive">
                     {cat.percentage}%
                   </span>
                 </div>

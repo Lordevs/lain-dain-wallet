@@ -35,7 +35,7 @@ export default function NotificationCard({
   onCardClick,
 }: NotificationCardProps) {
   const borderClass = theme === 'green' ? 'border-primary' : 'border-tertiary'
-  const tagColorClass = theme === 'green' ? 'text-[#0B683A]' : 'text-[#C96A1B]'
+  const tagColorClass = theme === 'green' ? 'text-positive' : 'text-[#C96A1B]'
 
   return (
     <div
@@ -83,7 +83,7 @@ export default function NotificationCard({
           {actions.map((action, index) => {
             const btnBg =
               action.variant === 'green'
-                ? 'bg-[#0B683A] text-white'
+                ? 'bg-positive text-white'
                 : action.variant === 'amber'
                   ? 'bg-[#FDB105] text-[#1A1A1A]'
                   : 'bg-[#C96A1B] text-white'

@@ -38,8 +38,8 @@ export default function SettleUpPanel({
   // Parse dynamic requester data
   let requesterName = notification.title.split(' ')[0] || 'Muzaffar'
   if (
-    requesterName.toLowerCase().includes('murree') || 
-    requesterName.toLowerCase().includes('poker') || 
+    requesterName.toLowerCase().includes('murree') ||
+    requesterName.toLowerCase().includes('poker') ||
     requesterName.toLowerCase().includes('group') ||
     requesterName.toLowerCase().includes('trip')
   ) {
@@ -101,12 +101,12 @@ export default function SettleUpPanel({
   const [isNoteFlowOpen, setIsNoteFlowOpen] = useState(false)
 
   // Calculate totals based on active mode
-  const payingNow = mode === 'contact' 
-    ? (Number(contactAmount) || 0) 
+  const payingNow = mode === 'contact'
+    ? (Number(contactAmount) || 0)
     : (Number(muzaffarAmount) || 0) + (Number(ahmedAmount) || 0)
 
-  const receivingNow = mode === 'contact' 
-    ? (Number(contactAmount) || 0) 
+  const receivingNow = mode === 'contact'
+    ? (Number(contactAmount) || 0)
     : (Number(aliAmount) || 0) + (Number(saraAmount) || 0)
 
   const activeAmountNow = activeTab === 'pay' ? payingNow : receivingNow
@@ -173,7 +173,7 @@ export default function SettleUpPanel({
           <Check
             size={24}
             onClick={handleConfirmAction}
-            className="text-[#0B683A] stroke-[3px] cursor-pointer hover:opacity-80 active:scale-95 transition-all shrink-0"
+            className="text-positive stroke-[3px] cursor-pointer hover:opacity-80 active:scale-95 transition-all shrink-0"
           />
         }
       />
@@ -183,7 +183,7 @@ export default function SettleUpPanel({
         <div className="px-6 mt-4">
           <div className="bg-white rounded-[24px] border-[0.8px] border-[#EBEBEB] p-4 flex items-center gap-3.5 shadow-[0px_4px_16px_rgba(0,0,0,0.02)] text-left">
             {/* Custom Mountain Group Avatar Icon */}
-            <div className="w-12 h-12 rounded-full bg-[#E8F5EE] border border-[#0B683A]/10 flex items-center justify-center overflow-hidden shrink-0">
+            <div className="w-12 h-12 rounded-full bg-[#E8F5EE] border border-positive/10 flex items-center justify-center overflow-hidden shrink-0">
               <svg viewBox="0 0 100 100" className="w-9 h-9">
                 <circle cx="50" cy="50" r="45" fill="#E8F5EE" />
                 <circle cx="65" cy="35" r="8" fill="#FDB105" opacity="0.8" />
@@ -220,7 +220,7 @@ export default function SettleUpPanel({
             type="button"
             onClick={() => setActiveTab('receive')}
             className={`flex-1 py-3 text-center rounded-full text-sm font-extrabold transition-all border-0 outline-none cursor-pointer ${activeTab === 'receive'
-              ? 'bg-[#0B683A] text-white'
+              ? 'bg-positive text-white'
               : 'bg-transparent text-[#6B6B6B] hover:text-[#1A1A1A]'
               }`}
           >
@@ -237,7 +237,7 @@ export default function SettleUpPanel({
             <span className="text-[#6B6B6B] text-[12px] font-bold">
               {activeTab === 'pay' ? 'Paying now' : 'Receiving now'}
             </span>
-            <span className={`text-[30px] font-extrabold mt-1.5 leading-none tracking-tight ${activeTab === 'pay' ? 'text-[#C96A1B]' : 'text-[#0B683A]'
+            <span className={`text-[30px] font-extrabold mt-1.5 leading-none tracking-tight ${activeTab === 'pay' ? 'text-[#C96A1B]' : 'text-positive'
               }`}>
               Rs. {activeAmountNow.toLocaleString('en-US')}
             </span>
@@ -251,7 +251,7 @@ export default function SettleUpPanel({
             <span className="text-[#6B6B6B] text-[12px] font-bold">
               Still left
             </span>
-            <span className={`text-[30px] font-extrabold mt-1.5 leading-none tracking-tight ${activeTab === 'pay' ? 'text-[#C96A1B]' : 'text-[#0B683A]'
+            <span className={`text-[30px] font-extrabold mt-1.5 leading-none tracking-tight ${activeTab === 'pay' ? 'text-[#C96A1B]' : 'text-positive'
               }`}>
               Rs. {stillLeft.toLocaleString('en-US')}
             </span>
@@ -278,7 +278,7 @@ export default function SettleUpPanel({
                 ? `You owe Rs. ${Math.max(0, totalDue - (Number(contactAmount) || 0)).toLocaleString('en-US')}`
                 : `Owes you Rs. ${Math.max(0, totalDue - (Number(contactAmount) || 0)).toLocaleString('en-US')}`
             }
-            subtextColorClass={activeTab === 'pay' ? 'text-[#C96A1B]' : 'text-[#0B683A]'}
+            subtextColorClass={activeTab === 'pay' ? 'text-[#C96A1B]' : 'text-positive'}
             avatarBg="bg-[#EDE9FE]"
             avatarText="text-[#6366F1]"
             avatarBorder="border-[#6366F1]/10"
@@ -341,7 +341,7 @@ export default function SettleUpPanel({
               initials="S"
               name="Sara"
               subtext={`Left: Rs. ${Math.max(0, 800 - (Number(saraAmount) || 0)).toLocaleString('en-US')}`}
-              subtextColorClass="text-[#0B683A]"
+              subtextColorClass="text-positive"
               avatarBg="bg-[#EDE9FE]"
               avatarText="text-[#6366F1]"
               avatarBorder="border-[#6366F1]/10"
@@ -382,11 +382,11 @@ export default function SettleUpPanel({
           type="button"
           onClick={() => setIsReceiptFlowOpen(true)}
           className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full border-[0.8px] bg-white text-xs font-medium text-[#6B6B6B] shrink-0 outline-none cursor-pointer active:scale-95 transition-all ${hasReceipt
-            ? 'bg-[#E4F2EB] border-[#0B683A4D] text-[#0B683A]'
+            ? 'bg-[#E4F2EB] border-[#0B683A4D] text-positive'
             : 'bg-white border-[#E8E4DC] text-[#6B6B6B]'
             }`}
         >
-          <Camera size={14} className={hasReceipt ? 'text-[#0B683A]' : 'text-[#6B6B6B]'} />
+          <Camera size={14} className={hasReceipt ? 'text-positive' : 'text-[#6B6B6B]'} />
           <span>{hasReceipt ? 'Receipt Attached' : 'Receipt'}</span>
         </button>
 
@@ -395,18 +395,18 @@ export default function SettleUpPanel({
           type="button"
           onClick={() => setIsNoteFlowOpen(true)}
           className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full border-[0.8px] bg-white text-xs font-medium text-[#6B6B6B] shrink-0 outline-none cursor-pointer active:scale-95 transition-all ${hasNote
-            ? 'bg-[#E4F2EB] border-[#0B683A4D] text-[#0B683A]'
+            ? 'bg-[#E4F2EB] border-[#0B683A4D] text-positive'
             : 'bg-white border-[#E8E4DC] text-[#6B6B6B]'
             }`}
         >
-          <Pencil size={14} className={hasNote ? 'text-[#0B683A]' : 'text-[#6B6B6B]'} />
+          <Pencil size={14} className={hasNote ? 'text-positive' : 'text-[#6B6B6B]'} />
           <span>{hasNote ? 'Note Added' : 'Note'}</span>
         </button>
       </div>
 
 
       {/* Sticky Bottom Actions */}
-      <div className="fixed bottom-0 left-0 right-0 z-10 px-6 py-4 bg-[#FEFAF1]/90 backdrop-blur-sm flex flex-col items-center justify-center gap-4">
+      <div className="fixed bottom-3 left-3 right-3 z-10 flex flex-col items-center justify-center gap-4">
         {/* Confirmation Lock Warning Text */}
         <div className="mt-5 text-[#6B6B6B] text-xs font-normal flex items-center justify-center gap-1.5 shrink-0">
           <Lock size={12} className="text-[#6B6B6B]" />
@@ -522,7 +522,7 @@ function MemberRow({
         placeholder="Enter amount"
         className={cn(
           "border border-[#EBEBEB] rounded-[14px] bg-white px-3 py-2.5 text-sm text-[#1A1A1A] font-bold text-center w-32 placeholder:text-[#9A9590] placeholder:font-medium focus:outline-none focus:ring-1",
-          activeThemeColor === 'pay' ? 'focus:ring-[#C96A1B] focus:border-[#C96A1B]' : 'focus:ring-[#0B683A] focus:border-[#0B683A]'
+          activeThemeColor === 'pay' ? 'focus:ring-[#C96A1B] focus:border-[#C96A1B]' : 'focus:ring-positive focus:border-positive'
         )}
       />
     </div>

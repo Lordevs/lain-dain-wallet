@@ -15,7 +15,7 @@ export default function ViewReportsCard({ onClick }: ViewReportsCardProps) {
     >
       <div className="flex items-center">
         <div className="w-14 h-14 rounded-[16px] bg-[#E4F2EB] flex items-center justify-center shrink-0">
-          <ClipboardList size={28} className="text-[#0B683A]" strokeWidth={2} />
+          <ClipboardList size={28} className="text-positive" strokeWidth={2} />
         </div>
         <span className="font-semibold text-lg text-[#1A1A1A] ml-4">
           View Reports

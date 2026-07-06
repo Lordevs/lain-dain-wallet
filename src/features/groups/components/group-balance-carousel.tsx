@@ -4,18 +4,15 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
 const cardVariants = {
-  initial: (direction: 'left' | 'right') => ({
+  initial: {
     opacity: 0,
-    x: direction === 'left' ? 120 : -120
-  }),
+  },
   animate: {
     opacity: 1,
-    x: 0
   },
-  exit: (direction: 'left' | 'right') => ({
+  exit: {
     opacity: 0,
-    x: direction === 'left' ? -120 : 120
-  })
+  }
 }
 
 interface GroupBalanceCarouselProps {
@@ -40,12 +37,11 @@ export default function GroupBalanceCarousel({ isReceivable, formattedNetAmount,
           {activeCardIndex === 0 ? (
             <motion.div
               key="card1"
-              custom={slideDirection}
               variants={cardVariants}
               initial="initial"
               animate="animate"
               exit="exit"
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0 }}
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={0.6}
@@ -68,7 +64,7 @@ export default function GroupBalanceCarousel({ isReceivable, formattedNetAmount,
                 <span className="text-[#6B6B6B] text-[13px] font-semibold">
                   Net Balance
                 </span>
-                <span className={cn('text-3xl font-extrabold mt-2 leading-none tracking-tight', isReceivable ? 'text-[#0B683A]' : 'text-[#C96A1B]')}>
+                <span className={cn('text-3xl font-extrabold mt-2 leading-none tracking-tight', isReceivable ? 'text-positive' : 'text-[#C96A1B]')}>
                   {formattedNetAmount}
                 </span>
               </div>
@@ -80,9 +76,9 @@ export default function GroupBalanceCarousel({ isReceivable, formattedNetAmount,
                     e.stopPropagation() // Prevent toggling the card when clicking remind
                     onRemind()
                   }}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-[#0B683A4D] bg-[#E4F2EB] text-[#0B683A] text-xs font-bold transition-all hover:bg-[#E4F2EB]/80 shrink-0 cursor-pointer outline-none"
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-[#0B683A4D] bg-[#E4F2EB] text-positive text-xs font-bold transition-all hover:bg-[#E4F2EB]/80 shrink-0 cursor-pointer outline-none"
                 >
-                  <Bell size={13} className="text-[#0B683A]" strokeWidth={2.5} />
+                  <Bell size={13} className="text-positive" strokeWidth={2.5} />
                   Remind
                 </button>
               )}
@@ -96,7 +92,7 @@ export default function GroupBalanceCarousel({ isReceivable, formattedNetAmount,
                     setSlideDirection('right')
                     setActiveCardIndex(0)
                   }}
-                  className="w-2.5 h-2.5 rounded-full bg-[#0B683A] p-0 border-0 outline-none cursor-pointer"
+                  className="w-2.5 h-2.5 rounded-full bg-positive p-0 border-0 outline-none cursor-pointer"
                 />
                 <button
                   type="button"
@@ -112,12 +108,11 @@ export default function GroupBalanceCarousel({ isReceivable, formattedNetAmount,
           ) : (
             <motion.div
               key="card2"
-              custom={slideDirection}
               variants={cardVariants}
               initial="initial"
               animate="animate"
               exit="exit"
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0 }}
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={0.6}
@@ -140,15 +135,15 @@ export default function GroupBalanceCarousel({ isReceivable, formattedNetAmount,
               <div className="flex-1 flex items-stretch divide-x divide-[#EFE7DD] h-full">
                 {/* Left Column: You will receive */}
                 <div className="flex-1 flex flex-col items-center text-center pr-4">
-                  <span className="text-[#0B683A] text-[13px] font-normal">
+                  <span className="text-positive text-[13px] font-normal">
                     You will receive
                   </span>
-                  <span className="text-xl font-extrabold text-[#0B683A] mt-2.5 leading-none tracking-tight">
+                  <span className="text-xl font-extrabold text-positive mt-2.5 leading-none tracking-tight">
                     Rs. 13,800
                   </span>
                   <div className="mt-3.5 flex items-center justify-start">
-                    <div className="w-8 h-8 rounded-full bg-[#E4F2EB] flex items-center justify-center text-[#0B683A]">
-                      <ArrowDown size={14} className="text-[#0B683A]" strokeWidth={2.5} />
+                    <div className="w-8 h-8 rounded-full bg-[#E4F2EB] flex items-center justify-center text-positive">
+                      <ArrowDown size={14} className="text-positive" strokeWidth={2.5} />
                     </div>
                   </div>
                 </div>
@@ -187,7 +182,7 @@ export default function GroupBalanceCarousel({ isReceivable, formattedNetAmount,
                     setSlideDirection('left')
                     setActiveCardIndex(1)
                   }}
-                  className="w-2.5 h-2.5 rounded-full bg-[#0B683A] p-0 border-0 outline-none cursor-pointer"
+                  className="w-2.5 h-2.5 rounded-full bg-positive p-0 border-0 outline-none cursor-pointer"
                 />
               </div>
             </motion.div>

@@ -58,7 +58,7 @@ export default function ContactLedgerCard({ contact, onClick }: ContactLedgerCar
         {/* Name + ledger count */}
         <div className="flex-1 min-w-0">
           <p className="font-bold text-[15px] text-foreground leading-tight">{name}</p>
-          <p className="text-[12px] text-muted-foreground mt-0.5">
+          <p className="text-[12px] text-muted-foreground mt-0.5 font-medium">
             Net across {ledgerCount} ledger{ledgerCount !== 1 ? 's' : ''}
           </p>
         </div>
@@ -84,7 +84,7 @@ export default function ContactLedgerCard({ contact, onClick }: ContactLedgerCar
           {tags.map((tag, i) => (
             <span
               key={`${tag.name}-${i}`}
-              className="text-[12px] font-semibold whitespace-nowrap"
+              className="text-[12px] font-medium whitespace-nowrap"
             >
               <span className="text-foreground/70">{tag.name}</span>{' '}
               <span className={cn(

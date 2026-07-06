@@ -142,7 +142,7 @@ export default function PersonalCategoriesScreen() {
           isReordering ? (
             <button
               onClick={() => setIsReordering(false)}
-              className="text-[#0B683A] font-extrabold text-[15px] cursor-pointer hover:opacity-80 transition-opacity p-2 border-0 bg-transparent"
+              className="text-positive font-extrabold text-[15px] cursor-pointer hover:opacity-80 transition-opacity p-2 border-0 bg-transparent"
             >
               Done
             </button>
@@ -153,8 +153,8 @@ export default function PersonalCategoriesScreen() {
       {/* Description Text or Reorder Helper Banner */}
       {isReordering ? (
         <div className="mx-6 bg-[#E8F2EC] rounded-[16px] py-3.5 px-4 flex items-center justify-center gap-2 mb-5 border border-[#0B683A0F] shrink-0">
-          <ArrowUpDown size={16} className="text-[#0B683A]" />
-          <span className="text-sm font-extrabold text-[#0B683A]">
+          <ArrowUpDown size={16} className="text-positive" />
+          <span className="text-sm font-extrabold text-positive">
             Hold and drag a row to reorder
           </span>
         </div>
@@ -205,9 +205,9 @@ export default function PersonalCategoriesScreen() {
                   <div className="flex items-center flex-1 min-w-0">
                     {/* Drag Handle (Compact custom handle) */}
                     <div className="flex flex-col gap-0.75 pr-3 pl-1 py-2 shrink-0 select-none">
-                      <div className={cn("w-3.5 h-[1.2px] rounded-full", isFirstGrocery ? "bg-[#0B683A]" : "bg-[#C8C4BD]")} />
-                      <div className={cn("w-3.5 h-[1.2px] rounded-full", isFirstGrocery ? "bg-[#0B683A]" : "bg-[#C8C4BD]")} />
-                      <div className={cn("w-3.5 h-[1.2px] rounded-full", isFirstGrocery ? "bg-[#0B683A]" : "bg-[#C8C4BD]")} />
+                      <div className={cn("w-3.5 h-[1.2px] rounded-full", isFirstGrocery ? "bg-positive" : "bg-[#C8C4BD]")} />
+                      <div className={cn("w-3.5 h-[1.2px] rounded-full", isFirstGrocery ? "bg-positive" : "bg-[#C8C4BD]")} />
+                      <div className={cn("w-3.5 h-[1.2px] rounded-full", isFirstGrocery ? "bg-positive" : "bg-[#C8C4BD]")} />
                     </div>
 
                     {/* Icon Squircle */}
@@ -222,7 +222,7 @@ export default function PersonalCategoriesScreen() {
                           className={cn(
                             "font-bold text-[15px] text-[#1A1A1A] leading-snug",
                             cat.isHidden && "text-[#1A1A1A]/55",
-                            isFirstGrocery && "text-[#0B683A]"
+                            isFirstGrocery && "text-positive"
                           )}
                         >
                           {cat.name}
@@ -249,7 +249,7 @@ export default function PersonalCategoriesScreen() {
                                 "text-[10px] font-bold px-2.5 py-0.5 rounded-[6px] shrink-0 flex items-center gap-1",
                                 b.type === 'cycle'
                                   ? "bg-[#FEF5E7] border border-[#FDB10526] text-[#B87C04]"
-                                  : "bg-[#E8F5E9] text-[#0B683A]"
+                                  : "bg-[#E8F5E9] text-positive"
                               )}
                             >
                               {b.type === 'cycle' && <Calendar size={10} strokeWidth={1.5} />}
@@ -287,11 +287,11 @@ export default function PersonalCategoriesScreen() {
             className="mx-6 bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_2px_10px_0px_#0000000D] p-5 flex items-center gap-4 cursor-pointer hover:bg-muted/5 transition-colors mb-6 text-left"
           >
             {/* Plus icon inside dashed border green squircle */}
-            <div className="w-11 h-11 rounded-[16px] border-2 border-dashed border-[#0B683A33] bg-[#E8F5E9]/30 flex items-center justify-center text-[#0B683A] shrink-0">
+            <div className="w-11 h-11 rounded-[16px] border-2 border-dashed border-[#0B683A33] bg-[#E8F5E9]/30 flex items-center justify-center text-positive shrink-0">
               <Plus size={20} strokeWidth={1.5} />
             </div>
             <div>
-              <p className="font-bold text-[15px] text-[#0B683A] leading-tight">
+              <p className="font-bold text-[15px] text-positive leading-tight">
                 Add New Category
               </p>
               <p className="text-[12px] font-normal text-[#6B6B6B] mt-1 leading-none">
@@ -303,10 +303,10 @@ export default function PersonalCategoriesScreen() {
 
         {/* Alert Banner (only in Normal view) */}
         {!isReordering && (
-          <div className="mx-6 p-4 rounded-[20px] bg-[#E8F2EC] border-[0.8px] border-[#0B683A1F] text-[#0B683A] flex items-start gap-3 text-left">
-            <AlertCircle size={18} className="text-[#0B683A] shrink-0 mt-0.5" strokeWidth={1.5} />
+          <div className="mx-6 p-4 rounded-[20px] bg-[#E8F2EC] border-[0.8px] border-[#0B683A1F] text-positive flex items-start gap-3 text-left">
+            <AlertCircle size={18} className="text-positive shrink-0 mt-0.5" strokeWidth={1.5} />
             <p className="text-[13px] text-[#6B6B6B] leading-relaxed">
-              Deleting a category won't delete its expenses — they'll move to <span className="font-bold text-[#0B683A]">Other</span>.
+              Deleting a category won't delete its expenses — they'll move to <span className="font-bold text-positive">Other</span>.
             </p>
           </div>
         )}

@@ -48,7 +48,7 @@ export default function ReceiptPreviewFlow({
                 1.05 MB • PNG Image
               </span>
             </div>
-            <div className="text-[11px] font-extrabold uppercase tracking-wider text-[#0B683A] bg-[#E4F2EB] px-3 py-1 rounded-full">
+            <div className="text-[11px] font-extrabold uppercase tracking-wider text-positive bg-[#E4F2EB] px-3 py-1 rounded-full">
               Uploaded
             </div>
           </div>
@@ -58,7 +58,7 @@ export default function ReceiptPreviewFlow({
         <button
           type="button"
           onClick={onDownload}
-          className="w-full max-w-[380px] h-14 rounded-[20px] bg-[#0B683A] text-white font-extrabold text-base cursor-pointer shadow-[0px_4px_16px_rgba(11,104,58,0.16)] hover:bg-[#0B683A]/90 transition-all flex items-center justify-center gap-2 outline-none mt-6"
+          className="w-full max-w-[380px] h-14 rounded-[20px] bg-positive text-white font-extrabold text-base cursor-pointer shadow-[0px_4px_16px_rgba(11,104,58,0.16)] hover:bg-positive/90 transition-all flex items-center justify-center gap-2 outline-none mt-6"
         >
           <Download size={18} />
           Download Receipt

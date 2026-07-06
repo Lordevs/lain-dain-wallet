@@ -7,9 +7,21 @@ export type { Contact, LedgerTag }
 
 interface ContactState {
   contacts: Contact[]
+  hiddenLedgerIds: string[]
+  resetDay: number
+  budgetLimit: number
+  alertNearingLimit: boolean
+  alertThreshold: number
+  categoryBudgets: Record<string, number>
   addContact: (contact: Contact) => void
   updateContact: (id: string, updatedFields: Partial<Contact>) => void
   deleteContact: (id: string) => void
+  setHiddenLedgerIds: (ids: string[]) => void
+  setResetDay: (day: number) => void
+  setBudgetLimit: (limit: number) => void
+  setAlertNearingLimit: (val: boolean) => void
+  setAlertThreshold: (threshold: number) => void
+  setCategoryBudget: (catId: string, limit: number) => void
 }
 
 const INITIAL_CONTACTS: Contact[] = [
@@ -18,7 +30,7 @@ const INITIAL_CONTACTS: Contact[] = [
     id: '1',
     name: 'Ali Hassan',
     initials: 'AH',
-    avatarColor: 'bg-[#E8F5E9] text-[#0B683A]',
+    avatarColor: 'bg-[#E8F5E9] text-positive',
     ledgerCount: 3,
     netAmount: 7500,
     isOnline: true,
@@ -261,6 +273,17 @@ const INITIAL_CONTACTS: Contact[] = [
 
 export const useContactStore = create<ContactState>((set) => ({
   contacts: INITIAL_CONTACTS,
+  hiddenLedgerIds: [],
+  resetDay: 23,
+  budgetLimit: 50000,
+  alertNearingLimit: true,
+  alertThreshold: 80,
+  categoryBudgets: {
+    grocery: 10000,
+    transport: 8000,
+    shopping: 12000,
+    bills: 5000,
+  },
   addContact: (contact) =>
     set((state) => ({
       contacts: [...state.contacts, contact],
@@ -275,23 +298,57 @@ export const useContactStore = create<ContactState>((set) => ({
     set((state) => ({
       contacts: state.contacts.filter((c) => c.id !== id),
     })),
+  setHiddenLedgerIds: (ids) =>
+    set(() => ({
+      hiddenLedgerIds: ids,
+    })),
+  setResetDay: (day) =>
+    set(() => ({
+      resetDay: day,
+    })),
+  setBudgetLimit: (limit) =>
+    set(() => ({
+      budgetLimit: limit,
+    })),
+  setAlertNearingLimit: (val) =>
+    set(() => ({
+      alertNearingLimit: val,
+    })),
+  setAlertThreshold: (val) =>
+    set(() => ({
+      alertThreshold: val,
+    })),
+  setCategoryBudget: (catId, limit) =>
+    set((state) => ({
+      categoryBudgets: {
+        ...state.categoryBudgets,
+        [catId]: limit,
+      },
+    })),
 }))
 
 // Computed Selectors
 export function selectReceivables(state: ContactState) {
-  return state.contacts.filter((c) => c.netAmount > 0)
+  return state.contacts
+    .filter((c) => !state.hiddenLedgerIds.includes(c.id))
+    .filter((c) => c.netAmount > 0)
 }
 
 export function selectPayables(state: ContactState) {
-  return state.contacts.filter((c) => c.netAmount < 0)
+  return state.contacts
+    .filter((c) => !state.hiddenLedgerIds.includes(c.id))
+    .filter((c) => c.netAmount < 0)
 }
 
 export function selectBalanceSummary(state: ContactState): BalanceSummary {
-  const totalReceivable = state.contacts
+  const visibleContacts = state.contacts.filter(
+    (c) => !state.hiddenLedgerIds.includes(c.id)
+  )
+  const totalReceivable = visibleContacts
     .filter((c) => c.netAmount > 0)
     .reduce((sum, c) => sum + c.netAmount, 0)
   const totalPayable = Math.abs(
-    state.contacts
+    visibleContacts
       .filter((c) => c.netAmount < 0)
       .reduce((sum, c) => sum + c.netAmount, 0)
   )

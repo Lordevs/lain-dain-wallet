@@ -69,7 +69,7 @@ export default function CategoryOptionsDrawer({
             }}
             className="w-full py-4 px-6 flex items-center gap-4 hover:bg-muted/5 transition-colors cursor-pointer border-0 bg-transparent text-left outline-none"
           >
-            <div className="w-10 h-10 rounded-[12px] bg-[#E4F2EB] text-[#0B683A] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-[12px] bg-[#E4F2EB] text-positive flex items-center justify-center shrink-0">
               <EyeOff size={18} strokeWidth={1.5} />
             </div>
             <div className="flex flex-col">
@@ -87,7 +87,7 @@ export default function CategoryOptionsDrawer({
             onClick={onClose}
             className="w-full py-4 px-6 flex items-center gap-4 hover:bg-muted/5 transition-colors cursor-pointer border-0 bg-transparent text-left outline-none"
           >
-            <div className="w-10 h-10 rounded-[12px] bg-[#E4F2EB] text-[#0B683A] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-[12px] bg-[#E4F2EB] text-positive flex items-center justify-center shrink-0">
               <Pencil size={18} strokeWidth={1.5} />
             </div>
             <div className="flex flex-col">
@@ -118,7 +118,7 @@ export default function CategoryOptionsDrawer({
             }}
             className="w-full py-4 px-6 flex items-center gap-4 hover:bg-muted/5 transition-colors cursor-pointer border-0 bg-transparent text-left outline-none"
           >
-            <div className="w-10 h-10 rounded-[12px] bg-[#E4F2EB] text-[#0B683A] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-[12px] bg-[#E4F2EB] text-positive flex items-center justify-center shrink-0">
               <ArrowUpDown size={18} strokeWidth={1.5} />
             </div>
             <div className="flex flex-col">
