@@ -35,6 +35,7 @@ import { Route as PersonalAddExpenseRouteImport } from './routes/personal/add-ex
 import { Route as GroupsIdRouteImport } from './routes/groups/$id'
 import { Route as ContactsNewRouteImport } from './routes/contacts/new'
 import { Route as ContactsIdRouteImport } from './routes/contacts/$id'
+import { Route as TransactionsIdIndexRouteImport } from './routes/transactions/$id.index'
 import { Route as PersonalCategoryBudgetsIndexRouteImport } from './routes/personal/category-budgets.index'
 import { Route as GroupsIdIndexRouteImport } from './routes/groups/$id.index'
 import { Route as ContactsIdIndexRouteImport } from './routes/contacts/$id.index'
@@ -187,6 +188,11 @@ const ContactsIdRoute = ContactsIdRouteImport.update({
   path: '/contacts/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TransactionsIdIndexRoute = TransactionsIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => TransactionsIdRoute,
+} as any)
 const PersonalCategoryBudgetsIndexRoute =
   PersonalCategoryBudgetsIndexRouteImport.update({
     id: '/category-budgets/',
@@ -338,6 +344,7 @@ export interface FileRoutesByFullPath {
   '/contacts/$id/': typeof ContactsIdIndexRoute
   '/groups/$id/': typeof GroupsIdIndexRoute
   '/personal/category-budgets/': typeof PersonalCategoryBudgetsIndexRoute
+  '/transactions/$id/': typeof TransactionsIdIndexRoute
   '/groups/$id/category/$catId': typeof GroupsIdCategoryCatIdRoute
   '/groups/$id/recurring/new': typeof GroupsIdRecurringNewRoute
   '/groups/$id/settings/name': typeof GroupsIdSettingsNameRoute
@@ -362,7 +369,6 @@ export interface FileRoutesByTo {
   '/settings/photo': typeof SettingsPhotoRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/settings/report-issue': typeof SettingsReportIssueRoute
-  '/transactions/$id': typeof TransactionsIdRouteWithChildren
   '/auth': typeof AuthIndexRoute
   '/contacts': typeof ContactsIndexRoute
   '/notifications': typeof NotificationsIndexRoute
@@ -382,6 +388,7 @@ export interface FileRoutesByTo {
   '/contacts/$id': typeof ContactsIdIndexRoute
   '/groups/$id': typeof GroupsIdIndexRoute
   '/personal/category-budgets': typeof PersonalCategoryBudgetsIndexRoute
+  '/transactions/$id': typeof TransactionsIdIndexRoute
   '/groups/$id/category/$catId': typeof GroupsIdCategoryCatIdRoute
   '/groups/$id/recurring/new': typeof GroupsIdRecurringNewRoute
   '/groups/$id/settings/name': typeof GroupsIdSettingsNameRoute
@@ -432,6 +439,7 @@ export interface FileRoutesById {
   '/contacts/$id/': typeof ContactsIdIndexRoute
   '/groups/$id/': typeof GroupsIdIndexRoute
   '/personal/category-budgets/': typeof PersonalCategoryBudgetsIndexRoute
+  '/transactions/$id/': typeof TransactionsIdIndexRoute
   '/groups/$id/category/$catId': typeof GroupsIdCategoryCatIdRoute
   '/groups/$id/recurring/new': typeof GroupsIdRecurringNewRoute
   '/groups/$id/settings/name': typeof GroupsIdSettingsNameRoute
@@ -483,6 +491,7 @@ export interface FileRouteTypes {
     | '/contacts/$id/'
     | '/groups/$id/'
     | '/personal/category-budgets/'
+    | '/transactions/$id/'
     | '/groups/$id/category/$catId'
     | '/groups/$id/recurring/new'
     | '/groups/$id/settings/name'
@@ -507,7 +516,6 @@ export interface FileRouteTypes {
     | '/settings/photo'
     | '/settings/profile'
     | '/settings/report-issue'
-    | '/transactions/$id'
     | '/auth'
     | '/contacts'
     | '/notifications'
@@ -527,6 +535,7 @@ export interface FileRouteTypes {
     | '/contacts/$id'
     | '/groups/$id'
     | '/personal/category-budgets'
+    | '/transactions/$id'
     | '/groups/$id/category/$catId'
     | '/groups/$id/recurring/new'
     | '/groups/$id/settings/name'
@@ -576,6 +585,7 @@ export interface FileRouteTypes {
     | '/contacts/$id/'
     | '/groups/$id/'
     | '/personal/category-budgets/'
+    | '/transactions/$id/'
     | '/groups/$id/category/$catId'
     | '/groups/$id/recurring/new'
     | '/groups/$id/settings/name'
@@ -788,6 +798,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/contacts/$id'
       preLoaderRoute: typeof ContactsIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/transactions/$id/': {
+      id: '/transactions/$id/'
+      path: '/'
+      fullPath: '/transactions/$id/'
+      preLoaderRoute: typeof TransactionsIdIndexRouteImport
+      parentRoute: typeof TransactionsIdRoute
     }
     '/personal/category-budgets/': {
       id: '/personal/category-budgets/'
@@ -1057,10 +1074,12 @@ const GroupsIdRouteWithChildren = GroupsIdRoute._addFileChildren(
 
 interface TransactionsIdRouteChildren {
   TransactionsIdEditRoute: typeof TransactionsIdEditRoute
+  TransactionsIdIndexRoute: typeof TransactionsIdIndexRoute
 }
 
 const TransactionsIdRouteChildren: TransactionsIdRouteChildren = {
   TransactionsIdEditRoute: TransactionsIdEditRoute,
+  TransactionsIdIndexRoute: TransactionsIdIndexRoute,
 }
 
 const TransactionsIdRouteWithChildren = TransactionsIdRoute._addFileChildren(

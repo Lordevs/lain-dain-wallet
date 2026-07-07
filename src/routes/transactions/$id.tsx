@@ -1,6 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router'
-import TransactionDetailScreen from '@/features/transactions/transaction-detail-screen'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/transactions/$id')({
-  component: TransactionDetailScreen,
+  component: () => <Outlet />,
 })
