@@ -79,7 +79,7 @@ export default function FlowHeader({
 
         {/* Title & Subtitle */}
         <div className="flex flex-col text-left">
-          <h1 className="text-xl font-extrabold! text-foreground leading-tight select-none">
+          <h1 className="text-lg font-bold! text-foreground leading-tight select-none">
             {title}
           </h1>
           {subtitle && (
