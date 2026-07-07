@@ -1,8 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
 import App from '@/App'
+import { z } from 'zod'
 
-export const Route = createFileRoute('/')({
-  component: App,
+const dashboardSearchSchema = z.object({
+  search: z.string().optional(),
 })
 
-
+export const Route = createFileRoute('/')({
+  validateSearch: dashboardSearchSchema,
+  component: App,
+})

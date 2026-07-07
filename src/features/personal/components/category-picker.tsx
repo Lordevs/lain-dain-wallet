@@ -12,6 +12,7 @@ import {
   ForkKnife,
 } from 'lucide-react'
 import AddCategoryFlow from '@/components/shared/add-category-flow'
+import { useDrawerBackHandler } from '@/hooks/use-drawer-back-handler'
 
 export interface CategoryOption {
   id: string
@@ -44,6 +45,8 @@ export default function CategoryPicker({
   const [localCategories, setLocalCategories] = useState<CategoryOption[]>(CATEGORIES)
   const [showAddCategory, setShowAddCategory] = useState(false)
 
+  const closeAddCategory = useDrawerBackHandler(showAddCategory, () => setShowAddCategory(false))
+
   const handleSaveCategory = (name: string, icon: any, color: string) => {
     const newId = name.toLowerCase().replace(/\s+/g, '-')
     const newCategory: CategoryOption = {
@@ -60,7 +63,7 @@ export default function CategoryPicker({
     }
 
     onSelectCategory(newId)
-    setShowAddCategory(false)
+    closeAddCategory()
   }
 
   return (
@@ -100,7 +103,7 @@ export default function CategoryPicker({
         <div className="fixed inset-0 z-50 bg-[#FEFAF1]">
           <AddCategoryFlow
             isOpen={showAddCategory}
-            onClose={() => setShowAddCategory(false)}
+            onClose={closeAddCategory}
             onSave={handleSaveCategory}
           />
         </div>

@@ -2,6 +2,7 @@ import { MoreVertical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import FlowHeader from '@/components/shared/flow-header'
 import { useNewContactFlow } from './hooks/use-new-contact-flow'
+import { useWizardBackHandler } from '@/hooks/use-wizard-back-handler'
 import ChoiceStep from './components/choice-step'
 import AddMembersStep from './components/add-members-step'
 import GroupDetailsStep from './components/group-details-step'
@@ -31,13 +32,19 @@ const STEP_TITLES: Record<NewFlowStep, string> = {
  */
 export default function NewContactScreen() {
   const flow = useNewContactFlow()
+  
+  const handleBack = useWizardBackHandler({
+    step: flow.step,
+    baseStep: 'choice',
+    goBack: flow.goBack,
+  })
 
   return (
     <div className="flex flex-col flex-1 bg-background h-screen overflow-hidden text-foreground">
       {/* Header */}
       <FlowHeader
         title={STEP_TITLES[flow.step]}
-        onBack={flow.goBack}
+        onBack={handleBack}
         rightSlot={
           flow.step === 'add_members' ? (
             <Button

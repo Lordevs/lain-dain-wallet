@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import { ROUTES } from '@/constants/routes'
 import AppHeader from '@/components/layout/app-header'
 import SearchBar from '@/components/shared/search-bar'
@@ -19,9 +19,11 @@ import { useContactStore, selectBalanceSummary, selectReceivables, selectPayable
  */
 export default function DashboardScreen() {
   const navigate = useNavigate({ from: '/' })
+  const searchParams = useSearch({ from: '/' }) as any
+  const isSearchActive = searchParams.search === 'active'
+
   const [activeTab, setActiveTab] = useState<LedgerTab>('receivables')
   const [search, setSearch] = useState('')
-  const [isSearchActive, setIsSearchActive] = useState(false)
   const [filterType, setFilterType] = useState<'all' | 'people' | 'groups'>('all')
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest')
 
@@ -33,12 +35,16 @@ export default function DashboardScreen() {
   const allContacts = useContactStore(useShallow((s) => s.contacts))
 
   const handleSearchFocus = () => {
-    setIsSearchActive(true)
+    navigate({
+      search: { search: 'active' },
+    })
   }
 
   const handleSearchClose = () => {
     setSearch('')
-    setIsSearchActive(false)
+    navigate({
+      search: {},
+    })
   }
 
   const contacts = activeTab === 'receivables' ? receivables : payables
