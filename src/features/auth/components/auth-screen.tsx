@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft } from 'lucide-react'
 import { useNavigate } from '@tanstack/react-router'
 
@@ -62,13 +61,6 @@ export default function AuthScreen() {
     navigate({ to: ROUTES.DASHBOARD })
   }
 
-  const fadeSlideProps = {
-    initial: { opacity: 0, x: 20 },
-    animate: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -20 },
-    transition: { duration: 0.22 }
-  }
-
   return (
     <div className="flex flex-col flex-1 px-6 pb-8 pt-4 w-full bg-[#FEFAF1] min-height-screen justify-between relative overflow-y-auto">
       {/* Top Header/Back Button */}
@@ -85,83 +77,81 @@ export default function AuthScreen() {
         )}
       </div>
 
-      <AnimatePresence mode="wait">
-        {step === 'signin' && (
-          <motion.div key="signin" {...fadeSlideProps} className="flex-1 flex flex-col justify-between">
-            <div>
-              <BrandLogo />
-              <PhoneForm
-                mode="signin"
-                initialPhone={phone}
-                onSubmit={(enteredPhone) => {
-                  setPhone(enteredPhone)
-                  setAuthMode('signin')
-                  setStep('otp')
-                }}
-                onToggleMode={() => setStep('signup_phone')}
-              />
-            </div>
-          </motion.div>
-        )}
-
-        {step === 'signup_phone' && (
-          <motion.div key="signup" {...fadeSlideProps} className="flex-1 flex flex-col justify-between">
-            <div>
-              <BrandLogo />
-              <PhoneForm
-                mode="signup"
-                initialPhone={phone}
-                onSubmit={handlePhoneContinue}
-                onToggleMode={() => setStep('signin')}
-              />
-            </div>
-          </motion.div>
-        )}
-
-        {step === 'otp' && (
-          <motion.div key="otp" {...fadeSlideProps} className="flex-1 flex flex-col justify-between">
-            <div>
-              <BrandLogo />
-              <OtpForm
-                phoneNumber={phone}
-                onVerify={() => setStep('success')}
-                onBack={() => setStep(authMode === 'signup' ? 'signup_phone' : 'signin')}
-              />
-            </div>
-          </motion.div>
-        )}
-
-        {step === 'success' && (
-          <div key="success" className="flex-1 flex items-center justify-center">
-            <SuccessCheck onComplete={() => {
-              if (authMode === 'signin') {
-                setProfile({
-                  name: 'Muhammad Huzaifa',
-                  phone: phone,
-                  email: 'huzaifa@example.com',
-                  occupation: 'Software Engineer',
-                  avatar: null,
-                })
-                setIsAuthenticated(true)
-                navigate({ to: ROUTES.DASHBOARD })
-              } else {
-                setStep('profile')
-              }
-            }} />
+      {step === 'signin' && (
+        <div className="flex-1 flex flex-col justify-between">
+          <div>
+            <BrandLogo />
+            <PhoneForm
+              mode="signin"
+              initialPhone={phone}
+              onSubmit={(enteredPhone) => {
+                setPhone(enteredPhone)
+                setAuthMode('signin')
+                setStep('otp')
+              }}
+              onToggleMode={() => setStep('signup_phone')}
+            />
           </div>
-        )}
+        </div>
+      )}
 
-        {step === 'profile' && (
-          <motion.div key="profile" {...fadeSlideProps} className="flex-1 flex flex-col justify-between">
-            <div>
-              <BrandLogo />
-              <ProfileForm
-                onSubmit={handleProfileSubmit}
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {step === 'signup_phone' && (
+        <div className="flex-1 flex flex-col justify-between">
+          <div>
+            <BrandLogo />
+            <PhoneForm
+              mode="signup"
+              initialPhone={phone}
+              onSubmit={handlePhoneContinue}
+              onToggleMode={() => setStep('signin')}
+            />
+          </div>
+        </div>
+      )}
+
+      {step === 'otp' && (
+        <div className="flex-1 flex flex-col justify-between">
+          <div>
+            <BrandLogo />
+            <OtpForm
+              phoneNumber={phone}
+              onVerify={() => setStep('success')}
+              onBack={() => setStep(authMode === 'signup' ? 'signup_phone' : 'signin')}
+            />
+          </div>
+        </div>
+      )}
+
+      {step === 'success' && (
+        <div className="flex-1 flex items-center justify-center">
+          <SuccessCheck onComplete={() => {
+            if (authMode === 'signin') {
+              setProfile({
+                name: 'Muhammad Huzaifa',
+                phone: phone,
+                email: 'huzaifa@example.com',
+                occupation: 'Software Engineer',
+                avatar: null,
+              })
+              setIsAuthenticated(true)
+              navigate({ to: ROUTES.DASHBOARD })
+            } else {
+              setStep('profile')
+            }
+          }} />
+        </div>
+      )}
+
+      {step === 'profile' && (
+        <div className="flex-1 flex flex-col justify-between">
+          <div>
+            <BrandLogo />
+            <ProfileForm
+              onSubmit={handleProfileSubmit}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
