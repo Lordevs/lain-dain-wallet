@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import GroupRecurringScreen from '@/features/groups/recurring-payments-screen'
+import { ROUTES } from '@/constants/routes'
 
 export const Route = createFileRoute('/groups/$id/recurring/')({
   component: function Component() {
@@ -8,7 +9,7 @@ export const Route = createFileRoute('/groups/$id/recurring/')({
     return (
       <GroupRecurringScreen
         groupId={id}
-        onClose={() => navigate({ to: '/groups/$id/settings', params: { id } })}
+        onClose={() => navigate({ to: ROUTES.GROUP_SETTINGS, params: { id } })}
       />
     )
   },

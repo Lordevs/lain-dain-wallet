@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import FlowHeader from '@/components/shared/flow-header'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuthStore } from '@/store/use-auth-store'
+import { ROUTES } from '@/constants/routes'
 
 interface LogoutPanelProps {
   onClose?: () => void
@@ -18,7 +19,7 @@ export default function LogoutPanel({
 
   const handleConfirm = onConfirm ?? (() => {
     logout()
-    navigate({ to: '/auth' })
+    navigate({ to: ROUTES.AUTH })
   })
 
   const displayName = userProfile?.name || 'Muhammad Huzaifa'

@@ -10,21 +10,21 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettleUpRouteImport } from './routes/settle-up'
-import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PersonalRouteImport } from './routes/personal'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TransactionsIndexRouteImport } from './routes/transactions/index'
+import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as PersonalIndexRouteImport } from './routes/personal/index'
-import { Route as NotificationsIndexRouteImport } from './routes/notifications.index'
+import { Route as NotificationsIndexRouteImport } from './routes/notifications/index'
 import { Route as ContactsIndexRouteImport } from './routes/contacts/index'
 import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as TransactionsIdRouteImport } from './routes/transactions/$id'
-import { Route as SettingsReportIssueRouteImport } from './routes/settings.report-issue'
-import { Route as SettingsProfileRouteImport } from './routes/settings.profile'
-import { Route as SettingsPhotoRouteImport } from './routes/settings.photo'
-import { Route as SettingsLogoutRouteImport } from './routes/settings.logout'
-import { Route as SettingsDeleteAccountRouteImport } from './routes/settings.delete-account'
+import { Route as SettingsReportIssueRouteImport } from './routes/settings/report-issue'
+import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
+import { Route as SettingsPhotoRouteImport } from './routes/settings/photo'
+import { Route as SettingsLogoutRouteImport } from './routes/settings/logout'
+import { Route as SettingsDeleteAccountRouteImport } from './routes/settings/delete-account'
 import { Route as PersonalSettingsRouteImport } from './routes/personal/settings'
 import { Route as PersonalReportsRouteImport } from './routes/personal/reports'
 import { Route as PersonalHideLedgersRouteImport } from './routes/personal/hide-ledgers'
@@ -40,8 +40,8 @@ import { Route as GroupsIdIndexRouteImport } from './routes/groups/$id.index'
 import { Route as ContactsIdIndexRouteImport } from './routes/contacts/$id.index'
 import { Route as TransactionsIdEditRouteImport } from './routes/transactions/$id.edit'
 import { Route as PersonalCategoryBudgetsCatIdRouteImport } from './routes/personal/category-budgets.$catId'
-import { Route as NotificationsDisputeIdRouteImport } from './routes/notifications.dispute.$id'
-import { Route as NotificationsConfirmIdRouteImport } from './routes/notifications.confirm.$id'
+import { Route as NotificationsDisputeIdRouteImport } from './routes/notifications/dispute.$id'
+import { Route as NotificationsConfirmIdRouteImport } from './routes/notifications/confirm.$id'
 import { Route as GroupsIdSettingsRouteImport } from './routes/groups/$id.settings'
 import { Route as GroupsIdReminderRouteImport } from './routes/groups/$id.reminder'
 import { Route as GroupsIdRecurringRouteImport } from './routes/groups/$id.recurring'
@@ -62,11 +62,6 @@ const SettleUpRoute = SettleUpRouteImport.update({
   path: '/settle-up',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const PersonalRoute = PersonalRouteImport.update({
   id: '/personal',
   path: '/personal',
@@ -85,6 +80,11 @@ const IndexRoute = IndexRouteImport.update({
 const TransactionsIndexRoute = TransactionsIndexRouteImport.update({
   id: '/transactions/',
   path: '/transactions/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
+  id: '/settings/',
+  path: '/settings/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PersonalIndexRoute = PersonalIndexRouteImport.update({
@@ -113,29 +113,29 @@ const TransactionsIdRoute = TransactionsIdRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsReportIssueRoute = SettingsReportIssueRouteImport.update({
-  id: '/report-issue',
-  path: '/report-issue',
-  getParentRoute: () => SettingsRoute,
+  id: '/settings/report-issue',
+  path: '/settings/report-issue',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsProfileRoute = SettingsProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => SettingsRoute,
+  id: '/settings/profile',
+  path: '/settings/profile',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsPhotoRoute = SettingsPhotoRouteImport.update({
-  id: '/photo',
-  path: '/photo',
-  getParentRoute: () => SettingsRoute,
+  id: '/settings/photo',
+  path: '/settings/photo',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsLogoutRoute = SettingsLogoutRouteImport.update({
-  id: '/logout',
-  path: '/logout',
-  getParentRoute: () => SettingsRoute,
+  id: '/settings/logout',
+  path: '/settings/logout',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsDeleteAccountRoute = SettingsDeleteAccountRouteImport.update({
-  id: '/delete-account',
-  path: '/delete-account',
-  getParentRoute: () => SettingsRoute,
+  id: '/settings/delete-account',
+  path: '/settings/delete-account',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const PersonalSettingsRoute = PersonalSettingsRouteImport.update({
   id: '/settings',
@@ -301,7 +301,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/notifications': typeof NotificationsRouteWithChildren
   '/personal': typeof PersonalRouteWithChildren
-  '/settings': typeof SettingsRouteWithChildren
   '/settle-up': typeof SettleUpRoute
   '/contacts/$id': typeof ContactsIdRouteWithChildren
   '/contacts/new': typeof ContactsNewRoute
@@ -323,6 +322,7 @@ export interface FileRoutesByFullPath {
   '/contacts/': typeof ContactsIndexRoute
   '/notifications/': typeof NotificationsIndexRoute
   '/personal/': typeof PersonalIndexRoute
+  '/settings/': typeof SettingsIndexRoute
   '/transactions/': typeof TransactionsIndexRoute
   '/contacts/$id/add-expense': typeof ContactsIdAddExpenseRoute
   '/contacts/$id/breakdown': typeof ContactsIdBreakdownRoute
@@ -348,7 +348,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/settings': typeof SettingsRouteWithChildren
   '/settle-up': typeof SettleUpRoute
   '/contacts/new': typeof ContactsNewRoute
   '/personal/add-expense': typeof PersonalAddExpenseRoute
@@ -368,6 +367,7 @@ export interface FileRoutesByTo {
   '/contacts': typeof ContactsIndexRoute
   '/notifications': typeof NotificationsIndexRoute
   '/personal': typeof PersonalIndexRoute
+  '/settings': typeof SettingsIndexRoute
   '/transactions': typeof TransactionsIndexRoute
   '/contacts/$id/add-expense': typeof ContactsIdAddExpenseRoute
   '/contacts/$id/breakdown': typeof ContactsIdBreakdownRoute
@@ -395,7 +395,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/notifications': typeof NotificationsRouteWithChildren
   '/personal': typeof PersonalRouteWithChildren
-  '/settings': typeof SettingsRouteWithChildren
   '/settle-up': typeof SettleUpRoute
   '/contacts/$id': typeof ContactsIdRouteWithChildren
   '/contacts/new': typeof ContactsNewRoute
@@ -417,6 +416,7 @@ export interface FileRoutesById {
   '/contacts/': typeof ContactsIndexRoute
   '/notifications/': typeof NotificationsIndexRoute
   '/personal/': typeof PersonalIndexRoute
+  '/settings/': typeof SettingsIndexRoute
   '/transactions/': typeof TransactionsIndexRoute
   '/contacts/$id/add-expense': typeof ContactsIdAddExpenseRoute
   '/contacts/$id/breakdown': typeof ContactsIdBreakdownRoute
@@ -446,7 +446,6 @@ export interface FileRouteTypes {
     | '/'
     | '/notifications'
     | '/personal'
-    | '/settings'
     | '/settle-up'
     | '/contacts/$id'
     | '/contacts/new'
@@ -468,6 +467,7 @@ export interface FileRouteTypes {
     | '/contacts/'
     | '/notifications/'
     | '/personal/'
+    | '/settings/'
     | '/transactions/'
     | '/contacts/$id/add-expense'
     | '/contacts/$id/breakdown'
@@ -493,7 +493,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/settings'
     | '/settle-up'
     | '/contacts/new'
     | '/personal/add-expense'
@@ -513,6 +512,7 @@ export interface FileRouteTypes {
     | '/contacts'
     | '/notifications'
     | '/personal'
+    | '/settings'
     | '/transactions'
     | '/contacts/$id/add-expense'
     | '/contacts/$id/breakdown'
@@ -539,7 +539,6 @@ export interface FileRouteTypes {
     | '/'
     | '/notifications'
     | '/personal'
-    | '/settings'
     | '/settle-up'
     | '/contacts/$id'
     | '/contacts/new'
@@ -561,6 +560,7 @@ export interface FileRouteTypes {
     | '/contacts/'
     | '/notifications/'
     | '/personal/'
+    | '/settings/'
     | '/transactions/'
     | '/contacts/$id/add-expense'
     | '/contacts/$id/breakdown'
@@ -589,14 +589,19 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   NotificationsRoute: typeof NotificationsRouteWithChildren
   PersonalRoute: typeof PersonalRouteWithChildren
-  SettingsRoute: typeof SettingsRouteWithChildren
   SettleUpRoute: typeof SettleUpRoute
   ContactsIdRoute: typeof ContactsIdRouteWithChildren
   ContactsNewRoute: typeof ContactsNewRoute
   GroupsIdRoute: typeof GroupsIdRouteWithChildren
+  SettingsDeleteAccountRoute: typeof SettingsDeleteAccountRoute
+  SettingsLogoutRoute: typeof SettingsLogoutRoute
+  SettingsPhotoRoute: typeof SettingsPhotoRoute
+  SettingsProfileRoute: typeof SettingsProfileRoute
+  SettingsReportIssueRoute: typeof SettingsReportIssueRoute
   TransactionsIdRoute: typeof TransactionsIdRouteWithChildren
   AuthIndexRoute: typeof AuthIndexRoute
   ContactsIndexRoute: typeof ContactsIndexRoute
+  SettingsIndexRoute: typeof SettingsIndexRoute
   TransactionsIndexRoute: typeof TransactionsIndexRoute
 }
 
@@ -607,13 +612,6 @@ declare module '@tanstack/react-router' {
       path: '/settle-up'
       fullPath: '/settle-up'
       preLoaderRoute: typeof SettleUpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/personal': {
@@ -642,6 +640,13 @@ declare module '@tanstack/react-router' {
       path: '/transactions'
       fullPath: '/transactions/'
       preLoaderRoute: typeof TransactionsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/': {
+      id: '/settings/'
+      path: '/settings'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof SettingsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/personal/': {
@@ -681,38 +686,38 @@ declare module '@tanstack/react-router' {
     }
     '/settings/report-issue': {
       id: '/settings/report-issue'
-      path: '/report-issue'
+      path: '/settings/report-issue'
       fullPath: '/settings/report-issue'
       preLoaderRoute: typeof SettingsReportIssueRouteImport
-      parentRoute: typeof SettingsRoute
+      parentRoute: typeof rootRouteImport
     }
     '/settings/profile': {
       id: '/settings/profile'
-      path: '/profile'
+      path: '/settings/profile'
       fullPath: '/settings/profile'
       preLoaderRoute: typeof SettingsProfileRouteImport
-      parentRoute: typeof SettingsRoute
+      parentRoute: typeof rootRouteImport
     }
     '/settings/photo': {
       id: '/settings/photo'
-      path: '/photo'
+      path: '/settings/photo'
       fullPath: '/settings/photo'
       preLoaderRoute: typeof SettingsPhotoRouteImport
-      parentRoute: typeof SettingsRoute
+      parentRoute: typeof rootRouteImport
     }
     '/settings/logout': {
       id: '/settings/logout'
-      path: '/logout'
+      path: '/settings/logout'
       fullPath: '/settings/logout'
       preLoaderRoute: typeof SettingsLogoutRouteImport
-      parentRoute: typeof SettingsRoute
+      parentRoute: typeof rootRouteImport
     }
     '/settings/delete-account': {
       id: '/settings/delete-account'
-      path: '/delete-account'
+      path: '/settings/delete-account'
       fullPath: '/settings/delete-account'
       preLoaderRoute: typeof SettingsDeleteAccountRouteImport
-      parentRoute: typeof SettingsRoute
+      parentRoute: typeof rootRouteImport
     }
     '/personal/settings': {
       id: '/personal/settings'
@@ -980,26 +985,6 @@ const PersonalRouteWithChildren = PersonalRoute._addFileChildren(
   PersonalRouteChildren,
 )
 
-interface SettingsRouteChildren {
-  SettingsDeleteAccountRoute: typeof SettingsDeleteAccountRoute
-  SettingsLogoutRoute: typeof SettingsLogoutRoute
-  SettingsPhotoRoute: typeof SettingsPhotoRoute
-  SettingsProfileRoute: typeof SettingsProfileRoute
-  SettingsReportIssueRoute: typeof SettingsReportIssueRoute
-}
-
-const SettingsRouteChildren: SettingsRouteChildren = {
-  SettingsDeleteAccountRoute: SettingsDeleteAccountRoute,
-  SettingsLogoutRoute: SettingsLogoutRoute,
-  SettingsPhotoRoute: SettingsPhotoRoute,
-  SettingsProfileRoute: SettingsProfileRoute,
-  SettingsReportIssueRoute: SettingsReportIssueRoute,
-}
-
-const SettingsRouteWithChildren = SettingsRoute._addFileChildren(
-  SettingsRouteChildren,
-)
-
 interface ContactsIdRouteChildren {
   ContactsIdAddExpenseRoute: typeof ContactsIdAddExpenseRoute
   ContactsIdBreakdownRoute: typeof ContactsIdBreakdownRoute
@@ -1086,14 +1071,19 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   NotificationsRoute: NotificationsRouteWithChildren,
   PersonalRoute: PersonalRouteWithChildren,
-  SettingsRoute: SettingsRouteWithChildren,
   SettleUpRoute: SettleUpRoute,
   ContactsIdRoute: ContactsIdRouteWithChildren,
   ContactsNewRoute: ContactsNewRoute,
   GroupsIdRoute: GroupsIdRouteWithChildren,
+  SettingsDeleteAccountRoute: SettingsDeleteAccountRoute,
+  SettingsLogoutRoute: SettingsLogoutRoute,
+  SettingsPhotoRoute: SettingsPhotoRoute,
+  SettingsProfileRoute: SettingsProfileRoute,
+  SettingsReportIssueRoute: SettingsReportIssueRoute,
   TransactionsIdRoute: TransactionsIdRouteWithChildren,
   AuthIndexRoute: AuthIndexRoute,
   ContactsIndexRoute: ContactsIndexRoute,
+  SettingsIndexRoute: SettingsIndexRoute,
   TransactionsIndexRoute: TransactionsIndexRoute,
 }
 export const routeTree = rootRouteImport

@@ -71,7 +71,7 @@ export default function TransactionDetailScreen() {
             if (window.history.length > 1) {
               window.history.back()
             } else {
-              navigate({ to: '/' })
+              navigate({ to: ROUTES.DASHBOARD })
             }
           }}
           className="text-primary font-bold hover:underline border-0 bg-transparent cursor-pointer"

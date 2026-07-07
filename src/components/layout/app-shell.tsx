@@ -1,17 +1,18 @@
 import type { ReactNode } from 'react'
 import { useRouterState } from '@tanstack/react-router'
 import { useAuthStore } from '@/store/use-auth-store'
+import { ROUTES } from '@/constants/routes'
 import BottomNav from './bottom-nav'
+
 
 // Exact paths or path prefixes where the bottom nav should be hidden.
 // These are full-screen flows and detail views that have their own navigation.
 const HIDE_NAV_PREFIXES = [
-  '/contacts/new',       // New contact / group flow
-  '/contacts/$',         // Contact detail  (dynamic segment)
-  '/groups/$',           // Group detail (dynamic segment)
-  '/transactions/$',     // Transaction detail (dynamic segment)
-  '/settings',
-  '/personal',           // Personal screen and all subroutes
+  ROUTES.CONTACTS,                             // '/contacts' all child routes
+  ROUTES.GROUPS,                               // '/groups' all child routes
+  ROUTES.TRANSACTIONS,                         // '/transactions' all child routes
+  ROUTES.SETTINGS,                             // '/settings' and all sub-screens
+  ROUTES.PERSONAL,                             // '/personal' and all subroutes
 ]
 
 function shouldShowNav(pathname: string): boolean {
