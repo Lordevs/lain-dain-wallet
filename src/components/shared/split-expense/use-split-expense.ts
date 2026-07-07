@@ -136,17 +136,21 @@ export function useSplitExpense({
 
   const handleUnequalChange = (memberId: string, val: string) => {
     const rawVal = val.replace(/\D/g, '')
+    const numVal = Number(rawVal) || 0
+    const cappedVal = numVal > totalAmount ? totalAmount.toString() : rawVal
     setUnequalAmounts((prev) => ({
       ...prev,
-      [memberId]: rawVal,
+      [memberId]: cappedVal,
     }))
   }
 
   const handleAdjustmentChange = (memberId: string, val: string) => {
     const rawVal = val.replace(/\D/g, '')
+    const numVal = Number(rawVal) || 0
+    const cappedVal = numVal > totalAmount ? totalAmount.toString() : rawVal
     setAdjustmentAmounts((prev) => ({
       ...prev,
-      [memberId]: rawVal,
+      [memberId]: cappedVal,
     }))
   }
 

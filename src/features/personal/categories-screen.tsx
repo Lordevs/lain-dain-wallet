@@ -125,12 +125,6 @@ export default function PersonalCategoriesScreen() {
     setCategories(newOrder)
   }
 
-  const toggleHideCategory = (catId: string) => {
-    setCategories(prev =>
-      prev.map(c => c.id === catId ? { ...c, isHidden: !c.isHidden } : c)
-    )
-  }
-
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-6 select-none overflow-hidden text-left">
       {/* Top Header */}
@@ -318,7 +312,6 @@ export default function PersonalCategoriesScreen() {
         isOpen={!!selectedCategoryOptions}
         onClose={() => setSelectedCategoryOptions(null)}
         category={selectedCategoryOptions}
-        onHideShow={toggleHideCategory}
         onReorderClick={() => setIsReordering(true)}
         onDeleteClick={(cat) => setCategoryToDelete(cat)}
       />

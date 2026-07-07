@@ -1,9 +1,7 @@
 import {
   ArrowUpDown,
-  EyeOff,
   Pencil,
   Trash2,
-  Calendar
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Drawer, DrawerContent } from '@/components/ui/drawer'
@@ -23,7 +21,6 @@ interface CategoryOptionsDrawerProps {
   isOpen: boolean
   onClose: () => void
   category: CategoryItem | null
-  onHideShow: (catId: string) => void
   onReorderClick: () => void
   onDeleteClick: (cat: CategoryItem) => void
 }
@@ -32,7 +29,6 @@ export default function CategoryOptionsDrawer({
   isOpen,
   onClose,
   category,
-  onHideShow,
   onReorderClick,
   onDeleteClick,
 }: CategoryOptionsDrawerProps) {
@@ -60,28 +56,6 @@ export default function CategoryOptionsDrawer({
 
         {/* Options List */}
         <div className="divide-y-[0.8px]! divide-[#EBEBEB] flex flex-col">
-
-          {/* Hide / Show Category */}
-          <button
-            onClick={() => {
-              onHideShow(category.id)
-              onClose()
-            }}
-            className="w-full py-4 px-6 flex items-center gap-4 hover:bg-muted/5 transition-colors cursor-pointer border-0 bg-transparent text-left outline-none"
-          >
-            <div className="w-10 h-10 rounded-[12px] bg-[#E4F2EB] text-positive flex items-center justify-center shrink-0">
-              <EyeOff size={18} strokeWidth={1.5} />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[15px] font-semibold text-[#1A1A1A] leading-tight">
-                {category.isHidden ? 'Show category' : 'Hide category'}
-              </span>
-              <span className="text-[12px] font-normal text-[#6B6B6B] mt-0.5 leading-none">
-                {category.isHidden ? 'Will appear in the expense picker' : "Won't appear in the expense picker"}
-              </span>
-            </div>
-          </button>
-
           {/* Rename Category */}
           <button
             onClick={onClose}
@@ -93,20 +67,6 @@ export default function CategoryOptionsDrawer({
             <div className="flex flex-col">
               <span className="text-[15px] font-semibold text-[#1A1A1A] leading-tight">Rename category</span>
               <span className="text-[12px] font-normal text-[#6B6B6B] mt-0.5 leading-none">Change the display name</span>
-            </div>
-          </button>
-
-          {/* Set Monthly Cycle */}
-          <button
-            onClick={onClose}
-            className="w-full py-4 px-6 flex items-center gap-4 hover:bg-muted/5 transition-colors cursor-pointer border-0 bg-transparent text-left outline-none"
-          >
-            <div className="w-10 h-10 rounded-[12px] bg-[#FFF9E6] text-[#C85A00] flex items-center justify-center shrink-0">
-              <Calendar size={18} strokeWidth={1.5} />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[15px] font-semibold text-[#1A1A1A] leading-tight">Set monthly cycle</span>
-              <span className="text-[12px] font-normal text-[#6B6B6B] mt-0.5 leading-none">Reset tracking on a chosen day e.g. 1st</span>
             </div>
           </button>
 

@@ -61,25 +61,25 @@ export default function MonthlySpendingCard({
   // Chart config
   const svgWidth = 340
   const svgHeight = 180
-  const chartHeight = 120
-  const bottomY = 140
-  const startX = 40
-  const barWidth = 12
-  const gap = 12
+  const chartHeight = 115
+  const bottomY = 135
+  const startX = 32
+  const barWidth = 14
+  const gap = 13
 
   const maxVal = 60000
   const yTicks = [60000, 45000, 30000, 15000, 0]
 
   return (
-    <div className="bg-white rounded-[24px] border-[0.8px] border-[#EBEBEB] shadow-[0px_2px_10px_0px_#0000000D] p-6 mx-6 mt-4 mb-24 flex flex-col">
+    <div className="bg-white rounded-[24px] border-[0.8px] border-[#EBEBEB] shadow-[0px_2px_10px_0px_#0000000D] p-5 mx-4 mt-4 mb-24 flex flex-col">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-[#E4F2EB] rounded-[10px] flex items-center justify-center shrink-0">
-          <TrendingUp className='text-primary' />
+      <div className="flex items-center gap-2.5 mb-5 select-none">
+        <div className="w-8 h-8 bg-[#E4F2EB] rounded-[8px] flex items-center justify-center shrink-0">
+          <TrendingUp size={16} className='text-primary' />
         </div>
-        <div className="flex flex-col">
-          <h2 className="text-base font-bold! text-[#1A1A1A] leading-tight">All months</h2>
-          <span className="text-[11px] font-normal text-[#6B6B6B]">Monthly spending</span>
+        <div className="flex flex-col text-left">
+          <h2 className="text-[14px] font-black text-[#1A1A1A] leading-tight">All months</h2>
+          <span className="text-[10px] font-semibold text-[#6B6B6B]">Monthly spending</span>
         </div>
       </div>
 
@@ -97,18 +97,17 @@ export default function MonthlySpendingCard({
                 <line
                   x1={startX}
                   y1={y}
-                  x2={svgWidth - 10}
+                  x2={svgWidth - 6}
                   y2={y}
                   stroke="#EEEDED"
                   strokeWidth="0.8"
-                  strokeDasharray="0"
                 />
                 {/* Y-Axis tick label */}
                 <text
-                  x={startX - 10}
+                  x={startX - 8}
                   y={y}
                   fill="#9A9590"
-                  fontSize="10"
+                  fontSize="9"
                   fontWeight="600"
                   textAnchor="end"
                   dominantBaseline="middle"
@@ -122,7 +121,7 @@ export default function MonthlySpendingCard({
 
           {/* Columns (Bars) */}
           {monthlySpending.map((item, idx) => {
-            const x = startX + idx * (barWidth + gap) + 6
+            const x = startX + idx * (barWidth + gap) + 4
             const isHighlighted = item.month === activeAbbr
             const barH = (item.amount / maxVal) * chartHeight
             const y = bottomY - barH
@@ -145,9 +144,9 @@ export default function MonthlySpendingCard({
                   <g>
                     {/* Active Pill Badge background */}
                     <rect
-                      x={x - 8}
+                      x={x - 6}
                       y={bottomY + 8}
-                      width={barWidth + 16}
+                      width={barWidth + 12}
                       height={18}
                       rx={9}
                       fill="#ffffff"
@@ -173,7 +172,7 @@ export default function MonthlySpendingCard({
                     x={x + barWidth / 2}
                     y={bottomY + 17}
                     fill="#9A9590"
-                    fontSize="10"
+                    fontSize="9"
                     fontWeight="600"
                     textAnchor="middle"
                     dominantBaseline="middle"

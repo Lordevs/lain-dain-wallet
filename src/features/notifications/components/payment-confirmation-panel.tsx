@@ -118,7 +118,7 @@ export default function PaymentConfirmationPanel() {
             <span className="text-[13px] font-semibold">Please verify before confirming</span>
           </div>
           <p className="text-xs text-[#6B6B6B] font-normal leading-relaxed">
-            Check your Easypaisa or bank account to confirm you actually received this amount before tapping Confirm.
+            Check your bank account to confirm you actually received this amount before tapping Confirm.
           </p>
         </div>
       </div>

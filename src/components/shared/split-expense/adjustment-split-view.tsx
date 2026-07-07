@@ -55,8 +55,8 @@ export default function AdjustmentSplitView({
               key={member.id}
               className="px-6 py-4 flex items-center justify-between transition-colors bg-transparent"
             >
-              <div className="flex items-center gap-3 text-left">
-                <div className="relative">
+              <div className="flex items-center gap-3 text-left min-w-0 flex-1 mr-3">
+                <div className="relative shrink-0">
                   <Avatar className="size-10 shrink-0 font-extrabold text-sm text-white select-none">
                     <AvatarFallback className={cn("rounded-full flex items-center justify-center border-0 text-white font-extrabold text-sm", member.avatarColor)}>
                       {member.initials}
@@ -64,10 +64,10 @@ export default function AdjustmentSplitView({
                   </Avatar>
                   <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#14A558] border border-white rounded-full" />
                 </div>
-                <div className="flex flex-col">
-                  <span className="font-semibold text-sm text-foreground">{member.name}</span>
+                <div className="flex flex-col min-w-0">
+                  <span className="font-semibold text-sm text-foreground truncate">{member.name}</span>
                   {member.isOrganizer && (
-                    <span className="text-[10px] text-positive font-bold bg-[#E5F2EB] px-1.5 py-0.5 rounded-full mt-0.5 self-start leading-none">
+                    <span className="text-[10px] text-positive font-bold bg-[#E5F2EB] px-1.5 py-0.5 rounded-full mt-0.5 self-start leading-none shrink-0">
                       Organizer
                     </span>
                   )}
@@ -75,23 +75,23 @@ export default function AdjustmentSplitView({
               </div>
 
               {/* Right side controls */}
-              <div className="flex items-center gap-6">
-                <div className="flex flex-col text-right">
+              <div className="flex items-center gap-4 shrink-0">
+                <div className="flex flex-col text-right shrink-0">
                   <span className="text-[10px] text-muted-faint font-semibold">Final Amount</span>
-                  <span className="text-sm font-extrabold text-positive mt-0.5">
+                  <span className="text-sm font-extrabold text-positive mt-0.5 whitespace-nowrap">
                     Rs. {getAdjustmentFinalAmount(member.id).toLocaleString('en-US')}
                   </span>
                 </div>
-                <div className="flex flex-col">
+                <div className="flex flex-col shrink-0">
                   <span className="text-[10px] text-muted-faint font-semibold mb-1 text-left">owes extra</span>
-                  <div className="flex items-center gap-1 bg-white px-3 py-1.5 rounded-[12px] border-[0.8px] border-divider shadow-[0px_1px_4px_rgba(0,0,0,0.02)]">
-                    <span className="text-xs text-muted-faint font-bold">Rs.</span>
+                  <div className="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-[12px] border-[0.8px] border-divider shadow-[0px_1px_4px_rgba(0,0,0,0.02)] w-20">
+                    <span className="text-xs text-muted-faint font-bold shrink-0">Rs.</span>
                     <input
                       type="text"
                       inputMode="decimal"
                       value={adjustmentAmounts[member.id]}
                       onChange={(e) => onAdjustmentChange(member.id, e.target.value)}
-                      className="w-14 bg-transparent border-0 outline-none text-xs font-extrabold text-foreground text-right font-sans py-0"
+                      className="w-full bg-transparent border-0 outline-none text-xs font-extrabold text-foreground text-right font-sans py-0"
                     />
                   </div>
                 </div>
