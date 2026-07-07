@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { useParams } from '@tanstack/react-router'
 import { Check, AlertTriangle } from 'lucide-react'
 import FlowHeader from '@/components/shared/flow-header'
 import { useNotifications } from '@/features/notifications/hooks/use-notifications'
+import SuccessCheck from '@/components/shared/success-check'
 
 /**
  * PaymentConfirmationPanel — sliding panel to verify and confirm received payments.
@@ -10,8 +12,24 @@ import { useNotifications } from '@/features/notifications/hooks/use-notificatio
 export default function PaymentConfirmationPanel() {
   const { id } = useParams({ from: '/notifications/confirm/$id' })
   const { notifications, handleConfirmComplete, triggerToast } = useNotifications()
+  const [showSuccess, setShowSuccess] = useState(false)
 
   const notification = notifications.find((n) => n.id === id)
+
+  if (showSuccess && notification) {
+    return (
+      <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen select-none justify-between">
+        <SuccessCheck
+          text="Payment Received"
+          showConfetti={true}
+          onComplete={() => {
+            handleConfirmComplete(notification.id)
+            window.history.back()
+          }}
+        />
+      </div>
+    )
+  }
 
   if (!notification) {
     return (
@@ -128,10 +146,7 @@ export default function PaymentConfirmationPanel() {
         <div className="w-full flex items-center gap-3.5">
           <button
             type="button"
-            onClick={() => {
-              handleConfirmComplete(notification.id)
-              window.history.back()
-            }}
+            onClick={() => setShowSuccess(true)}
             className="flex-1 h-14 rounded-full bg-positive text-white font-bold text-sm cursor-pointer active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
           >
             Confirm Received

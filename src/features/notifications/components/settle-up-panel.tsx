@@ -219,7 +219,11 @@ export default function SettleUpPanel() {
   if (showSuccess) {
     return (
       <div className="flex flex-col flex-1 min-h-screen bg-[#FEFAF1] select-none justify-center">
-        <SuccessCheck onComplete={handleSuccessComplete} />
+        <SuccessCheck
+          text={activeTab === 'receive' ? 'Payment Received' : 'Success'}
+          showConfetti={activeTab === 'receive'}
+          onComplete={handleSuccessComplete}
+        />
       </div>
     )
   }
