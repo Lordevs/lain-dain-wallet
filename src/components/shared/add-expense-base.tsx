@@ -14,6 +14,7 @@ import SuccessCheck from '@/components/shared/success-check'
 import PaidByDrawer from '@/components/shared/paid-by-drawer'
 import SplitExpenseDrawer, { type SplitData } from '@/components/shared/split-expense-drawer'
 import SelectDateDrawer from '@/components/shared/select-date-drawer'
+import { useDrawerBackHandler } from '@/hooks/use-drawer-back-handler'
 
 export interface ConfirmExpenseData {
   amount: number
@@ -88,6 +89,13 @@ export default function AddExpenseBase({
 
   const userProfile = useAuthStore((state) => state.userProfile)
   const youInitials = getInitials(userProfile?.name || 'You')
+
+  // Each drawer gets a back-button-aware close handler.
+  // When the mobile back button is pressed while a drawer is open,
+  // it closes the drawer instead of navigating to the previous page.
+  const closePaidBy = useDrawerBackHandler(showPaidBy, () => setShowPaidBy(false))
+  const closeSplit = useDrawerBackHandler(showSplit, () => setShowSplit(false))
+  const closeDateDrawer = useDrawerBackHandler(showDateDrawer, () => setShowDateDrawer(false))
 
   const payerName = paidBy === 'you'
     ? 'You'
@@ -350,7 +358,7 @@ export default function AddExpenseBase({
       {showPaidByAndSplit && contact && (
         <PaidByDrawer
           isOpen={showPaidBy}
-          onClose={() => setShowPaidBy(false)}
+          onClose={closePaidBy}
           selectedValue={paidBy}
           onSelect={setPaidBy}
           contactName={contact.name}
@@ -369,10 +377,10 @@ export default function AddExpenseBase({
           categoryLabel={CATEGORIES.find((cat) => cat.id === selectedCategory)?.label || 'Other'}
           categoryColor={CATEGORIES.find((cat) => cat.id === selectedCategory)?.color || '#7F8C8D'}
           CategoryIcon={CATEGORIES.find((cat) => cat.id === selectedCategory)?.icon || CATEGORIES[7].icon}
-          onClose={() => setShowSplit(false)}
+          onClose={closeSplit}
           onSave={(data) => {
             setSplitData(data)
-            setShowSplit(false)
+            closeSplit()
           }}
           initialSplitData={splitData}
           contactName={contact.name}
@@ -384,7 +392,7 @@ export default function AddExpenseBase({
       {/* Select Date Drawer */}
       <SelectDateDrawer
         isOpen={showDateDrawer}
-        onClose={() => setShowDateDrawer(false)}
+        onClose={closeDateDrawer}
         selectedValue={dateValue.toLowerCase()}
         onSelect={(val) => {
           if (val === 'today') {

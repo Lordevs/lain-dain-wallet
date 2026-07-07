@@ -11,6 +11,7 @@ import PaymentMethodDrawer, { type PaymentMethodType } from '@/components/shared
 import SelectDateDrawer from '@/components/shared/select-date-drawer'
 import AddReceiptFlow from '@/components/shared/add-receipt-flow'
 import AddNoteFlow from '@/components/shared/add-note-flow'
+import { useDrawerBackHandler } from '@/hooks/use-drawer-back-handler'
 interface ReceiptFile {
   name: string
   size: string
@@ -150,6 +151,13 @@ export default function SettleUpPanel() {
   const [isDateDrawerOpen, setIsDateDrawerOpen] = useState(false)
   const [isReceiptFlowOpen, setIsReceiptFlowOpen] = useState(false)
   const [isNoteFlowOpen, setIsNoteFlowOpen] = useState(false)
+
+  // Back-button-aware close handlers — pressing the mobile hardware back
+  // button while a drawer is open will close it instead of navigating away.
+  const closeMethodDrawer = useDrawerBackHandler(isMethodDrawerOpen, () => setIsMethodDrawerOpen(false))
+  const closeDateDrawer = useDrawerBackHandler(isDateDrawerOpen, () => setIsDateDrawerOpen(false))
+  const closeReceiptFlow = useDrawerBackHandler(isReceiptFlowOpen, () => setIsReceiptFlowOpen(false))
+  const closeNoteFlow = useDrawerBackHandler(isNoteFlowOpen, () => setIsNoteFlowOpen(false))
 
   // Calculate totals based on active mode
   const payingNow = mode === 'contact'
@@ -478,7 +486,7 @@ export default function SettleUpPanel() {
       {/* Payment Method Drawer */}
       <PaymentMethodDrawer
         isOpen={isMethodDrawerOpen}
-        onClose={() => setIsMethodDrawerOpen(false)}
+        onClose={closeMethodDrawer}
         selectedValue={method}
         onSelect={(val) => setMethod(val)}
       />
@@ -486,7 +494,7 @@ export default function SettleUpPanel() {
       {/* Select Date Drawer */}
       <SelectDateDrawer
         isOpen={isDateDrawerOpen}
-        onClose={() => setIsDateDrawerOpen(false)}
+        onClose={closeDateDrawer}
         selectedValue={dateVal}
         onSelect={(val) => setDateVal(val)}
       />
@@ -498,10 +506,10 @@ export default function SettleUpPanel() {
         description={groupName}
         category="other"
         initialFile={receiptFile}
-        onClose={() => setIsReceiptFlowOpen(false)}
+        onClose={closeReceiptFlow}
         onSave={(file) => {
           setReceiptFile(file)
-          setIsReceiptFlowOpen(false)
+          closeReceiptFlow()
         }}
       />
 
@@ -512,10 +520,10 @@ export default function SettleUpPanel() {
         description={groupName}
         category="other"
         initialNote={noteText}
-        onClose={() => setIsNoteFlowOpen(false)}
+        onClose={closeNoteFlow}
         onSave={(text) => {
           setNoteText(text)
-          setIsNoteFlowOpen(false)
+          closeNoteFlow()
         }}
       />
     </div>
