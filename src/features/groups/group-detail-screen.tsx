@@ -1,6 +1,7 @@
 
+import { useState, useMemo } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
-import { MoreVertical, ChevronRight } from 'lucide-react'
+import { MoreVertical, ChevronRight, ListFilter } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import { formatPKR } from '@/lib/currency'
 import { cn } from '@/lib/utils'
@@ -9,6 +10,11 @@ import ContactList from '@/components/shared/contact-list'
 import ContactListItem from '@/components/shared/contact-list-item'
 import { useGroupLedger } from '@/features/groups/hooks/use-group-ledger'
 import GroupBalanceCarousel from '@/features/groups/components/group-balance-carousel'
+import GroupExpensesFilterDrawer, {
+  type GroupSortBy,
+  type GroupViewBy,
+} from '@/features/groups/components/group-expenses-filter-drawer'
+import ExpenseList from '@/components/shared/expense-list'
 
 /**
  * GroupDetailScreen — handles detailed views and features for groups.
@@ -17,7 +23,10 @@ export default function GroupDetailScreen() {
   const { id } = useParams({ from: '/groups/$id/' })
   const navigate = useNavigate({ from: '/groups/$id/' })
 
-  const { contact, categoriesSummary, groupBalances } = useGroupLedger(id)
+  const { contact, groupExpensesData, categoriesSummary, groupBalances } = useGroupLedger(id)
+
+  const [sortBy, setSortBy] = useState<GroupSortBy>('newest')
+  const [viewBy, setViewBy] = useState<GroupViewBy>('category')
 
   if (!contact || contact.type !== 'group') {
     return (
@@ -35,6 +44,28 @@ export default function GroupDetailScreen() {
 
   const isGroupReceivable = contact.netAmount > 0
   const formattedGroupVal = formatPKR(Math.abs(contact.netAmount))
+
+  // Sort raw expenses list when viewing all
+  const sortedExpenses = useMemo(() => {
+    const data = [...groupExpensesData]
+    if (sortBy === 'oldest') {
+      return data.reverse()
+    }
+    if (sortBy === 'highest') {
+      return data.sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
+    }
+    if (sortBy === 'lowest') {
+      return data.sort((a, b) => Math.abs(a.amount) - Math.abs(b.amount))
+    }
+    // 'newest' default
+    return data
+  }, [groupExpensesData, sortBy])
+
+  const handleExpenseClick = (expenseId: string | number) => {
+    navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: expenseId.toString() } })
+  }
+
+  const isFilterActive = sortBy !== 'newest' || viewBy !== 'category'
 
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24 relative select-none">
@@ -100,7 +131,7 @@ export default function GroupDetailScreen() {
                       {mb.direction === 'in' ? (
                         <span className="text-positive font-semibold text-[13px]">↓</span>
                       ) : (
-                        <span className="text-[#C96A1B] font-semibold text-[13px]">↑</span>
+                        <span className="font-semibold text-[13px] text-[#C96A1B]">↑</span>
                       )}
                       <span className={cn(
                         "text-[13px] font-black",
@@ -121,48 +152,76 @@ export default function GroupDetailScreen() {
         <div className="flex flex-col text-left">
           <div className="flex items-center justify-between mb-3 mt-1">
             <h3 className="text-sm font-bold text-[#1A1A1A]">
-              Expenses <span className="text-[#6B6B6B] font-medium">({categoriesSummary.length} categories)</span>
+              Expenses <span className="text-[#6B6B6B] font-medium">({viewBy === 'category' ? categoriesSummary.length : sortedExpenses.length} {viewBy === 'category' ? 'categories' : 'items'})</span>
             </h3>
+            
+            <GroupExpensesFilterDrawer
+              sortBy={sortBy}
+              onSortByChange={setSortBy}
+              viewBy={viewBy}
+              onViewByChange={setViewBy}
+            >
+              <button
+                type="button"
+                className={cn(
+                  'w-9 h-9 rounded-full bg-white! border-[1.08px] border-border-card flex items-center justify-center text-muted-faint hover:text-foreground hover:bg-white transition-colors shadow-[0px_2px_8px_0px_#0000000A] p-0 shrink-0 cursor-pointer outline-none',
+                  isFilterActive && 'border-primary text-primary bg-primary/5 hover:bg-primary/5',
+                )}
+                aria-label="Filter Expenses"
+              >
+                <ListFilter size={16} strokeWidth={2} />
+              </button>
+            </GroupExpensesFilterDrawer>
           </div>
 
-          <div className="bg-white border border-[#EFE7DD] rounded-xl divide-y! divide-[#EFE7DD]! overflow-hidden shadow-[0px_4px_16px_rgba(0,0,0,0.02)]">
-            {categoriesSummary.map((summary) => {
-              const IconComp = summary.icon
-              const formattedVal = formatPKR(summary.total)
-              return (
-                <button
-                  key={summary.id}
-                  type="button"
-                  onClick={() => navigate({ to: ROUTES.GROUP_CATEGORY, params: { id: contact.id, catId: summary.id } })}
-                  className="w-full flex items-center justify-between p-4 hover:bg-muted/5 transition-colors border-0 outline-none text-left cursor-pointer bg-white"
-                >
-                  <div className="flex items-center gap-3.5">
-                    <div
-                      className="w-10 h-10 rounded-[14px] flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: `${summary.color}15` }}
-                    >
-                      <IconComp size={20} style={{ color: summary.color }} />
+          {viewBy === 'category' ? (
+            <div className="bg-white border border-[#EFE7DD] rounded-xl divide-y! divide-[#EFE7DD]! overflow-hidden shadow-[0px_4px_16px_rgba(0,0,0,0.02)]">
+              {categoriesSummary.map((summary) => {
+                const IconComp = summary.icon
+                const formattedVal = formatPKR(summary.total)
+                return (
+                  <button
+                    key={summary.id}
+                    type="button"
+                    onClick={() => navigate({ to: ROUTES.GROUP_CATEGORY, params: { id: contact.id, catId: summary.id } })}
+                    className="w-full flex items-center justify-between p-4 hover:bg-muted/5 transition-colors border-0 outline-none text-left cursor-pointer bg-white"
+                  >
+                    <div className="flex items-center gap-3.5">
+                      <div
+                        className="w-10 h-10 rounded-[14px] flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: `${summary.color}15` }}
+                      >
+                        <IconComp size={20} style={{ color: summary.color }} />
+                      </div>
+                      <div className="flex flex-col text-left">
+                        <span className="font-semibold text-sm text-[#1A1A1A]">
+                          {summary.label}
+                        </span>
+                        <span className="text-xs text-[#6B6B6B] font-normal mt-0.5">
+                          {summary.count} {summary.count === 1 ? 'item' : 'items'}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex flex-col text-left">
-                      <span className="font-semibold text-sm text-[#1A1A1A]">
-                        {summary.label}
-                      </span>
-                      <span className="text-xs text-[#6B6B6B] font-normal mt-0.5">
-                        {summary.count} {summary.count === 1 ? 'item' : 'items'}
-                      </span>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm text-[#1A1A1A]">
-                      {formattedVal}
-                    </span>
-                    <ChevronRight size={16} className="text-[#9A9590]" strokeWidth={2.5} />
-                  </div>
-                </button>
-              )
-            })}
-          </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm text-[#1A1A1A]">
+                        {formattedVal}
+                      </span>
+                      <ChevronRight size={16} className="text-[#9A9590]" strokeWidth={2.5} />
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="bg-white border border-[#EFE7DD] rounded-xl overflow-hidden shadow-[0px_4px_16px_rgba(0,0,0,0.02)]">
+              <ExpenseList
+                expenses={sortedExpenses}
+                onItemClick={handleExpenseClick}
+                className="border-0 divide-[#EFE7DD]"
+              />
+            </div>
+          )}
         </div>
 
       </div>

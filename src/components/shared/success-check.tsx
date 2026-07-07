@@ -41,7 +41,7 @@ export default function SuccessCheck({
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
         if (AudioContextClass) {
           const audioCtx = new AudioContextClass()
-          
+
           audioCtx.resume().then(() => {
             // Chime Note 1 (E5)
             const osc1 = audioCtx.createOscillator()
@@ -175,7 +175,7 @@ export default function SuccessCheck({
       <div className="flex flex-col items-center z-10">
         {/* Animated Check Bubble */}
         <div
-          className="w-28 h-28 rounded-full bg-[#E4F2EB] shadow-[0px_6px_24px_0px_#0B683A33] flex items-center justify-center active:scale-95 transition-transform cursor-pointer border-[1.5px] border-[#0B683A33]"
+          className="w-28 h-28 rounded-full bg-[#E4F2EB] shadow-[0px_6px_24px_0px_#0B683A33] flex items-center justify-center active:scale-95 transition-transform cursor-pointer"
           onClick={onComplete}
         >
           <Check size={44} className="text-positive" strokeWidth={3} />

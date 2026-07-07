@@ -153,7 +153,7 @@ export default function PersonalCategoriesScreen() {
           </span>
         </div>
       ) : (
-        <p className="text-[14px] font-medium text-[#6B6B6B] px-6 mt-1 mb-5 leading-relaxed shrink-0">
+        <p className="text-[13px] font-normal text-[#6B6B6B] px-6 mt-1 mb-3 leading-relaxed shrink-0">
           Tap ... on any category to rename, hide, reorder or set a monthly budget cycle.
         </p>
       )}
@@ -162,7 +162,7 @@ export default function PersonalCategoriesScreen() {
       <div className="flex-1 overflow-y-auto pb-4">
 
         {/* Section Title */}
-        <h4 className="text-[11px] font-bold text-[#6B6B6B] tracking-widest mb-3 px-7 uppercase">
+        <h4 className="text-[11px] font-semibold text-[#6B6B6B] tracking-widest mb-1 px-7 uppercase">
           Your Categories ({categories.length})
         </h4>
 
@@ -240,10 +240,10 @@ export default function PersonalCategoriesScreen() {
                             <div
                               key={idx}
                               className={cn(
-                                "text-[10px] font-bold px-2.5 py-0.5 rounded-[6px] shrink-0 flex items-center gap-1",
+                                "text-[10px] font-semibold px-2.5 rounded-full shrink-0 flex items-center gap-1",
                                 b.type === 'cycle'
-                                  ? "bg-[#FEF5E7] border border-[#FDB10526] text-[#B87C04]"
-                                  : "bg-[#E8F5E9] text-positive"
+                                  ? "bg-[#FFF9E6] border-[0.8px] border-[#C85A0026] text-[#C85A00]"
+                                  : "bg-[#F0FDF4] border-[0.8px] border-[#0B683A26] text-positive"
                               )}
                             >
                               {b.type === 'cycle' && <Calendar size={10} strokeWidth={1.5} />}
