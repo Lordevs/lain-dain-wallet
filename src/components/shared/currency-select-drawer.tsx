@@ -28,6 +28,7 @@ interface CurrencySelectDrawerProps {
   value: string
   onChange: (value: string) => void
   className?: string
+  children?: React.ReactNode
 }
 
 interface CurrencyVisuals {
@@ -78,6 +79,7 @@ export default function CurrencySelectDrawer({
   value,
   onChange,
   className,
+  children,
 }: CurrencySelectDrawerProps) {
   const [currencySearch, setCurrencySearch] = useState('')
   const [isCurrencyOpen, setIsCurrencyOpen] = useState(false)
@@ -101,24 +103,28 @@ export default function CurrencySelectDrawer({
   return (
     <Drawer open={isCurrencyOpen} onOpenChange={setIsCurrencyOpen}>
       <DrawerTrigger asChild>
-        <button
-          type="button"
-          className={cn(
-            'w-full h-11 flex items-center justify-between px-4 rounded-full bg-white! border-[1.26px] border-border-card text-xs font-bold text-foreground cursor-pointer transition-all outline-none',
-            className
-          )}
-        >
-          <div className="flex items-center gap-1.5">
-            <Banknote size={16} className="text-muted-foreground" />
-            <span className="uppercase text-muted-foreground font-semibold">
-              Currency:
-            </span>
-            <span className="text-foreground font-bold">
-              {value.toUpperCase()}
-            </span>
-          </div>
-          <ChevronDown size={16} className="text-muted-foreground" />
-        </button>
+        {children ? (
+          children
+        ) : (
+          <button
+            type="button"
+            className={cn(
+              'w-full h-11 flex items-center justify-between px-4 rounded-full bg-white! border-[1.26px] border-border-card text-xs font-bold text-foreground cursor-pointer transition-all outline-none',
+              className
+            )}
+          >
+            <div className="flex items-center gap-1.5">
+              <Banknote size={16} className="text-muted-foreground" />
+              <span className="uppercase text-muted-foreground font-semibold">
+                Currency:
+              </span>
+              <span className="text-foreground font-bold">
+                {value.toUpperCase()}
+              </span>
+            </div>
+            <ChevronDown size={16} className="text-muted-foreground" />
+          </button>
+        )}
       </DrawerTrigger>
       <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-foreground h-[65dvh] max-h-[65dvh]">
         {/* Drawer Header */}

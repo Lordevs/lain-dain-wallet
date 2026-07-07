@@ -9,6 +9,7 @@ import { ROUTES } from '@/constants/routes'
 import { CATEGORIES } from '@/features/personal/components/category-picker'
 import receiptMockup from '@/assets/receipt_mockup.png'
 import ReceiptPreviewFlow from './components/receipt-preview-flow'
+import { useDrawerBackHandler } from '@/hooks/use-drawer-back-handler'
 
 const getCategoryEmoji = (id: string) => {
   switch (id) {
@@ -31,6 +32,7 @@ export default function TransactionDetailScreen() {
 
   // All hooks must be declared before any conditional return to satisfy Rules of Hooks
   const [isReceiptOpen, setIsReceiptOpen] = useState(false)
+  const closeReceipt = useDrawerBackHandler(isReceiptOpen, () => setIsReceiptOpen(false))
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null)
 
   useEffect(() => {
@@ -296,8 +298,7 @@ export default function TransactionDetailScreen() {
             type="button"
             onClick={() => {
               navigate({
-                to: ROUTES.TRANSACTION_EDIT,
-                params: { id: tx.id }
+                to: `/transactions/${tx.id}/edit`
               })
             }}
             className="flex-1 h-14 rounded-[20px] bg-white border border-[#EFE7DD] text-[#6B6B6B] font-extrabold text-base cursor-pointer shadow-sm hover:bg-muted/5 transition-colors flex items-center justify-center gap-2 outline-none"
@@ -352,7 +353,7 @@ export default function TransactionDetailScreen() {
           >
             <ReceiptPreviewFlow
               isOpen={isReceiptOpen}
-              onClose={() => setIsReceiptOpen(false)}
+              onClose={closeReceipt}
               tx={tx}
               onDownload={handleDownload}
             />

@@ -8,7 +8,6 @@ import {
   Info,
   Trash2,
   Check,
-  AlertCircle
 } from 'lucide-react'
 import { useAuthStore } from '@/store/use-auth-store'
 import { ROUTES } from '@/constants/routes'
@@ -16,6 +15,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import FlowHeader from '@/components/shared/flow-header'
 import { Switch } from '@/components/ui/switch'
+import CurrencySelectDrawer from '@/components/shared/currency-select-drawer'
+import { getCurrency } from '@/lib/currency'
 
 // ─── Main Screen Component ─────────────────────────────────────────────────────
 export default function SettingsScreen() {
@@ -23,23 +24,10 @@ export default function SettingsScreen() {
   const { userProfile } = useAuthStore()
 
   // Local state for interactive settings mockup
+  const [currency, setCurrency] = useState('pkr')
   const [pushNotifications, setPushNotifications] = useState(true)
   const [autoReminders, setAutoReminders] = useState(true)
   const [reminderInterval, setReminderInterval] = useState<'week' | 'two_weeks'>('week')
-
-
-
-
-
-  // Toast message notification
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null)
-
-  const showToast = (message: string, type: 'success' | 'info' = 'info') => {
-    setToast({ message, type })
-    setTimeout(() => {
-      setToast(null)
-    }, 2500)
-  }
 
   // Derive display values from store with mockup fallbacks
   const displayName = userProfile?.name || 'Muhammad Huzaifa'
@@ -54,23 +42,6 @@ export default function SettingsScreen() {
 
   return (
     <div className="flex flex-col flex-1 pb-10 select-none relative">
-      {/* Toast Alert overlay */}
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            initial={{ opacity: 0, y: -20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className="fixed top-6 left-6 right-6 z-100 mx-auto max-w-[380px] bg-white/90 backdrop-blur-md border border-[#EFE7DD] shadow-[0px_10px_30px_rgba(0,0,0,0.08)] rounded-2xl p-4 flex items-center gap-3"
-          >
-            <div className="w-8 h-8 rounded-full bg-[#E4F2EB] flex items-center justify-center text-positive shrink-0">
-              {toast.type === 'success' ? <Check size={16} strokeWidth={3} /> : <AlertCircle size={16} />}
-            </div>
-            <span className="text-sm font-semibold text-[#1A1A1A]">{toast.message}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Top Header */}
       <FlowHeader
         title="Settings"
@@ -222,16 +193,23 @@ export default function SettingsScreen() {
               </div>
 
               {/* Currency Row */}
-              <button
-                onClick={() => showToast('Currency settings are locked to PKR for this region.')}
-                className="w-full flex items-center justify-between p-5 text-left active:bg-[#FEFAF1]/80 transition-colors cursor-pointer outline-none"
-              >
-                <div>
-                  <h4 className="text-[15px] font-semibold text-[#1A1A1A] leading-tight">Currency</h4>
-                  <p className="text-[12px] text-[#6B6B6B]">Pakistani Rupee (PKR)</p>
-                </div>
-                <ChevronRight size={18} className="text-[#9A9590]" strokeWidth={2.5} />
-              </button>
+              <CurrencySelectDrawer value={currency} onChange={setCurrency}>
+                <button
+                  type="button"
+                  className="w-full flex items-center justify-between p-5 text-left active:bg-[#FEFAF1]/80 transition-colors cursor-pointer border-0 bg-transparent outline-none"
+                >
+                  <div>
+                    <h4 className="text-[15px] font-semibold text-[#1A1A1A] leading-tight">Currency</h4>
+                    <p className="text-[12px] text-[#6B6B6B]">
+                      {(() => {
+                        const curObj = getCurrency(currency.toUpperCase())
+                        return `${curObj.name} (${curObj.code})`
+                      })()}
+                    </p>
+                  </div>
+                  <ChevronRight size={18} className="text-[#9A9590]" strokeWidth={2.5} />
+                </button>
+              </CurrencySelectDrawer>
 
             </div>
           </div>
