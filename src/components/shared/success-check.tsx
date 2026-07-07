@@ -34,9 +34,12 @@ export default function SuccessCheck({
 }: SuccessCheckProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
+  const soundPlayedRef = useRef(false)
+
   useEffect(() => {
     // Play success chime sound for celebration checks
-    if (showConfetti) {
+    if (showConfetti && !soundPlayedRef.current) {
+      soundPlayedRef.current = true
       try {
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
         if (AudioContextClass) {
@@ -62,7 +65,9 @@ export default function SuccessCheck({
         // Ignore autoplay blocking error
       }
     }
+  }, [showConfetti])
 
+  useEffect(() => {
     const duration = showConfetti ? 2800 : 500
     const timer = setTimeout(() => {
       onComplete()
