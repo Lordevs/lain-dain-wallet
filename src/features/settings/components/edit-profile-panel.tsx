@@ -1,27 +1,28 @@
 import { useState } from 'react'
-import { useNavigate, useSearch } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { Pencil } from 'lucide-react'
 import FlowHeader from '@/components/shared/flow-header'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuthStore } from '@/store/use-auth-store'
-import ProfilePicturePanel from '@/components/shared/profile-picture-panel'
+import { ROUTES } from '@/constants/routes'
 
 interface EditProfilePanelProps {
-  onClose: () => void
-  onSuccess: (msg: string) => void
+  onClose?: () => void
+  onSuccess?: (msg: string) => void
 }
 
-export default function EditProfilePanel({ onClose, onSuccess }: EditProfilePanelProps) {
+export default function EditProfilePanel({
+  onClose = () => window.history.back(),
+  onSuccess,
+}: EditProfilePanelProps) {
   const navigate = useNavigate()
-  const search = useSearch({ from: '/settings' }) as any
   const { userProfile, setProfile } = useAuthStore()
 
   // Form states prefilled from store
   const [name, setName] = useState(userProfile?.name || 'Muhammad Huzaifa')
   const [email, setEmail] = useState(userProfile?.email || '')
-  const [avatar, setAvatar] = useState<string | null>(userProfile?.avatar || null)
+  const avatar = userProfile?.avatar || null
 
-  const isProfilePicOpen = !!search?.editPhoto
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,7 +35,9 @@ export default function EditProfilePanel({ onClose, onSuccess }: EditProfilePane
       avatar: avatar
     })
 
-    onSuccess('Profile updated successfully!')
+    if (onSuccess) {
+      onSuccess('Profile updated successfully!')
+    }
     onClose()
   }
 
@@ -45,7 +48,7 @@ export default function EditProfilePanel({ onClose, onSuccess }: EditProfilePane
     .slice(0, 2)
 
   return (
-    <div className="fixed inset-0 z-60 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto text-[#1A1A1A]">
+    <div className="min-h-screen bg-[#FEFAF1] flex flex-col select-none overflow-y-auto text-[#1A1A1A]">
       <FlowHeader
         title="Edit Profile"
         onBack={onClose}
@@ -69,7 +72,7 @@ export default function EditProfilePanel({ onClose, onSuccess }: EditProfilePane
               {/* Pencil Icon Button */}
               <button
                 type="button"
-                onClick={() => (navigate as any)({ search: (prev: any) => ({ ...prev, editPhoto: true }) })}
+                onClick={() => navigate({ to: ROUTES.USER_PHOTO })}
                 className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-positive text-white border-2 border-white flex items-center justify-center shadow-md cursor-pointer active:scale-95 transition-all"
                 aria-label="Upload profile image"
               >
@@ -79,7 +82,7 @@ export default function EditProfilePanel({ onClose, onSuccess }: EditProfilePane
 
             <button
               type="button"
-              onClick={() => (navigate as any)({ search: (prev: any) => ({ ...prev, editPhoto: true }) })}
+              onClick={() => navigate({ to: ROUTES.USER_PHOTO })}
               className="text-positive font-semibold text-[15px] cursor-pointer mt-2.5 block text-center"
             >
               Change Profile Icon
@@ -97,7 +100,10 @@ export default function EditProfilePanel({ onClose, onSuccess }: EditProfilePane
                 <input
                   type="text"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    setName(e.target.value)
+                    setProfile({ ...userProfile, name: e.target.value })
+                  }}
                   className="outline-none border-0 w-full text-[15px] font-medium text-[#1A1A1A] p-0 bg-transparent"
                   required
                   placeholder="Enter your name"
@@ -129,7 +135,10 @@ export default function EditProfilePanel({ onClose, onSuccess }: EditProfilePane
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value)
+                    setProfile({ ...userProfile, email: e.target.value })
+                  }}
                   className="outline-none border-0 w-full text-[15px] font-medium text-[#1A1A1A] p-0 bg-transparent"
                   placeholder="Add email address..."
                 />
@@ -150,14 +159,6 @@ export default function EditProfilePanel({ onClose, onSuccess }: EditProfilePane
         </div>
       </form>
 
-      {isProfilePicOpen && (
-        <ProfilePicturePanel
-          currentAvatar={avatar}
-          initials={initials}
-          onClose={() => (navigate as any)({ search: (prev: any) => { const next = { ...prev }; delete next.editPhoto; return next } })}
-          onSave={(newAvatar) => setAvatar(newAvatar)}
-        />
-      )}
     </div>
   )
 }

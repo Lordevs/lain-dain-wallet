@@ -1,15 +1,25 @@
 import { LogOut } from 'lucide-react'
+import { useNavigate } from '@tanstack/react-router'
 import FlowHeader from '@/components/shared/flow-header'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuthStore } from '@/store/use-auth-store'
 
 interface LogoutPanelProps {
-  onClose: () => void
-  onConfirm: () => void
+  onClose?: () => void
+  onConfirm?: () => void
 }
 
-export default function LogoutPanel({ onClose, onConfirm }: LogoutPanelProps) {
-  const { userProfile } = useAuthStore()
+export default function LogoutPanel({
+  onClose = () => window.history.back(),
+  onConfirm,
+}: LogoutPanelProps) {
+  const navigate = useNavigate()
+  const { userProfile, logout } = useAuthStore()
+
+  const handleConfirm = onConfirm ?? (() => {
+    logout()
+    navigate({ to: '/auth' })
+  })
 
   const displayName = userProfile?.name || 'Muhammad Huzaifa'
   const displayPhone = userProfile?.phone || '+92 300 1234567'
@@ -21,7 +31,7 @@ export default function LogoutPanel({ onClose, onConfirm }: LogoutPanelProps) {
     .slice(0, 2)
 
   return (
-    <div className="fixed inset-0 z-60 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto text-[#1A1A1A]">
+    <div className="min-h-screen bg-[#FEFAF1] flex flex-col select-none overflow-y-auto text-[#1A1A1A]">
       <FlowHeader
         title="Log Out"
         onBack={onClose}
@@ -68,7 +78,7 @@ export default function LogoutPanel({ onClose, onConfirm }: LogoutPanelProps) {
           {/* Yes, Log Out Button */}
           <button
             type="button"
-            onClick={onConfirm}
+            onClick={handleConfirm}
             // box-shadow: 0px 3px 12px 0px #C85A0026;
             className="w-full h-14 bg-[#FFF3E6] border-[0.8px] border-[#C85A0033] text-tertiary rounded-[16px] font-bold text-[17px] flex items-center justify-center gap-2 active:scale-[0.99] transition-all cursor-pointer shadow-[0px_3px_12px_0px_#C85A0026]"
           >

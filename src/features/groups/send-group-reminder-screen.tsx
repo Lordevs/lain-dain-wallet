@@ -1,3 +1,4 @@
+import { useParams } from '@tanstack/react-router'
 import { useState } from 'react'
 import { User } from 'lucide-react'
 import { useContactStore } from '@/store/use-contact-store'
@@ -5,15 +6,8 @@ import { formatPKR } from '@/lib/currency'
 import FlowHeader from '@/components/shared/flow-header'
 import SuccessCheck from '@/components/shared/success-check'
 
-/**
- * SendGroupReminderScreen — allows users to send reminders to groups who owe them money.
- */
-interface SendGroupReminderScreenProps {
-  groupId: string
-  onClose: () => void
-}
-
-export default function SendGroupReminderScreen({ groupId, onClose }: SendGroupReminderScreenProps) {
+export default function SendGroupReminderScreen() {
+  const { id: groupId } = useParams({ from: '/groups/$id/reminder' })
   const [showSuccess, setShowSuccess] = useState(false)
 
   // Find group by id from store
@@ -25,7 +19,7 @@ export default function SendGroupReminderScreen({ groupId, onClose }: SendGroupR
       <div className="flex flex-col items-center justify-center p-6 bg-[#FEFAF1] select-none text-[#1A1A1A] h-[50vh]">
         <p className="text-muted-foreground text-sm mb-4">Group not found</p>
         <button
-          onClick={onClose}
+          onClick={() => window.history.back()}
           className="text-primary font-bold hover:underline border-0 bg-transparent cursor-pointer"
         >
           Close
@@ -42,7 +36,7 @@ export default function SendGroupReminderScreen({ groupId, onClose }: SendGroupR
   }
 
   const handleSuccessComplete = () => {
-    onClose()
+    window.history.back()
   }
 
   if (showSuccess) {
@@ -54,11 +48,11 @@ export default function SendGroupReminderScreen({ groupId, onClose }: SendGroupR
   }
 
   return (
-    <div className="fixed inset-0 z-60 flex flex-col bg-[#FEFAF1] select-none overflow-hidden text-[#1A1A1A]">
+    <div className="flex flex-col flex-1 min-h-screen bg-[#FEFAF1] select-none overflow-hidden text-[#1A1A1A]">
       {/* Header */}
       <FlowHeader
         title="Send Reminder"
-        onBack={onClose}
+        onBack={() => window.history.back()}
         backVariant="circle"
       />
 

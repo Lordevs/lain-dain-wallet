@@ -3,21 +3,18 @@ import { cn } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
 import smartSettleImg from '@/assets/smart-settle.png'
 
-interface SmartSettleScreenProps {
-  onClose: () => void
-}
 
-export default function SmartSettleScreen({ onClose }: SmartSettleScreenProps) {
+export default function SmartSettleScreen() {
   // Local state for the dynamic "Simplify" toggle
   const [isSimplified, setIsSimplified] = useState(true)
 
 
   return (
-    <div className="fixed inset-0 z-60 flex flex-col bg-[#FEFAF1] pb-12 select-none text-left overflow-y-auto">
+    <div className="min-h-screen flex flex-col bg-[#FEFAF1] pb-12 select-none text-left overflow-y-auto">
       {/* Header */}
       <FlowHeader
         title="Smart Settle"
-        onBack={onClose}
+        onBack={() => window.history.back()}
         backVariant="circle"
       />
 

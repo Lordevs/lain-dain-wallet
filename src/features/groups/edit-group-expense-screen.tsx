@@ -1,16 +1,22 @@
+import { useParams, useNavigate } from '@tanstack/react-router'
 import AddExpenseBase, { type ConfirmExpenseData } from '@/components/shared/add-expense-base'
 import { useContactStore } from '@/store/use-contact-store'
 import { useTransactionStore } from '@/store/use-transaction-store'
 import { calculateContactOwesAmount } from '@/lib/split'
+import { ROUTES } from '@/constants/routes'
 
-interface EditGroupExpenseScreenProps {
-  groupId: string
-  txId: string
-  onClose: () => void
-  onSuccess: () => void
-}
+export default function EditGroupExpenseScreen() {
+  const { id: txId } = useParams({ from: '/transactions/$id/edit' })
+  const navigate = useNavigate()
 
-export default function EditGroupExpenseScreen({ groupId, txId, onClose, onSuccess }: EditGroupExpenseScreenProps) {
+  const transactionsByContact = useTransactionStore((state) => state.transactionsByContact)
+  let groupId = ''
+  for (const cId in transactionsByContact) {
+    if (transactionsByContact[cId].some((item) => item.id === txId)) {
+      groupId = cId
+      break
+    }
+  }
   // Find group by id from store
   const contacts = useContactStore((state) => state.contacts)
   const contact = contacts.find((c) => c.id === groupId)
@@ -21,7 +27,7 @@ export default function EditGroupExpenseScreen({ groupId, txId, onClose, onSucce
         <div className="text-center">
           <p className="text-lg font-bold text-[#1A1A1A]">Group not found</p>
           <button
-            onClick={onClose}
+            onClick={() => window.history.back()}
             className="mt-4 px-4 py-2 bg-positive text-white rounded-full font-bold border-0 cursor-pointer"
           >
             Close
@@ -110,8 +116,10 @@ export default function EditGroupExpenseScreen({ groupId, txId, onClose, onSucce
         avatarColor: contact.avatarColor,
       }}
       onConfirm={handleConfirm}
-      onSuccessComplete={onSuccess}
-      onBack={onClose}
+      onSuccessComplete={() => {
+        navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: txId }, replace: true })
+      }}
+      onBack={() => window.history.back()}
     />
   )
 }

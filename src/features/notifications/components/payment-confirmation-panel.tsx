@@ -1,24 +1,33 @@
+import { useParams } from '@tanstack/react-router'
 import { Check, AlertTriangle } from 'lucide-react'
 import FlowHeader from '@/components/shared/flow-header'
-import { type NotificationItem } from '../types'
-
-interface PaymentConfirmationPanelProps {
-  notification: NotificationItem
-  onClose: () => void
-  onConfirmReceived: () => void
-  onDispute: () => void
-}
+import { useNotifications } from '@/features/notifications/hooks/use-notifications'
 
 /**
  * PaymentConfirmationPanel — sliding panel to verify and confirm received payments.
  * Matches mockup design exactly, including profile avatars, large green totals, row info grid, warning note, and action controls.
  */
-export default function PaymentConfirmationPanel({
-  notification,
-  onClose,
-  onConfirmReceived,
-  onDispute,
-}: PaymentConfirmationPanelProps) {
+export default function PaymentConfirmationPanel() {
+  const { id } = useParams({ from: '/notifications/confirm/$id' })
+  const { notifications, handleConfirmComplete, triggerToast } = useNotifications()
+
+  const notification = notifications.find((n) => n.id === id)
+
+  if (!notification) {
+    return (
+      <div className="flex items-center justify-center p-6 bg-[#FEFAF1] h-[50vh]">
+        <div className="text-center">
+          <p className="text-lg font-bold text-[#1A1A1A]">Payment confirmation request not found</p>
+          <button
+            onClick={() => window.history.back()}
+            className="mt-4 px-4 py-2 bg-positive text-white rounded-full font-bold border-0 cursor-pointer"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    )
+  }
   // Parse name & group context dynamically
   let requesterFirstName = 'Muzaffar'
   const knownNames = ['Muzaffar', 'Sara', 'Ali', 'Ahmed', 'Arsalan']
@@ -38,11 +47,11 @@ export default function PaymentConfirmationPanel({
   const amountVal = amountMatch ? `Rs. ${amountMatch[1]}` : 'Rs. 2,000'
 
   return (
-    <div className="fixed inset-0 z-60 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto pb-36 text-[#1A1A1A]">
+    <div className="flex flex-col flex-1 min-h-screen bg-[#FEFAF1] select-none pb-36 text-[#1A1A1A]">
       {/* Header */}
       <FlowHeader
         title="Payment Confirmation"
-        onBack={onClose}
+        onBack={() => window.history.back()}
         backVariant="circle"
       />
 
@@ -119,15 +128,20 @@ export default function PaymentConfirmationPanel({
         <div className="w-full flex items-center gap-3.5">
           <button
             type="button"
-            onClick={onConfirmReceived}
-            // box-shadow: 0px 3px 10px 0px #0B683A47;
+            onClick={() => {
+              handleConfirmComplete(notification.id)
+              window.history.back()
+            }}
             className="flex-1 h-14 rounded-full bg-positive text-white font-bold text-sm cursor-pointer active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
           >
             Confirm Received
           </button>
           <button
             type="button"
-            onClick={onDispute}
+            onClick={() => {
+              triggerToast('Dispute logged')
+              window.history.back()
+            }}
             className="flex-1 h-14 rounded-full bg-tertiary text-white font-bold text-sm cursor-pointer active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
           >
             Dispute
@@ -136,7 +150,7 @@ export default function PaymentConfirmationPanel({
 
         <button
           type="button"
-          onClick={onClose}
+          onClick={() => window.history.back()}
           className="text-[13px] font-semibold text-[#6B6B6B] cursor-pointer bg-transparent border-0 outline-none mt-1"
         >
           Decide later

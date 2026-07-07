@@ -1,70 +1,26 @@
-import { useRef } from 'react'
-import { useNavigate, useSearch } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { Check, Wallet, CheckCircle2, Clock, AlertTriangle } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import SuccessCheck from '@/components/shared/success-check'
 import NotificationCard, { type NotificationAction } from './components/notification-card'
 import { useNotifications } from './hooks/use-notifications'
 import { type NotificationItem } from './types'
-import PaymentConfirmationPanel from './components/payment-confirmation-panel'
-import PaymentDisputePanel from './components/payment-dispute-panel'
 
 export default function NotificationsScreen() {
   const navigate = useNavigate({ from: '/notifications/' })
-  const { drawer, txId } = useSearch({ from: '/notifications/' })
-  const openedInSessionRef = useRef(false)
 
-  const closeDrawer = () => {
-    if (!drawer) return
-
-    if (openedInSessionRef.current) {
-      openedInSessionRef.current = false
-      window.history.back()
-    } else {
-      navigate({
-        search: (prev: any) => {
-          const next = { ...prev }
-          delete next.drawer
-          delete next.txId
-          return next
-        },
-        replace: true,
-      })
-    }
-  }
-
-  const openDrawer = (
-    dName: 'confirm' | 'dispute',
-    cid: string
-  ) => {
-    openedInSessionRef.current = true
-    navigate({
-      search: (prev: any) => ({
-        ...prev,
-        drawer: dName,
-        txId: cid,
-      }),
-      replace: !!drawer,
-    })
-  }
-
-  // Decoupled Business Logic & State Layer
   const {
     notifications,
     activeAnimation,
     toastMessage,
-    triggerToast,
     handleIgnore,
     handleSettleComplete,
-    handleConfirmReceived,
     handleConfirmComplete,
     handleRemind,
     handleRemindComplete,
   } = useNotifications()
 
-  // Panel visibility states resolved from search query params
-  const activeConfirmNotification = drawer === 'confirm' ? notifications.find((n) => n.id === txId) || null : null
-  const activeDisputeNotification = drawer === 'dispute' ? notifications.find((n) => n.id === txId) || null : null
+
 
   // Render Category Icon Badges based on type
   const getNotificationIcon = (type: NotificationItem['type']) => {
@@ -134,7 +90,7 @@ export default function NotificationsScreen() {
             variant: 'green',
             onClick: (e) => {
               e.stopPropagation()
-              openDrawer('confirm', item.id)
+              navigate({ to: ROUTES.CONFIRM_PAYMENT, params: { id: item.id } })
             },
           },
           {
@@ -142,7 +98,7 @@ export default function NotificationsScreen() {
             variant: 'orange',
             onClick: (e) => {
               e.stopPropagation()
-              openDrawer('confirm', item.id)
+              navigate({ to: ROUTES.CONFIRM_PAYMENT, params: { id: item.id } })
             },
           },
         ]
@@ -168,11 +124,11 @@ export default function NotificationsScreen() {
       case 'dispute':
         return [
           {
-            label: 'Pay Again',
+            label: 'Dispute details',
             variant: 'orange',
             onClick: (e) => {
               e.stopPropagation()
-              openDrawer('dispute', item.id)
+              navigate({ to: ROUTES.DISPUTE_PAYMENT, params: { id: item.id } })
             },
           },
           {
@@ -215,9 +171,9 @@ export default function NotificationsScreen() {
     } else if (item.type === 'request') {
       navigate({ to: ROUTES.SETTLE_UP, search: { notificationId: item.id } })
     } else if (item.type === 'confirmation') {
-      openDrawer('confirm', item.id)
+      navigate({ to: ROUTES.CONFIRM_PAYMENT, params: { id: item.id } })
     } else if (item.type === 'dispute') {
-      openDrawer('dispute', item.id)
+      navigate({ to: ROUTES.DISPUTE_PAYMENT, params: { id: item.id } })
     } else if (item.type === 'reminder') {
       navigate({
         to: ROUTES.CONTACT_REMINDER,
@@ -333,37 +289,6 @@ export default function NotificationsScreen() {
       </div>
 
 
-      {/* Sliding Payment Confirmation Panel */}
-      {activeConfirmNotification && (
-        <PaymentConfirmationPanel
-          notification={activeConfirmNotification}
-          onClose={closeDrawer}
-          onConfirmReceived={() => {
-            handleConfirmReceived(activeConfirmNotification.id)
-            closeDrawer()
-          }}
-          onDispute={() => {
-            triggerToast('Dispute logged')
-            closeDrawer()
-          }}
-        />
-      )}
-
-      {/* Sliding Payment Dispute Panel */}
-      {activeDisputeNotification && (
-        <PaymentDisputePanel
-          notification={activeDisputeNotification}
-          onClose={closeDrawer}
-          onPayAgain={() => {
-            triggerToast('Redirecting to Payment screen...')
-            closeDrawer()
-          }}
-          onIgnore={() => {
-            handleIgnore(activeDisputeNotification.id)
-            closeDrawer()
-          }}
-        />
-      )}
 
     </div>
   )

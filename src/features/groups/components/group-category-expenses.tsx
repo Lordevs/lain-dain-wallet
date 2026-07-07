@@ -1,29 +1,40 @@
+import { useParams, useNavigate } from '@tanstack/react-router'
+import { useContactStore } from '@/store/use-contact-store'
+import { useGroupLedger, getCategoryDetails } from '@/features/groups/hooks/use-group-ledger'
+import { formatPKR } from '@/lib/currency'
+import { ROUTES } from '@/constants/routes'
 import { cn } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
-import ExpenseList, { type TransactionListItem } from '@/components/shared/expense-list'
-
-interface GroupCategoryExpensesProps {
-  label: string
-  color: string
-  Icon: React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>
-  formattedTotal: string
-  expenses: TransactionListItem[]
-  onBack: () => void
-  onExpenseClick: (id: string | number) => void
-}
+import ExpenseList from '@/components/shared/expense-list'
 
 /** Category drill-down view on the group detail screen: header + spent summary + filtered expense list. */
-export default function GroupCategoryExpenses({
-  label,
-  color,
-  Icon,
-  formattedTotal,
-  expenses,
-  onBack,
-  onExpenseClick,
-}: GroupCategoryExpensesProps) {
+export default function GroupCategoryExpenses() {
+  const { id, catId } = useParams({ from: '/groups/$id/category/$catId' })
+  const navigate = useNavigate()
+
+  const contacts = useContactStore((state) => state.contacts)
+  const contact = contacts.find((c) => c.id === id)
+
+  const { groupExpensesData } = useGroupLedger(id || '')
+
+  if (!contact) return null
+
+  const catDetails = getCategoryDetails(catId)
+  const filteredExpenses = groupExpensesData.filter((exp) => (exp.category || 'other') === catId)
+  const totalSpent = filteredExpenses.reduce((sum, exp) => sum + Math.abs(exp.amount), 0)
+  const formattedTotal = formatPKR(totalSpent)
+
+  const label = catDetails.label
+  const color = catDetails.color
+  const Icon = catDetails.icon
+  const expenses = filteredExpenses
+  const onBack = () => window.history.back()
+  const onExpenseClick = (expenseId: string | number) => {
+    navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: expenseId.toString() } })
+  }
+
   return (
-    <>
+    <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24 relative select-none">
       {/* Category-specific Header */}
       <FlowHeader
         title={`${label} Expenses`}
@@ -68,6 +79,6 @@ export default function GroupCategoryExpenses({
           className="border-[#EFE7DD] divide-[#EFE7DD]"
         />
       </div>
-    </>
+    </div>
   )
 }

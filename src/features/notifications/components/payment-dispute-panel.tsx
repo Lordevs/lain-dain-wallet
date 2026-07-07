@@ -1,24 +1,33 @@
+import { useParams } from '@tanstack/react-router'
 import { AlertTriangle } from 'lucide-react'
 import FlowHeader from '@/components/shared/flow-header'
-import { type NotificationItem } from '../types'
-
-interface PaymentDisputePanelProps {
-  notification: NotificationItem
-  onClose: () => void
-  onPayAgain: () => void
-  onIgnore: () => void
-}
+import { useNotifications } from '@/features/notifications/hooks/use-notifications'
 
 /**
  * PaymentDisputePanel — sliding panel to display and resolve payment disputes.
  * Matches mockup design exactly, including warning avatars, large orange totals, row info grid, and action controls.
  */
-export default function PaymentDisputePanel({
-  notification,
-  onClose,
-  onPayAgain,
-  onIgnore,
-}: PaymentDisputePanelProps) {
+export default function PaymentDisputePanel() {
+  const { id } = useParams({ from: '/notifications/dispute/$id' })
+  const { notifications, handleIgnore, triggerToast } = useNotifications()
+
+  const notification = notifications.find((n) => n.id === id)
+
+  if (!notification) {
+    return (
+      <div className="flex items-center justify-center p-6 bg-[#FEFAF1] h-[50vh]">
+        <div className="text-center">
+          <p className="text-lg font-bold text-[#1A1A1A]">Payment dispute not found</p>
+          <button
+            onClick={() => window.history.back()}
+            className="mt-4 px-4 py-2 bg-positive text-white rounded-full font-bold border-0 cursor-pointer"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    )
+  }
   // Parse name & group context dynamically
   let requesterFirstName = 'Muzaffar'
   const knownNames = ['Muzaffar', 'Sara', 'Ali', 'Ahmed', 'Arsalan']
@@ -37,11 +46,11 @@ export default function PaymentDisputePanel({
   const amountVal = amountMatch ? `Rs. ${amountMatch[1]}` : 'Rs. 2,000'
 
   return (
-    <div className="fixed inset-0 z-60 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto pb-32 text-[#1A1A1A]">
+    <div className="flex flex-col flex-1 min-h-screen bg-[#FEFAF1] select-none pb-32 text-[#1A1A1A]">
       {/* Header */}
       <FlowHeader
         title="Payment Dispute"
-        onBack={onClose}
+        onBack={() => window.history.back()}
         backVariant="circle"
       />
 
@@ -98,14 +107,20 @@ export default function PaymentDisputePanel({
       <div className="fixed bottom-3 left-3 right-3 z-10 flex items-center gap-4">
         <button
           type="button"
-          onClick={onPayAgain}
+          onClick={() => {
+            triggerToast('Redirecting to Payment screen...')
+            window.history.back()
+          }}
           className="flex-1 h-14 rounded-full bg-tertiary text-white font-extrabold text-base cursor-pointer active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
         >
           Pay Again
         </button>
         <button
           type="button"
-          onClick={onIgnore}
+          onClick={() => {
+            handleIgnore(notification.id)
+            window.history.back()
+          }}
           className="flex-1 h-14 rounded-full bg-[#FDB105] text-[#1A1A1A] font-extrabold text-base cursor-pointer active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
         >
           Ignore

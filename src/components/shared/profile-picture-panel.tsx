@@ -40,7 +40,7 @@ export default function ProfilePicturePanel({
   }
 
   return (
-    <div className="fixed inset-0 z-70 bg-background flex flex-col select-none overflow-y-auto text-foreground">
+    <div className="min-h-screen bg-background flex flex-col select-none overflow-y-auto text-foreground">
       <FlowHeader
         title={title}
         onBack={onClose}

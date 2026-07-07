@@ -1,15 +1,22 @@
 import { useState } from 'react'
 import { Trash2, X, Info } from 'lucide-react'
+import { useNavigate } from '@tanstack/react-router'
 import FlowHeader from '@/components/shared/flow-header'
 import OutstandingBalanceDrawer from '@/components/shared/outstanding-balance-drawer'
 import ConfirmActionDrawer from '@/components/shared/confirm-action-drawer'
+import { useAuthStore } from '@/store/use-auth-store'
 
 interface DeleteAccountPanelProps {
-  onClose: () => void
-  onConfirm: () => void
+  onClose?: () => void
+  onConfirm?: () => void
 }
 
-export default function DeleteAccountPanel({ onClose, onConfirm }: DeleteAccountPanelProps) {
+export default function DeleteAccountPanel({
+  onClose = () => window.history.back(),
+  onConfirm,
+}: DeleteAccountPanelProps) {
+  const navigate = useNavigate()
+  const { logout } = useAuthStore()
   const [isSettled, setIsSettled] = useState(false)
   const [isOutstandingOpen, setIsOutstandingOpen] = useState(false)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
@@ -22,8 +29,13 @@ export default function DeleteAccountPanel({ onClose, onConfirm }: DeleteAccount
     }
   }
 
+  const handleConfirm = onConfirm ?? (() => {
+    logout()
+    navigate({ to: '/auth' })
+  })
+
   return (
-    <div className="fixed inset-0 z-60 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto text-[#1A1A1A]">
+    <div className="min-h-screen bg-[#FEFAF1] flex flex-col select-none overflow-y-auto text-[#1A1A1A]">
       <FlowHeader
         title="Delete Account"
         onBack={onClose}
@@ -118,7 +130,7 @@ export default function DeleteAccountPanel({ onClose, onConfirm }: DeleteAccount
         title="Permanently delete the Account"
         confirmTitle="Delete your account permanently?"
         confirmDescription="This will erase everything — your profile, all entries, transaction history, and personal balances. This cannot be undone."
-        onConfirm={onConfirm}
+        onConfirm={handleConfirm}
       />
     </div>
   )

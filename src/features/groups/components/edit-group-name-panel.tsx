@@ -1,30 +1,38 @@
+import { useState } from 'react'
+import { useParams } from '@tanstack/react-router'
+import { useContactStore } from '@/store/use-contact-store'
 import FlowHeader from '@/components/shared/flow-header'
 
-interface EditGroupNamePanelProps {
-  isOpen: boolean
-  tempGroupName: string
-  onTempGroupNameChange: (v: string) => void
-  onSave: (e: React.FormEvent) => void
-  onClose: () => void
-}
+/** Edit group name standalone screen. */
+export default function EditGroupNamePanel() {
+  const { id } = useParams({ from: '/groups/$id/settings/name' })
+  const contacts = useContactStore((state) => state.contacts)
+  const contact = contacts.find((c) => c.id === id)
+  const updateContact = useContactStore((state) => state.updateContact)
 
-export default function EditGroupNamePanel({
-  isOpen,
-  tempGroupName,
-  onTempGroupNameChange,
-  onSave,
-  onClose,
-}: EditGroupNamePanelProps) {
-  if (!isOpen) return null
+  const [tempGroupName, setTempGroupName] = useState(contact?.name || '')
+
+  if (!contact) return null
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!tempGroupName.trim()) return
+    updateContact(contact.id, { name: tempGroupName.trim() })
+    window.history.back()
+  }
+
+  const handleBack = () => {
+    window.history.back()
+  }
 
   return (
-    <div className="fixed inset-0 z-70 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto text-[#1A1A1A]">
+    <div className="min-h-screen bg-[#FEFAF1] flex flex-col select-none overflow-y-auto text-[#1A1A1A]">
       <FlowHeader
         title="Edit Group Name"
-        onBack={onClose}
+        onBack={handleBack}
       />
 
-      <form onSubmit={onSave} className="flex-1 flex flex-col justify-between px-6 pb-8 pt-2">
+      <form onSubmit={handleSave} className="flex-1 flex flex-col justify-between px-6 pb-8 pt-2">
         <div className="space-y-6">
           {/* Name Input */}
           <div className="space-y-1.5 text-left mt-4">
@@ -35,7 +43,7 @@ export default function EditGroupNamePanel({
               <input
                 type="text"
                 value={tempGroupName}
-                onChange={(e) => onTempGroupNameChange(e.target.value)}
+                onChange={(e) => setTempGroupName(e.target.value)}
                 className="outline-none border-0 w-full text-[15px] font-medium text-[#1A1A1A] p-0 bg-transparent"
                 required
                 placeholder="Enter group name"

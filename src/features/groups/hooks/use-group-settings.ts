@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react'
-import { useParams, useNavigate, useSearch } from '@tanstack/react-router'
+import { useParams, useNavigate } from '@tanstack/react-router'
 import { useContactStore } from '@/store/use-contact-store'
 import { ROUTES } from '@/constants/routes'
 
@@ -46,15 +46,10 @@ export function useGroupSettings() {
     return contacts.find((c) => c.id === id)
   }, [id, contacts])
 
-  const search = useSearch({ from: '/groups/$id/settings' }) as any
-  const drawer = search?.drawer
-
   const [smartSettleEnabled, setSmartSettleEnabled] = useState(true)
-  const [groupPhoto, setGroupPhoto] = useState<string | null>(null)
-  const isPhotoPanelOpen = drawer === 'edit-photo'
-  const [groupName, setGroupName] = useState(contact?.name || 'Murree Trip')
-  const isNamePanelOpen = drawer === 'edit-name'
-  const [tempGroupName, setTempGroupName] = useState(contact?.name || 'Murree Trip')
+  const groupPhoto = contact?.avatar || null
+  const groupName = contact?.name || 'Murree Trip'
+  const isNamePanelOpen = false
 
   const [members, setMembers] = useState<GroupMember[]>([
     makeMember({ id: 'you', name: 'You', initials: 'MH', avatarColor: 'bg-positive text-white', balance: 0, isAdmin: true, isPending: false }),
@@ -196,19 +191,6 @@ export function useGroupSettings() {
     })
   }
 
-  const handleSaveGroupName = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!tempGroupName.trim()) return
-    setGroupName(tempGroupName.trim())
-    navigate({
-      search: (prev: any) => {
-        const next = { ...prev }
-        delete next.drawer
-        return next
-      }
-    })
-  }
-
   const groupInitials = groupName
     .split(' ')
     .map((n) => n[0])
@@ -220,13 +202,8 @@ export function useGroupSettings() {
     smartSettleEnabled,
     setSmartSettleEnabled,
     groupPhoto,
-    setGroupPhoto,
-    isPhotoPanelOpen,
     groupName,
-    setGroupName,
     isNamePanelOpen,
-    tempGroupName,
-    setTempGroupName,
     members,
     selectedMemberId,
     setSelectedMemberId,
@@ -239,7 +216,6 @@ export function useGroupSettings() {
     handleBlockReport,
     handleLeaveGroup,
     handleDeleteGroup,
-    handleSaveGroupName,
     groupInitials,
     navigate,
   }

@@ -1,12 +1,7 @@
 import AddExpenseBase, { type ConfirmExpenseData } from '@/components/shared/add-expense-base'
 import { FILTER_DATA } from './data/mock-data'
 
-interface AddEntryScreenProps {
-  onClose: () => void
-  onSuccess: () => void
-}
-
-export default function AddEntryScreen({ onClose, onSuccess }: AddEntryScreenProps) {
+export default function AddEntryScreen() {
   const handleConfirm = (data: ConfirmExpenseData) => {
     const parsedAmount = data.amount
 
@@ -42,8 +37,8 @@ export default function AddEntryScreen({ onClose, onSuccess }: AddEntryScreenPro
       title="Add Entry"
       showPaidByAndSplit={false}
       onConfirm={handleConfirm}
-      onSuccessComplete={onSuccess}
-      onBack={onClose}
+      onSuccessComplete={() => window.history.back()}
+      onBack={() => window.history.back()}
     />
   )
 }

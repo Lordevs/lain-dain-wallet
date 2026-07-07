@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useSearch } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import {
   ChevronRight,
   User,
@@ -16,26 +16,20 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import FlowHeader from '@/components/shared/flow-header'
 import { Switch } from '@/components/ui/switch'
-import EditProfilePanel from './components/edit-profile-panel'
-import ReportIssuePanel from './components/report-issue-panel'
-import LogoutPanel from './components/logout-panel'
-import DeleteAccountPanel from './components/delete-account-panel'
 
 // ─── Main Screen Component ─────────────────────────────────────────────────────
 export default function SettingsScreen() {
   const navigate = useNavigate()
-  const search = useSearch({ from: '/settings' }) as any
-  const { userProfile, logout } = useAuthStore()
+  const { userProfile } = useAuthStore()
 
   // Local state for interactive settings mockup
   const [pushNotifications, setPushNotifications] = useState(true)
   const [autoReminders, setAutoReminders] = useState(true)
   const [reminderInterval, setReminderInterval] = useState<'week' | 'two_weeks'>('week')
 
-  const isEditProfileOpen = search?.subPanel === 'edit-profile'
-  const [isReportIssueOpen, setIsReportIssueOpen] = useState(false)
-  const [isLogoutOpen, setIsLogoutOpen] = useState(false)
-  const [isDeleteAccountOpen, setIsDeleteAccountOpen] = useState(false)
+
+
+
 
   // Toast message notification
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null)
@@ -57,10 +51,6 @@ export default function SettingsScreen() {
     .join('')
     .slice(0, 2)
 
-  const handleLogout = () => {
-    logout()
-    navigate({ to: ROUTES.AUTH })
-  }
 
   return (
     <div className="flex flex-col flex-1 pb-10 select-none relative">
@@ -119,7 +109,7 @@ export default function SettingsScreen() {
             </h3>
             <div className="bg-white border-[1.5px] border-[#E8E4DC] rounded-[18px] shadow-[0px_2px_10px_0px_#0000000D] overflow-hidden">
               <button
-                onClick={() => (navigate as any)({ search: (prev: any) => ({ ...prev, subPanel: 'edit-profile' }) })}
+                onClick={() => navigate({ to: ROUTES.USER_PROFILE })}
                 className="w-full flex items-center justify-between p-5 text-left active:bg-[#FEFAF1]/80 transition-colors cursor-pointer outline-none"
               >
                 <div className="flex items-center gap-4">
@@ -255,7 +245,7 @@ export default function SettingsScreen() {
 
               {/* Log Out */}
               <button
-                onClick={() => setIsLogoutOpen(true)}
+                onClick={() => navigate({ to: ROUTES.USER_LOGOUT })}
                 className="w-full flex items-center gap-4 p-5 text-left active:bg-[#FFF3E6]/80 transition-colors cursor-pointer outline-none"
               >
                 <div className="w-11 h-11 rounded-[13px] bg-[#FFF3E6] flex items-center justify-center text-tertiary shrink-0">
@@ -266,7 +256,7 @@ export default function SettingsScreen() {
 
               {/* Report an Issue */}
               <button
-                onClick={() => setIsReportIssueOpen(true)}
+                onClick={() => navigate({ to: ROUTES.USER_REPORT_ISSUE })}
                 className="w-full flex items-center gap-4 p-5 text-left active:bg-[#FFF3E6]/80 transition-colors cursor-pointer outline-none"
               >
                 <div className="w-11 h-11 rounded-[13px] bg-[#FFF3E6] flex items-center justify-center text-tertiary shrink-0">
@@ -277,7 +267,7 @@ export default function SettingsScreen() {
 
               {/* Delete Account */}
               <button
-                onClick={() => setIsDeleteAccountOpen(true)}
+                onClick={() => navigate({ to: ROUTES.USER_DELETE_ACCOUNT })}
                 className="w-full flex items-center gap-4 p-5 text-left active:bg-[#FFF3E6]/80 transition-colors cursor-pointer outline-none"
               >
                 <div className="w-11 h-11 rounded-[13px] bg-[#FFF3E6] flex items-center justify-center text-tertiary shrink-0">
@@ -292,42 +282,7 @@ export default function SettingsScreen() {
         </div>
       </div>
 
-      {isEditProfileOpen && (
-        <EditProfilePanel
-          onClose={() => (navigate as any)({ search: (prev: any) => { const next = { ...prev }; delete next.subPanel; return next } })}
-          onSuccess={(msg) => showToast(msg, 'success')}
-        />
-      )}
 
-      {/* Report Issue sliding panel overlay */}
-      {isReportIssueOpen && (
-        <ReportIssuePanel
-          onClose={() => setIsReportIssueOpen(false)}
-          onSuccess={(msg) => showToast(msg, 'success')}
-        />
-      )}
-
-      {/* Logout sliding panel overlay */}
-      {isLogoutOpen && (
-        <LogoutPanel
-          onClose={() => setIsLogoutOpen(false)}
-          onConfirm={handleLogout}
-        />
-      )}
-
-      {/* Delete Account sliding panel overlay */}
-      {isDeleteAccountOpen && (
-        <DeleteAccountPanel
-          onClose={() => setIsDeleteAccountOpen(false)}
-          onConfirm={() => {
-            setIsDeleteAccountOpen(false)
-            showToast('Account deleted successfully.', 'success')
-            setTimeout(() => {
-              handleLogout()
-            }, 1000)
-          }}
-        />
-      )}
     </div>
   )
 }

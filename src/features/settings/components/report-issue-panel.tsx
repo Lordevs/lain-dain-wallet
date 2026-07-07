@@ -15,13 +15,16 @@ import FlowHeader from '@/components/shared/flow-header'
 import { useAuthStore } from '@/store/use-auth-store'
 
 interface ReportIssuePanelProps {
-  onClose: () => void
-  onSuccess: (msg: string) => void
+  onClose?: () => void
+  onSuccess?: (msg: string) => void
 }
 
 type IssueType = 'payment' | 'split' | 'agreement' | 'bug' | 'other'
 
-export default function ReportIssuePanel({ onClose, onSuccess }: ReportIssuePanelProps) {
+export default function ReportIssuePanel({
+  onClose = () => window.history.back(),
+  onSuccess,
+}: ReportIssuePanelProps) {
   const { userProfile } = useAuthStore()
 
   // Form states
@@ -50,7 +53,9 @@ export default function ReportIssuePanel({ onClose, onSuccess }: ReportIssuePane
     e.preventDefault()
     if (!description.trim()) return
 
-    onSuccess('Thank you! Issue report submitted successfully.')
+    if (onSuccess) {
+      onSuccess('Thank you! Issue report submitted successfully.')
+    }
     onClose()
   }
 
@@ -98,7 +103,7 @@ export default function ReportIssuePanel({ onClose, onSuccess }: ReportIssuePane
   ]
 
   return (
-    <div className="fixed inset-0 z-60 bg-[#FEFAF1] flex flex-col select-none overflow-y-auto text-[#1A1A1A]">
+    <div className="min-h-screen bg-[#FEFAF1] flex flex-col select-none overflow-y-auto text-[#1A1A1A]">
       <FlowHeader
         title="Report an Issue"
         onBack={onClose}

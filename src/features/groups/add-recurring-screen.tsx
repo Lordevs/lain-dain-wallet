@@ -18,11 +18,16 @@ import RecurringAttachmentsStrip from '@/features/groups/components/recurring-at
 interface AddRecurringScreenProps {
   groupId: string
   editPaymentId?: string
-  onClose: () => void
-  onSuccess: () => void
+  onClose?: () => void
+  onSuccess?: () => void
 }
 
-export default function AddRecurringScreen({ groupId, editPaymentId, onClose, onSuccess }: AddRecurringScreenProps) {
+export default function AddRecurringScreen({
+  groupId,
+  editPaymentId,
+  onClose = () => window.history.back(),
+  onSuccess = () => window.history.back(),
+}: AddRecurringScreenProps) {
   const { getPayments, addPayment, updatePayment } = useRecurringStore()
 
   // Find the group details
@@ -113,7 +118,7 @@ export default function AddRecurringScreen({ groupId, editPaymentId, onClose, on
   return (
     <form
       onSubmit={handleSave}
-      className="fixed inset-0 z-60 flex flex-col bg-background select-none justify-between text-left overflow-y-auto"
+      className="min-h-screen flex flex-col bg-background select-none justify-between text-left overflow-y-auto pb-12"
     >
       <div className="flex flex-col flex-1 pb-4">
         <RecurringFormHeader

@@ -1,11 +1,11 @@
 import { useMemo } from 'react'
-import { useNavigate, useSearch } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { Home, Music, Pencil, Trash2, Plus, Video } from 'lucide-react'
 import FlowHeader from '@/components/shared/flow-header'
 import { useRecurringStore } from '@/store/use-recurring-store'
 import { MOCK_GROUP_MEMBERS } from '@/features/groups/data/group-members'
 import { cn } from '@/lib/utils'
-import AddRecurringScreen from '@/features/groups/add-recurring-screen'
+import { ROUTES } from '@/constants/routes'
 
 
 interface RecurringPaymentsScreenProps {
@@ -15,23 +15,6 @@ interface RecurringPaymentsScreenProps {
 
 export default function RecurringPaymentsScreen({ groupId, onClose }: RecurringPaymentsScreenProps) {
   const navigate = useNavigate()
-  const search = useSearch({ strict: false })
-  const isAddRecurringOpen = search?.subDrawer === 'add-recurring' || search?.drawer === 'add-recurring'
-  const editPaymentId = search?.edit as string | undefined
-
-  const closeAddRecurringDrawer = () => {
-    (navigate as any)({
-      search: (prev: any) => {
-        const next = { ...prev }
-        delete next.subDrawer
-        if (next.drawer === 'add-recurring') {
-          delete next.drawer
-        }
-        delete next.edit
-        return next
-      },
-    })
-  }
 
   const { deletePayment } = useRecurringStore()
   const payments = useRecurringStore((s) => s.paymentsByGroup[groupId] ?? [])
@@ -51,12 +34,9 @@ export default function RecurringPaymentsScreen({ groupId, onClose }: RecurringP
 
   // Edit payment handler — search params are typed via route's validateSearch
   const handleEdit = (paymentId: string) => {
-    (navigate as any)({
-      search: (prev: any) => ({
-        ...prev,
-        subDrawer: 'add-recurring',
-        edit: paymentId,
-      }),
+    navigate({
+      to: ROUTES.GROUP_EDIT_RECURRING,
+      params: { id: groupId, paymentId },
     })
   }
 
@@ -228,7 +208,7 @@ export default function RecurringPaymentsScreen({ groupId, onClose }: RecurringP
       <div className="fixed bottom-3 left-3 right-3 z-10">
         <button
           type="button"
-          onClick={() => (navigate as any)({ search: (prev: any) => ({ ...prev, subDrawer: 'add-recurring' }) })}
+          onClick={() => navigate({ to: ROUTES.GROUP_ADD_RECURRING, params: { id: groupId } })}
           className="w-full h-14 bg-positive text-white rounded-full font-bold text-base active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer border-0 pointer-events-auto"
         >
           <Plus size={18} strokeWidth={3} />
@@ -236,14 +216,6 @@ export default function RecurringPaymentsScreen({ groupId, onClose }: RecurringP
         </button>
       </div>
 
-      {isAddRecurringOpen && (
-        <AddRecurringScreen
-          groupId={groupId}
-          editPaymentId={editPaymentId}
-          onClose={closeAddRecurringDrawer}
-          onSuccess={closeAddRecurringDrawer}
-        />
-      )}
     </div>
   )
 }

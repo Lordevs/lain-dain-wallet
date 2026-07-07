@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react'
-import { useParams, useNavigate, useSearch } from '@tanstack/react-router'
+
+import { useParams, useNavigate } from '@tanstack/react-router'
 import { MoreVertical, ChevronRight } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import { formatPKR } from '@/lib/currency'
@@ -7,12 +7,8 @@ import { cn } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
 import ContactList from '@/components/shared/contact-list'
 import ContactListItem from '@/components/shared/contact-list-item'
-import SendGroupReminderScreen from '@/features/groups/send-group-reminder-screen'
-import AddGroupExpenseScreen from '@/features/groups/add-group-expense-screen'
-import EditGroupExpenseScreen from '@/features/groups/edit-group-expense-screen'
-import { useGroupLedger, getCategoryDetails } from '@/features/groups/hooks/use-group-ledger'
+import { useGroupLedger } from '@/features/groups/hooks/use-group-ledger'
 import GroupBalanceCarousel from '@/features/groups/components/group-balance-carousel'
-import GroupCategoryExpenses from '@/features/groups/components/group-category-expenses'
 
 /**
  * GroupDetailScreen — handles detailed views and features for groups.
@@ -20,46 +16,8 @@ import GroupCategoryExpenses from '@/features/groups/components/group-category-e
 export default function GroupDetailScreen() {
   const { id } = useParams({ from: '/groups/$id/' })
   const navigate = useNavigate({ from: '/groups/$id/' })
-  const { drawer, txId } = useSearch({ from: '/groups/$id/' })
-  const openedInSessionRef = useRef(false)
 
-  const openDrawer = (name: 'reminder' | 'add-expense' | 'edit-expense', tid?: string) => {
-    openedInSessionRef.current = true
-    navigate({
-      search: (prev) => ({
-        ...prev,
-        drawer: name,
-        txId: tid,
-      }),
-      replace: !!drawer,
-    })
-  }
-
-  const closeDrawer = () => {
-    if (!drawer) return
-
-    if (openedInSessionRef.current) {
-      openedInSessionRef.current = false
-      window.history.back()
-    } else {
-      navigate({
-        search: (prev) => {
-          const next = { ...prev }
-          delete next.drawer
-          delete next.txId
-          return next
-        },
-        replace: true,
-      })
-    }
-  }
-
-  // State to filter by category
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-
-
-
-  const { contact, groupExpensesData, categoriesSummary, groupBalances } = useGroupLedger(id)
+  const { contact, categoriesSummary, groupBalances } = useGroupLedger(id)
 
   if (!contact || contact.type !== 'group') {
     return (
@@ -78,26 +36,9 @@ export default function GroupDetailScreen() {
   const isGroupReceivable = contact.netAmount > 0
   const formattedGroupVal = formatPKR(Math.abs(contact.netAmount))
 
-  const catDetails = selectedCategory ? getCategoryDetails(selectedCategory) : null
-  const filteredExpenses = selectedCategory ? groupExpensesData.filter((exp) => (exp.category || 'other') === selectedCategory) : []
-  const totalSpent = filteredExpenses.reduce((sum, exp) => sum + Math.abs(exp.amount), 0)
-  const formattedTotal = formatPKR(totalSpent)
-
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24 relative select-none">
-      {selectedCategory && catDetails ? (
-        <GroupCategoryExpenses
-          label={catDetails.label}
-          color={catDetails.color}
-          Icon={catDetails.icon}
-          formattedTotal={formattedTotal}
-          expenses={filteredExpenses}
-          onBack={() => setSelectedCategory(null)}
-          onExpenseClick={(expenseId) => navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: expenseId.toString() } })}
-        />
-      ) : (
-        <>
-          {/* Unified Header */}
+      {/* Unified Header */}
           <FlowHeader
             title={contact.name}
             subtitle={`${contact.ledgerCount} members`}
@@ -121,7 +62,7 @@ export default function GroupDetailScreen() {
           <GroupBalanceCarousel
             isReceivable={isGroupReceivable}
             formattedNetAmount={formattedGroupVal}
-            onRemind={() => openDrawer('reminder')}
+            onRemind={() => navigate({ to: ROUTES.GROUP_REMINDER, params: { id: contact.id } })}
           />
 
           {/* Scrollable breakdown container */}
@@ -192,7 +133,7 @@ export default function GroupDetailScreen() {
                     <button
                       key={summary.id}
                       type="button"
-                      onClick={() => setSelectedCategory(summary.id)}
+                      onClick={() => navigate({ to: ROUTES.GROUP_CATEGORY, params: { id: contact.id, catId: summary.id } })}
                       className="w-full flex items-center justify-between p-4 hover:bg-muted/5 transition-colors border-0 outline-none text-left cursor-pointer bg-white"
                     >
                       <div className="flex items-center gap-3.5">
@@ -228,11 +169,11 @@ export default function GroupDetailScreen() {
 
           {/* Sticky Bottom Row Buttons */}
           <div className="fixed bottom-3 left-3 right-3 z-10 flex items-center gap-4">
-            {/* + Add Expense */}
+            {/* Add Expense */}
             <button
               type="button"
-              onClick={() => openDrawer('add-expense')}
-              className="flex-1 h-12 rounded-full bg-positive text-white font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
+              onClick={() => navigate({ to: ROUTES.GROUP_ADD_EXPENSE, params: { id: contact.id } })}
+              className="flex-1 h-12 rounded-full bg-[#1A1A1A] text-white font-extrabold text-base cursor-pointer hover:bg-neutral-800 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
             >
               Add Expense
             </button>
@@ -246,32 +187,6 @@ export default function GroupDetailScreen() {
               Settle Up
             </button>
           </div>
-
-        </>
-      )}
-
-      {drawer === 'reminder' && (
-        <SendGroupReminderScreen groupId={contact.id} onClose={closeDrawer} />
-      )}
-
-      {drawer === 'add-expense' && (
-        <AddGroupExpenseScreen
-          groupId={contact.id}
-          onClose={closeDrawer}
-          onSuccess={(newId) => navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: newId }, replace: true })}
-        />
-      )}
-
-
-
-      {drawer === 'edit-expense' && txId && (
-        <EditGroupExpenseScreen
-          groupId={contact.id}
-          txId={txId}
-          onClose={() => navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: txId } })}
-          onSuccess={closeDrawer}
-        />
-      )}
     </div>
   )
 }

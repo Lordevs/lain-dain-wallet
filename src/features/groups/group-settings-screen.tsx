@@ -1,34 +1,22 @@
-import { useRef } from 'react'
-import { useSearch } from '@tanstack/react-router'
+
 import { MoreVertical, Camera, Pencil, Plus, LogOut, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
 import ContactListItem from '@/components/shared/contact-list-item'
 import MemberOptionsDrawer from '@/components/shared/member-options-drawer'
-import ProfilePicturePanel from '@/components/shared/profile-picture-panel'
 import OutstandingBalanceDrawer from '@/components/shared/outstanding-balance-drawer'
 import ConfirmActionDrawer from '@/components/shared/confirm-action-drawer'
 import { ROUTES } from '@/constants/routes'
-import SmartSettleScreen from '@/features/groups/smart-settle-screen'
-import RecurringPaymentsScreen from '@/features/groups/recurring-payments-screen'
 import { useGroupSettings } from './hooks/use-group-settings'
-import EditGroupNamePanel from './components/edit-group-name-panel'
 
 export default function GroupSettingsScreen() {
-  const { drawer } = useSearch({ from: '/groups/$id/settings' })
-  const openedInSessionRef = useRef(false)
 
   const {
     contact,
     smartSettleEnabled,
     setSmartSettleEnabled,
     groupPhoto,
-    setGroupPhoto,
-    isPhotoPanelOpen,
     groupName,
-    isNamePanelOpen,
-    tempGroupName,
-    setTempGroupName,
     members,
     selectedMemberId,
     setSelectedMemberId,
@@ -41,41 +29,10 @@ export default function GroupSettingsScreen() {
     handleBlockReport,
     handleLeaveGroup,
     handleDeleteGroup,
-    handleSaveGroupName,
-    groupInitials,
     navigate,
   } = useGroupSettings()
 
-  const closeDrawer = () => {
-    if (!drawer) return
 
-    if (openedInSessionRef.current) {
-      openedInSessionRef.current = false
-      window.history.back()
-    } else {
-      navigate({
-        search: (prev) => {
-          const next = { ...prev }
-          delete next.drawer
-          delete next.subDrawer
-          delete next.edit
-          return next
-        },
-        replace: true,
-      })
-    }
-  }
-
-  const openDrawer = (name: 'smart-settle' | 'recurring') => {
-    openedInSessionRef.current = true
-    navigate({
-      search: (prev) => ({
-        ...prev,
-        drawer: name,
-      }),
-      replace: !!drawer,
-    })
-  }
 
   if (!contact || contact.type !== 'group') {
     return (
@@ -141,7 +98,7 @@ export default function GroupSettingsScreen() {
           <div className="flex items-center gap-3 mt-4">
             <button
               type="button"
-              onClick={() => navigate({ search: (prev) => ({ ...prev, drawer: 'edit-photo' as const }) })}
+              onClick={() => navigate({ to: ROUTES.GROUP_PHOTO, params: { id: contact.id } })}
               className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#0B683A33] bg-[#E4F2EB] text-positive text-xs font-bold transition-all hover:bg-[#E4F2EB]/80 shrink-0 cursor-pointer outline-none"
             >
               <Camera size={14} className="text-positive" strokeWidth={2.5} />
@@ -149,12 +106,7 @@ export default function GroupSettingsScreen() {
             </button>
             <button
               type="button"
-              onClick={() => {
-                setTempGroupName(groupName)
-                navigate({
-                  search: (prev) => ({ ...prev, drawer: 'edit-name' as const })
-                })
-              }}
+              onClick={() => navigate({ to: ROUTES.GROUP_NAME, params: { id: contact.id } })}
               className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#0B683A33] bg-[#E4F2EB] text-positive text-xs font-bold transition-all hover:bg-[#E4F2EB]/80 shrink-0 cursor-pointer outline-none"
             >
               <Pencil size={14} className="text-positive" strokeWidth={2.5} />
@@ -276,7 +228,7 @@ export default function GroupSettingsScreen() {
                 </p>
                 <button
                   type="button"
-                  onClick={() => openDrawer('smart-settle')}
+                  onClick={() => navigate({ to: ROUTES.GROUP_SMART_SETTLE, params: { id: contact.id } })}
                   className="text-[12px] text-[#C96A1B] font-bold mt-1.5 block hover:underline border-0 bg-transparent cursor-pointer p-0 text-left outline-none"
                 >
                   Learn More
@@ -305,7 +257,7 @@ export default function GroupSettingsScreen() {
             <div
               role="button"
               tabIndex={0}
-              onClick={() => openDrawer('recurring')}
+              onClick={() => navigate({ to: ROUTES.GROUP_RECURRING, params: { id: contact.id } })}
               className="bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-5 flex flex-col cursor-pointer hover:bg-muted/5 transition-colors outline-none"
             >
               <p className="font-bold text-[15px] text-[#1A1A1A]">
@@ -364,23 +316,6 @@ export default function GroupSettingsScreen() {
         onBlockReport={handleBlockReport}
       />
 
-      {/* Profile picture panel for group cover */}
-      {isPhotoPanelOpen && (
-        <ProfilePicturePanel
-          title="Group Image"
-          label="Current group photo"
-          initials={groupInitials}
-          currentAvatar={groupPhoto}
-          onClose={() => navigate({
-            search: (prev) => {
-              const next = { ...prev }
-              delete next.drawer
-              return next
-            }
-          })}
-          onSave={(newPhoto) => setGroupPhoto(newPhoto)}
-        />
-      )}
 
       {/* Outstanding Balance Drawer */}
       <OutstandingBalanceDrawer
@@ -412,31 +347,6 @@ export default function GroupSettingsScreen() {
         variant={drawerConfig.buttonVariant}
         onConfirm={drawerConfig.onAction || (() => { })}
       />
-
-      {/* Edit Group Name Panel */}
-      <EditGroupNamePanel
-        isOpen={isNamePanelOpen}
-        tempGroupName={tempGroupName}
-        onTempGroupNameChange={setTempGroupName}
-        onSave={handleSaveGroupName}
-        onClose={() => {
-          navigate({
-            search: (prev) => {
-              const next = { ...prev }
-              delete next.drawer
-              return next
-            }
-          })
-        }}
-      />
-
-      {drawer === 'smart-settle' && contact && (
-        <SmartSettleScreen onClose={closeDrawer} />
-      )}
-
-      {drawer === 'recurring' && contact && (
-        <RecurringPaymentsScreen groupId={contact.id} onClose={closeDrawer} />
-      )}
     </div>
   )
 }

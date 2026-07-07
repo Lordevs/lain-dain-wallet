@@ -1,16 +1,14 @@
+import { useParams, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import AddExpenseBase, { type ConfirmExpenseData } from '@/components/shared/add-expense-base'
 import { useContactStore } from '@/store/use-contact-store'
 import { useTransactionStore } from '@/store/use-transaction-store'
 import { calculateContactOwesAmount } from '@/lib/split'
+import { ROUTES } from '@/constants/routes'
 
-interface AddGroupExpenseScreenProps {
-  groupId: string
-  onClose: () => void
-  onSuccess: (newTxId: string) => void
-}
-
-export default function AddGroupExpenseScreen({ groupId, onClose, onSuccess }: AddGroupExpenseScreenProps) {
+export default function AddGroupExpenseScreen() {
+  const { id: groupId } = useParams({ from: '/groups/$id/add-expense' })
+  const navigate = useNavigate()
 
   const [newTxId, setNewTxId] = useState<string | null>(null)
 
@@ -24,7 +22,7 @@ export default function AddGroupExpenseScreen({ groupId, onClose, onSuccess }: A
         <div className="text-center">
           <p className="text-lg font-bold text-[#1A1A1A]">Group not found</p>
           <button
-            onClick={onClose}
+            onClick={() => window.history.back()}
             className="mt-4 px-4 py-2 bg-positive text-white rounded-full font-bold border-0 cursor-pointer"
           >
             Close
@@ -92,12 +90,12 @@ export default function AddGroupExpenseScreen({ groupId, onClose, onSuccess }: A
       onConfirm={handleConfirm}
       onSuccessComplete={() => {
         if (newTxId) {
-          onSuccess(newTxId)
+          navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: newTxId }, replace: true })
         } else {
-          onClose()
+          window.history.back()
         }
       }}
-      onBack={onClose}
+      onBack={() => window.history.back()}
     />
   )
 }

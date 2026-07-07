@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react'
-import { useNavigate, useSearch } from '@tanstack/react-router'
+import { useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import { MoreVertical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ROUTES } from '@/constants/routes'
@@ -9,7 +9,7 @@ import ViewReportsCard from './components/view-reports-card'
 import ExpenseList from '@/components/shared/expense-list'
 import MonthFilterDropdown from './components/month-filter-drawer'
 import FlowHeader from '@/components/shared/flow-header'
-import AddEntryScreen from '@/features/personal/add-entry-screen'
+
 
 
 /**
@@ -18,39 +18,8 @@ import AddEntryScreen from '@/features/personal/add-entry-screen'
  * and lists of dynamic mock personal expenses.
  */
 export default function PersonalScreen() {
-  const navigate = useNavigate({ from: '/personal/' })
-  const { drawer } = useSearch({ from: '/personal/' })
+  const navigate = useNavigate()
   const [activeFilter, setActiveFilter] = useState<'this_month' | 'last_month' | 'all_time'>('this_month')
-  const openedInSessionRef = useRef(false)
-
-  const closeDrawer = () => {
-    if (!drawer) return
-
-    if (openedInSessionRef.current) {
-      openedInSessionRef.current = false
-      window.history.back()
-    } else {
-      navigate({
-        search: (prev) => {
-          const next = { ...prev }
-          delete next.drawer
-          return next
-        },
-        replace: true,
-      })
-    }
-  }
-
-  const openDrawer = (name: 'add-expense') => {
-    openedInSessionRef.current = true
-    navigate({
-      search: (prev) => ({
-        ...prev,
-        drawer: name,
-      }),
-      replace: !!drawer,
-    })
-  }
 
   const currentData = FILTER_DATA[activeFilter]
 
@@ -107,16 +76,14 @@ export default function PersonalScreen() {
       <div className="fixed bottom-3 left-3 right-3 z-10">
         <Button
           type="button"
-          onClick={() => openDrawer('add-expense')}
+          onClick={() => navigate({ to: ROUTES.PERSONAL_ADD_EXPENSE })}
           className="w-full h-14 rounded-full bg-primary text-white font-bold text-base cursor-pointer transition-transform active:scale-[0.99]"
         >
           Add Personal Expense
         </Button>
       </div>
 
-      {drawer === 'add-expense' && (
-        <AddEntryScreen onClose={closeDrawer} onSuccess={closeDrawer} />
-      )}
+
     </div>
   )
 }

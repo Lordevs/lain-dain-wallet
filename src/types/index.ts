@@ -53,6 +53,7 @@ export interface Contact {
   name: string
   initials: string
   avatarColor: string // Tailwind classes, e.g. "bg-[#E8F5E9] text-positive"
+  avatar?: string | null
   ledgerCount: number
   netAmount: number // positive = owes you, negative = you owe
   tags: LedgerTag[]
