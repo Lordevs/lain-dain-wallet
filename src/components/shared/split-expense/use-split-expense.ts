@@ -137,7 +137,11 @@ export function useSplitExpense({
   const handleUnequalChange = (memberId: string, val: string) => {
     const rawVal = val.replace(/\D/g, '')
     const numVal = Number(rawVal) || 0
-    const cappedVal = numVal > totalAmount ? totalAmount.toString() : rawVal
+    const otherSum = members
+      .filter((m) => m.id !== memberId)
+      .reduce((sum, m) => sum + (Number(unequalAmounts[m.id]) || 0), 0)
+    const maxAllowed = Math.max(0, totalAmount - otherSum)
+    const cappedVal = numVal > maxAllowed ? maxAllowed.toString() : rawVal
     setUnequalAmounts((prev) => ({
       ...prev,
       [memberId]: cappedVal,
@@ -147,7 +151,11 @@ export function useSplitExpense({
   const handleAdjustmentChange = (memberId: string, val: string) => {
     const rawVal = val.replace(/\D/g, '')
     const numVal = Number(rawVal) || 0
-    const cappedVal = numVal > totalAmount ? totalAmount.toString() : rawVal
+    const otherSum = members
+      .filter((m) => m.id !== memberId)
+      .reduce((sum, m) => sum + (Number(adjustmentAmounts[m.id]) || 0), 0)
+    const maxAllowed = Math.max(0, totalAmount - otherSum)
+    const cappedVal = numVal > maxAllowed ? maxAllowed.toString() : rawVal
     setAdjustmentAmounts((prev) => ({
       ...prev,
       [memberId]: cappedVal,
