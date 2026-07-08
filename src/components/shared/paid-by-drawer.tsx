@@ -117,9 +117,20 @@ function PaidByDrawerContent({
 
   const handleAmountChange = (memberId: string, val: string) => {
     const rawVal = val.replace(/\D/g, '')
+    const numVal = Number(rawVal) || 0
+    
+    // Calculate the sum of contributions from all other members
+    const otherSum = members
+      .filter((m) => m.id !== memberId)
+      .reduce((sum, m) => sum + (Number(payerAmounts[m.id]) || 0), 0)
+      
+    // Max allowed for this member is the remaining unassigned amount
+    const maxAllowed = Math.max(0, totalAmount - otherSum)
+    const cappedVal = numVal > maxAllowed ? maxAllowed.toString() : rawVal
+
     setPayerAmounts((prev) => ({
       ...prev,
-      [memberId]: rawVal
+      [memberId]: cappedVal
     }))
   }
 

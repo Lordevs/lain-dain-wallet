@@ -53,9 +53,9 @@ export default function AdjustmentSplitView({
           return (
             <div
               key={member.id}
-              className="px-6 py-4 flex items-center justify-between transition-colors bg-transparent"
+              className="px-4 py-4 flex items-center justify-between transition-colors bg-transparent gap-2"
             >
-              <div className="flex items-center gap-3 text-left min-w-0 flex-1 mr-3">
+              <div className="flex items-center gap-2.5 text-left min-w-0 flex-1 mr-1">
                 <div className="relative shrink-0">
                   <Avatar className="size-10 shrink-0 font-extrabold text-sm text-white select-none">
                     <AvatarFallback className={cn("rounded-full flex items-center justify-center border-0 text-white font-extrabold text-sm", member.avatarColor)}>
@@ -75,7 +75,7 @@ export default function AdjustmentSplitView({
               </div>
 
               {/* Right side controls */}
-              <div className="flex items-center gap-4 shrink-0">
+              <div className="flex items-center gap-3 shrink-0">
                 <div className="flex flex-col text-right shrink-0">
                   <span className="text-[10px] text-muted-faint font-semibold">Final Amount</span>
                   <span className="text-sm font-extrabold text-positive mt-0.5 whitespace-nowrap">
@@ -84,7 +84,7 @@ export default function AdjustmentSplitView({
                 </div>
                 <div className="flex flex-col shrink-0">
                   <span className="text-[10px] text-muted-faint font-semibold mb-1 text-left">owes extra</span>
-                  <div className="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-[12px] border-[0.8px] border-divider shadow-[0px_1px_4px_rgba(0,0,0,0.02)] w-20">
+                  <div className="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-[12px] border-[0.8px] border-divider shadow-[0px_1px_4px_rgba(0,0,0,0.02)] w-24">
                     <span className="text-xs text-muted-faint font-bold shrink-0">Rs.</span>
                     <input
                       type="text"

@@ -59,7 +59,7 @@ export default function ContactLedgerCard({ contact, onClick }: ContactLedgerCar
         <div className="flex-1 min-w-0">
           <p className="font-bold text-[15px] text-foreground leading-tight">{name}</p>
           <p className="text-[12px] text-muted-foreground mt-0.5 font-medium">
-            Net across {ledgerCount} ledger{ledgerCount !== 1 ? 's' : ''}
+            Net across {ledgerCount} Balance{ledgerCount !== 1 ? 's' : ''}
           </p>
         </div>
 

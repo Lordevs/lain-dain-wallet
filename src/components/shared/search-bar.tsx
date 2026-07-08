@@ -87,6 +87,7 @@ export default function SearchBar({
         className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-faint pointer-events-none z-10"
       />
       <input
+        ref={inputRef}
         id={id}
         type="search"
         readOnly={!!onFocus}
@@ -94,8 +95,24 @@ export default function SearchBar({
         onChange={(e) => onChange?.(e.target.value)}
         onFocus={onFocus}
         placeholder={placeholder}
-        className="w-full h-12 pl-11 pr-4 rounded-full bg-white border-[1.08px] border-border-card text-sm text-foreground placeholder:text-muted-faint outline-none focus:border-primary/40 focus-visible:border-primary/40 focus:ring-2 focus-visible:ring-2 focus-visible:ring-primary/10 focus:ring-primary/10 transition-all cursor-pointer"
+        className={cn(
+          "w-full h-12 pl-11 rounded-full bg-white border-[1.08px] border-border-card text-sm text-foreground placeholder:text-muted-faint outline-none focus:border-primary/40 focus-visible:border-primary/40 focus:ring-2 focus-visible:ring-2 focus-visible:ring-primary/10 focus:ring-primary/10 transition-all cursor-pointer [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden",
+          value.length > 0 ? "pr-10" : "pr-4"
+        )}
       />
+      {value.length > 0 && !onFocus && (
+        <button
+          type="button"
+          onClick={() => {
+            onChange?.('')
+            onClear?.()
+            inputRef.current?.focus()
+          }}
+          className="absolute right-3.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-[#F2EFEA] hover:bg-[#E8E4DF] flex items-center justify-center border-0 outline-none cursor-pointer transition-colors"
+        >
+          <X size={11} className="text-[#1A1A1A]" strokeWidth={2.5} />
+        </button>
+      )}
     </div>
   )
 }

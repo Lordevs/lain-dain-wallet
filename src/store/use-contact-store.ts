@@ -274,7 +274,7 @@ const INITIAL_CONTACTS: Contact[] = [
 export const useContactStore = create<ContactState>((set) => ({
   contacts: INITIAL_CONTACTS,
   hiddenLedgerIds: [],
-  resetDay: 23,
+  resetDay: 7,
   budgetLimit: 50000,
   alertNearingLimit: true,
   alertThreshold: 80,

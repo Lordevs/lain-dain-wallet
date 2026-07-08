@@ -29,7 +29,7 @@ const CONFETTI_COLORS = [
 
 export default function SuccessCheck({
   onComplete,
-  text = 'Success',
+  text = '',
   showConfetti = false,
 }: SuccessCheckProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)

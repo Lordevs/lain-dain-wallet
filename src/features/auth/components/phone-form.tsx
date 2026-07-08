@@ -37,15 +37,13 @@ export default function PhoneForm({
             {isSignIn ? (
               <>
                 <h2 className="text-xl font-bold text-foreground leading-tight">Welcome Back</h2>
-                <p className="text-muted-foreground mt-0.5 text-base">Sign in to manage your ledgers</p>
+                <p className="text-muted-foreground mt-0.5 text-base">Sign in to manage your balances</p>
               </>
             ) : (
               <>
                 <h2 className="text-xl font-bold text-foreground leading-tight">Create your account</h2>
-                <p className="text-muted-foreground mt-0.5 text-base">
-                  Simple. <span className="text-primary">Secure.</span>{' '}
-                  <span className="text-primary">Lain Dain</span> ka hisaab{' '}
-                  <span className="text-secondary">easy.</span>
+                <p className="text-primary mt-0.5 text-base">
+                  One place for every Lain Dain.
                 </p>
               </>
             )}

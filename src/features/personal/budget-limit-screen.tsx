@@ -3,7 +3,6 @@ import { Info } from 'lucide-react'
 import { useContactStore } from '@/store/use-contact-store'
 import FlowHeader from '@/components/shared/flow-header'
 import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
 
@@ -17,20 +16,16 @@ export default function BudgetLimitScreen() {
   const {
     resetDay,
     budgetLimit,
-    alertNearingLimit,
     alertThreshold,
     setBudgetLimit,
-    setAlertNearingLimit,
     setAlertThreshold
   } = useContactStore()
 
   const [limitValue, setLimitValue] = useState(budgetLimit)
-  const [nearingLimitAlert, setNearingLimitAlert] = useState(alertNearingLimit)
   const [thresholdValue, setThresholdValue] = useState(alertThreshold)
 
   const handleSave = () => {
     setBudgetLimit(limitValue)
-    setAlertNearingLimit(nearingLimitAlert)
     setAlertThreshold(thresholdValue)
     window.history.back()
   }
@@ -156,27 +151,6 @@ export default function BudgetLimitScreen() {
                     </button>
                   )
                 })}
-              </div>
-            </div>
-
-            <div className="border-t border-[#EBEBEB]" />
-
-            {/* Alert Toggle switch row */}
-            <div className="p-5 flex items-center justify-between transition-colors hover:bg-muted/5">
-              <div className="flex flex-col text-left pr-4">
-                <span className="text-[15px] font-semibold text-[#1A1A1A] leading-tight">
-                  Alert when nearing limit
-                </span>
-                <span className="text-[12px] font-normal text-[#6B6B6B] mt-1.5 leading-normal">
-                  Notify at {thresholdValue}% of budget
-                </span>
-              </div>
-              <div className="shrink-0 select-none">
-                <Switch
-                  checked={nearingLimitAlert}
-                  onCheckedChange={setNearingLimitAlert}
-                  size="lg"
-                />
               </div>
             </div>
 
