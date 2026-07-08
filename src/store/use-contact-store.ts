@@ -68,8 +68,8 @@ const INITIAL_CONTACTS: Contact[] = [
     isOnline: false,
     type: 'group',
     tags: [
-      { name: 'Eid', amount: 1200 },
-      { name: 'Groceries', amount: 1250 },
+      { name: 'Zain', amount: -1500 },
+      { name: 'Ayesha', amount: 950 },
     ],
   },
   {
@@ -82,13 +82,8 @@ const INITIAL_CONTACTS: Contact[] = [
     isOnline: false,
     type: 'group',
     tags: [
-      { name: 'Hotel Booking', amount: 3000 },
-      { name: 'Fuel', amount: 1250 },
-      { name: 'Payment settled', amount: 1000 },
-      { name: 'Dinner', amount: 850 },
-      { name: 'Snacks', amount: 300 },
-      { name: 'Motorway Toll', amount: 200 },
-      { name: 'Breakfast', amount: 550 },
+      { name: 'Ali', amount: -2000 },
+      { name: 'Haider', amount: 200 },
     ],
   },
   // Payables

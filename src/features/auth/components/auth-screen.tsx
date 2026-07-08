@@ -52,7 +52,7 @@ export default function AuthScreen() {
   const handleProfileSubmit = (profileData: ProfileFormData) => {
     const { tempCountryCode, tempPhoneNumber } = useAuthStore.getState()
     const finalProfile = {
-      name: 'Muhammad Huzaifa',
+      name: profileData.fullName,
       phone: `${tempCountryCode.code} ${tempPhoneNumber}`,
       ...profileData,
     }

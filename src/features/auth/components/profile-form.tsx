@@ -7,7 +7,8 @@ import {
   Globe,
   Camera,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  Calendar
 } from 'lucide-react'
 import { differenceInYears, format } from 'date-fns'
 import { Button } from '@/components/ui/button'
@@ -23,6 +24,7 @@ import { useAuthStore } from '@/store/use-auth-store'
 
 /** Exported so auth-screen.tsx can type its handleProfileSubmit handler */
 export interface ProfileFormData {
+  fullName: string
   age: string
   gender: string
   email: string
@@ -36,6 +38,7 @@ interface ProfileFormProps {
 }
 
 interface FormValues {
+  fullName: string
   dob: Date | undefined
   gender: string
   email: string
@@ -48,6 +51,7 @@ export default function ProfileForm({ onSubmit }: ProfileFormProps) {
 
   const { control, handleSubmit, watch } = useForm<FormValues>({
     defaultValues: {
+      fullName: '',
       dob: undefined,
       gender: '',
       email: '',
@@ -78,6 +82,7 @@ export default function ProfileForm({ onSubmit }: ProfileFormProps) {
 
   const onFormSubmit = (values: FormValues) => {
     onSubmit({
+      fullName: values.fullName,
       age,
       gender: values.gender,
       email: values.email,
@@ -117,6 +122,29 @@ export default function ProfileForm({ onSubmit }: ProfileFormProps) {
               <span className="text-base font-semibold text-primary mt-2">Add profile photo</span>
             </div>
 
+            {/* Full Name Input */}
+            <div className="space-y-1.5 w-full">
+              <Label className="text-sm font-semibold text-foreground px-1">Full Name</Label>
+              <Controller
+                name="fullName"
+                control={control}
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590]">
+                      <User size={18} />
+                    </span>
+                    <Input
+                      {...field}
+                      id="fullName"
+                      placeholder="Enter your full name"
+                      className="w-full h-12 pl-12 pr-4 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground text-sm! focus-visible:ring-1 focus-visible:ring-primary shadow-none font-normal placeholder:text-[#9A9590]"
+                    />
+                  </div>
+                )}
+              />
+            </div>
+
             {/* Date of Birth Input */}
             <div className="space-y-1.5 w-full">
               <Label className="text-sm font-semibold text-foreground px-1">Date of Birth</Label>
@@ -125,17 +153,20 @@ export default function ProfileForm({ onSubmit }: ProfileFormProps) {
                 control={control}
                 render={({ field }) => (
                   <>
-                    <Button
+                    <button
                       type="button"
                       onClick={() => setIsDobOpen(true)}
-                      className="w-full h-12 pl-4 pr-4 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground hover:bg-[#FEF5EE] justify-start font-normal text-sm relative shadow-none focus-visible:ring-1 focus-visible:ring-primary"
+                      className="w-full h-12 pl-12 pr-4 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground hover:bg-[#FEF5EE] justify-start font-normal text-sm relative shadow-none focus:outline-none focus-visible:ring-1 focus-visible:ring-primary cursor-pointer text-left flex items-center"
                     >
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590]">
+                        <Calendar size={18} />
+                      </span>
                       {field.value ? (
                         <span className="text-foreground">{format(field.value, 'dd MMM yyyy')} ({differenceInYears(new Date(), field.value)} years)</span>
                       ) : (
                         <span className="text-[#9A9590]">Enter your DOB</span>
                       )}
-                    </Button>
+                    </button>
                     <SelectDateDrawer
                       isOpen={isDobOpen}
                       onClose={() => setIsDobOpen(false)}
@@ -264,7 +295,7 @@ export default function ProfileForm({ onSubmit }: ProfileFormProps) {
                     <Input
                       type="email"
                       placeholder="Enter Email"
-                      className="h-12 pl-12 pr-4 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground text-sm placeholder:text-[#9A9590] shadow-none"
+                      className="h-12 pl-12 pr-4 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground text-sm! placeholder:text-[#9A9590] shadow-none"
                       {...field}
                     />
                   </div>

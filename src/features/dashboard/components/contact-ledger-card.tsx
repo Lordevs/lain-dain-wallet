@@ -76,22 +76,23 @@ export default function ContactLedgerCard({ contact, onClick }: ContactLedgerCar
       </div>
 
       {/* Ledger Tag Row */}
-      {type !== 'group' && tags.length > 0 && (
+      {tags.length > 0 && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="flex items-center gap-2 px-4 pb-3 border-t border-border-card pt-2.5 overflow-x-auto scrollbar-none"
+          className="flex items-center gap-x-2 gap-y-1 px-4 pb-3 border-t border-border-card pt-2.5 overflow-x-auto scrollbar-none"
         >
           {tags.map((tag, i) => (
             <span
               key={`${tag.name}-${i}`}
-              className="text-[12px] font-medium whitespace-nowrap"
+              className="text-[12px] font-medium whitespace-nowrap flex items-center gap-1.5"
             >
+              {i > 0 && <span className="text-muted-faint/60 select-none">·</span>}
               <span className="text-foreground/70">{tag.name}</span>{' '}
               <span className={cn(
                 'font-bold',
                 tag.amount > 0 ? 'text-primary' : 'text-orange-payable'
               )}>
-                {tag.amount > 0 ? '+' : ''}{formatAmount(tag.amount)}
+                {tag.amount > 0 ? '+' : '-'}{formatAmount(tag.amount)}
               </span>
             </span>
           ))}
