@@ -40,6 +40,17 @@ const config: CapacitorConfig = {
       androidScaleType: 'CENTER_CROP',
       showSpinner: false,
     },
+    Keyboard: {
+      // KeyboardResize.Body = "body" — only body element resizes, not the viewport
+      // Only applies on iOS; Android handles it via resizeOnFullScreen
+      resize: 'body' as any,
+      // KeyboardStyle.Light = "LIGHT"
+      style: 'LIGHT' as any,
+      // Android: workaround for resize not working when StatusBar overlays the WebView
+      resizeOnFullScreen: true,
+      // iOS v8: tint the area behind keyboard to match app background automatically
+      autoBackdropColor: 'auto' as any,
+    },
   },
 };
 

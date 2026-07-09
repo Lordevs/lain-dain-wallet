@@ -38,4 +38,10 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Camera: for receipt scanning / photo attachments -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Vibration: for haptic feedback via @capacitor/haptics -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Photo library access (Android 13+) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 </manifest>

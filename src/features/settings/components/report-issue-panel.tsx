@@ -1,4 +1,7 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
+import { Capacitor } from '@capacitor/core'
+import { pickFromGallery } from '@/lib/camera'
+import { haptic } from '@/lib/haptics'
 import {
   Wallet,
   DollarSign,
@@ -35,17 +38,26 @@ export default function ReportIssuePanel({
   const [screenshot, setScreenshot] = useState<string | null>(null)
   const [email, setEmail] = useState(userProfile?.email || '')
 
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const maxChars = 300
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setScreenshot(reader.result as string)
+  const handleScreenshotPick = async () => {
+    haptic.light()
+    if (Capacitor.isNativePlatform()) {
+      const photo = await pickFromGallery()
+      if (photo?.webPath) setScreenshot(photo.webPath)
+    } else {
+      // Web dev fallback: file picker
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = 'image/*'
+      input.onchange = () => {
+        const file = input.files?.[0]
+        if (!file) return
+        const reader = new FileReader()
+        reader.onloadend = () => setScreenshot(reader.result as string)
+        reader.readAsDataURL(file)
       }
-      reader.readAsDataURL(file)
+      input.click()
     }
   }
 
@@ -190,9 +202,10 @@ export default function ReportIssuePanel({
             <h3 className="text-[11px] font-semibold tracking-widest text-[#6B6B6B] uppercase mb-1.5 px-1">
               Attach Screenshot (Optional)
             </h3>
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-4 bg-white border-[1.5px] border-dashed border-[#E8E4DC] rounded-[18px] p-4 cursor-pointer transition-colors shadow-[0px_2px_10px_rgba(0,0,0,0.01)] text-left"
+            <button
+              type="button"
+              onClick={handleScreenshotPick}
+              className="w-full flex items-center gap-4 bg-white border-[1.5px] border-dashed border-[#E8E4DC] rounded-[18px] p-4 cursor-pointer transition-colors shadow-[0px_2px_10px_rgba(0,0,0,0.01)] text-left outline-none"
             >
               <div className="w-11 h-11 rounded-[13px] bg-[#E4F2EB] flex items-center justify-center text-primary shrink-0">
                 <Camera size={20} strokeWidth={2.2} />
@@ -205,14 +218,7 @@ export default function ReportIssuePanel({
                   {screenshot ? 'Tap to replace · JPG, PNG up to 5MB' : 'Helps us resolve faster · JPG, PNG up to 5MB'}
                 </span>
               </div>
-            </div>
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept="image/*"
-              className="hidden"
-              onChange={handleImageUpload}
-            />
+            </button>
           </div>
 
           {/* Your Email */}

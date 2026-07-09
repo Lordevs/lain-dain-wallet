@@ -19,6 +19,15 @@ select {
 }
 
 :root {
+  /* Safe area insets — critical for iPhone notch / Dynamic Island / home indicator */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+
+  /* Keyboard height — updated dynamically by use-capacitor-setup.ts */
+  --keyboard-height: 0px;
+
   --text: #1A1A1A;
   --text-h: #1A1A1A;
   --bg: #FEFAF1;
@@ -119,6 +128,12 @@ select {
   background-color: var(--background);
   position: relative;
   overflow-x: hidden;
+
+  /* iOS Safe Area: push content below notch/status bar and above home indicator */
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
 }
 
 body {

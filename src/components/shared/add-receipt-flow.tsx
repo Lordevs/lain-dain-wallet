@@ -1,5 +1,8 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { Camera, Image as ImageIcon, FileText, RotateCcw, Trash2, X } from 'lucide-react'
+import { Capacitor } from '@capacitor/core'
+import { takePhoto, pickFromGallery } from '@/lib/camera'
+import { haptic } from '@/lib/haptics'
 import FlowHeader from '@/components/shared/flow-header'
 import { CATEGORIES } from '../../features/personal/components/category-picker'
 
@@ -20,8 +23,6 @@ interface AddReceiptFlowProps {
 }
 
 export default function AddReceiptFlow(props: AddReceiptFlowProps) {
-  // Only mounted while open, so AddReceiptFlowContent always starts fresh from the
-  // current initialFile - no effect needed to resync on reopen.
   if (!props.isOpen) return null
   return <AddReceiptFlowContent {...props} />
 }
@@ -35,7 +36,6 @@ function AddReceiptFlowContent({
   initialFile = null,
 }: AddReceiptFlowProps) {
   const [tempFile, setTempFile] = useState<ReceiptFile | null>(initialFile)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Resolve category details
   const activeCategory = CATEGORIES.find((cat) => cat.id === category) || CATEGORIES.find((cat) => cat.id === 'other')
@@ -46,34 +46,69 @@ function AddReceiptFlowContent({
   // Format currency
   const formattedAmount = amount ? amount.toLocaleString('en-US') : '0'
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    // Convert file size to human-readable format
-    const sizeInMB = file.size / (1024 * 1024)
-    const formattedSize =
-      sizeInMB < 0.1 ? `${(file.size / 1024).toFixed(1)} KB` : `${sizeInMB.toFixed(1)} MB`
-
-    // Generate blob URL for local preview if needed
-    const dataUrl = URL.createObjectURL(file)
-
-    setTempFile({
-      name: file.name,
-      size: formattedSize,
-      dataUrl,
-    })
+  // ─── Shared helper: turn a webPath/objectUrl into a ReceiptFile entry ───────
+  const applyPhoto = (webPath: string, filename: string) => {
+    setTempFile({ name: filename, size: 'Photo', dataUrl: webPath })
+    haptic.success()
   }
 
-  const triggerFileSelect = () => {
-    fileInputRef.current?.click()
+  // ─── Handlers ────────────────────────────────────────────────────────────────
+
+  const handleCamera = async () => {
+    haptic.light()
+    if (Capacitor.isNativePlatform()) {
+      const photo = await takePhoto()
+      if (photo?.webPath) applyPhoto(photo.webPath, 'Receipt_Photo.jpg')
+    } else {
+      openWebFilePicker()
+    }
+  }
+
+  const handleGallery = async () => {
+    haptic.light()
+    if (Capacitor.isNativePlatform()) {
+      const photo = await pickFromGallery()
+      if (photo?.webPath) applyPhoto(photo.webPath, 'Receipt_Gallery.jpg')
+    } else {
+      openWebFilePicker()
+    }
+  }
+
+  // Files option always uses the web-style file picker (supports PDF too)
+  const handleFiles = () => {
+    haptic.light()
+    openWebFilePicker(true)
+  }
+
+  const handleReplace = async () => {
+    haptic.medium()
+    if (Capacitor.isNativePlatform()) {
+      const photo = await pickFromGallery()
+      if (photo?.webPath) applyPhoto(photo.webPath, 'Receipt_Gallery.jpg')
+    } else {
+      openWebFilePicker()
+    }
+  }
+
+  const openWebFilePicker = (includePdf = false) => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = includePdf ? 'image/*,application/pdf' : 'image/*'
+    input.onchange = () => {
+      const file = input.files?.[0]
+      if (!file) return
+      const sizeInMB = file.size / (1024 * 1024)
+      const formattedSize =
+        sizeInMB < 0.1 ? `${(file.size / 1024).toFixed(1)} KB` : `${sizeInMB.toFixed(1)} MB`
+      setTempFile({ name: file.name, size: formattedSize, dataUrl: URL.createObjectURL(file) })
+      haptic.success()
+    }
+    input.click()
   }
 
   const handleRemove = () => {
+    haptic.heavy()
     setTempFile(null)
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
   }
 
   const handleDone = () => {
@@ -82,14 +117,6 @@ function AddReceiptFlowContent({
 
   return (
     <div className="fixed inset-0 z-70 bg-background flex flex-col select-none overflow-y-auto">
-      {/* Hidden Native File Input */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        className="hidden"
-        accept="image/*,application/pdf"
-      />
 
       {/* Header */}
       <FlowHeader
@@ -136,10 +163,10 @@ function AddReceiptFlowContent({
 
           {/* Large Upload Zone / File Preview */}
           {!tempFile ? (
-            /* Empty State Box */
+            /* Empty State Box — tapping the big area opens gallery on native, file picker on web */
             <button
               type="button"
-              onClick={triggerFileSelect}
+              onClick={handleGallery}
               className="w-full h-72 rounded-[24px] border-[1.5px] border-dashed border-[#C0BCAE] bg-white flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-white/70 outline-none"
             >
               <div className="w-16 h-16 rounded-[18px] bg-positive-soft-bg flex items-center justify-center">
@@ -152,8 +179,8 @@ function AddReceiptFlowContent({
             </button>
           ) : (
             /* Uploaded State Box */
-            <div className="w-full h-72 rounded-[24px] bg-[#F2F9F6] border-[0.8px] border-[#E2EBE7] flex flex-col items-center justify-center relative shadow-[0px_4px_16px_rgba(11,104,58,0.03)] select-none">
-              {/* Close Button Top-Left */}
+            <div className="w-full h-72 rounded-[24px] overflow-hidden bg-[#F2F9F6] border-[0.8px] border-[#E2EBE7] flex flex-col items-center justify-center relative shadow-[0px_4px_16px_rgba(11,104,58,0.03)] select-none">
+              {/* Remove button */}
               <button
                 type="button"
                 onClick={handleRemove}
@@ -163,13 +190,24 @@ function AddReceiptFlowContent({
                 <X size={16} strokeWidth={2.5} />
               </button>
 
-              <FileText size={56} className="text-[#A2B5AD]" strokeWidth={1.25} />
-              <span className="text-base font-extrabold text-foreground mt-4 px-6 text-center truncate max-w-full">
-                {tempFile.name}
-              </span>
-              <span className="text-[13px] text-muted-faint mt-1 font-semibold">
-                {tempFile.size} • Uploaded
-              </span>
+              {/* Show image preview if it's a photo, otherwise show file icon */}
+              {tempFile.dataUrl && tempFile.name.match(/\.(jpg|jpeg|png|webp|gif)$/i) ? (
+                <img
+                  src={tempFile.dataUrl}
+                  alt="Receipt preview"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <>
+                  <FileText size={56} className="text-[#A2B5AD]" strokeWidth={1.25} />
+                  <span className="text-base font-extrabold text-foreground mt-4 px-6 text-center truncate max-w-full">
+                    {tempFile.name}
+                  </span>
+                  <span className="text-[13px] text-muted-faint mt-1 font-semibold">
+                    {tempFile.size} • Uploaded
+                  </span>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -178,12 +216,12 @@ function AddReceiptFlowContent({
         <div className="flex flex-col gap-4 mt-6">
           {!tempFile ? (
             <>
-              {/* Three Option Cards (Camera, Gallery, Files) */}
+              {/* Three Option Cards */}
               <div className="flex items-center gap-3 w-full">
                 {/* Camera Card */}
                 <button
                   type="button"
-                  onClick={triggerFileSelect}
+                  onClick={handleCamera}
                   className="flex-1 bg-white rounded-2xl border-[0.8px] border-divider py-5 flex flex-col items-center justify-center cursor-pointer hover:bg-hover-bg transition-colors outline-none"
                 >
                   <Camera size={22} className="text-positive" strokeWidth={1.5} />
@@ -193,17 +231,17 @@ function AddReceiptFlowContent({
                 {/* Gallery Card */}
                 <button
                   type="button"
-                  onClick={triggerFileSelect}
+                  onClick={handleGallery}
                   className="flex-1 bg-white rounded-2xl border-[0.8px] border-divider py-5 flex flex-col items-center justify-center cursor-pointer hover:bg-hover-bg transition-colors outline-none"
                 >
                   <ImageIcon size={22} className="text-positive" strokeWidth={1.5} />
                   <span className="text-[13px] font-extrabold text-foreground mt-2">Gallery</span>
                 </button>
 
-                {/* Files Card */}
+                {/* Files Card — always web file picker, supports PDF */}
                 <button
                   type="button"
-                  onClick={triggerFileSelect}
+                  onClick={handleFiles}
                   className="flex-1 bg-white rounded-2xl border-[0.8px] border-divider py-5 flex flex-col items-center justify-center cursor-pointer hover:bg-hover-bg transition-colors outline-none"
                 >
                   <FileText size={22} className="text-positive" strokeWidth={1.5} />
@@ -211,7 +249,7 @@ function AddReceiptFlowContent({
                 </button>
               </div>
 
-              {/* Skip for Now pill button */}
+              {/* Skip for Now */}
               <button
                 type="button"
                 onClick={onClose}
@@ -223,17 +261,15 @@ function AddReceiptFlowContent({
           ) : (
             /* Replace & Remove buttons row */
             <div className="flex items-center gap-4 w-full">
-              {/* Replace */}
               <button
                 type="button"
-                onClick={triggerFileSelect}
+                onClick={handleReplace}
                 className="flex-1 h-13 rounded-full border-[0.8px] border-divider bg-white text-foreground font-bold text-sm cursor-pointer hover:bg-hover-bg transition-all flex items-center justify-center gap-2 outline-none"
               >
                 <RotateCcw size={16} strokeWidth={2.5} />
                 Replace
               </button>
 
-              {/* Remove */}
               <button
                 type="button"
                 onClick={handleRemove}

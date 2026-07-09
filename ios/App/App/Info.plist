@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>Lain Dein Wallet</string>
+        <string>Lain Dain</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -47,5 +47,12 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<!-- Camera permissions — required by App Store (will reject without these) -->
+	<key>NSCameraUsageDescription</key>
+	<string>Lain Dain uses your camera to scan and attach receipts to expenses.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Lain Dain accesses your photo library so you can attach receipt images to expenses.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Lain Dain saves receipt photos to your library when requested.</string>
 </dict>
 </plist>

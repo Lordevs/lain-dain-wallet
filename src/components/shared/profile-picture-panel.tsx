@@ -1,5 +1,8 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { Camera, Image as ImageIcon, ChevronRight } from 'lucide-react'
+import { Capacitor } from '@capacitor/core'
+import { takePhoto, pickFromGallery } from '@/lib/camera'
+import { haptic } from '@/lib/haptics'
 import FlowHeader from '@/components/shared/flow-header'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
@@ -21,20 +24,32 @@ export default function ProfilePicturePanel({
   onSave,
 }: ProfilePicturePanelProps) {
   const [tempAvatar, setTempAvatar] = useState<string | null>(currentAvatar)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setTempAvatar(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+  // ─── Handlers ────────────────────────────────────────────────────────────────
+
+  const handleTakePhoto = async () => {
+    haptic.light()
+    if (Capacitor.isNativePlatform()) {
+      const photo = await takePhoto()
+      if (photo?.webPath) setTempAvatar(photo.webPath)
+    } else {
+      // Web fallback: file input
+      openWebFilePicker((url) => setTempAvatar(url))
+    }
+  }
+
+  const handlePickGallery = async () => {
+    haptic.light()
+    if (Capacitor.isNativePlatform()) {
+      const photo = await pickFromGallery()
+      if (photo?.webPath) setTempAvatar(photo.webPath)
+    } else {
+      openWebFilePicker((url) => setTempAvatar(url))
     }
   }
 
   const handleSave = () => {
+    haptic.success()
     onSave(tempAvatar)
     onClose()
   }
@@ -64,14 +79,6 @@ export default function ProfilePicturePanel({
             </span>
           </div>
 
-          <input
-            type="file"
-            ref={fileInputRef}
-            accept="image/*"
-            className="hidden"
-            onChange={handleImageUpload}
-          />
-
           {/* Options Card */}
           <div>
             <h3 className="text-[11px] font-semibold tracking-widest text-muted-foreground uppercase mb-2 px-1">
@@ -82,7 +89,7 @@ export default function ProfilePicturePanel({
               {/* Take a Photo */}
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={handleTakePhoto}
                 className="w-full flex items-center justify-between p-4 text-left active:bg-background/80 transition-colors cursor-pointer outline-none"
               >
                 <div className="flex items-center gap-4">
@@ -97,7 +104,7 @@ export default function ProfilePicturePanel({
               {/* Choose from Gallery */}
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={handlePickGallery}
                 className="w-full flex items-center justify-between p-4 text-left active:bg-background/80 transition-colors cursor-pointer outline-none"
               >
                 <div className="flex items-center gap-4">
@@ -126,4 +133,18 @@ export default function ProfilePicturePanel({
       </div>
     </div>
   )
+}
+
+// ─── Web fallback helper ──────────────────────────────────────────────────────
+// Creates a temporary <input type="file"> for browser dev mode only
+
+function openWebFilePicker(onPicked: (objectUrl: string) => void) {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = 'image/*'
+  input.onchange = () => {
+    const file = input.files?.[0]
+    if (file) onPicked(URL.createObjectURL(file))
+  }
+  input.click()
 }

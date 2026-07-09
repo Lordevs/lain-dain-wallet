@@ -1,4 +1,7 @@
 import { useState } from 'react'
+import { Capacitor } from '@capacitor/core'
+import { pickFromGallery } from '@/lib/camera'
+import { haptic } from '@/lib/haptics'
 import { useForm, Controller } from 'react-hook-form'
 import {
   User,
@@ -69,12 +72,21 @@ export default function ProfileForm({ onSubmit }: ProfileFormProps) {
   const [isOccupationOpen, setIsOccupationOpen] = useState(false)
   const [isCountryOpen, setIsCountryOpen] = useState(false)
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    // Use Object URL — avoids storing large base64 strings in state/memory
-    const url = URL.createObjectURL(file)
-    setAvatarUrl(url)
+  const handlePickAvatar = async () => {
+    haptic.light()
+    if (Capacitor.isNativePlatform()) {
+      const photo = await pickFromGallery()
+      if (photo?.webPath) setAvatarUrl(photo.webPath)
+    } else {
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = 'image/*'
+      input.onchange = () => {
+        const file = input.files?.[0]
+        if (file) setAvatarUrl(URL.createObjectURL(file))
+      }
+      input.click()
+    }
   }
 
   const dob = watch('dob')
@@ -114,10 +126,13 @@ export default function ProfileForm({ onSubmit }: ProfileFormProps) {
                     </AvatarFallback>
                   )}
                 </Avatar>
-                <label className="absolute -bottom-1 -right-1 w-10 h-10 rounded-full bg-primary hover:bg-primary/95 flex items-center justify-center text-white cursor-pointer shadow-[0_2.44px_7.31px_0px_#0B683A66] transition-colors">
+                <button
+                  type="button"
+                  onClick={handlePickAvatar}
+                  className="absolute -bottom-1 -right-1 w-10 h-10 rounded-full bg-primary hover:bg-primary/95 flex items-center justify-center text-white cursor-pointer shadow-[0_2.44px_7.31px_0px_#0B683A66] transition-colors outline-none border-0"
+                >
                   <Camera size={20} />
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-                </label>
+                </button>
               </div>
               <span className="text-base font-semibold text-primary mt-2">Add profile photo</span>
             </div>

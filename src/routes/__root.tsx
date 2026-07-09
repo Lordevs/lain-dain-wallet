@@ -5,10 +5,14 @@ import { SplashScreen } from '@capacitor/splash-screen'
 import { useAuthStore } from '@/store/use-auth-store'
 import { ROUTES } from '@/constants/routes'
 import AppShell from '@/components/layout/app-shell'
+import { useCapacitorSetup } from '@/hooks/use-capacitor-setup'
 import coinAnimation from '@/assets/coin.webp'
 
 function RootComponent() {
   const [showSplash, setShowSplash] = useState(true)
+
+  // Initialise all Capacitor native platform features (keyboard, back button, lifecycle)
+  useCapacitorSetup()
 
   useEffect(() => {
     // Hide native splash screen immediately when JS bundle loads
