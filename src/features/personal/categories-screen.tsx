@@ -1,14 +1,6 @@
 import { useState } from 'react'
 import { Reorder } from 'framer-motion'
 import {
-  ShoppingCart,
-  Truck,
-  ShoppingBag,
-  Receipt,
-  Video,
-  Heart,
-  Fuel,
-  Info,
   Plus,
   MoreVertical,
   Calendar,
@@ -19,109 +11,30 @@ import { cn } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
 import ConfirmActionDrawer from '@/components/shared/confirm-action-drawer'
 import CategoryOptionsDrawer from './components/category-options-drawer'
+import AddCategoryFlow from '@/components/shared/add-category-flow'
+import { useDrawerBackHandler } from '@/hooks/use-drawer-back-handler'
 
-interface CategoryItem {
-  id: string
-  name: string
-  expensesCount: number
-  totalAmount: number
-  icon: any
-  iconBg: string
-  iconColor: string
-  isHidden?: boolean
-  badges?: Array<{
-    label: string
-    type: 'cycle' | 'budget'
-  }>
-}
-
-const INITIAL_CATEGORIES: CategoryItem[] = [
-  {
-    id: 'grocery',
-    name: 'Grocery',
-    expensesCount: 15,
-    totalAmount: 18200,
-    icon: ShoppingCart,
-    iconBg: 'bg-[#E8F5E9]',
-    iconColor: 'text-[#27AE60]',
-    badges: [
-      { label: 'Monthly cycle · 1st', type: 'cycle' },
-      { label: 'Budget: Rs. 12,000', type: 'budget' }
-    ]
-  },
-  {
-    id: 'transport',
-    name: 'Transport',
-    expensesCount: 12,
-    totalAmount: 8400,
-    icon: Truck,
-    iconBg: 'bg-[#FFF3E0]',
-    iconColor: 'text-[#E28743]',
-  },
-  {
-    id: 'shopping',
-    name: 'Shopping',
-    expensesCount: 7,
-    totalAmount: 12600,
-    icon: ShoppingBag,
-    iconBg: 'bg-[#F3E5F5]',
-    iconColor: 'text-[#9B59B6]',
-  },
-  {
-    id: 'bills',
-    name: 'Bills',
-    expensesCount: 4,
-    totalAmount: 6500,
-    icon: Receipt,
-    iconBg: 'bg-[#F5F5F5]',
-    iconColor: 'text-[#7F8C8D]',
-  },
-  {
-    id: 'entertainment',
-    name: 'Entertainment',
-    expensesCount: 3,
-    totalAmount: 2550,
-    icon: Video,
-    iconBg: 'bg-[#FFF3E0]/70',
-    iconColor: 'text-[#E28743]/70',
-    isHidden: true
-  },
-  {
-    id: 'health',
-    name: 'Health',
-    expensesCount: 2,
-    totalAmount: 1800,
-    icon: Heart,
-    iconBg: 'bg-[#FFEAEA]',
-    iconColor: 'text-[#E74C3C]',
-  },
-  {
-    id: 'fuel',
-    name: 'Fuel',
-    expensesCount: 9,
-    totalAmount: 7200,
-    icon: Fuel,
-    iconBg: 'bg-[#FFF3E0]',
-    iconColor: 'text-[#D35400]',
-  },
-  {
-    id: 'other',
-    name: 'Other',
-    expensesCount: 2,
-    totalAmount: 950,
-    icon: Info,
-    iconBg: 'bg-[#F5F5F5]',
-    iconColor: 'text-[#7F8C8D]',
-  }
-]
+import { useCategoryStore } from '@/store/use-category-store'
 
 export default function PersonalCategoriesScreen() {
-  const [categories, setCategories] = useState<CategoryItem[]>(INITIAL_CATEGORIES)
-  const [isReordering, setIsReordering] = useState(false)
-  const [selectedCategoryOptions, setSelectedCategoryOptions] = useState<CategoryItem | null>(null)
-  const [categoryToDelete, setCategoryToDelete] = useState<CategoryItem | null>(null)
+  const categories = useCategoryStore((s) => s.categories)
+  const setCategories = useCategoryStore((s) => s.reorderCategories)
+  const deleteCategory = useCategoryStore((s) => s.deleteCategory)
+  const addCategory = useCategoryStore((s) => s.addCategory)
 
-  const handleReorder = (newOrder: CategoryItem[]) => {
+  const [isReordering, setIsReordering] = useState(false)
+  const [selectedCategoryOptions, setSelectedCategoryOptions] = useState<any | null>(null)
+  const [categoryToDelete, setCategoryToDelete] = useState<any | null>(null)
+  const [showAddCategory, setShowAddCategory] = useState(false)
+
+  const closeAddCategory = useDrawerBackHandler(showAddCategory, () => setShowAddCategory(false))
+
+  const handleSaveCategory = (name: string, icon: any, color: string) => {
+    addCategory(name, icon, color)
+    closeAddCategory()
+  }
+
+  const handleReorder = (newOrder: any[]) => {
     setCategories(newOrder)
   }
 
@@ -205,7 +118,10 @@ export default function PersonalCategoriesScreen() {
                     </div>
 
                     {/* Icon Squircle */}
-                    <div className={cn("w-10 h-10 rounded-[12px] flex items-center justify-center shrink-0 mr-3.5", cat.iconBg, cat.iconColor)}>
+                    <div
+                      className="w-10 h-10 rounded-[12px] flex items-center justify-center shrink-0 mr-3.5"
+                      style={{ backgroundColor: `${cat.color}1A`, color: cat.color }}
+                    >
                       <Icon size={18} strokeWidth={1.5} />
                     </div>
 
@@ -219,7 +135,7 @@ export default function PersonalCategoriesScreen() {
                             isFirstGrocery && "text-positive"
                           )}
                         >
-                          {cat.name}
+                          {cat.label}
                         </span>
                         {cat.isHidden && (
                           <span className="bg-[#ECEAE4] text-[#6B6B6B] text-[9px] font-bold px-1.5 py-0.5 rounded-[4px] ml-1.5 shrink-0">
@@ -278,6 +194,7 @@ export default function PersonalCategoriesScreen() {
           <div
             role="button"
             tabIndex={0}
+            onClick={() => setShowAddCategory(true)}
             className="mx-6 bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_2px_10px_0px_#0000000D] p-5 flex items-center gap-4 cursor-pointer hover:bg-muted/5 transition-colors mb-6 text-left"
           >
             {/* Plus icon inside dashed border green squircle */}
@@ -323,14 +240,25 @@ export default function PersonalCategoriesScreen() {
           onClose={() => setCategoryToDelete(null)}
           title="Delete Category"
           confirmTitle="Delete Category"
-          confirmDescription={`Are you sure you want to delete the "${categoryToDelete.name}" category? All expenses belonging to it will be reassigned to "Other".`}
+          confirmDescription={`Are you sure you want to delete the "${categoryToDelete.label || categoryToDelete.name}" category? All expenses belonging to it will be reassigned to "Other".`}
           buttonText="Delete Category"
           variant="danger"
           onConfirm={() => {
-            setCategories(prev => prev.filter(c => c.id !== categoryToDelete.id))
+            deleteCategory(categoryToDelete.id)
             setCategoryToDelete(null)
           }}
         />
+      )}
+
+      {/* Add Custom Category Drawer Flow */}
+      {showAddCategory && (
+        <div className="fixed inset-0 z-50 bg-[#FEFAF1]">
+          <AddCategoryFlow
+            isOpen={showAddCategory}
+            onClose={closeAddCategory}
+            onSave={handleSaveCategory}
+          />
+        </div>
       )}
     </div>
   )

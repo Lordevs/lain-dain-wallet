@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import AddCategoryFlow from '@/components/shared/add-category-flow'
 import { useDrawerBackHandler } from '@/hooks/use-drawer-back-handler'
+import { useCategoryStore } from '@/store/use-category-store'
 
 export interface CategoryOption {
   id: string
@@ -42,35 +43,28 @@ export default function CategoryPicker({
   selectedCategoryId,
   onSelectCategory,
 }: CategoryPickerProps) {
-  const [localCategories, setLocalCategories] = useState<CategoryOption[]>(CATEGORIES)
+  const storeCategories = useCategoryStore((s) => s.categories)
+  const addCategory = useCategoryStore((s) => s.addCategory)
   const [showAddCategory, setShowAddCategory] = useState(false)
 
   const closeAddCategory = useDrawerBackHandler(showAddCategory, () => setShowAddCategory(false))
 
   const handleSaveCategory = (name: string, icon: any, color: string) => {
+    addCategory(name, icon, color)
     const newId = name.toLowerCase().replace(/\s+/g, '-')
-    const newCategory: CategoryOption = {
-      id: newId,
-      label: name,
-      color: color,
-      icon: icon,
-    }
-
-    // Add only to local state — never mutate the exported CATEGORIES const,
-    // which is shared across every importer in the module graph.
-    if (!localCategories.some((c) => c.id === newId)) {
-      setLocalCategories((prev) => [...prev, newCategory])
-    }
-
     onSelectCategory(newId)
     closeAddCategory()
   }
 
+  // Filter out hidden categories
+  const visibleCategories = storeCategories.filter((c) => !c.isHidden)
+
   return (
     <div className="flex flex-wrap gap-2.5">
-      {localCategories.map((cat) => {
+      {visibleCategories.map((cat) => {
         const IconComponent = cat.icon
         const isSelected = selectedCategoryId === cat.id
+        const label = cat.label || ''
 
         return (
           <button
@@ -83,7 +77,7 @@ export default function CategoryPicker({
               }`}
           >
             <IconComponent size={18} style={{ color: cat.color }} strokeWidth={1.13} />
-            {cat.label}
+            {label}
           </button>
         )
       })}
