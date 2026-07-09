@@ -69,7 +69,7 @@ export default function HideLedgersScreen() {
         <div className="flex flex-col text-left">
           {!searchQuery && (
             <h4 className="text-[11px] font-bold text-[#9A9590] tracking-[0.8px] mb-2 uppercase">
-              Choose what shows
+              Choose what to hide
             </h4>
           )}
           <SearchBar

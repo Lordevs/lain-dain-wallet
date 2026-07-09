@@ -32,7 +32,7 @@ export default function ContactLedgerCard({ contact, onClick }: ContactLedgerCar
       className="w-full bg-[linear-gradient(160deg,#FFFDF5_8.49%,#FFFFFF_58.3%)] rounded-lg border-[1.08px] border-border-card text-left overflow-hidden hover:shadow-md active:scale-[0.99] transition-all"
     >
       {/* Top Row */}
-      <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+      <div className="flex items-center gap-2 px-4 pt-4 pb-3">
         {/* Avatar */}
         <div className="relative shrink-0">
           <div className={cn(
@@ -57,8 +57,8 @@ export default function ContactLedgerCard({ contact, onClick }: ContactLedgerCar
 
         {/* Name + ledger count */}
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-[15px] text-foreground leading-tight">{name}</p>
-          <p className="text-[12px] text-muted-foreground mt-0.5 font-medium">
+          <p className="font-bold text-[14px] text-foreground leading-tight">{name}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5 font-medium leading-tight">
             Net across {ledgerCount} Balance{ledgerCount !== 1 ? 's' : ''}
           </p>
         </div>
@@ -66,7 +66,7 @@ export default function ContactLedgerCard({ contact, onClick }: ContactLedgerCar
         {/* Amount + chevron */}
         <div className="flex items-center gap-1 shrink-0">
           <span className={cn(
-            'text-[17px] font-extrabold',
+            'text-[15px] font-extrabold',
             isReceivable ? 'text-primary' : 'text-orange-payable'
           )}>
             Rs. {formatAmount(netAmount)}
