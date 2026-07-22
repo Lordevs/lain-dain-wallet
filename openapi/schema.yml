@@ -3937,6 +3937,20 @@ components:
         * `accepted` - Accepted
         * `declined` - Declined
         * `cancelled` - Cancelled
+    GroupName:
+      type: object
+      description: |-
+        {"id", "name"} only — apps.ledger.serializers.GroupSummarySerializer
+        also carries "image", which these call sites' underlying dicts don't.
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+      required:
+      - id
+      - name
     GroupParticipant:
       type: object
       description: |-
@@ -4324,8 +4338,8 @@ components:
           format: uuid
           nullable: true
         group:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/GroupName'
           nullable: true
           readOnly: true
         added_by:
@@ -5214,14 +5228,12 @@ components:
         payers:
           type: array
           items:
-            type: object
-            additionalProperties: {}
+            $ref: '#/components/schemas/ExpensePayerRead'
           readOnly: true
         splits:
           type: array
           items:
-            type: object
-            additionalProperties: {}
+            $ref: '#/components/schemas/RecurringExpenseSplitRead'
           readOnly: true
         frequency:
           $ref: '#/components/schemas/FrequencyEnum'
@@ -5255,6 +5267,32 @@ components:
       - split_type
       - splits
       - start_date
+    RecurringExpenseSplitRead:
+      type: object
+      description: |-
+        Unlike ExpenseSplitReadSerializer, amount_owed/extra_amount are
+        optional — a template's stored entries only carry what its split_type
+        needs (equal: neither), not a value computed fresh on every occurrence.
+      properties:
+        id:
+          type: string
+          format: uuid
+        full_name:
+          type: string
+        phone_number:
+          type: string
+        image:
+          type: string
+          nullable: true
+        amount_owed:
+          type: string
+        extra_amount:
+          type: string
+      required:
+      - full_name
+      - id
+      - image
+      - phone_number
     RecurringExpenseUpdate:
       type: object
       description: |-
@@ -5681,8 +5719,8 @@ components:
         friendship); for a "group" row, one co-member (`other_user` set).
       properties:
         group:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/GroupName'
           nullable: true
           readOnly: true
         friendship_id:
@@ -5725,8 +5763,8 @@ components:
           nullable: true
           readOnly: true
         group:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/GroupSummary'
           nullable: true
           readOnly: true
         net_amount:

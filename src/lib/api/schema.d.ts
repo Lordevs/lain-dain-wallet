@@ -2030,6 +2030,15 @@ export interface components {
          */
         GroupInvitationStatusEnum: "pending" | "accepted" | "declined" | "cancelled";
         /**
+         * @description {"id", "name"} only — apps.ledger.serializers.GroupSummarySerializer
+         *     also carries "image", which these call sites' underlying dicts don't.
+         */
+        GroupName: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
+        /**
          * @description One entry per active member OR pending invitee — a group's participant
          *     list is a merge of both, matching the app UI where a pending invite
          *     shows inline in the member list with a "Pending" badge rather than
@@ -2231,9 +2240,7 @@ export interface components {
             context: components["schemas"]["ExpenseContextEnum"];
             /** Format: uuid */
             friendship?: string | null;
-            readonly group: {
-                [key: string]: unknown;
-            } | null;
+            readonly group: components["schemas"]["GroupName"] | null;
             readonly added_by: components["schemas"]["UserSummary"];
             description: string;
             readonly your_share: string;
@@ -2722,12 +2729,8 @@ export interface components {
             /** Format: uri */
             receipt?: string | null;
             split_type: components["schemas"]["SplitTypeEnum"];
-            readonly payers: {
-                [key: string]: unknown;
-            }[];
-            readonly splits: {
-                [key: string]: unknown;
-            }[];
+            readonly payers: components["schemas"]["ExpensePayerRead"][];
+            readonly splits: components["schemas"]["RecurringExpenseSplitRead"][];
             frequency: components["schemas"]["FrequencyEnum"];
             /** Format: date */
             start_date: string;
@@ -2738,6 +2741,20 @@ export interface components {
             last_error?: string;
             /** Format: date-time */
             readonly created_at: string;
+        };
+        /**
+         * @description Unlike ExpenseSplitReadSerializer, amount_owed/extra_amount are
+         *     optional — a template's stored entries only carry what its split_type
+         *     needs (equal: neither), not a value computed fresh on every occurrence.
+         */
+        RecurringExpenseSplitRead: {
+            /** Format: uuid */
+            id: string;
+            full_name: string;
+            phone_number: string;
+            image: string | null;
+            amount_owed?: string;
+            extra_amount?: string;
         };
         /**
          * @description All fields optional (PATCH semantics). amount/split_type/payers/splits
@@ -2946,9 +2963,7 @@ export interface components {
          *     friendship); for a "group" row, one co-member (`other_user` set).
          */
         WalletBreakdownItem: {
-            readonly group: {
-                [key: string]: unknown;
-            } | null;
+            readonly group: components["schemas"]["GroupName"] | null;
             /** Format: uuid */
             friendship_id?: string | null;
             readonly other_user: components["schemas"]["UserSummary"] | null;
@@ -2969,9 +2984,7 @@ export interface components {
         WalletRow: {
             row_type: string;
             readonly other_user: components["schemas"]["UserSummary"] | null;
-            readonly group: {
-                [key: string]: unknown;
-            } | null;
+            readonly group: components["schemas"]["GroupSummary"] | null;
             readonly net_amount: string;
             currency: string;
             /** Format: date-time */
