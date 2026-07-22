@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Camera, Image as ImageIcon, ChevronRight, AlertCircle } from 'lucide-react'
+import { Camera, Image as ImageIcon, ChevronRight } from 'lucide-react'
 import { Capacitor } from '@capacitor/core'
 import { takePhoto, pickFromGallery } from '@/lib/camera'
 import { haptic } from '@/lib/haptics'
 import FlowHeader from '@/components/shared/flow-header'
+import FormError from '@/components/shared/form-error'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 interface ProfilePicturePanelProps {
@@ -135,12 +136,7 @@ export default function ProfilePicturePanel({
 
         {/* Save Photo Button */}
         <div>
-          {error && (
-            <div className="flex items-start gap-2 mb-4 text-tertiary justify-center">
-              <AlertCircle size={16} className="shrink-0 mt-0.5" />
-              <p className="text-sm font-medium">{error}</p>
-            </div>
-          )}
+          <FormError message={error} className="mb-4 justify-center" />
           <button
             type="button"
             onClick={handleSave}

@@ -12,6 +12,8 @@ const dynamicPrefix = (route: string) => route.split('$')[0] + '$'
 // Exact paths or path prefixes where the bottom nav should be hidden.
 // These are full-screen flows and detail views that have their own navigation.
 const HIDE_NAV_PREFIXES = [
+  ROUTES.AUTH,                                 // '/auth' — nothing to navigate to yet
+  ROUTES.ONBOARDING,                           // '/onboarding' — same
   ROUTES.CONTACTS,                             // '/contacts' all child routes
   ROUTES.GROUPS,                               // '/groups' all child routes
   ROUTES.TRANSACTIONS,                         // '/transactions' all child routes

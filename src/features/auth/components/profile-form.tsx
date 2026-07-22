@@ -11,8 +11,7 @@ import {
   Camera,
   ChevronRight,
   ChevronDown,
-  Calendar,
-  AlertCircle
+  Calendar
 } from 'lucide-react'
 import { differenceInYears, format } from 'date-fns'
 import { Button } from '@/components/ui/button'
@@ -23,6 +22,7 @@ import SelectDateDrawer from '@/components/shared/select-date-drawer'
 import GenderSelectorDrawer from '@/components/shared/gender-selector-drawer'
 import OccupationSelectorDrawer from '@/components/shared/occupation-selector-drawer'
 import CountrySelectorDrawer from '@/components/shared/country-selector-drawer'
+import FormError from '@/components/shared/form-error'
 
 /** Exported so auth-screen.tsx can type its handleProfileSubmit handler.
  * Field names mirror apps.accounts.models.User (see UserSerializer) — the
@@ -326,12 +326,7 @@ export default function ProfileForm({ onSubmit, isSubmitting = false, submitErro
 
         {/* Bottom Actions */}
         <div className="mt-10 space-y-6 shrink-0">
-          {submitError && (
-            <div className="flex items-start gap-2 text-tertiary justify-center">
-              <AlertCircle size={16} className="shrink-0 mt-0.5" />
-              <p className="text-sm font-medium">{submitError}</p>
-            </div>
-          )}
+          <FormError message={submitError} className="justify-center" />
 
           <Button
             type="submit"

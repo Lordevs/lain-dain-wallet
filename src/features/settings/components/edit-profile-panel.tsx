@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { Pencil, AlertCircle, User } from 'lucide-react'
+import { Pencil, User } from 'lucide-react'
 import FlowHeader from '@/components/shared/flow-header'
+import FormError from '@/components/shared/form-error'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuthStore } from '@/store/use-auth-store'
 import { ROUTES } from '@/constants/routes'
@@ -147,12 +148,7 @@ export default function EditProfilePanel({
 
         {/* Bottom Save Changes Button */}
         <div className="mt-8">
-          {updateProfile.isError && (
-            <div className="flex items-start gap-2 mb-4 text-tertiary justify-center">
-              <AlertCircle size={16} className="shrink-0 mt-0.5" />
-              <p className="text-sm font-medium">{updateProfile.error.message}</p>
-            </div>
-          )}
+          <FormError message={updateProfile.error?.message} className="mb-4 justify-center" />
           <button
             type="submit"
             disabled={!name.trim() || updateProfile.isPending}

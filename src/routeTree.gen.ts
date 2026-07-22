@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettleUpRouteImport } from './routes/settle-up'
 import { Route as PersonalRouteImport } from './routes/personal'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TransactionsIndexRouteImport } from './routes/transactions/index'
@@ -66,6 +67,11 @@ const SettleUpRoute = SettleUpRouteImport.update({
 const PersonalRoute = PersonalRouteImport.update({
   id: '/personal',
   path: '/personal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotificationsRoute = NotificationsRouteImport.update({
@@ -306,6 +312,7 @@ const GroupsIdRecurringPaymentIdEditRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/notifications': typeof NotificationsRouteWithChildren
+  '/onboarding': typeof OnboardingRoute
   '/personal': typeof PersonalRouteWithChildren
   '/settle-up': typeof SettleUpRoute
   '/contacts/$id': typeof ContactsIdRouteWithChildren
@@ -355,6 +362,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/onboarding': typeof OnboardingRoute
   '/settle-up': typeof SettleUpRoute
   '/contacts/new': typeof ContactsNewRoute
   '/personal/add-expense': typeof PersonalAddExpenseRoute
@@ -401,6 +409,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/notifications': typeof NotificationsRouteWithChildren
+  '/onboarding': typeof OnboardingRoute
   '/personal': typeof PersonalRouteWithChildren
   '/settle-up': typeof SettleUpRoute
   '/contacts/$id': typeof ContactsIdRouteWithChildren
@@ -453,6 +462,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/notifications'
+    | '/onboarding'
     | '/personal'
     | '/settle-up'
     | '/contacts/$id'
@@ -502,6 +512,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/onboarding'
     | '/settle-up'
     | '/contacts/new'
     | '/personal/add-expense'
@@ -547,6 +558,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/notifications'
+    | '/onboarding'
     | '/personal'
     | '/settle-up'
     | '/contacts/$id'
@@ -598,6 +610,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   NotificationsRoute: typeof NotificationsRouteWithChildren
+  OnboardingRoute: typeof OnboardingRoute
   PersonalRoute: typeof PersonalRouteWithChildren
   SettleUpRoute: typeof SettleUpRoute
   ContactsIdRoute: typeof ContactsIdRouteWithChildren
@@ -629,6 +642,13 @@ declare module '@tanstack/react-router' {
       path: '/personal'
       fullPath: '/personal'
       preLoaderRoute: typeof PersonalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notifications': {
@@ -1089,6 +1109,7 @@ const TransactionsIdRouteWithChildren = TransactionsIdRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   NotificationsRoute: NotificationsRouteWithChildren,
+  OnboardingRoute: OnboardingRoute,
   PersonalRoute: PersonalRouteWithChildren,
   SettleUpRoute: SettleUpRoute,
   ContactsIdRoute: ContactsIdRouteWithChildren,

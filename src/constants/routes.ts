@@ -3,6 +3,7 @@ export const ROUTES = {
   // ── Core ────────────────────────────────────────────────────────────────────
   DASHBOARD: '/',
   AUTH: '/auth',
+  ONBOARDING: '/onboarding',
 
   // ── Settings ─────────────────────────────────────────────────────────────────
   SETTINGS: '/settings',

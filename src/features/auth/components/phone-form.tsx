@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { ChevronLeft, Check, AlertCircle } from 'lucide-react'
+import { ChevronLeft, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { PhoneInput } from '@/components/reui/phone-input'
+import FormError from '@/components/shared/form-error'
 import { useRequestOtpMutation } from '@/features/auth/api/use-auth-mutations'
 
 interface PhoneFormProps {
@@ -78,12 +79,7 @@ export default function PhoneForm({
               </p>
             </div>
 
-            {requestOtp.isError && (
-              <div className="flex items-start gap-2 mt-4 text-tertiary">
-                <AlertCircle size={16} className="shrink-0 mt-0.5" />
-                <p className="text-sm font-medium">{requestOtp.error.message}</p>
-              </div>
-            )}
+            <FormError message={requestOtp.error?.message} className="mt-4" />
           </div>
         </div>
 

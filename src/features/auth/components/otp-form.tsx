@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Phone, AlertCircle } from 'lucide-react'
+import { Phone } from 'lucide-react'
 import { parsePhoneNumber } from 'react-phone-number-input'
 
 // Import shadcn UI components
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
+import FormError from '@/components/shared/form-error'
 
 // Import separate components
 import CountdownTimer from './countdown-timer'
@@ -125,12 +126,7 @@ export default function OtpForm({
             {/* Reusable Countdown Timer Component */}
             <CountdownTimer onResend={handleResend} />
 
-            {verifyOtp.isError && (
-              <div className="flex items-start gap-2 mt-4 text-tertiary justify-center">
-                <AlertCircle size={16} className="shrink-0 mt-0.5" />
-                <p className="text-sm font-medium">{verifyOtp.error.message}</p>
-              </div>
-            )}
+            <FormError message={verifyOtp.error?.message} className="mt-4 justify-center" />
           </div>
         </div>
 

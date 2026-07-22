@@ -6,49 +6,27 @@ import { useNavigate } from '@tanstack/react-router'
 import PhoneForm from './phone-form'
 import OtpForm from './otp-form'
 import SuccessCheck from '@/components/shared/success-check'
-import ProfileForm, { type ProfileFormData } from './profile-form'
+import BrandLogo from '@/components/shared/brand-logo'
 
 // Import store
-import { useAuthStore } from '@/store/use-auth-store'
 import { ROUTES } from '@/constants/routes'
-import { useUpdateProfileMutation } from '@/features/auth/api/use-auth-mutations'
-import { buildProfileFormData } from '@/features/auth/api/build-profile-form-data'
-import { mapUserToProfile } from '@/features/auth/api/map-user'
 
-type AuthStep = 'signin' | 'signup_phone' | 'otp' | 'success' | 'profile'
+type AuthStep = 'signin' | 'signup_phone' | 'otp' | 'success'
 
-// Defined outside the component so React doesn't treat it as a new type on every render
-function BrandLogo() {
-  return (
-    <div className="flex flex-col items-center mt-2 mb-8 select-none">
-      <div className="flex items-center gap-1.5 text-[32px] font-extrabold tracking-tight">
-        <span className="text-primary">Lain</span>
-        <span className="text-secondary">Dain</span>
-      </div>
-      <span className="text-[10px] font-bold tracking-[0.25em] text-muted-foreground opacity-90 uppercase">
-        Wallet
-      </span>
-    </div>
-  )
-}
-
+// Only reachable when NOT authenticated — see __root.tsx's beforeLoad,
+// which redirects an authenticated user away before this ever mounts
+// (to /onboarding if their profile is incomplete, to the dashboard
+// otherwise). That guarantee is what lets phone/OTP stay pure step state
+// here instead of needing their own routes: there's no URL a signed-in
+// user could hit that would land back on them.
 export default function AuthScreen() {
   const navigate = useNavigate()
-  const { setProfile } = useAuthStore()
-  const updateProfile = useUpdateProfileMutation()
 
-  // A resumed session (see lib/api/bootstrap.ts) already has valid tokens
-  // by the time this mounts — if its profile is still incomplete, skip
-  // straight to that step instead of making them re-verify a phone number
-  // they've already proven they own.
-  const [step, setStep] = useState<AuthStep>(() => {
-    const { isAuthenticated, userProfile } = useAuthStore.getState()
-    return isAuthenticated && !userProfile?.profileComplete ? 'profile' : 'signin'
-  })
+  const [step, setStep] = useState<AuthStep>('signin')
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin')
   const [phone, setPhone] = useState('') // Empty initially
   // Set by OtpForm once verification succeeds — the source of truth for
-  // whether "success" should lead to "profile" or straight to the app,
+  // whether "success" should lead to onboarding or straight to the app,
   // replacing the old signin/signup-mode guess with the backend's own
   // profile_complete flag.
   const [needsProfile, setNeedsProfile] = useState(false)
@@ -56,7 +34,6 @@ export default function AuthScreen() {
   const handleBack = () => {
     if (step === 'signup_phone') setStep('signin')
     else if (step === 'otp') setStep(authMode === 'signup' ? 'signup_phone' : 'signin')
-    else if (step === 'profile') setStep('otp')
   }
 
   const handlePhoneContinue = (enteredPhone: string) => {
@@ -65,22 +42,11 @@ export default function AuthScreen() {
     setStep('otp')
   }
 
-  const handleProfileSubmit = async (profileData: ProfileFormData) => {
-    const formData = await buildProfileFormData(profileData)
-    updateProfile.mutate(formData, {
-      onSuccess: (user) => {
-        if (!user) return
-        setProfile(mapUserToProfile(user))
-        navigate({ to: ROUTES.DASHBOARD })
-      },
-    })
-  }
-
   return (
     <div className="flex flex-col flex-1 px-6 pb-8 pt-4 w-full bg-[#FEFAF1] min-height-screen justify-between relative overflow-y-auto">
       {/* Top Header/Back Button */}
       <div className="h-12 flex items-center justify-between shrink-0">
-        {['signup_phone', 'otp', 'profile'].includes(step) ? (
+        {['signup_phone', 'otp'].includes(step) ? (
           <button
             onClick={handleBack}
             className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-foreground active:scale-95 transition-all"
@@ -143,25 +109,8 @@ export default function AuthScreen() {
       {step === 'success' && (
         <div className="flex-1 flex items-center justify-center">
           <SuccessCheck onComplete={() => {
-            if (needsProfile) {
-              setStep('profile')
-            } else {
-              navigate({ to: ROUTES.DASHBOARD })
-            }
+            navigate({ to: needsProfile ? ROUTES.ONBOARDING : ROUTES.DASHBOARD })
           }} />
-        </div>
-      )}
-
-      {step === 'profile' && (
-        <div className="flex-1 flex flex-col justify-between">
-          <div>
-            <BrandLogo />
-            <ProfileForm
-              onSubmit={handleProfileSubmit}
-              isSubmitting={updateProfile.isPending}
-              submitError={updateProfile.error?.message ?? null}
-            />
-          </div>
         </div>
       )}
     </div>

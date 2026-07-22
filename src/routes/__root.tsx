@@ -72,26 +72,38 @@ function RootComponent() {
   )
 }
 
+// Three states, each with exactly one place they're allowed to be:
+//   unauthenticated            → /auth only
+//   authenticated, incomplete  → /onboarding only (already has valid
+//                                 tokens from OTP verify — see otp-form.tsx
+//                                 — so this is "finish setup," not "log in
+//                                 again"; resumable across app restarts via
+//                                 lib/api/bootstrap.ts)
+//   authenticated, complete    → everywhere except /auth and /onboarding
+// Routing (not component-local step state) is what makes this a real
+// boundary — it's what stops a signed-in user from navigating back to the
+// phone/OTP screens, and stops an incomplete profile from reaching the
+// rest of the app, regardless of how they try to get there (back button,
+// direct URL, deep link).
 export const Route = createRootRoute({
   beforeLoad: ({ location }) => {
     const { isAuthenticated, userProfile } = useAuthStore.getState()
-    const isAuthRoute = location.pathname.startsWith(ROUTES.AUTH)
-    // A verified-but-incomplete signup already has valid tokens (set right
-    // after OTP verify — see otp-form.tsx) but must finish the profile
-    // step before reaching the app. Keeping this as its own flag (rather
-    // than folding it into isAuthenticated) is what makes that resumable:
-    // if the app is killed mid-onboarding, the next launch's bootstrap
-    // (see lib/api/bootstrap.ts) restores the session and lands back here
-    // instead of forcing a re-signup.
+    const pathname = location.pathname
+    const isAuthRoute = pathname.startsWith(ROUTES.AUTH)
+    const isOnboardingRoute = pathname.startsWith(ROUTES.ONBOARDING)
     const profileComplete = userProfile?.profileComplete ?? false
 
-    if (!isAuthenticated && !isAuthRoute) {
-      throw redirect({ to: ROUTES.AUTH })
+    if (!isAuthenticated) {
+      if (!isAuthRoute) throw redirect({ to: ROUTES.AUTH })
+      return
     }
-    if (isAuthenticated && !profileComplete && !isAuthRoute) {
-      throw redirect({ to: ROUTES.AUTH })
+
+    if (!profileComplete) {
+      if (!isOnboardingRoute) throw redirect({ to: ROUTES.ONBOARDING })
+      return
     }
-    if (isAuthenticated && profileComplete && isAuthRoute) {
+
+    if (isAuthRoute || isOnboardingRoute) {
       throw redirect({ to: ROUTES.DASHBOARD })
     }
   },
