@@ -1,13 +1,19 @@
 import { create } from 'zustand'
 
 export interface UserProfile {
+  id?: string
   name?: string
   phone?: string
   dateOfBirth?: string
   gender?: string
+  country?: string
   email?: string
   occupation?: string
   avatar?: string | null
+  // Mirrors backend User.profile_complete — drives whether __root.tsx's
+  // route guard lets an authenticated user reach the app or keeps them on
+  // /auth to finish onboarding (see routes/__root.tsx beforeLoad).
+  profileComplete?: boolean
 }
 
 interface AuthState {

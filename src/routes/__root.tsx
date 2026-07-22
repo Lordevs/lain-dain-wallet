@@ -74,13 +74,24 @@ function RootComponent() {
 
 export const Route = createRootRoute({
   beforeLoad: ({ location }) => {
-    const { isAuthenticated } = useAuthStore.getState()
+    const { isAuthenticated, userProfile } = useAuthStore.getState()
     const isAuthRoute = location.pathname.startsWith(ROUTES.AUTH)
+    // A verified-but-incomplete signup already has valid tokens (set right
+    // after OTP verify — see otp-form.tsx) but must finish the profile
+    // step before reaching the app. Keeping this as its own flag (rather
+    // than folding it into isAuthenticated) is what makes that resumable:
+    // if the app is killed mid-onboarding, the next launch's bootstrap
+    // (see lib/api/bootstrap.ts) restores the session and lands back here
+    // instead of forcing a re-signup.
+    const profileComplete = userProfile?.profileComplete ?? false
 
     if (!isAuthenticated && !isAuthRoute) {
       throw redirect({ to: ROUTES.AUTH })
     }
-    if (isAuthenticated && isAuthRoute) {
+    if (isAuthenticated && !profileComplete && !isAuthRoute) {
+      throw redirect({ to: ROUTES.AUTH })
+    }
+    if (isAuthenticated && profileComplete && isAuthRoute) {
       throw redirect({ to: ROUTES.DASHBOARD })
     }
   },

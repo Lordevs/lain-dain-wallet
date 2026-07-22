@@ -18,7 +18,11 @@ export const apiClient = createClient<paths>({ baseUrl: env.apiBaseUrl })
 // while. ROTATE_REFRESH_TOKENS is also on server-side: every refresh call
 // returns a NEW refresh token and blacklists the old one, so a successful
 // refresh always writes both tokens, never just the access token.
-const REFRESH_PATH = '/accounts/token/refresh/'
+//
+// apps.accounts is mounted at "api/auth/" in config/urls.py, not
+// "api/accounts/" — the app's own internal name doesn't match its URL
+// prefix, easy to get wrong without checking urls.py directly.
+const REFRESH_PATH = '/api/auth/token/refresh/'
 
 // Concurrent 401s (e.g. a screen firing several queries at once right as
 // the access token expires) must share one in-flight refresh, not each
@@ -26,7 +30,9 @@ const REFRESH_PATH = '/accounts/token/refresh/'
 // rotation blacklists the refresh token the first call already consumed.
 let refreshPromise: Promise<string | null> | null = null
 
-async function refreshAccessToken(): Promise<string | null> {
+// Exported so the cold-start bootstrap (src/lib/api/bootstrap.ts) can
+// reuse the exact same refresh+dedupe logic instead of duplicating it.
+export async function refreshAccessToken(): Promise<string | null> {
   if (refreshPromise) return refreshPromise
 
   refreshPromise = (async () => {

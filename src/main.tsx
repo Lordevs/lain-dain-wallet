@@ -8,6 +8,7 @@ import { routeTree } from './routeTree.gen'
 import ErrorFallback from './components/layout/error-fallback'
 import { preferencesStorage } from './lib/query-persister-storage'
 import { setUpNetworkStatusListener } from './lib/network'
+import { bootstrapAuth } from './lib/api/bootstrap'
 import './index.css'
 
 const router = createRouter({ routeTree, defaultErrorComponent: ErrorFallback })
@@ -46,10 +47,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <PersistQueryClientProvider client={queryClient} persistOptions={{ persister, maxAge: CACHE_MAX_AGE }}>
-      <RouterProvider router={router} />
-    </PersistQueryClientProvider>
-  </StrictMode>,
-)
+// __root.tsx's beforeLoad reads auth state synchronously on the very first
+// navigation — it can't wait for an async restore itself, so this has to
+// resolve (or fail silently) before the router ever renders.
+bootstrapAuth()
+  .catch(() => {})
+  .finally(() => {
+    createRoot(document.getElementById('root')!).render(
+      <StrictMode>
+        <PersistQueryClientProvider client={queryClient} persistOptions={{ persister, maxAge: CACHE_MAX_AGE }}>
+          <RouterProvider router={router} />
+        </PersistQueryClientProvider>
+      </StrictMode>,
+    )
+  })

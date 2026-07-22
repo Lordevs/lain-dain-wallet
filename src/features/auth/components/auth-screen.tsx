@@ -11,6 +11,9 @@ import ProfileForm, { type ProfileFormData } from './profile-form'
 // Import store
 import { useAuthStore } from '@/store/use-auth-store'
 import { ROUTES } from '@/constants/routes'
+import { useUpdateProfileMutation } from '@/features/auth/api/use-auth-mutations'
+import { buildProfileFormData } from '@/features/auth/api/build-profile-form-data'
+import { mapUserToProfile } from '@/features/auth/api/map-user'
 
 type AuthStep = 'signin' | 'signup_phone' | 'otp' | 'success' | 'profile'
 
@@ -31,11 +34,24 @@ function BrandLogo() {
 
 export default function AuthScreen() {
   const navigate = useNavigate()
-  const { setProfile, setIsAuthenticated } = useAuthStore()
+  const { setProfile } = useAuthStore()
+  const updateProfile = useUpdateProfileMutation()
 
-  const [step, setStep] = useState<AuthStep>('signin')
+  // A resumed session (see lib/api/bootstrap.ts) already has valid tokens
+  // by the time this mounts — if its profile is still incomplete, skip
+  // straight to that step instead of making them re-verify a phone number
+  // they've already proven they own.
+  const [step, setStep] = useState<AuthStep>(() => {
+    const { isAuthenticated, userProfile } = useAuthStore.getState()
+    return isAuthenticated && !userProfile?.profileComplete ? 'profile' : 'signin'
+  })
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin')
   const [phone, setPhone] = useState('') // Empty initially
+  // Set by OtpForm once verification succeeds — the source of truth for
+  // whether "success" should lead to "profile" or straight to the app,
+  // replacing the old signin/signup-mode guess with the backend's own
+  // profile_complete flag.
+  const [needsProfile, setNeedsProfile] = useState(false)
 
   const handleBack = () => {
     if (step === 'signup_phone') setStep('signin')
@@ -49,17 +65,15 @@ export default function AuthScreen() {
     setStep('otp')
   }
 
-  const handleProfileSubmit = (profileData: ProfileFormData) => {
-    // `phone` is already a full E.164 string (see PhoneForm) — no need to
-    // reassemble it from a country code + national number.
-    const finalProfile = {
-      name: profileData.fullName,
-      phone,
-      ...profileData,
-    }
-    setProfile(finalProfile)
-    setIsAuthenticated(true)
-    navigate({ to: ROUTES.DASHBOARD })
+  const handleProfileSubmit = async (profileData: ProfileFormData) => {
+    const formData = await buildProfileFormData(profileData)
+    updateProfile.mutate(formData, {
+      onSuccess: (user) => {
+        if (!user) return
+        setProfile(mapUserToProfile(user))
+        navigate({ to: ROUTES.DASHBOARD })
+      },
+    })
   }
 
   return (
@@ -116,7 +130,10 @@ export default function AuthScreen() {
             <BrandLogo />
             <OtpForm
               phoneNumber={phone}
-              onVerify={() => setStep('success')}
+              onVerify={(needsProfileStep) => {
+                setNeedsProfile(needsProfileStep)
+                setStep('success')
+              }}
               onBack={() => setStep(authMode === 'signup' ? 'signup_phone' : 'signin')}
             />
           </div>
@@ -126,18 +143,10 @@ export default function AuthScreen() {
       {step === 'success' && (
         <div className="flex-1 flex items-center justify-center">
           <SuccessCheck onComplete={() => {
-            if (authMode === 'signin') {
-              setProfile({
-                name: 'Muhammad Huzaifa',
-                phone: phone,
-                email: 'huzaifa@example.com',
-                occupation: 'Software Engineer',
-                avatar: null,
-              })
-              setIsAuthenticated(true)
-              navigate({ to: ROUTES.DASHBOARD })
-            } else {
+            if (needsProfile) {
               setStep('profile')
+            } else {
+              navigate({ to: ROUTES.DASHBOARD })
             }
           }} />
         </div>
@@ -149,6 +158,8 @@ export default function AuthScreen() {
             <BrandLogo />
             <ProfileForm
               onSubmit={handleProfileSubmit}
+              isSubmitting={updateProfile.isPending}
+              submitError={updateProfile.error?.message ?? null}
             />
           </div>
         </div>

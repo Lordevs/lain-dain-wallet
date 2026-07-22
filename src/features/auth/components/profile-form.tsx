@@ -11,7 +11,8 @@ import {
   Camera,
   ChevronRight,
   ChevronDown,
-  Calendar
+  Calendar,
+  AlertCircle
 } from 'lucide-react'
 import { differenceInYears, format } from 'date-fns'
 import { Button } from '@/components/ui/button'
@@ -24,9 +25,11 @@ import OccupationSelectorDrawer from '@/components/shared/occupation-selector-dr
 import CountrySelectorDrawer from '@/components/shared/country-selector-drawer'
 
 /** Exported so auth-screen.tsx can type its handleProfileSubmit handler.
- * Mirrors apps.accounts.models.User exactly (see UserSerializer) — this
- * is the same field set PATCH /api/accounts/profile/ accepts, so no
- * translation layer is needed between this form and the real request. */
+ * Field names mirror apps.accounts.models.User (see UserSerializer) — the
+ * same set PATCH /api/auth/profile/ accepts — but gender/country still
+ * hold UI display values here ("Male", "Pakistan"), not the backend's
+ * wire format (lowercase enum, ISO code); that conversion happens in
+ * build-profile-form-data.ts, right before the request is built. */
 export interface ProfileFormData {
   fullName: string
   dateOfBirth: string
@@ -39,6 +42,8 @@ export interface ProfileFormData {
 
 interface ProfileFormProps {
   onSubmit: (profile: ProfileFormData) => void
+  isSubmitting?: boolean
+  submitError?: string | null
 }
 
 interface FormValues {
@@ -50,7 +55,7 @@ interface FormValues {
   country: string
 }
 
-export default function ProfileForm({ onSubmit }: ProfileFormProps) {
+export default function ProfileForm({ onSubmit, isSubmitting = false, submitError = null }: ProfileFormProps) {
   const { control, handleSubmit } = useForm<FormValues>({
     defaultValues: {
       fullName: '',
@@ -321,12 +326,20 @@ export default function ProfileForm({ onSubmit }: ProfileFormProps) {
 
         {/* Bottom Actions */}
         <div className="mt-10 space-y-6 shrink-0">
+          {submitError && (
+            <div className="flex items-start gap-2 text-tertiary justify-center">
+              <AlertCircle size={16} className="shrink-0 mt-0.5" />
+              <p className="text-sm font-medium">{submitError}</p>
+            </div>
+          )}
+
           <Button
             type="submit"
-            className="w-full h-14 bg-primary text-white rounded-full font-bold text-base hover:bg-primary/95 transition-all flex items-center justify-center gap-1.5"
+            disabled={isSubmitting}
+            className="w-full h-14 bg-primary text-white rounded-full font-bold text-base hover:bg-primary/95 disabled:opacity-70 transition-all flex items-center justify-center gap-1.5"
           >
-            Create Account
-            <ChevronRight size={16} strokeWidth={2.5} className="ml-1" />
+            {isSubmitting ? 'Creating Account...' : 'Create Account'}
+            {!isSubmitting && <ChevronRight size={16} strokeWidth={2.5} className="ml-1" />}
           </Button>
 
           <p className="text-sm text-muted-foreground text-center">

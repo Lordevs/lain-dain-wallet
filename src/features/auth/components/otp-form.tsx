@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Phone } from 'lucide-react'
+import { Phone, AlertCircle } from 'lucide-react'
 import { parsePhoneNumber } from 'react-phone-number-input'
 
 // Import shadcn UI components
@@ -10,10 +10,18 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 
 // Import separate components
 import CountdownTimer from './countdown-timer'
+import { useRequestOtpMutation, useVerifyOtpMutation } from '@/features/auth/api/use-auth-mutations'
+import { mapUserToProfile } from '@/features/auth/api/map-user'
+import { setRefreshToken } from '@/lib/secure-storage'
+import { useAuthStore } from '@/store/use-auth-store'
 
 interface OtpFormProps {
   phoneNumber: string // E.164 format (e.g. "+923219988776")
-  onVerify: () => void
+  // Tells the caller whether the just-verified account still needs the
+  // profile-completion step — isAuthenticated is already true by the time
+  // this fires (see handleVerify below), so this is purely a UI routing
+  // signal, not an auth gate.
+  onVerify: (needsProfile: boolean) => void
   onBack: () => void
 }
 
@@ -23,6 +31,9 @@ export default function OtpForm({
   onBack
 }: OtpFormProps) {
   const [otpValue, setOtpValue] = useState('')
+  const verifyOtp = useVerifyOtpMutation()
+  const requestOtp = useRequestOtpMutation()
+  const { setAccessToken, setProfile, setIsAuthenticated } = useAuthStore()
 
   // Parse calling code and national number dynamically
   let countryCallingCode = ''
@@ -39,11 +50,29 @@ export default function OtpForm({
 
   const handleVerify = (e: React.FormEvent) => {
     e.preventDefault()
-    onVerify()
+    verifyOtp.mutate(
+      { phoneNumber, code: otpValue },
+      {
+        onSuccess: async (data) => {
+          if (!data) return
+          setAccessToken(data.access)
+          await setRefreshToken(data.refresh)
+          const profile = mapUserToProfile(data.user)
+          setProfile(profile)
+          // Tokens are valid the instant OTP is verified — isAuthenticated
+          // reflects "has a session," not "finished onboarding" (see
+          // routes/__root.tsx), so this is safe to flip now even if the
+          // profile step is still ahead.
+          setIsAuthenticated(true)
+          onVerify(!profile.profileComplete)
+        },
+      },
+    )
   }
 
   const handleResend = () => {
-    // TODO: Trigger OTP resend via auth backend
+    if (requestOtp.isPending) return
+    requestOtp.mutate(phoneNumber)
   }
 
   return (
@@ -95,6 +124,13 @@ export default function OtpForm({
 
             {/* Reusable Countdown Timer Component */}
             <CountdownTimer onResend={handleResend} />
+
+            {verifyOtp.isError && (
+              <div className="flex items-start gap-2 mt-4 text-tertiary justify-center">
+                <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                <p className="text-sm font-medium">{verifyOtp.error.message}</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -102,10 +138,10 @@ export default function OtpForm({
         <div className="mt-12 space-y-6 shrink-0">
           <Button
             type="submit"
-            disabled={otpValue.length !== 6}
+            disabled={otpValue.length !== 6 || verifyOtp.isPending}
             className="w-full h-14 bg-primary text-white rounded-full font-bold text-base hover:bg-primary/95 disabled:bg-[#D9D2C5] disabled:text-white disabled:shadow-none disabled:opacity-100 transition-all"
           >
-            Verify Phone Number
+            {verifyOtp.isPending ? 'Verifying...' : 'Verify Phone Number'}
           </Button>
 
           <p className="text-sm font-medium text-muted-foreground text-center">

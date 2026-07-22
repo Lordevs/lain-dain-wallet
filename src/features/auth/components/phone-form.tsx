@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { ChevronLeft, Check } from 'lucide-react'
+import { ChevronLeft, Check, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { PhoneInput } from '@/components/reui/phone-input'
+import { useRequestOtpMutation } from '@/features/auth/api/use-auth-mutations'
 
 interface PhoneFormProps {
   mode: 'signin' | 'signup'
@@ -19,12 +20,14 @@ export default function PhoneForm({
 }: PhoneFormProps) {
   // initialPhone is expected to be a full E.164 string like "+923219988776"
   const [phone, setPhone] = useState(initialPhone || '')
+  const requestOtp = useRequestOtpMutation()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (phone) {
-      onSubmit(phone)
-    }
+    if (!phone) return
+    requestOtp.mutate(phone, {
+      onSuccess: () => onSubmit(phone),
+    })
   }
 
   const isSignIn = mode === 'signin'
@@ -74,6 +77,13 @@ export default function PhoneForm({
                 We'll send you an <span className="text-primary font-semibold">OTP</span> to verify your number
               </p>
             </div>
+
+            {requestOtp.isError && (
+              <div className="flex items-start gap-2 mt-4 text-tertiary">
+                <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                <p className="text-sm font-medium">{requestOtp.error.message}</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -107,10 +117,13 @@ export default function PhoneForm({
 
           <Button
             type="submit"
-            className="w-full h-14 bg-primary text-white rounded-full font-bold text-base hover:bg-primary/95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            disabled={requestOtp.isPending}
+            className="w-full h-14 bg-primary text-white rounded-full font-bold text-base hover:bg-primary/95 disabled:opacity-70 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
           >
-            Continue
-            <ChevronLeft size={16} strokeWidth={2.5} className="rotate-180 ml-1" />
+            {requestOtp.isPending ? 'Sending...' : 'Continue'}
+            {!requestOtp.isPending && (
+              <ChevronLeft size={16} strokeWidth={2.5} className="rotate-180 ml-1" />
+            )}
           </Button>
         </div>
       </form>
