@@ -23,12 +23,13 @@ import GenderSelectorDrawer from '@/components/shared/gender-selector-drawer'
 import OccupationSelectorDrawer from '@/components/shared/occupation-selector-drawer'
 import CountrySelectorDrawer from '@/components/shared/country-selector-drawer'
 
-import { useAuthStore } from '@/store/use-auth-store'
-
-/** Exported so auth-screen.tsx can type its handleProfileSubmit handler */
+/** Exported so auth-screen.tsx can type its handleProfileSubmit handler.
+ * Mirrors apps.accounts.models.User exactly (see UserSerializer) — this
+ * is the same field set PATCH /api/accounts/profile/ accepts, so no
+ * translation layer is needed between this form and the real request. */
 export interface ProfileFormData {
   fullName: string
-  age: string
+  dateOfBirth: string
   gender: string
   email: string
   occupation: string
@@ -50,16 +51,14 @@ interface FormValues {
 }
 
 export default function ProfileForm({ onSubmit }: ProfileFormProps) {
-  const defaultCountry = useAuthStore((s) => s.tempCountryCode?.name) || ''
-
-  const { control, handleSubmit, watch } = useForm<FormValues>({
+  const { control, handleSubmit } = useForm<FormValues>({
     defaultValues: {
       fullName: '',
       dob: undefined,
       gender: '',
       email: '',
       occupation: '',
-      country: defaultCountry,
+      country: '',
     },
   })
 
@@ -89,13 +88,13 @@ export default function ProfileForm({ onSubmit }: ProfileFormProps) {
     }
   }
 
-  const dob = watch('dob')
-  const age = dob ? String(differenceInYears(new Date(), dob)) : ''
-
   const onFormSubmit = (values: FormValues) => {
     onSubmit({
       fullName: values.fullName,
-      age,
+      // Backend field is a date, not a computed age (an age would go
+      // stale the moment a birthday passes) — send the real date and let
+      // the UI compute "years" for display wherever it needs to.
+      dateOfBirth: values.dob ? format(values.dob, 'yyyy-MM-dd') : '',
       gender: values.gender,
       email: values.email,
       occupation: values.occupation,

@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import FlowHeader from '@/components/shared/flow-header'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuthStore } from '@/store/use-auth-store'
+import { clearRefreshToken } from '@/lib/secure-storage'
 import { ROUTES } from '@/constants/routes'
 
 interface LogoutPanelProps {
@@ -17,7 +18,11 @@ export default function LogoutPanel({
   const navigate = useNavigate()
   const { userProfile, logout } = useAuthStore()
 
-  const handleConfirm = onConfirm ?? (() => {
+  const handleConfirm = onConfirm ?? (async () => {
+    // logout() only clears in-memory state — the refresh token sitting in
+    // secure storage has to be cleared explicitly, or a "logged out" app
+    // could still silently re-authenticate with it on next launch.
+    await clearRefreshToken()
     logout()
     navigate({ to: ROUTES.AUTH })
   })

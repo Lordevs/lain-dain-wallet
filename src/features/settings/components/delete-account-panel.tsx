@@ -5,6 +5,7 @@ import FlowHeader from '@/components/shared/flow-header'
 import OutstandingBalanceDrawer from '@/components/shared/outstanding-balance-drawer'
 import ConfirmActionDrawer from '@/components/shared/confirm-action-drawer'
 import { useAuthStore } from '@/store/use-auth-store'
+import { clearRefreshToken } from '@/lib/secure-storage'
 import { ROUTES } from '@/constants/routes'
 
 interface DeleteAccountPanelProps {
@@ -30,7 +31,8 @@ export default function DeleteAccountPanel({
     }
   }
 
-  const handleConfirm = onConfirm ?? (() => {
+  const handleConfirm = onConfirm ?? (async () => {
+    await clearRefreshToken()
     logout()
     navigate({ to: ROUTES.AUTH })
   })

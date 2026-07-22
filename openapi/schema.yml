@@ -1,0 +1,5780 @@
+openapi: 3.0.3
+info:
+  title: Lain Dain API
+  version: 0.1.0
+  description: Backend API for the Lain Dain expense-sharing app.
+paths:
+  /api/auth/otp/request/:
+    post:
+      operationId: auth_otp_request_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestOTPRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RequestOTPRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RequestOTPRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OTPRequested'
+          description: ''
+  /api/auth/otp/verify/:
+    post:
+      operationId: auth_otp_verify_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyOTPRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/VerifyOTPRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/VerifyOTPRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OTPVerified'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: ''
+  /api/auth/profile/:
+    get:
+      operationId: auth_profile_retrieve
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    put:
+      operationId: auth_profile_update
+      tags:
+      - auth
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    patch:
+      operationId: auth_profile_partial_update
+      tags:
+      - auth
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/auth/profile/delete/:
+    post:
+      operationId: auth_profile_delete_create
+      description: |-
+        POST /api/accounts/profile/delete/ — "Permanently Delete Account"
+        from the Danger Zone mockup. See apps.expenses.services.delete_account
+        for the full settle-everything-first / anonymize flow (it lives
+        there, not here, since it needs to touch friendship/group balances
+        and personal expense history, all of which sit above `accounts` in
+        this app's dependency direction). No response body: nothing is left
+        to serialize about an account that just anonymized itself.
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/auth/token/refresh/:
+    post:
+      operationId: auth_token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /api/contacts/:
+    get:
+      operationId: contacts_list
+      description: |-
+        GET /api/contacts/?search=...&on_lain_dain=true
+        Powers the "New Lain Dain" screen's two sections (contacts already on
+        the app vs. contacts to invite) via the `on_lain_dain` filter, and its
+        search bar via `search` (matches display_name or phone_number).
+        "Invited" status is not tracked server-side — the client sends invites
+        itself (OS share sheet / wa.me) and owns that state locally. See
+        docs/architecture/tech-stack.md.
+
+        `id` on each result is the Contact row's own id (this owner's address-
+        book entry) — NOT a User id, and not usable with the ledger endpoints.
+        When `is_on_lain_dain` is true, use `lain_dain_user_id` instead: that's
+        the actual User.id, the value `POST /api/ledger/friendships/`
+        (`user_id`) and `POST /api/ledger/groups/` (`member_ids`) expect.
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - contacts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedContactList'
+          description: ''
+  /api/contacts/sync/:
+    post:
+      operationId: contacts_sync_create
+      description: |-
+        Bulk upsert of the caller's device address book. One efficient
+        upsert query (not N round trips for N contacts) via bulk_create with
+        update_conflicts — matters once a user's contact list runs into the
+        hundreds/thousands.
+      tags:
+      - contacts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactSyncRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ContactSyncRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ContactSyncRequestRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactSyncResult'
+          description: ''
+  /api/expenses/{id}/:
+    get:
+      operationId: expenses_retrieve
+      description: |-
+        GET/PATCH/DELETE /api/expenses/{id}/ — not nested under a
+        group/friendship path, matching how GroupInvitation detail actions
+        address by invitation_id alone. Visibility is the OR of all three
+        "can view" scopes; edit/delete permission (narrower than view) is
+        enforced in the service layer, not the queryset — a visible-but-
+        unauthorized actor gets 403, a true outsider gets 404, matching the
+        pattern already used throughout apps/ledger/views.py.
+
+        examples= above is set via extend_schema_view(patch=..., put=...), not
+        @extend_schema on update() directly — see _ExpenseListCreateBase's
+        comment for why decorating the delegate method is silently ignored.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseRead'
+          description: ''
+    put:
+      operationId: expenses_update
+      description: |-
+        GET/PATCH/DELETE /api/expenses/{id}/ — not nested under a
+        group/friendship path, matching how GroupInvitation detail actions
+        address by invitation_id alone. Visibility is the OR of all three
+        "can view" scopes; edit/delete permission (narrower than view) is
+        enforced in the service layer, not the queryset — a visible-but-
+        unauthorized actor gets 403, a true outsider gets 404, matching the
+        pattern already used throughout apps/ledger/views.py.
+
+        examples= above is set via extend_schema_view(patch=..., put=...), not
+        @extend_schema on update() directly — see _ExpenseListCreateBase's
+        comment for why decorating the delegate method is silently ignored.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ExpenseUpdateRequest'
+            examples:
+              EqualSplit:
+                value:
+                  description: Dinner
+                  amount: '1000.00'
+                  category_id: 00000000-0000-0000-0000-000000000000
+                  split_type: equal
+                  payers: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "amount":
+                    "1000.00"}]'
+                  splits: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001"}, {"user_id":
+                    "5b1f2b3a-0000-0000-0000-000000000002"}]'
+                summary: Equal split
+                description: Total split evenly among the listed participants.
+              UnequalSplit:
+                value:
+                  description: Dinner
+                  amount: '1000.00'
+                  category_id: 00000000-0000-0000-0000-000000000000
+                  split_type: unequal
+                  payers: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "amount":
+                    "1000.00"}]'
+                  splits: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "amount_owed":
+                    "300.00"}, {"user_id": "5b1f2b3a-0000-0000-0000-000000000002",
+                    "amount_owed": "700.00"}]'
+                summary: Unequal split
+                description: Each participant owes an exact amount you specify; amount_owed
+                  values must sum to amount.
+              AdjustmentSplit:
+                value:
+                  description: Cafe
+                  amount: '1000.00'
+                  category_id: 00000000-0000-0000-0000-000000000000
+                  split_type: adjustment
+                  payers: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "amount":
+                    "1000.00"}]'
+                  splits: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "extra_amount":
+                    "200.00"}, {"user_id": "5b1f2b3a-0000-0000-0000-000000000002"}]'
+                summary: Adjustment split
+                description: Everyone splits the remainder evenly, plus their own
+                  extra_amount on top (e.g. one person also ordered a cake).
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ExpenseUpdateRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseUpdate'
+          description: ''
+    patch:
+      operationId: expenses_partial_update
+      description: |-
+        GET/PATCH/DELETE /api/expenses/{id}/ — not nested under a
+        group/friendship path, matching how GroupInvitation detail actions
+        address by invitation_id alone. Visibility is the OR of all three
+        "can view" scopes; edit/delete permission (narrower than view) is
+        enforced in the service layer, not the queryset — a visible-but-
+        unauthorized actor gets 403, a true outsider gets 404, matching the
+        pattern already used throughout apps/ledger/views.py.
+
+        examples= above is set via extend_schema_view(patch=..., put=...), not
+        @extend_schema on update() directly — see _ExpenseListCreateBase's
+        comment for why decorating the delegate method is silently ignored.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedExpenseUpdateRequest'
+            examples:
+              EqualSplit:
+                value:
+                  description: Dinner
+                  amount: '1000.00'
+                  category_id: 00000000-0000-0000-0000-000000000000
+                  split_type: equal
+                  payers: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "amount":
+                    "1000.00"}]'
+                  splits: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001"}, {"user_id":
+                    "5b1f2b3a-0000-0000-0000-000000000002"}]'
+                summary: Equal split
+                description: Total split evenly among the listed participants.
+              UnequalSplit:
+                value:
+                  description: Dinner
+                  amount: '1000.00'
+                  category_id: 00000000-0000-0000-0000-000000000000
+                  split_type: unequal
+                  payers: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "amount":
+                    "1000.00"}]'
+                  splits: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "amount_owed":
+                    "300.00"}, {"user_id": "5b1f2b3a-0000-0000-0000-000000000002",
+                    "amount_owed": "700.00"}]'
+                summary: Unequal split
+                description: Each participant owes an exact amount you specify; amount_owed
+                  values must sum to amount.
+              AdjustmentSplit:
+                value:
+                  description: Cafe
+                  amount: '1000.00'
+                  category_id: 00000000-0000-0000-0000-000000000000
+                  split_type: adjustment
+                  payers: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "amount":
+                    "1000.00"}]'
+                  splits: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "extra_amount":
+                    "200.00"}, {"user_id": "5b1f2b3a-0000-0000-0000-000000000002"}]'
+                summary: Adjustment split
+                description: Everyone splits the remainder evenly, plus their own
+                  extra_amount on top (e.g. one person also ordered a cake).
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedExpenseUpdateRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseUpdate'
+          description: ''
+    delete:
+      operationId: expenses_destroy
+      description: |-
+        GET/PATCH/DELETE /api/expenses/{id}/ — not nested under a
+        group/friendship path, matching how GroupInvitation detail actions
+        address by invitation_id alone. Visibility is the OR of all three
+        "can view" scopes; edit/delete permission (narrower than view) is
+        enforced in the service layer, not the queryset — a visible-but-
+        unauthorized actor gets 403, a true outsider gets 404, matching the
+        pattern already used throughout apps/ledger/views.py.
+
+        examples= above is set via extend_schema_view(patch=..., put=...), not
+        @extend_schema on update() directly — see _ExpenseListCreateBase's
+        comment for why decorating the delegate method is silently ignored.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/expenses/categories/:
+    get:
+      operationId: expenses_categories_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCategoryList'
+          description: ''
+    post:
+      operationId: expenses_categories_create
+      tags:
+      - expenses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+  /api/expenses/categories/{id}/:
+    delete:
+      operationId: expenses_categories_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/expenses/categories/reorder/:
+    post:
+      operationId: expenses_categories_reorder_create
+      description: |-
+        POST /api/expenses/categories/reorder/ {"category_ids": [...]} —
+        top-to-bottom order for as many of the caller's visible categories
+        (system + own) as they dragged; anything omitted keeps falling back
+        to the old default order. See services.reorder_categories.
+      tags:
+      - expenses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryReorderRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CategoryReorderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CategoryReorderRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+          description: ''
+  /api/expenses/friendships/{friendship_id}/:
+    get:
+      operationId: expenses_friendships_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: path
+        name: friendship_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedExpenseReadList'
+          description: ''
+    post:
+      operationId: expenses_friendships_create
+      parameters:
+      - in: path
+        name: friendship_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ExpenseCreateRequest'
+            examples:
+              EqualSplit:
+                value:
+                  description: Dinner
+                  amount: '1000.00'
+                  category_id: 00000000-0000-0000-0000-000000000000
+                  split_type: equal
+                  payers: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "amount":
+                    "1000.00"}]'
+                  splits: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001"}, {"user_id":
+                    "5b1f2b3a-0000-0000-0000-000000000002"}]'
+                summary: Equal split
+                description: Total split evenly among the listed participants.
+              UnequalSplit:
+                value:
+                  description: Dinner
+                  amount: '1000.00'
+                  category_id: 00000000-0000-0000-0000-000000000000
+                  split_type: unequal
+                  payers: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "amount":
+                    "1000.00"}]'
+                  splits: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "amount_owed":
+                    "300.00"}, {"user_id": "5b1f2b3a-0000-0000-0000-000000000002",
+                    "amount_owed": "700.00"}]'
+                summary: Unequal split
+                description: Each participant owes an exact amount you specify; amount_owed
+                  values must sum to amount.
+              AdjustmentSplit:
+                value:
+                  description: Cafe
+                  amount: '1000.00'
+                  category_id: 00000000-0000-0000-0000-000000000000
+                  split_type: adjustment
+                  payers: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "amount":
+                    "1000.00"}]'
+                  splits: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "extra_amount":
+                    "200.00"}, {"user_id": "5b1f2b3a-0000-0000-0000-000000000002"}]'
+                summary: Adjustment split
+                description: Everyone splits the remainder evenly, plus their own
+                  extra_amount on top (e.g. one person also ordered a cake).
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ExpenseCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseCreate'
+          description: ''
+  /api/expenses/friendships/{friendship_id}/balance/:
+    get:
+      operationId: expenses_friendships_balance_list
+      description: |-
+        Balance with this friendship's other party, scoped to just this
+        friendship's own PairwiseBalance row(s) (one per currency) — NOT
+        summed with any group balance. For the cross-scope combined total
+        (this friendship + every shared group), see UserLedgersView's
+        `overall`; for the itemized per-ledger breakdown behind that total,
+        see its `ledgers`. Naturally small and bounded (currencies in play
+        for one pair), no pagination needed.
+      parameters:
+      - in: path
+        name: friendship_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PersonBalance'
+          description: ''
+  /api/expenses/friendships/{friendship_id}/clear-history/:
+    post:
+      operationId: expenses_friendships_clear_history_create
+      description: |-
+        POST /api/expenses/friendships/{friendship_id}/clear-history/ —
+        either party. "Delete all entries — cannot be undone," from the
+        user's perspective; see services.clear_friendship_ledger_history for
+        why this is soft-delete-plus-reversal under the hood, not a literal
+        hard delete of LedgerEntry (the observable result is identical
+        either way — nothing recoverable through this app — but the
+        mechanism preserves every invariant the rest of this app relies on).
+        No response body: there's nothing left to serialize once every
+        Expense/Settlement/RecurringExpense in the friendship is gone.
+      parameters:
+      - in: path
+        name: friendship_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/expenses/friendships/{friendship_id}/recurring/:
+    get:
+      operationId: expenses_friendships_recurring_list
+      description: |-
+        Shared by the friendship and group variants below — same pattern as
+        _ExpenseListCreateBase. Multipart-only: `receipt` is a file. Create/
+        update permission depends on scope (group: admin/owner only;
+        friendship: either party — see
+        services._require_recurring_manage_permission); list/view stays
+        open to any currently-active participant either way.
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: path
+        name: friendship_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRecurringExpenseReadList'
+          description: ''
+    post:
+      operationId: expenses_friendships_recurring_create
+      description: |-
+        Shared by the friendship and group variants below — same pattern as
+        _ExpenseListCreateBase. Multipart-only: `receipt` is a file. Create/
+        update permission depends on scope (group: admin/owner only;
+        friendship: either party — see
+        services._require_recurring_manage_permission); list/view stays
+        open to any currently-active participant either way.
+      parameters:
+      - in: path
+        name: friendship_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RecurringExpenseCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RecurringExpenseCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurringExpenseCreate'
+          description: ''
+  /api/expenses/friendships/{friendship_id}/settlements/:
+    get:
+      operationId: expenses_friendships_settlements_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: path
+        name: friendship_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSettlementReadList'
+          description: ''
+    post:
+      operationId: expenses_friendships_settlements_create
+      parameters:
+      - in: path
+        name: friendship_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FriendshipSettlementCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FriendshipSettlementCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendshipSettlementCreate'
+          description: ''
+  /api/expenses/groups/{group_id}/:
+    get:
+      operationId: expenses_groups_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: path
+        name: group_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedExpenseReadList'
+          description: ''
+    post:
+      operationId: expenses_groups_create
+      parameters:
+      - in: path
+        name: group_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ExpenseCreateRequest'
+            examples:
+              EqualSplit:
+                value:
+                  description: Dinner
+                  amount: '1000.00'
+                  category_id: 00000000-0000-0000-0000-000000000000
+                  split_type: equal
+                  payers: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "amount":
+                    "1000.00"}]'
+                  splits: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001"}, {"user_id":
+                    "5b1f2b3a-0000-0000-0000-000000000002"}]'
+                summary: Equal split
+                description: Total split evenly among the listed participants.
+              UnequalSplit:
+                value:
+                  description: Dinner
+                  amount: '1000.00'
+                  category_id: 00000000-0000-0000-0000-000000000000
+                  split_type: unequal
+                  payers: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "amount":
+                    "1000.00"}]'
+                  splits: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "amount_owed":
+                    "300.00"}, {"user_id": "5b1f2b3a-0000-0000-0000-000000000002",
+                    "amount_owed": "700.00"}]'
+                summary: Unequal split
+                description: Each participant owes an exact amount you specify; amount_owed
+                  values must sum to amount.
+              AdjustmentSplit:
+                value:
+                  description: Cafe
+                  amount: '1000.00'
+                  category_id: 00000000-0000-0000-0000-000000000000
+                  split_type: adjustment
+                  payers: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "amount":
+                    "1000.00"}]'
+                  splits: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "extra_amount":
+                    "200.00"}, {"user_id": "5b1f2b3a-0000-0000-0000-000000000002"}]'
+                summary: Adjustment split
+                description: Everyone splits the remainder evenly, plus their own
+                  extra_amount on top (e.g. one person also ordered a cake).
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ExpenseCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpenseCreate'
+          description: ''
+  /api/expenses/groups/{group_id}/balance/:
+    get:
+      operationId: expenses_groups_balance_list
+      description: |-
+        "Who do I pay, who pays me, in this group." Optional ?with=<user_id>
+        narrows to one member. For the cross-scope combined total with one
+        specific member (always unsimplified, regardless of this group's
+        Smart Settle setting — see services.group_balances), see
+        UserLedgersView's `overall` (narrow to them first via ?with= here,
+        then look them up there). Naturally small and bounded (members x
+        currencies), no pagination needed.
+
+        Respects the group's `smart_settle_enabled` — services.group_balances()
+        is the single place that branches on it, so this view doesn't need
+        its own on/off logic. When enabled, the specific counterparties and
+        amounts returned here can differ from the group's raw pairwise
+        debts (see that function's docstring) — this is the ONE endpoint
+        where that's true; nothing else in this app applies the
+        simplification.
+      parameters:
+      - in: path
+        name: group_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PersonBalance'
+          description: ''
+  /api/expenses/groups/{group_id}/clear-history/:
+    post:
+      operationId: expenses_groups_clear_history_create
+      description: |-
+        POST /api/expenses/groups/{group_id}/clear-history/ — active admin/
+        owner only (unlike the friendship version's "either party" — see
+        services.clear_group_ledger_history for why a group's bigger blast
+        radius needs a stricter bar). Group and membership stay intact;
+        only the Expense/Settlement/RecurringExpense history and every
+        balance in the group are wiped. For actually dissolving the group,
+        see DELETE /api/ledger/groups/{id}/ instead.
+      parameters:
+      - in: path
+        name: group_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/expenses/groups/{group_id}/recurring/:
+    get:
+      operationId: expenses_groups_recurring_list
+      description: |-
+        Shared by the friendship and group variants below — same pattern as
+        _ExpenseListCreateBase. Multipart-only: `receipt` is a file. Create/
+        update permission depends on scope (group: admin/owner only;
+        friendship: either party — see
+        services._require_recurring_manage_permission); list/view stays
+        open to any currently-active participant either way.
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: path
+        name: group_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRecurringExpenseReadList'
+          description: ''
+    post:
+      operationId: expenses_groups_recurring_create
+      description: |-
+        Shared by the friendship and group variants below — same pattern as
+        _ExpenseListCreateBase. Multipart-only: `receipt` is a file. Create/
+        update permission depends on scope (group: admin/owner only;
+        friendship: either party — see
+        services._require_recurring_manage_permission); list/view stays
+        open to any currently-active participant either way.
+      parameters:
+      - in: path
+        name: group_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RecurringExpenseCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RecurringExpenseCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurringExpenseCreate'
+          description: ''
+  /api/expenses/groups/{group_id}/settlements/:
+    get:
+      operationId: expenses_groups_settlements_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: path
+        name: group_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSettlementReadList'
+          description: ''
+    post:
+      operationId: expenses_groups_settlements_create
+      parameters:
+      - in: path
+        name: group_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GroupSettlementCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GroupSettlementCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupSettlementCreate'
+          description: ''
+  /api/expenses/my-expenses/:
+    get:
+      operationId: expenses_my_expenses_list
+      description: |-
+        GET /api/expenses/my-expenses/?year=&month= — the combined feed:
+        personal expenses plus any friendship/group expense the caller has a
+        split in, minus whatever scopes they've opted out of (see
+        PersonalExpenseSettingsView).
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMyExpenseItemList'
+          description: ''
+  /api/expenses/my-expenses/category-budgets/:
+    get:
+      operationId: expenses_my_expenses_category_budgets_retrieve
+      description: |-
+        GET /api/expenses/my-expenses/category-budgets/?year=&month= — the
+        "Category Budgets" screen: every category visible to the caller,
+        each with this period's spent and its limit (if one's set). Setting/
+        removing an individual category's limit is CategoryBudgetDetailView,
+        not this one — this endpoint is read-only.
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryBudgetsOverview'
+          description: ''
+  /api/expenses/my-expenses/category-budgets/{category_id}/:
+    put:
+      operationId: expenses_my_expenses_category_budgets_update
+      description: |-
+        PUT/DELETE /api/expenses/my-expenses/category-budgets/{category_id}/
+        — set (or update) / remove one category's monthly limit. The
+        "Set Category Limit" screen's Save/"Remove limit" actions.
+      parameters:
+      - in: path
+        name: category_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryBudgetSetRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CategoryBudgetSetRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CategoryBudgetSetRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryBudgetItem'
+          description: ''
+    delete:
+      operationId: expenses_my_expenses_category_budgets_destroy
+      description: |-
+        PUT/DELETE /api/expenses/my-expenses/category-budgets/{category_id}/
+        — set (or update) / remove one category's monthly limit. The
+        "Set Category Limit" screen's Save/"Remove limit" actions.
+      parameters:
+      - in: path
+        name: category_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/expenses/my-expenses/reports/:
+    get:
+      operationId: expenses_my_expenses_reports_retrieve
+      description: |-
+        GET /api/expenses/my-expenses/reports/?year=&month= — the Reports
+        screen: the same summary as above, plus a per-category breakdown for
+        that period and a 12-month trend for `year` (defaults to the current
+        period's own year, not necessarily the calendar year `today` is in).
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyExpensesReport'
+          description: ''
+  /api/expenses/my-expenses/settings/:
+    get:
+      operationId: expenses_my_expenses_settings_retrieve
+      description: |-
+        GET/PATCH /api/expenses/my-expenses/settings/ — the "Personal
+        Expense Settings" screens' display/hide/period preferences. Created
+        lazily on first access (services.get_personal_expense_settings), not
+        on signup.
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonalExpenseSettings'
+          description: ''
+    patch:
+      operationId: expenses_my_expenses_settings_partial_update
+      description: |-
+        GET/PATCH /api/expenses/my-expenses/settings/ — the "Personal
+        Expense Settings" screens' display/hide/period preferences. Created
+        lazily on first access (services.get_personal_expense_settings), not
+        on signup.
+      tags:
+      - expenses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPersonalExpenseSettingsUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPersonalExpenseSettingsUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPersonalExpenseSettingsUpdateRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonalExpenseSettings'
+          description: ''
+  /api/expenses/my-expenses/summary/:
+    get:
+      operationId: expenses_my_expenses_summary_retrieve
+      description: |-
+        GET /api/expenses/my-expenses/summary/?year=&month= — the "My
+        Expenses" home screen's top card: spent this period, plus the
+        previous period's total for comparison (omitted when the caller has
+        turned that off in settings).
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyExpensesSummary'
+          description: ''
+  /api/expenses/personal/:
+    get:
+      operationId: expenses_personal_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedExpenseReadList'
+          description: ''
+    post:
+      operationId: expenses_personal_create
+      tags:
+      - expenses
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PersonalExpenseCreateRequest'
+            examples:
+              EqualSplit:
+                value:
+                  description: Dinner
+                  amount: '1000.00'
+                  category_id: 00000000-0000-0000-0000-000000000000
+                  split_type: equal
+                  payers: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "amount":
+                    "1000.00"}]'
+                  splits: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001"}, {"user_id":
+                    "5b1f2b3a-0000-0000-0000-000000000002"}]'
+                summary: Equal split
+                description: Total split evenly among the listed participants.
+              UnequalSplit:
+                value:
+                  description: Dinner
+                  amount: '1000.00'
+                  category_id: 00000000-0000-0000-0000-000000000000
+                  split_type: unequal
+                  payers: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "amount":
+                    "1000.00"}]'
+                  splits: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "amount_owed":
+                    "300.00"}, {"user_id": "5b1f2b3a-0000-0000-0000-000000000002",
+                    "amount_owed": "700.00"}]'
+                summary: Unequal split
+                description: Each participant owes an exact amount you specify; amount_owed
+                  values must sum to amount.
+              AdjustmentSplit:
+                value:
+                  description: Cafe
+                  amount: '1000.00'
+                  category_id: 00000000-0000-0000-0000-000000000000
+                  split_type: adjustment
+                  payers: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "amount":
+                    "1000.00"}]'
+                  splits: '[{"user_id": "5b1f2b3a-0000-0000-0000-000000000001", "extra_amount":
+                    "200.00"}, {"user_id": "5b1f2b3a-0000-0000-0000-000000000002"}]'
+                summary: Adjustment split
+                description: Everyone splits the remainder evenly, plus their own
+                  extra_amount on top (e.g. one person also ordered a cake).
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PersonalExpenseCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonalExpenseCreate'
+          description: ''
+  /api/expenses/personal/clear-history/:
+    post:
+      operationId: expenses_personal_clear_history_create
+      description: |-
+        POST /api/expenses/personal/clear-history/ — "Clear All Personal
+        Expenses" Danger Zone action. No friendship_id/group_id: always
+        targets request.user's own PERSONAL-context expenses, so there's no
+        permission check to fail here — see services.clear_personal_ledger_history.
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/expenses/recurring/{id}/:
+    get:
+      operationId: expenses_recurring_retrieve
+      description: |-
+        GET/PATCH/DELETE /api/expenses/recurring/{id}/ — not nested under a
+        friendship/group path, matching how ExpenseDetailView/GroupInvitation
+        detail actions address by id alone. Visible to any currently-active
+        participant of either scope (broad); edit/delete permission
+        (narrower — depends on scope, see
+        services._require_recurring_manage_permission) is enforced in the
+        service layer, same 403-vs-404 split as ExpenseDetailView. Multipart,
+        same reasoning as the list/create views above.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurringExpenseRead'
+          description: ''
+    put:
+      operationId: expenses_recurring_update
+      description: |-
+        GET/PATCH/DELETE /api/expenses/recurring/{id}/ — not nested under a
+        friendship/group path, matching how ExpenseDetailView/GroupInvitation
+        detail actions address by id alone. Visible to any currently-active
+        participant of either scope (broad); edit/delete permission
+        (narrower — depends on scope, see
+        services._require_recurring_manage_permission) is enforced in the
+        service layer, same 403-vs-404 split as ExpenseDetailView. Multipart,
+        same reasoning as the list/create views above.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RecurringExpenseUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RecurringExpenseUpdateRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurringExpenseUpdate'
+          description: ''
+    patch:
+      operationId: expenses_recurring_partial_update
+      description: |-
+        GET/PATCH/DELETE /api/expenses/recurring/{id}/ — not nested under a
+        friendship/group path, matching how ExpenseDetailView/GroupInvitation
+        detail actions address by id alone. Visible to any currently-active
+        participant of either scope (broad); edit/delete permission
+        (narrower — depends on scope, see
+        services._require_recurring_manage_permission) is enforced in the
+        service layer, same 403-vs-404 split as ExpenseDetailView. Multipart,
+        same reasoning as the list/create views above.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedRecurringExpenseUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedRecurringExpenseUpdateRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurringExpenseUpdate'
+          description: ''
+    delete:
+      operationId: expenses_recurring_destroy
+      description: |-
+        GET/PATCH/DELETE /api/expenses/recurring/{id}/ — not nested under a
+        friendship/group path, matching how ExpenseDetailView/GroupInvitation
+        detail actions address by id alone. Visible to any currently-active
+        participant of either scope (broad); edit/delete permission
+        (narrower — depends on scope, see
+        services._require_recurring_manage_permission) is enforced in the
+        service layer, same 403-vs-404 split as ExpenseDetailView. Multipart,
+        same reasoning as the list/create views above.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/expenses/settlements/{id}/:
+    get:
+      operationId: expenses_settlements_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SettlementRead'
+          description: ''
+  /api/expenses/settlements/{id}/cancel/:
+    post:
+      operationId: expenses_settlements_cancel_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/expenses/settlements/{id}/confirm/:
+    post:
+      operationId: expenses_settlements_confirm_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SettlementRead'
+          description: ''
+  /api/expenses/settlements/{id}/dispute/:
+    post:
+      operationId: expenses_settlements_dispute_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SettlementRead'
+          description: ''
+  /api/expenses/settlements/pending/:
+    get:
+      operationId: expenses_settlements_pending_list
+      description: |-
+        Settlements awaiting the current user's confirmation, across every
+        friendship/group — the settlement equivalent of GET
+        /api/ledger/invitations/: until push notifications exist (Phase 5),
+        the client polls this for a badge count.
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSettlementReadList'
+          description: ''
+  /api/expenses/wallet/:
+    get:
+      operationId: expenses_wallet_list
+      description: |-
+        GET /api/expenses/wallet/?tab=receivables|payables&type=all|people|group&sort=newest|oldest|highest|lowest
+        — every person and group the caller has a nonzero balance with,
+        combined and sorted. Not paginated: bounded by how many people/
+        groups someone actually has an open balance with, not by
+        transaction volume, so it stays small regardless of how long the
+        account's been active — unlike Expense history, which does need
+        cursor pagination. See services.wallet_list for what each row
+        contains and how the four sort orders/three filters work.
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WalletRow'
+          description: ''
+  /api/expenses/wallet/summary/:
+    get:
+      operationId: expenses_wallet_summary_retrieve
+      description: |-
+        GET /api/expenses/wallet/summary/ — the wallet home's three
+        summary cards (You will receive / You will pay / Net balance), all
+        in the caller's own currency.
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletSummary'
+          description: ''
+  /api/expenses/with/{user_id}/:
+    get:
+      operationId: expenses_with_retrieve
+      description: |-
+        GET /api/expenses/with/{user_id}/ — every ledger running between the
+        current user and one specific other person: the overall combined
+        balance (one row per currency, summed across every shared ledger —
+        the direct friendship plus every shared group; this is the ONLY
+        endpoint that shows this combined number — FriendshipBalanceView/
+        GroupBalanceView are each scoped to just their own single ledger)
+        plus the itemized breakdown of each individual ledger (every shared
+        group, plus the direct 1:1) that makes it up.
+      parameters:
+      - in: path
+        name: user_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserLedgersResponse'
+          description: ''
+  /api/ledger/friendships/:
+    get:
+      operationId: ledger_friendships_list
+      description: |-
+        GET lists the current user's friendships (paginated). POST
+        /api/ledger/friendships/ {"user_id": "..."} — idempotent: 201 if a
+        new Friendship was created, 200 if one already existed between these
+        two users. Never an error just because it already exists. Unlike group
+        membership, a direct 1:1 ledger is not consent-gated — see
+        docs/architecture/data-model.md for why this is a deliberate difference.
+
+        responses= above is set via extend_schema_view(post=...), not
+        @extend_schema on create() directly — ListCreateAPIView.post() is a
+        thin wrapper that calls self.create() internally, and drf-spectacular
+        resolves schema from the HTTP-verb method (post), not whatever it
+        delegates to, so decorating create() directly is silently ignored.
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - ledger
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedFriendshipList'
+          description: ''
+    post:
+      operationId: ledger_friendships_create
+      description: |-
+        GET lists the current user's friendships (paginated). POST
+        /api/ledger/friendships/ {"user_id": "..."} — idempotent: 201 if a
+        new Friendship was created, 200 if one already existed between these
+        two users. Never an error just because it already exists. Unlike group
+        membership, a direct 1:1 ledger is not consent-gated — see
+        docs/architecture/data-model.md for why this is a deliberate difference.
+
+        responses= above is set via extend_schema_view(post=...), not
+        @extend_schema on create() directly — ListCreateAPIView.post() is a
+        thin wrapper that calls self.create() internally, and drf-spectacular
+        resolves schema from the HTTP-verb method (post), not whatever it
+        delegates to, so decorating create() directly is silently ignored.
+      tags:
+      - ledger
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FriendshipStartRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FriendshipStartRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FriendshipStartRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Friendship'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Friendship'
+          description: ''
+  /api/ledger/friendships/{friendship_id}/block/:
+    post:
+      operationId: ledger_friendships_block_create
+      description: |-
+        POST /api/ledger/friendships/{id}/block/ — either party. Stops NEW
+        friendship-scoped expenses/settlements/recurring expenses (enforced in
+        apps.expenses.services); existing history, editing, and deleting are
+        untouched. See services.block_friendship.
+      parameters:
+      - in: path
+        name: friendship_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ledger
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Friendship'
+          description: ''
+  /api/ledger/friendships/{friendship_id}/exchange-rate/:
+    patch:
+      operationId: ledger_friendships_exchange_rate_partial_update
+      description: |-
+        PATCH /api/ledger/friendships/{id}/exchange-rate/ — either party
+        (no "creator" role persists on a Friendship to restrict this to, same
+        as block/unblock). Only valid while the two parties' currencies
+        actually differ — always adds a new CurrencyRate row (never mutates
+        one), so already-recorded expenses/settlements keep converting at
+        whatever rate was active when they were created — see
+        services.set_friendship_currency_rate.
+      parameters:
+      - in: path
+        name: friendship_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ledger
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedFriendshipExchangeRateUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedFriendshipExchangeRateUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedFriendshipExchangeRateUpdateRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Friendship'
+          description: ''
+  /api/ledger/friendships/{friendship_id}/unblock/:
+    post:
+      operationId: ledger_friendships_unblock_create
+      description: |-
+        POST /api/ledger/friendships/{id}/unblock/ — either party, not just
+        whoever blocked it. See services.unblock_friendship.
+      parameters:
+      - in: path
+        name: friendship_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ledger
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Friendship'
+          description: ''
+  /api/ledger/groups/:
+    get:
+      operationId: ledger_groups_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - ledger
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedGroupList'
+          description: ''
+    post:
+      operationId: ledger_groups_create
+      tags:
+      - ledger
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GroupRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GroupRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+          description: ''
+  /api/ledger/groups/{group_id}/currency-rates/:
+    post:
+      operationId: ledger_groups_currency_rates_create
+      description: |-
+        POST /api/ledger/groups/{id}/currency-rates/ — admin-only. Sets or
+        edits the rate for one foreign currency in this group; always a new
+        CurrencyRate row, never a mutation, so already-recorded expenses/
+        settlements keep converting at whatever rate was active when they
+        were created — see services.set_group_currency_rate.
+      parameters:
+      - in: path
+        name: group_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ledger
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupCurrencyRateSetRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GroupCurrencyRateSetRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GroupCurrencyRateSetRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+          description: ''
+  /api/ledger/groups/{group_id}/currency-rates/{currency}/:
+    delete:
+      operationId: ledger_groups_currency_rates_destroy
+      description: |-
+        DELETE /api/ledger/groups/{id}/currency-rates/{currency}/ —
+        admin-only. Blocked while any active member still uses this
+        currency — see services.remove_group_currency_rate.
+      parameters:
+      - in: path
+        name: currency
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: group_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ledger
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+          description: ''
+  /api/ledger/groups/{group_id}/invitations/:
+    post:
+      operationId: ledger_groups_invitations_create
+      description: |-
+        POST /api/ledger/groups/{id}/invitations/ — admin-only. Invites
+        existing users; each becomes a pending GroupInvitation, not an
+        immediate member — see apps/ledger/services.py for why.
+      parameters:
+      - in: path
+        name: group_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ledger
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteMembersRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InviteMembersRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InviteMembersRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+          description: ''
+  /api/ledger/groups/{group_id}/invitations/{invitation_id}/cancel/:
+    post:
+      operationId: ledger_groups_invitations_cancel_create
+      description: |-
+        POST /api/ledger/groups/{group_id}/invitations/{invitation_id}/cancel/
+        — admin withdraws a pending invitation before the invitee responds.
+      parameters:
+      - in: path
+        name: group_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: invitation_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ledger
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+          description: ''
+  /api/ledger/groups/{group_id}/leave/:
+    post:
+      operationId: ledger_groups_leave_create
+      description: |-
+        POST /api/ledger/groups/{id}/leave/ — self-service, blocked if you're
+        the owner and other members remain (transfer ownership first).
+      parameters:
+      - in: path
+        name: group_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ledger
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/ledger/groups/{group_id}/members/{user_id}/make-admin/:
+    post:
+      operationId: ledger_groups_members_make_admin_create
+      description: POST /api/ledger/groups/{id}/members/{user_id}/make-admin/ — admin-only.
+      parameters:
+      - in: path
+        name: group_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: user_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ledger
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+          description: ''
+  /api/ledger/groups/{group_id}/members/{user_id}/remove/:
+    post:
+      operationId: ledger_groups_members_remove_create
+      description: POST /api/ledger/groups/{id}/members/{user_id}/remove/ — admin-only.
+      parameters:
+      - in: path
+        name: group_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: user_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ledger
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+          description: ''
+  /api/ledger/groups/{group_id}/members/{user_id}/remove-admin/:
+    post:
+      operationId: ledger_groups_members_remove_admin_create
+      description: |-
+        POST /api/ledger/groups/{id}/members/{user_id}/remove-admin/ —
+        admin-only. Demotes an admin to member; the owner is never a valid
+        target (see services.remove_admin).
+      parameters:
+      - in: path
+        name: group_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: user_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ledger
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+          description: ''
+  /api/ledger/groups/{group_id}/members/{user_id}/transfer-ownership/:
+    post:
+      operationId: ledger_groups_members_transfer_ownership_create
+      description: |-
+        POST /api/ledger/groups/{id}/members/{user_id}/transfer-ownership/ —
+        owner-only, not admin-only (see services.transfer_ownership).
+      parameters:
+      - in: path
+        name: group_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: user_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ledger
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+          description: ''
+  /api/ledger/groups/{id}/:
+    get:
+      operationId: ledger_groups_retrieve
+      description: |-
+        GET retrieves. PATCH updates name/description/image/
+        smart_settle_enabled (admin-only — currency/category are
+        deliberately not editable here, see services.update_group). DELETE
+        dissolves the group — owner-only, requires every member's balance to
+        already be zero — see apps.expenses.services.delete_group (lives
+        there, not here, since it needs to clear the group's Expense/
+        Settlement/RecurringExpense history and end every membership, both
+        of which live above `ledger` in this app's dependency direction).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ledger
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+          description: ''
+    put:
+      operationId: ledger_groups_update
+      description: |-
+        GET retrieves. PATCH updates name/description/image/
+        smart_settle_enabled (admin-only — currency/category are
+        deliberately not editable here, see services.update_group). DELETE
+        dissolves the group — owner-only, requires every member's balance to
+        already be zero — see apps.expenses.services.delete_group (lives
+        there, not here, since it needs to clear the group's Expense/
+        Settlement/RecurringExpense history and end every membership, both
+        of which live above `ledger` in this app's dependency direction).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ledger
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GroupUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GroupUpdateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupUpdate'
+          description: ''
+    patch:
+      operationId: ledger_groups_partial_update
+      description: |-
+        GET retrieves. PATCH updates name/description/image/
+        smart_settle_enabled (admin-only — currency/category are
+        deliberately not editable here, see services.update_group). DELETE
+        dissolves the group — owner-only, requires every member's balance to
+        already be zero — see apps.expenses.services.delete_group (lives
+        there, not here, since it needs to clear the group's Expense/
+        Settlement/RecurringExpense history and end every membership, both
+        of which live above `ledger` in this app's dependency direction).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ledger
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedGroupUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedGroupUpdateRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupUpdate'
+          description: ''
+    delete:
+      operationId: ledger_groups_destroy
+      description: |-
+        GET retrieves. PATCH updates name/description/image/
+        smart_settle_enabled (admin-only — currency/category are
+        deliberately not editable here, see services.update_group). DELETE
+        dissolves the group — owner-only, requires every member's balance to
+        already be zero — see apps.expenses.services.delete_group (lives
+        there, not here, since it needs to clear the group's Expense/
+        Settlement/RecurringExpense history and end every membership, both
+        of which live above `ledger` in this app's dependency direction).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ledger
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/ledger/invitations/:
+    get:
+      operationId: ledger_invitations_list
+      description: |-
+        GET /api/ledger/invitations/ — invitations sent TO the current user,
+        pending ones first for the badge/notification-style UI.
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - ledger
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedGroupInvitationList'
+          description: ''
+  /api/ledger/invitations/{invitation_id}/accept/:
+    post:
+      operationId: ledger_invitations_accept_create
+      description: |-
+        POST /api/ledger/invitations/{id}/accept/ — creates the membership
+        and Friendships with current active members. See services.accept_invitation.
+      parameters:
+      - in: path
+        name: invitation_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ledger
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupInvitation'
+          description: ''
+  /api/ledger/invitations/{invitation_id}/decline/:
+    post:
+      operationId: ledger_invitations_decline_create
+      description: |-
+        POST /api/ledger/invitations/{id}/decline/ — no membership, no
+        Friendship; the invitation just stops being pending.
+      parameters:
+      - in: path
+        name: invitation_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ledger
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupInvitation'
+          description: ''
+  /api/support/issues/:
+    get:
+      operationId: support_issues_list
+      tags:
+      - support
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IssueReport'
+          description: ''
+    post:
+      operationId: support_issues_create
+      tags:
+      - support
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/IssueReportRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/IssueReportRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueReport'
+          description: ''
+  /api/support/issues/{id}/:
+    get:
+      operationId: support_issues_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - support
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueReport'
+          description: ''
+components:
+  schemas:
+    BlankEnum:
+      enum:
+      - ''
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        icon:
+          type: string
+          maxLength: 50
+        color:
+          type: string
+          maxLength: 7
+        is_system:
+          type: boolean
+          readOnly: true
+        owner:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - color
+      - created_at
+      - icon
+      - id
+      - is_system
+      - name
+      - owner
+    CategoryBreakdownItem:
+      type: object
+      properties:
+        category:
+          $ref: '#/components/schemas/Category'
+        total:
+          type: string
+          readOnly: true
+        percentage:
+          type: number
+          format: double
+      required:
+      - category
+      - percentage
+      - total
+    CategoryBudgetItem:
+      type: object
+      description: |-
+        One row of GET /api/expenses/my-expenses/category-budgets/ —
+        `limit_amount`/`used_percentage` are null when that category has no
+        CategoryBudget row (spent still shown, matching the "Fuel — no
+        limit" state in the product's own mockup). `spent` is a
+        SerializerMethodField, not plain CharField, for the same
+        currency-conversion-precision reason as MyExpensesSummarySerializer.
+      properties:
+        category:
+          $ref: '#/components/schemas/Category'
+        spent:
+          type: string
+          readOnly: true
+        limit_amount:
+          type: string
+          nullable: true
+          readOnly: true
+        used_percentage:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - category
+      - limit_amount
+      - spent
+      - used_percentage
+    CategoryBudgetSetRequest:
+      type: object
+      properties:
+        limit_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+      required:
+      - limit_amount
+    CategoryBudgetsOverview:
+      type: object
+      properties:
+        period_start:
+          type: string
+          format: date
+        period_end:
+          type: string
+          format: date
+        resets_on:
+          type: string
+          format: date
+        currency:
+          type: string
+        total_budget:
+          type: string
+          readOnly: true
+        total_spent:
+          type: string
+          readOnly: true
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryBudgetItem'
+      required:
+      - categories
+      - currency
+      - period_end
+      - period_start
+      - resets_on
+      - total_budget
+      - total_spent
+    CategoryEnum:
+      enum:
+      - friends
+      - family
+      - colleague
+      - roommate
+      - classmate
+      - travel
+      - business
+      - other
+      type: string
+      description: |-
+        * `friends` - Friends
+        * `family` - Family
+        * `colleague` - Colleague
+        * `roommate` - Roommate
+        * `classmate` - Classmate
+        * `travel` - Travel
+        * `business` - Business
+        * `other` - Other
+    CategoryReorderRequest:
+      type: object
+      properties:
+        category_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 200
+      required:
+      - category_ids
+    CategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        icon:
+          type: string
+          minLength: 1
+          maxLength: 50
+        color:
+          type: string
+          minLength: 1
+          maxLength: 7
+      required:
+      - color
+      - icon
+      - name
+    Contact:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        phone_number:
+          type: string
+          readOnly: true
+        display_name:
+          type: string
+          maxLength: 150
+        is_on_lain_dain:
+          type: boolean
+          readOnly: true
+        lain_dain_user_id:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - display_name
+      - id
+      - is_on_lain_dain
+      - lain_dain_user_id
+      - phone_number
+    ContactSyncItemRequest:
+      type: object
+      properties:
+        phone_number:
+          type: string
+          minLength: 1
+        display_name:
+          type: string
+          minLength: 1
+          maxLength: 150
+      required:
+      - display_name
+      - phone_number
+    ContactSyncRequestRequest:
+      type: object
+      properties:
+        contacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContactSyncItemRequest'
+      required:
+      - contacts
+    ContactSyncResult:
+      type: object
+      properties:
+        synced_count:
+          type: integer
+      required:
+      - synced_count
+    CountryEnum:
+      enum:
+      - AF
+      - AX
+      - AL
+      - DZ
+      - AS
+      - AD
+      - AO
+      - AI
+      - AQ
+      - AG
+      - AR
+      - AM
+      - AW
+      - AU
+      - AT
+      - AZ
+      - BS
+      - BH
+      - BD
+      - BB
+      - BY
+      - BE
+      - BZ
+      - BJ
+      - BM
+      - BT
+      - BO
+      - BQ
+      - BA
+      - BW
+      - BV
+      - BR
+      - IO
+      - BN
+      - BG
+      - BF
+      - BI
+      - CV
+      - KH
+      - CM
+      - CA
+      - KY
+      - CF
+      - TD
+      - CL
+      - CN
+      - CX
+      - CC
+      - CO
+      - KM
+      - CG
+      - CK
+      - CR
+      - CI
+      - HR
+      - CU
+      - CW
+      - CY
+      - CZ
+      - CD
+      - DK
+      - DJ
+      - DM
+      - DO
+      - EC
+      - EG
+      - SV
+      - GQ
+      - ER
+      - EE
+      - SZ
+      - ET
+      - FK
+      - FO
+      - FJ
+      - FI
+      - FR
+      - GF
+      - PF
+      - TF
+      - GA
+      - GM
+      - GE
+      - DE
+      - GH
+      - GI
+      - GR
+      - GL
+      - GD
+      - GP
+      - GU
+      - GT
+      - GG
+      - GN
+      - GW
+      - GY
+      - HT
+      - HM
+      - HN
+      - HK
+      - HU
+      - IS
+      - IN
+      - ID
+      - IR
+      - IQ
+      - IE
+      - IM
+      - IL
+      - IT
+      - JM
+      - JP
+      - JE
+      - JO
+      - KZ
+      - KE
+      - KI
+      - KW
+      - KG
+      - LA
+      - LV
+      - LB
+      - LS
+      - LR
+      - LY
+      - LI
+      - LT
+      - LU
+      - MO
+      - MG
+      - MW
+      - MY
+      - MV
+      - ML
+      - MT
+      - MH
+      - MQ
+      - MR
+      - MU
+      - YT
+      - MX
+      - FM
+      - MD
+      - MC
+      - MN
+      - ME
+      - MS
+      - MA
+      - MZ
+      - MM
+      - NA
+      - NR
+      - NP
+      - NL
+      - NC
+      - NZ
+      - NI
+      - NE
+      - NG
+      - NU
+      - NF
+      - KP
+      - MK
+      - MP
+      - 'NO'
+      - OM
+      - PK
+      - PW
+      - PS
+      - PA
+      - PG
+      - PY
+      - PE
+      - PH
+      - PN
+      - PL
+      - PT
+      - PR
+      - QA
+      - RE
+      - RO
+      - RU
+      - RW
+      - BL
+      - SH
+      - KN
+      - LC
+      - MF
+      - PM
+      - VC
+      - WS
+      - SM
+      - ST
+      - SA
+      - SN
+      - RS
+      - SC
+      - SL
+      - SG
+      - SX
+      - SK
+      - SI
+      - SB
+      - SO
+      - ZA
+      - GS
+      - KR
+      - SS
+      - ES
+      - LK
+      - SD
+      - SR
+      - SJ
+      - SE
+      - CH
+      - SY
+      - TW
+      - TJ
+      - TZ
+      - TH
+      - TL
+      - TG
+      - TK
+      - TO
+      - TT
+      - TN
+      - TR
+      - TM
+      - TC
+      - TV
+      - UG
+      - UA
+      - AE
+      - GB
+      - UM
+      - US
+      - UY
+      - UZ
+      - VU
+      - VA
+      - VE
+      - VN
+      - VG
+      - VI
+      - WF
+      - EH
+      - YE
+      - ZM
+      - ZW
+      type: string
+      description: |-
+        * `AF` - Afghanistan
+        * `AX` - Åland Islands
+        * `AL` - Albania
+        * `DZ` - Algeria
+        * `AS` - American Samoa
+        * `AD` - Andorra
+        * `AO` - Angola
+        * `AI` - Anguilla
+        * `AQ` - Antarctica
+        * `AG` - Antigua and Barbuda
+        * `AR` - Argentina
+        * `AM` - Armenia
+        * `AW` - Aruba
+        * `AU` - Australia
+        * `AT` - Austria
+        * `AZ` - Azerbaijan
+        * `BS` - Bahamas (The)
+        * `BH` - Bahrain
+        * `BD` - Bangladesh
+        * `BB` - Barbados
+        * `BY` - Belarus
+        * `BE` - Belgium
+        * `BZ` - Belize
+        * `BJ` - Benin
+        * `BM` - Bermuda
+        * `BT` - Bhutan
+        * `BO` - Bolivia
+        * `BQ` - Bonaire, Sint Eustatius and Saba
+        * `BA` - Bosnia and Herzegovina
+        * `BW` - Botswana
+        * `BV` - Bouvet Island
+        * `BR` - Brazil
+        * `IO` - British Indian Ocean Territory
+        * `BN` - Brunei
+        * `BG` - Bulgaria
+        * `BF` - Burkina Faso
+        * `BI` - Burundi
+        * `CV` - Cabo Verde
+        * `KH` - Cambodia
+        * `CM` - Cameroon
+        * `CA` - Canada
+        * `KY` - Cayman Islands
+        * `CF` - Central African Republic
+        * `TD` - Chad
+        * `CL` - Chile
+        * `CN` - China
+        * `CX` - Christmas Island
+        * `CC` - Cocos (Keeling) Islands
+        * `CO` - Colombia
+        * `KM` - Comoros
+        * `CG` - Congo
+        * `CK` - Cook Islands
+        * `CR` - Costa Rica
+        * `CI` - Côte d'Ivoire
+        * `HR` - Croatia
+        * `CU` - Cuba
+        * `CW` - Curaçao
+        * `CY` - Cyprus
+        * `CZ` - Czechia
+        * `CD` - Democratic Republic of the Congo
+        * `DK` - Denmark
+        * `DJ` - Djibouti
+        * `DM` - Dominica
+        * `DO` - Dominican Republic
+        * `EC` - Ecuador
+        * `EG` - Egypt
+        * `SV` - El Salvador
+        * `GQ` - Equatorial Guinea
+        * `ER` - Eritrea
+        * `EE` - Estonia
+        * `SZ` - Eswatini
+        * `ET` - Ethiopia
+        * `FK` - Falkland Islands (Malvinas)
+        * `FO` - Faroe Islands
+        * `FJ` - Fiji
+        * `FI` - Finland
+        * `FR` - France
+        * `GF` - French Guiana
+        * `PF` - French Polynesia
+        * `TF` - French Southern Territories
+        * `GA` - Gabon
+        * `GM` - Gambia
+        * `GE` - Georgia
+        * `DE` - Germany
+        * `GH` - Ghana
+        * `GI` - Gibraltar
+        * `GR` - Greece
+        * `GL` - Greenland
+        * `GD` - Grenada
+        * `GP` - Guadeloupe
+        * `GU` - Guam
+        * `GT` - Guatemala
+        * `GG` - Guernsey
+        * `GN` - Guinea
+        * `GW` - Guinea-Bissau
+        * `GY` - Guyana
+        * `HT` - Haiti
+        * `HM` - Heard Island and McDonald Islands
+        * `HN` - Honduras
+        * `HK` - Hong Kong
+        * `HU` - Hungary
+        * `IS` - Iceland
+        * `IN` - India
+        * `ID` - Indonesia
+        * `IR` - Iran
+        * `IQ` - Iraq
+        * `IE` - Ireland
+        * `IM` - Isle of Man
+        * `IL` - Israel
+        * `IT` - Italy
+        * `JM` - Jamaica
+        * `JP` - Japan
+        * `JE` - Jersey
+        * `JO` - Jordan
+        * `KZ` - Kazakhstan
+        * `KE` - Kenya
+        * `KI` - Kiribati
+        * `KW` - Kuwait
+        * `KG` - Kyrgyzstan
+        * `LA` - Laos
+        * `LV` - Latvia
+        * `LB` - Lebanon
+        * `LS` - Lesotho
+        * `LR` - Liberia
+        * `LY` - Libya
+        * `LI` - Liechtenstein
+        * `LT` - Lithuania
+        * `LU` - Luxembourg
+        * `MO` - Macao
+        * `MG` - Madagascar
+        * `MW` - Malawi
+        * `MY` - Malaysia
+        * `MV` - Maldives
+        * `ML` - Mali
+        * `MT` - Malta
+        * `MH` - Marshall Islands
+        * `MQ` - Martinique
+        * `MR` - Mauritania
+        * `MU` - Mauritius
+        * `YT` - Mayotte
+        * `MX` - Mexico
+        * `FM` - Micronesia
+        * `MD` - Moldova
+        * `MC` - Monaco
+        * `MN` - Mongolia
+        * `ME` - Montenegro
+        * `MS` - Montserrat
+        * `MA` - Morocco
+        * `MZ` - Mozambique
+        * `MM` - Myanmar
+        * `NA` - Namibia
+        * `NR` - Nauru
+        * `NP` - Nepal
+        * `NL` - Netherlands
+        * `NC` - New Caledonia
+        * `NZ` - New Zealand
+        * `NI` - Nicaragua
+        * `NE` - Niger
+        * `NG` - Nigeria
+        * `NU` - Niue
+        * `NF` - Norfolk Island
+        * `KP` - North Korea
+        * `MK` - North Macedonia
+        * `MP` - Northern Mariana Islands
+        * `NO` - Norway
+        * `OM` - Oman
+        * `PK` - Pakistan
+        * `PW` - Palau
+        * `PS` - Palestine
+        * `PA` - Panama
+        * `PG` - Papua New Guinea
+        * `PY` - Paraguay
+        * `PE` - Peru
+        * `PH` - Philippines
+        * `PN` - Pitcairn
+        * `PL` - Poland
+        * `PT` - Portugal
+        * `PR` - Puerto Rico
+        * `QA` - Qatar
+        * `RE` - Réunion
+        * `RO` - Romania
+        * `RU` - Russia
+        * `RW` - Rwanda
+        * `BL` - Saint Barthélemy
+        * `SH` - Saint Helena
+        * `KN` - Saint Kitts and Nevis
+        * `LC` - Saint Lucia
+        * `MF` - Saint Martin (French part)
+        * `PM` - Saint Pierre and Miquelon
+        * `VC` - Saint Vincent and the Grenadines
+        * `WS` - Samoa
+        * `SM` - San Marino
+        * `ST` - Sao Tome and Principe
+        * `SA` - Saudi Arabia
+        * `SN` - Senegal
+        * `RS` - Serbia
+        * `SC` - Seychelles
+        * `SL` - Sierra Leone
+        * `SG` - Singapore
+        * `SX` - Sint Maarten (Dutch part)
+        * `SK` - Slovakia
+        * `SI` - Slovenia
+        * `SB` - Solomon Islands
+        * `SO` - Somalia
+        * `ZA` - South Africa
+        * `GS` - South Georgia
+        * `KR` - South Korea
+        * `SS` - South Sudan
+        * `ES` - Spain
+        * `LK` - Sri Lanka
+        * `SD` - Sudan
+        * `SR` - Suriname
+        * `SJ` - Svalbard and Jan Mayen
+        * `SE` - Sweden
+        * `CH` - Switzerland
+        * `SY` - Syria
+        * `TW` - Taiwan
+        * `TJ` - Tajikistan
+        * `TZ` - Tanzania
+        * `TH` - Thailand
+        * `TL` - Timor-Leste
+        * `TG` - Togo
+        * `TK` - Tokelau
+        * `TO` - Tonga
+        * `TT` - Trinidad and Tobago
+        * `TN` - Tunisia
+        * `TR` - Türkiye
+        * `TM` - Turkmenistan
+        * `TC` - Turks and Caicos Islands
+        * `TV` - Tuvalu
+        * `UG` - Uganda
+        * `UA` - Ukraine
+        * `AE` - United Arab Emirates
+        * `GB` - United Kingdom
+        * `UM` - United States Minor Outlying Islands
+        * `US` - United States of America
+        * `UY` - Uruguay
+        * `UZ` - Uzbekistan
+        * `VU` - Vanuatu
+        * `VA` - Vatican City
+        * `VE` - Venezuela
+        * `VN` - Vietnam
+        * `VG` - Virgin Islands (British)
+        * `VI` - Virgin Islands (U.S.)
+        * `WF` - Wallis and Futuna
+        * `EH` - Western Sahara
+        * `YE` - Yemen
+        * `ZM` - Zambia
+        * `ZW` - Zimbabwe
+    CreatedViaEnum:
+      enum:
+      - manual
+      - group
+      type: string
+      description: |-
+        * `manual` - Manual
+        * `group` - Group
+    DirectionEnum:
+      enum:
+      - owed_to_you
+      - you_owe
+      - settled
+      type: string
+      description: |-
+        * `owed_to_you` - owed_to_you
+        * `you_owe` - you_owe
+        * `settled` - settled
+    ErrorDetail:
+      type: object
+      properties:
+        detail:
+          type: string
+      required:
+      - detail
+    ExpenseContextEnum:
+      enum:
+      - personal
+      - friendship
+      - group
+      type: string
+      description: |-
+        * `personal` - Personal
+        * `friendship` - Friendship
+        * `group` - Group
+    ExpenseCreate:
+      type: object
+      description: |-
+        For friendship and group expenses. `context`/`friendship`/`group` are
+        not fields — they come from the URL, supplied by the view via
+        self.context. The view's parser_classes are multipart-only (no
+        JSONParser — see _ExpenseListCreateBase), so `payers`/`splits` always
+        arrive as a JSON-encoded string, not a native JSON array; they're
+        declared as JSONField (not CharField) since that's what correctly
+        parses a JSON string into Python on `to_internal_value`.
+      properties:
+        description:
+          type: string
+          maxLength: 255
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        date:
+          type: string
+          format: date
+        category_id:
+          type: string
+          format: uuid
+        note:
+          type: string
+          default: ''
+        receipt:
+          type: string
+          format: uri
+          nullable: true
+        split_type:
+          $ref: '#/components/schemas/SplitTypeEnum'
+        payers:
+          description: 'JSON-encoded string (this is a multipart form, so it travels
+            as text): a list of {"user_id": "<uuid>", "amount": "<decimal>"} — one
+            entry per payer, "amount" values must sum exactly to the expense "amount".
+            A single payer is just a one-item list. Example: [{"user_id": "5b1f...",
+            "amount": "1000.00"}]'
+        splits:
+          description: 'JSON-encoded string: a list with one entry per participant,
+            shape depends on split_type. equal: [{"user_id": "..."}]. unequal: [{"user_id":
+            "...", "amount_owed": "300.00"}] — amount_owed values must sum exactly
+            to the expense "amount". adjustment: [{"user_id": "...", "extra_amount":
+            "200.00"}, {"user_id": "..."}] — extra_amount defaults to 0, the remaining
+            amount after all extras is split evenly across everyone.'
+      required:
+      - amount
+      - category_id
+      - description
+      - payers
+      - split_type
+      - splits
+    ExpenseCreateRequest:
+      type: object
+      description: |-
+        For friendship and group expenses. `context`/`friendship`/`group` are
+        not fields — they come from the URL, supplied by the view via
+        self.context. The view's parser_classes are multipart-only (no
+        JSONParser — see _ExpenseListCreateBase), so `payers`/`splits` always
+        arrive as a JSON-encoded string, not a native JSON array; they're
+        declared as JSONField (not CharField) since that's what correctly
+        parses a JSON string into Python on `to_internal_value`.
+      properties:
+        description:
+          type: string
+          minLength: 1
+          maxLength: 255
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        date:
+          type: string
+          format: date
+        category_id:
+          type: string
+          format: uuid
+        note:
+          type: string
+          default: ''
+        receipt:
+          type: string
+          format: binary
+          nullable: true
+        split_type:
+          $ref: '#/components/schemas/SplitTypeEnum'
+        payers:
+          description: 'JSON-encoded string (this is a multipart form, so it travels
+            as text): a list of {"user_id": "<uuid>", "amount": "<decimal>"} — one
+            entry per payer, "amount" values must sum exactly to the expense "amount".
+            A single payer is just a one-item list. Example: [{"user_id": "5b1f...",
+            "amount": "1000.00"}]'
+        splits:
+          description: 'JSON-encoded string: a list with one entry per participant,
+            shape depends on split_type. equal: [{"user_id": "..."}]. unequal: [{"user_id":
+            "...", "amount_owed": "300.00"}] — amount_owed values must sum exactly
+            to the expense "amount". adjustment: [{"user_id": "...", "extra_amount":
+            "200.00"}, {"user_id": "..."}] — extra_amount defaults to 0, the remaining
+            amount after all extras is split evenly across everyone.'
+      required:
+      - amount
+      - category_id
+      - description
+      - payers
+      - split_type
+      - splits
+    ExpensePayerRead:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        full_name:
+          type: string
+        phone_number:
+          type: string
+        image:
+          type: string
+          nullable: true
+        amount:
+          type: string
+      required:
+      - amount
+      - full_name
+      - id
+      - image
+      - phone_number
+    ExpenseRead:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        context:
+          $ref: '#/components/schemas/ExpenseContextEnum'
+        friendship:
+          type: string
+          format: uuid
+          nullable: true
+        group:
+          type: string
+          format: uuid
+          nullable: true
+        added_by:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          readOnly: true
+        description:
+          type: string
+          maxLength: 255
+        amount:
+          type: string
+          readOnly: true
+        currency:
+          type: string
+          readOnly: true
+        date:
+          type: string
+          format: date
+        category:
+          allOf:
+          - $ref: '#/components/schemas/Category'
+          readOnly: true
+        note:
+          type: string
+        receipt:
+          type: string
+          format: uri
+          nullable: true
+        split_type:
+          $ref: '#/components/schemas/SplitTypeEnum'
+        payers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpensePayerRead'
+          readOnly: true
+        splits:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpenseSplitRead'
+          readOnly: true
+        edited_at:
+          type: string
+          format: date-time
+          nullable: true
+        recurring_source:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - added_by
+      - amount
+      - category
+      - context
+      - created_at
+      - currency
+      - date
+      - description
+      - id
+      - payers
+      - split_type
+      - splits
+    ExpenseSplitRead:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        full_name:
+          type: string
+        phone_number:
+          type: string
+        image:
+          type: string
+          nullable: true
+        amount_owed:
+          type: string
+        extra_amount:
+          type: string
+      required:
+      - amount_owed
+      - extra_amount
+      - full_name
+      - id
+      - image
+      - phone_number
+    ExpenseUpdate:
+      type: object
+      description: |-
+        All fields optional (PATCH semantics). For a friendship/group expense,
+        `amount`/`split_type`/`payers`/`splits` must be provided all-together-
+        or-not-at-all — that invariant (a recompute-soundness rule, not a
+        shape rule) is enforced in services.update_expense, not here. For a
+        personal expense, `amount` alone is enough (split_type/payers/splits
+        are meaningless there and services.update_expense rejects them
+        outright if sent, same as on create).
+      properties:
+        description:
+          type: string
+          maxLength: 255
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        date:
+          type: string
+          format: date
+        category_id:
+          type: string
+          format: uuid
+        note:
+          type: string
+        receipt:
+          type: string
+          format: uri
+          nullable: true
+        remove_receipt:
+          type: boolean
+          default: false
+        split_type:
+          $ref: '#/components/schemas/SplitTypeEnum'
+        payers:
+          description: 'JSON-encoded string: a list of {"user_id": "<uuid>", "amount":
+            "<decimal>"}. Required together with amount/split_type/splits if changing
+            any of them — see the class docstring.'
+        splits:
+          description: JSON-encoded string, shape depends on split_type — see ExpenseCreateSerializer.splits
+            for the exact per-split_type shape. Required together with amount/split_type/payers
+            if changing any of them.
+    ExpenseUpdateRequest:
+      type: object
+      description: |-
+        All fields optional (PATCH semantics). For a friendship/group expense,
+        `amount`/`split_type`/`payers`/`splits` must be provided all-together-
+        or-not-at-all — that invariant (a recompute-soundness rule, not a
+        shape rule) is enforced in services.update_expense, not here. For a
+        personal expense, `amount` alone is enough (split_type/payers/splits
+        are meaningless there and services.update_expense rejects them
+        outright if sent, same as on create).
+      properties:
+        description:
+          type: string
+          minLength: 1
+          maxLength: 255
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        date:
+          type: string
+          format: date
+        category_id:
+          type: string
+          format: uuid
+        note:
+          type: string
+        receipt:
+          type: string
+          format: binary
+          nullable: true
+        remove_receipt:
+          type: boolean
+          default: false
+        split_type:
+          $ref: '#/components/schemas/SplitTypeEnum'
+        payers:
+          description: 'JSON-encoded string: a list of {"user_id": "<uuid>", "amount":
+            "<decimal>"}. Required together with amount/split_type/splits if changing
+            any of them — see the class docstring.'
+        splits:
+          description: JSON-encoded string, shape depends on split_type — see ExpenseCreateSerializer.splits
+            for the exact per-split_type shape. Required together with amount/split_type/payers
+            if changing any of them.
+    FrequencyEnum:
+      enum:
+      - weekly
+      - monthly
+      type: string
+      description: |-
+        * `weekly` - Weekly
+        * `monthly` - Monthly
+    FriendInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        full_name:
+          type: string
+        phone_number:
+          type: string
+        image:
+          type: string
+          nullable: true
+      required:
+      - full_name
+      - id
+      - image
+      - phone_number
+    Friendship:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        friend:
+          allOf:
+          - $ref: '#/components/schemas/FriendInfo'
+          readOnly: true
+        created_via:
+          $ref: '#/components/schemas/CreatedViaEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        created:
+          type: boolean
+          nullable: true
+          readOnly: true
+        is_blocked:
+          type: boolean
+          readOnly: true
+        blocked_by_me:
+          type: boolean
+          readOnly: true
+        currency:
+          type: string
+          nullable: true
+          maxLength: 3
+        exchange_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,6})?$
+          nullable: true
+          readOnly: true
+      required:
+      - blocked_by_me
+      - created
+      - created_at
+      - created_via
+      - exchange_rate
+      - friend
+      - id
+      - is_blocked
+    FriendshipSettlementCreate:
+      type: object
+      description: |-
+        For a 1:1 settlement — there's only ever one possible counterparty
+        (the friendship's other party), so unlike the group version this
+        takes a single `amount` rather than an `entries` list. Still returns
+        a list from create() (of exactly one Settlement) so the view can
+        serialize friendship and group creates the same way.
+      properties:
+        mode:
+          allOf:
+          - $ref: '#/components/schemas/ModeEnum'
+          description: |-
+            "pay": you're recording that you paid them (pending until they confirm). "receive": you're recording that they already paid you (confirmed immediately, no confirmation step).
+
+            * `pay` - Pay
+            * `receive` - Receive
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        method:
+          allOf:
+          - $ref: '#/components/schemas/MethodEnum'
+          default: cash
+        date:
+          type: string
+          format: date
+        note:
+          type: string
+          default: ''
+        receipt:
+          type: string
+          format: uri
+          nullable: true
+      required:
+      - amount
+      - mode
+    FriendshipSettlementCreateRequest:
+      type: object
+      description: |-
+        For a 1:1 settlement — there's only ever one possible counterparty
+        (the friendship's other party), so unlike the group version this
+        takes a single `amount` rather than an `entries` list. Still returns
+        a list from create() (of exactly one Settlement) so the view can
+        serialize friendship and group creates the same way.
+      properties:
+        mode:
+          allOf:
+          - $ref: '#/components/schemas/ModeEnum'
+          description: |-
+            "pay": you're recording that you paid them (pending until they confirm). "receive": you're recording that they already paid you (confirmed immediately, no confirmation step).
+
+            * `pay` - Pay
+            * `receive` - Receive
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        method:
+          allOf:
+          - $ref: '#/components/schemas/MethodEnum'
+          default: cash
+        date:
+          type: string
+          format: date
+        note:
+          type: string
+          default: ''
+        receipt:
+          type: string
+          format: binary
+          nullable: true
+      required:
+      - amount
+      - mode
+    FriendshipStartRequest:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        currency:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 3
+        exchange_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,6})?$
+          nullable: true
+      required:
+      - user_id
+    GenderEnum:
+      enum:
+      - male
+      - female
+      - other
+      type: string
+      description: |-
+        * `male` - Male
+        * `female` - Female
+        * `other` - Other
+    Group:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 150
+        description:
+          type: string
+          maxLength: 500
+        image:
+          type: string
+          format: uri
+          nullable: true
+        default_currency:
+          type: string
+          maxLength: 3
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+        smart_settle_enabled:
+          type: boolean
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupParticipant'
+          readOnly: true
+        currency_rates:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupCurrencyRate'
+          readOnly: true
+        created_by:
+          type: string
+          format: uuid
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - category
+      - created_at
+      - created_by
+      - currency_rates
+      - default_currency
+      - id
+      - members
+      - name
+    GroupCurrencyRate:
+      type: object
+      properties:
+        currency:
+          type: string
+          readOnly: true
+        rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,6})?$
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - currency
+      - rate
+    GroupCurrencyRateSetRequest:
+      type: object
+      properties:
+        currency:
+          type: string
+          minLength: 1
+          maxLength: 3
+        rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,6})?$
+      required:
+      - currency
+      - rate
+    GroupInvitation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        group:
+          allOf:
+          - $ref: '#/components/schemas/GroupSummary'
+          readOnly: true
+        invited_by:
+          allOf:
+          - $ref: '#/components/schemas/FriendInfo'
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/GroupInvitationStatusEnum'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        responded_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - created_at
+      - group
+      - id
+      - invited_by
+      - responded_at
+      - status
+    GroupInvitationStatusEnum:
+      enum:
+      - pending
+      - accepted
+      - declined
+      - cancelled
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `accepted` - Accepted
+        * `declined` - Declined
+        * `cancelled` - Cancelled
+    GroupParticipant:
+      type: object
+      description: |-
+        One entry per active member OR pending invitee — a group's participant
+        list is a merge of both, matching the app UI where a pending invite
+        shows inline in the member list with a "Pending" badge rather than
+        being a separate section. `role` is always populated, even for a
+        pending invitee: `accept_invitation()` unconditionally assigns `member`
+        on acceptance (there's no invite-as-admin path), so showing `"member"`
+        ahead of acceptance is a true statement about what they will become,
+        not a guess. Distinguish "confirmed" from "will become" via `status`,
+        not by `role` being null — an admin can still promote after they
+        accept, via the separate make-admin action.
+      properties:
+        id:
+          type: string
+          format: uuid
+        full_name:
+          type: string
+        phone_number:
+          type: string
+        image:
+          type: string
+          nullable: true
+        role:
+          type: string
+        status:
+          $ref: '#/components/schemas/GroupParticipantStatusEnum'
+      required:
+      - full_name
+      - id
+      - image
+      - phone_number
+      - role
+      - status
+    GroupParticipantStatusEnum:
+      enum:
+      - active
+      - pending
+      type: string
+      description: |-
+        * `active` - active
+        * `pending` - pending
+    GroupRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        description:
+          type: string
+          maxLength: 500
+        image:
+          type: string
+          format: binary
+          nullable: true
+        default_currency:
+          type: string
+          minLength: 1
+          maxLength: 3
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+        smart_settle_enabled:
+          type: boolean
+        member_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          writeOnly: true
+          maxItems: 200
+          minItems: 1
+        currency_rate_inputs:
+          type: string
+          writeOnly: true
+          description: 'JSON object mapping currency to rate, e.g. {"PKR": "270"}.'
+      required:
+      - category
+      - default_currency
+      - member_ids
+      - name
+    GroupSettlementCreate:
+      type: object
+      description: |-
+        For a group's "Settle Up" screen — one Confirm tap can pay/receive
+        from several members at once, so `entries` is a list, same
+        JSON-encoded-string-in-a-multipart-field shape as ExpenseCreateSerializer's
+        payers/splits (see its docstring for why: multipart fields are flat
+        text, this is the only way to send nested data through one).
+      properties:
+        mode:
+          allOf:
+          - $ref: '#/components/schemas/ModeEnum'
+          description: |-
+            "pay": you're recording that you paid every listed member (each stays pending until that member confirms). "receive": you're recording that every listed member already paid you (confirmed immediately, no confirmation step).
+
+            * `pay` - Pay
+            * `receive` - Receive
+        entries:
+          description: 'JSON-encoded string: a list of {"user_id": "<uuid>", "amount":
+            "<decimal>"} — one entry per person in this batch. A single-person settle-up
+            is just a one-item list.'
+        method:
+          allOf:
+          - $ref: '#/components/schemas/MethodEnum'
+          default: cash
+        date:
+          type: string
+          format: date
+        note:
+          type: string
+          default: ''
+        receipt:
+          type: string
+          format: uri
+          nullable: true
+      required:
+      - entries
+      - mode
+    GroupSettlementCreateRequest:
+      type: object
+      description: |-
+        For a group's "Settle Up" screen — one Confirm tap can pay/receive
+        from several members at once, so `entries` is a list, same
+        JSON-encoded-string-in-a-multipart-field shape as ExpenseCreateSerializer's
+        payers/splits (see its docstring for why: multipart fields are flat
+        text, this is the only way to send nested data through one).
+      properties:
+        mode:
+          allOf:
+          - $ref: '#/components/schemas/ModeEnum'
+          description: |-
+            "pay": you're recording that you paid every listed member (each stays pending until that member confirms). "receive": you're recording that every listed member already paid you (confirmed immediately, no confirmation step).
+
+            * `pay` - Pay
+            * `receive` - Receive
+        entries:
+          description: 'JSON-encoded string: a list of {"user_id": "<uuid>", "amount":
+            "<decimal>"} — one entry per person in this batch. A single-person settle-up
+            is just a one-item list.'
+        method:
+          allOf:
+          - $ref: '#/components/schemas/MethodEnum'
+          default: cash
+        date:
+          type: string
+          format: date
+        note:
+          type: string
+          default: ''
+        receipt:
+          type: string
+          format: binary
+          nullable: true
+      required:
+      - entries
+      - mode
+    GroupSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        image:
+          type: string
+          nullable: true
+      required:
+      - id
+      - image
+      - name
+    GroupUpdate:
+      type: object
+      description: |-
+        PATCH-only surface for a group: name/description/image/
+        smart_settle_enabled. Deliberately excludes member_ids (which
+        GroupSerializer requires on create) and currency/category (not
+        editable at all, see services.update_group) — a separate serializer
+        instead of reusing GroupSerializer so "update" can't accidentally
+        inherit create's required fields. Currency exchange rates are
+        managed separately (POST/DELETE .../currency-rates/), not through
+        this PATCH — see GroupCurrencyRateSetSerializer.
+      properties:
+        name:
+          type: string
+          maxLength: 150
+        description:
+          type: string
+          maxLength: 500
+        image:
+          type: string
+          format: uri
+          nullable: true
+        smart_settle_enabled:
+          type: boolean
+      required:
+      - name
+    GroupUpdateRequest:
+      type: object
+      description: |-
+        PATCH-only surface for a group: name/description/image/
+        smart_settle_enabled. Deliberately excludes member_ids (which
+        GroupSerializer requires on create) and currency/category (not
+        editable at all, see services.update_group) — a separate serializer
+        instead of reusing GroupSerializer so "update" can't accidentally
+        inherit create's required fields. Currency exchange rates are
+        managed separately (POST/DELETE .../currency-rates/), not through
+        this PATCH — see GroupCurrencyRateSetSerializer.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        description:
+          type: string
+          maxLength: 500
+        image:
+          type: string
+          format: binary
+          nullable: true
+        smart_settle_enabled:
+          type: boolean
+      required:
+      - name
+    InviteMembersRequest:
+      type: object
+      properties:
+        member_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 200
+          minItems: 1
+      required:
+      - member_ids
+    IssueReport:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        category:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        screenshot:
+          type: string
+          format: uri
+          nullable: true
+        contact_email:
+          nullable: true
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        status:
+          allOf:
+          - $ref: '#/components/schemas/IssueReportStatusEnum'
+          readOnly: true
+        resolved_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - category
+      - created_at
+      - description
+      - id
+      - resolved_at
+      - status
+    IssueReportRequest:
+      type: object
+      properties:
+        category:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        screenshot:
+          type: string
+          format: binary
+          nullable: true
+        contact_email:
+          nullable: true
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+      required:
+      - category
+      - description
+    IssueReportStatusEnum:
+      enum:
+      - open
+      - in_progress
+      - resolved
+      - closed
+      type: string
+      description: |-
+        * `open` - Open
+        * `in_progress` - In progress
+        * `resolved` - Resolved
+        * `closed` - Closed
+    MethodEnum:
+      enum:
+      - cash
+      - bank_transfer
+      - easypaisa
+      - jazzcash
+      - other
+      type: string
+      description: |-
+        * `cash` - Cash
+        * `bank_transfer` - Bank Transfer
+        * `easypaisa` - Easypaisa
+        * `jazzcash` - JazzCash
+        * `other` - Other
+    ModeEnum:
+      enum:
+      - pay
+      - receive
+      type: string
+      description: |-
+        * `pay` - Pay
+        * `receive` - Receive
+    MonthlyTrendItem:
+      type: object
+      properties:
+        year:
+          type: integer
+        month:
+          type: integer
+        period_start:
+          type: string
+          format: date
+        period_end:
+          type: string
+          format: date
+        total:
+          type: string
+          readOnly: true
+      required:
+      - month
+      - period_end
+      - period_start
+      - total
+      - year
+    MyExpenseItem:
+      type: object
+      description: |-
+        One row in the combined My Expenses feed — personal, friendship,
+        or group, whichever this Expense's own context is. `your_share` (not
+        the full expense amount) is this user's own ExpenseSplit.amount_owed,
+        in the expense's OWN currency (unconverted) — see
+        services._my_expenses_queryset. `payers` lets the client render "You
+        paid"/"X paid"/"Split payment" itself rather than the server
+        hardcoding one phrasing.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        context:
+          $ref: '#/components/schemas/ExpenseContextEnum'
+        friendship:
+          type: string
+          format: uuid
+          nullable: true
+        group:
+          type: object
+          additionalProperties: {}
+          nullable: true
+          readOnly: true
+        added_by:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          readOnly: true
+        description:
+          type: string
+          maxLength: 255
+        your_share:
+          type: string
+          readOnly: true
+        currency:
+          type: string
+          readOnly: true
+        date:
+          type: string
+          format: date
+        category:
+          allOf:
+          - $ref: '#/components/schemas/Category'
+          readOnly: true
+        payers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpensePayerRead'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - added_by
+      - category
+      - context
+      - created_at
+      - currency
+      - date
+      - description
+      - group
+      - id
+      - payers
+      - your_share
+    MyExpensesReport:
+      type: object
+      description: |-
+        `spent`/`previous_spent`/`budget_limit` are SerializerMethodFields,
+        not plain CharField, because `spent`/`previous_spent` are
+        cross-currency-converted (services._my_expenses_total multiplies by
+        a 6-decimal-place CurrencyRate) — a plain CharField's str(Decimal)
+        would leak that extra precision straight into the response (e.g.
+        "392070.000000" instead of "392070.00"). `budget_limit` is a stored
+        2dp value already, but formatted the same way for consistency and
+        because a null needs explicit handling regardless.
+      properties:
+        period_start:
+          type: string
+          format: date
+        period_end:
+          type: string
+          format: date
+        resets_on:
+          type: string
+          format: date
+        currency:
+          type: string
+        spent:
+          type: string
+          readOnly: true
+        comparison_enabled:
+          type: boolean
+        previous_spent:
+          type: string
+          nullable: true
+          readOnly: true
+        budget_limit:
+          type: string
+          nullable: true
+          readOnly: true
+        budget_alert_enabled:
+          type: boolean
+        budget_alert_threshold_percent:
+          type: integer
+        budget_used_percentage:
+          type: number
+          format: double
+          nullable: true
+        is_over_budget:
+          type: boolean
+        by_category:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryBreakdownItem'
+        monthly:
+          type: array
+          items:
+            $ref: '#/components/schemas/MonthlyTrendItem'
+      required:
+      - budget_alert_enabled
+      - budget_alert_threshold_percent
+      - budget_limit
+      - budget_used_percentage
+      - by_category
+      - comparison_enabled
+      - currency
+      - is_over_budget
+      - monthly
+      - period_end
+      - period_start
+      - previous_spent
+      - resets_on
+      - spent
+    MyExpensesSummary:
+      type: object
+      description: |-
+        `spent`/`previous_spent`/`budget_limit` are SerializerMethodFields,
+        not plain CharField, because `spent`/`previous_spent` are
+        cross-currency-converted (services._my_expenses_total multiplies by
+        a 6-decimal-place CurrencyRate) — a plain CharField's str(Decimal)
+        would leak that extra precision straight into the response (e.g.
+        "392070.000000" instead of "392070.00"). `budget_limit` is a stored
+        2dp value already, but formatted the same way for consistency and
+        because a null needs explicit handling regardless.
+      properties:
+        period_start:
+          type: string
+          format: date
+        period_end:
+          type: string
+          format: date
+        resets_on:
+          type: string
+          format: date
+        currency:
+          type: string
+        spent:
+          type: string
+          readOnly: true
+        comparison_enabled:
+          type: boolean
+        previous_spent:
+          type: string
+          nullable: true
+          readOnly: true
+        budget_limit:
+          type: string
+          nullable: true
+          readOnly: true
+        budget_alert_enabled:
+          type: boolean
+        budget_alert_threshold_percent:
+          type: integer
+        budget_used_percentage:
+          type: number
+          format: double
+          nullable: true
+        is_over_budget:
+          type: boolean
+      required:
+      - budget_alert_enabled
+      - budget_alert_threshold_percent
+      - budget_limit
+      - budget_used_percentage
+      - comparison_enabled
+      - currency
+      - is_over_budget
+      - period_end
+      - period_start
+      - previous_spent
+      - resets_on
+      - spent
+    OTPRequested:
+      type: object
+      properties:
+        phone_number:
+          type: string
+        purpose:
+          $ref: '#/components/schemas/PurposeEnum'
+      required:
+      - phone_number
+      - purpose
+    OTPVerified:
+      type: object
+      properties:
+        access:
+          type: string
+        refresh:
+          type: string
+        is_new_user:
+          type: boolean
+        user:
+          $ref: '#/components/schemas/User'
+      required:
+      - access
+      - is_new_user
+      - refresh
+      - user
+    PaginatedCategoryList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+    PaginatedContactList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Contact'
+    PaginatedExpenseReadList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpenseRead'
+    PaginatedFriendshipList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Friendship'
+    PaginatedGroupInvitationList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupInvitation'
+    PaginatedGroupList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Group'
+    PaginatedMyExpenseItemList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/MyExpenseItem'
+    PaginatedRecurringExpenseReadList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecurringExpenseRead'
+    PaginatedSettlementReadList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SettlementRead'
+    PatchedExpenseUpdateRequest:
+      type: object
+      description: |-
+        All fields optional (PATCH semantics). For a friendship/group expense,
+        `amount`/`split_type`/`payers`/`splits` must be provided all-together-
+        or-not-at-all — that invariant (a recompute-soundness rule, not a
+        shape rule) is enforced in services.update_expense, not here. For a
+        personal expense, `amount` alone is enough (split_type/payers/splits
+        are meaningless there and services.update_expense rejects them
+        outright if sent, same as on create).
+      properties:
+        description:
+          type: string
+          minLength: 1
+          maxLength: 255
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        date:
+          type: string
+          format: date
+        category_id:
+          type: string
+          format: uuid
+        note:
+          type: string
+        receipt:
+          type: string
+          format: binary
+          nullable: true
+        remove_receipt:
+          type: boolean
+          default: false
+        split_type:
+          $ref: '#/components/schemas/SplitTypeEnum'
+        payers:
+          description: 'JSON-encoded string: a list of {"user_id": "<uuid>", "amount":
+            "<decimal>"}. Required together with amount/split_type/splits if changing
+            any of them — see the class docstring.'
+        splits:
+          description: JSON-encoded string, shape depends on split_type — see ExpenseCreateSerializer.splits
+            for the exact per-split_type shape. Required together with amount/split_type/payers
+            if changing any of them.
+    PatchedFriendshipExchangeRateUpdateRequest:
+      type: object
+      properties:
+        exchange_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,6})?$
+    PatchedGroupUpdateRequest:
+      type: object
+      description: |-
+        PATCH-only surface for a group: name/description/image/
+        smart_settle_enabled. Deliberately excludes member_ids (which
+        GroupSerializer requires on create) and currency/category (not
+        editable at all, see services.update_group) — a separate serializer
+        instead of reusing GroupSerializer so "update" can't accidentally
+        inherit create's required fields. Currency exchange rates are
+        managed separately (POST/DELETE .../currency-rates/), not through
+        this PATCH — see GroupCurrencyRateSetSerializer.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        description:
+          type: string
+          maxLength: 500
+        image:
+          type: string
+          format: binary
+          nullable: true
+        smart_settle_enabled:
+          type: boolean
+    PatchedPersonalExpenseSettingsUpdateRequest:
+      type: object
+      description: |-
+        Write shape for PATCH /api/expenses/my-expenses/settings/ — every
+        field optional, only whatever's provided gets touched (see
+        services.update_personal_expense_settings's _UNSET sentinel).
+        `monthly_budget_limit` is the one exception where a provided value
+        of `null` is itself meaningful (clears the limit) rather than "leave
+        alone" — that's still `_UNSET` (the key never lands in
+        validated_data), matching every other field here.
+      properties:
+        show_spending_comparison:
+          type: boolean
+        period_start_day:
+          type: integer
+          maximum: 31
+          minimum: 1
+        hidden_group_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        hidden_friendship_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        monthly_budget_limit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+        budget_alert_enabled:
+          type: boolean
+        budget_alert_threshold_percent:
+          type: integer
+          maximum: 100
+          minimum: 1
+    PatchedRecurringExpenseUpdateRequest:
+      type: object
+      description: |-
+        All fields optional (PATCH semantics). amount/split_type/payers/splits
+        must be provided all-together-or-not-at-all — same reasoning as
+        ExpenseUpdateSerializer: changing the total alone while leaving stale
+        splits in place would silently misallocate every future occurrence.
+        start_date stays immutable (a historical record, nothing re-reads it
+        after creation) but next_occurrence is editable — see
+        services.update_recurring_expense's docstring for what happens if
+        the edit leaves it due immediately.
+      properties:
+        description:
+          type: string
+          minLength: 1
+          maxLength: 255
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        category_id:
+          type: string
+          format: uuid
+        note:
+          type: string
+        receipt:
+          type: string
+          format: binary
+          nullable: true
+        remove_receipt:
+          type: boolean
+          default: false
+        split_type:
+          $ref: '#/components/schemas/SplitTypeEnum'
+        payers:
+          description: 'A list of {"user_id": "<uuid>", "amount": "<decimal>"} — one
+            entry per payer, "amount" values must sum exactly to the template "amount".
+            Re-validated against current group membership on every occurrence, not
+            just at creation.'
+        splits:
+          description: A list with one entry per participant, shape depends on split_type
+            — same per-split_type shapes as a normal expense's splits field (see ExpenseCreateSerializer.splits).
+            Re-validated against current group membership on every occurrence, not
+            just at creation.
+        frequency:
+          $ref: '#/components/schemas/FrequencyEnum'
+        next_occurrence:
+          type: string
+          format: date
+          description: Move the next scheduled occurrence. If the new date is today
+            or earlier, that cycle materializes immediately, in this same request.
+    PatchedUserRequest:
+      type: object
+      properties:
+        full_name:
+          type: string
+          maxLength: 150
+        image:
+          type: string
+          format: binary
+          nullable: true
+        gender:
+          oneOf:
+          - $ref: '#/components/schemas/GenderEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        date_of_birth:
+          type: string
+          format: date
+          nullable: true
+        country:
+          $ref: '#/components/schemas/CountryEnum'
+        occupation:
+          type: string
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          nullable: true
+          minLength: 1
+        default_currency:
+          type: string
+          maxLength: 3
+    PersonBalance:
+      type: object
+      description: |-
+        One row of balance with another person, in one currency. Consumes a
+        plain dict (`{"other_user": User, "currency": str, "net_amount":
+        Decimal}`, already signed from request.user's perspective) — never a
+        PairwiseBalance instance directly, since not every source maps to a
+        single row. Shared by call sites with different scopes, each
+        responsible for choosing the right one:
+          - FriendshipBalanceView / GroupBalanceView: services.scoped_balances()
+            — this one friendship's or this one group's own row(s) only.
+          - UserLedgersView's `overall`: services.combined_balances() — summed
+            across every shared scope (every group + the direct friendship).
+      properties:
+        other_user:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          readOnly: true
+        currency:
+          type: string
+        net_amount:
+          type: string
+          readOnly: true
+        direction:
+          allOf:
+          - $ref: '#/components/schemas/DirectionEnum'
+          readOnly: true
+      required:
+      - currency
+      - direction
+      - net_amount
+      - other_user
+    PersonalExpenseCreate:
+      type: object
+      description: |-
+        For personal expenses only. Deliberately omits `payers`, `splits`, and
+        `split_type` — the service hard-wires all three to "actor paid, actor
+        owes everything" and accepting them from the client would let a caller
+        pass arbitrary user IDs against a context that never involves anyone
+        else. Removing the fields entirely (not just ignoring them) means the
+        API contract makes the restriction visible and the empty-string
+        JSONField parse error that `payers=` / `splits=` produces can't happen.
+      properties:
+        description:
+          type: string
+          maxLength: 255
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        date:
+          type: string
+          format: date
+        category_id:
+          type: string
+          format: uuid
+        note:
+          type: string
+          default: ''
+        receipt:
+          type: string
+          format: uri
+          nullable: true
+      required:
+      - amount
+      - category_id
+      - description
+    PersonalExpenseCreateRequest:
+      type: object
+      description: |-
+        For personal expenses only. Deliberately omits `payers`, `splits`, and
+        `split_type` — the service hard-wires all three to "actor paid, actor
+        owes everything" and accepting them from the client would let a caller
+        pass arbitrary user IDs against a context that never involves anyone
+        else. Removing the fields entirely (not just ignoring them) means the
+        API contract makes the restriction visible and the empty-string
+        JSONField parse error that `payers=` / `splits=` produces can't happen.
+      properties:
+        description:
+          type: string
+          minLength: 1
+          maxLength: 255
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        date:
+          type: string
+          format: date
+        category_id:
+          type: string
+          format: uuid
+        note:
+          type: string
+          default: ''
+        receipt:
+          type: string
+          format: binary
+          nullable: true
+      required:
+      - amount
+      - category_id
+      - description
+    PersonalExpenseSettings:
+      type: object
+      description: Read shape for GET /api/expenses/my-expenses/settings/.
+      properties:
+        show_spending_comparison:
+          type: boolean
+        period_start_day:
+          type: integer
+        hidden_group_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          readOnly: true
+        hidden_friendship_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          readOnly: true
+        monthly_budget_limit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+        budget_alert_enabled:
+          type: boolean
+        budget_alert_threshold_percent:
+          type: integer
+      required:
+      - budget_alert_enabled
+      - budget_alert_threshold_percent
+      - hidden_friendship_ids
+      - hidden_group_ids
+      - monthly_budget_limit
+      - period_start_day
+      - show_spending_comparison
+    PurposeEnum:
+      enum:
+      - signup
+      - login
+      type: string
+      description: |-
+        * `signup` - Signup
+        * `login` - Login
+    RecurringExpenseCreate:
+      type: object
+      description: |-
+        Shared by both friendship and group recurring expenses — same
+        pattern as ExpenseCreateSerializer: `context`/`friendship`/`group`
+        aren't fields, they come from the URL, supplied by the view via
+        self.context (`recurring_context` plus one of `friendship`/`group`).
+        A friendship recurring expense still uses the full payers/splits
+        shape, not a single-target shortcut — split_type equal/unequal/
+        adjustment and multi-payer all apply the same way to 2 people as to
+        a group (see RecurringExpense's docstring for why this differs from
+        Settlement's friendship-specific simplification).
+
+        `receipt` is optional, same validator as Expense.receipt — since
+        it's a file field, this view is multipart-only (see the view's
+        docstring), so payers/splits travel as JSON-encoded strings within
+        the form, same convention as ExpenseCreateSerializer.payers/splits
+        (a plain JSONField parses both a JSON string and an already-parsed
+        list/dict identically, so validate_payers/validate_splits are
+        reused unchanged from the mixin either way).
+      properties:
+        description:
+          type: string
+          maxLength: 255
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        category_id:
+          type: string
+          format: uuid
+        note:
+          type: string
+          default: ''
+        receipt:
+          type: string
+          format: uri
+          nullable: true
+        split_type:
+          $ref: '#/components/schemas/SplitTypeEnum'
+        payers:
+          description: 'A list of {"user_id": "<uuid>", "amount": "<decimal>"} — one
+            entry per payer, "amount" values must sum exactly to the template "amount".
+            Re-validated against current group membership on every occurrence, not
+            just at creation.'
+        splits:
+          description: A list with one entry per participant, shape depends on split_type
+            — same per-split_type shapes as a normal expense's splits field (see ExpenseCreateSerializer.splits).
+            Re-validated against current group membership on every occurrence, not
+            just at creation.
+        frequency:
+          $ref: '#/components/schemas/FrequencyEnum'
+        start_date:
+          type: string
+          format: date
+          description: First occurrence. Also becomes the initial next_occurrence.
+      required:
+      - amount
+      - category_id
+      - description
+      - frequency
+      - payers
+      - split_type
+      - splits
+      - start_date
+    RecurringExpenseCreateRequest:
+      type: object
+      description: |-
+        Shared by both friendship and group recurring expenses — same
+        pattern as ExpenseCreateSerializer: `context`/`friendship`/`group`
+        aren't fields, they come from the URL, supplied by the view via
+        self.context (`recurring_context` plus one of `friendship`/`group`).
+        A friendship recurring expense still uses the full payers/splits
+        shape, not a single-target shortcut — split_type equal/unequal/
+        adjustment and multi-payer all apply the same way to 2 people as to
+        a group (see RecurringExpense's docstring for why this differs from
+        Settlement's friendship-specific simplification).
+
+        `receipt` is optional, same validator as Expense.receipt — since
+        it's a file field, this view is multipart-only (see the view's
+        docstring), so payers/splits travel as JSON-encoded strings within
+        the form, same convention as ExpenseCreateSerializer.payers/splits
+        (a plain JSONField parses both a JSON string and an already-parsed
+        list/dict identically, so validate_payers/validate_splits are
+        reused unchanged from the mixin either way).
+      properties:
+        description:
+          type: string
+          minLength: 1
+          maxLength: 255
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        category_id:
+          type: string
+          format: uuid
+        note:
+          type: string
+          default: ''
+        receipt:
+          type: string
+          format: binary
+          nullable: true
+        split_type:
+          $ref: '#/components/schemas/SplitTypeEnum'
+        payers:
+          description: 'A list of {"user_id": "<uuid>", "amount": "<decimal>"} — one
+            entry per payer, "amount" values must sum exactly to the template "amount".
+            Re-validated against current group membership on every occurrence, not
+            just at creation.'
+        splits:
+          description: A list with one entry per participant, shape depends on split_type
+            — same per-split_type shapes as a normal expense's splits field (see ExpenseCreateSerializer.splits).
+            Re-validated against current group membership on every occurrence, not
+            just at creation.
+        frequency:
+          $ref: '#/components/schemas/FrequencyEnum'
+        start_date:
+          type: string
+          format: date
+          description: First occurrence. Also becomes the initial next_occurrence.
+      required:
+      - amount
+      - category_id
+      - description
+      - frequency
+      - payers
+      - split_type
+      - splits
+      - start_date
+    RecurringExpenseRead:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        context:
+          $ref: '#/components/schemas/ScopeContextEnum'
+        friendship:
+          type: string
+          format: uuid
+          nullable: true
+        group:
+          type: string
+          format: uuid
+          nullable: true
+        created_by:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          readOnly: true
+        description:
+          type: string
+          maxLength: 255
+        amount:
+          type: string
+          readOnly: true
+        currency:
+          type: string
+          readOnly: true
+        category:
+          allOf:
+          - $ref: '#/components/schemas/Category'
+          readOnly: true
+        note:
+          type: string
+        receipt:
+          type: string
+          format: uri
+          nullable: true
+        split_type:
+          $ref: '#/components/schemas/SplitTypeEnum'
+        payers:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+        splits:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+        frequency:
+          $ref: '#/components/schemas/FrequencyEnum'
+        start_date:
+          type: string
+          format: date
+        next_occurrence:
+          type: string
+          format: date
+        last_materialized_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_error:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - category
+      - created_at
+      - created_by
+      - currency
+      - description
+      - frequency
+      - id
+      - next_occurrence
+      - payers
+      - split_type
+      - splits
+      - start_date
+    RecurringExpenseUpdate:
+      type: object
+      description: |-
+        All fields optional (PATCH semantics). amount/split_type/payers/splits
+        must be provided all-together-or-not-at-all — same reasoning as
+        ExpenseUpdateSerializer: changing the total alone while leaving stale
+        splits in place would silently misallocate every future occurrence.
+        start_date stays immutable (a historical record, nothing re-reads it
+        after creation) but next_occurrence is editable — see
+        services.update_recurring_expense's docstring for what happens if
+        the edit leaves it due immediately.
+      properties:
+        description:
+          type: string
+          maxLength: 255
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        category_id:
+          type: string
+          format: uuid
+        note:
+          type: string
+        receipt:
+          type: string
+          format: uri
+          nullable: true
+        remove_receipt:
+          type: boolean
+          default: false
+        split_type:
+          $ref: '#/components/schemas/SplitTypeEnum'
+        payers:
+          description: 'A list of {"user_id": "<uuid>", "amount": "<decimal>"} — one
+            entry per payer, "amount" values must sum exactly to the template "amount".
+            Re-validated against current group membership on every occurrence, not
+            just at creation.'
+        splits:
+          description: A list with one entry per participant, shape depends on split_type
+            — same per-split_type shapes as a normal expense's splits field (see ExpenseCreateSerializer.splits).
+            Re-validated against current group membership on every occurrence, not
+            just at creation.
+        frequency:
+          $ref: '#/components/schemas/FrequencyEnum'
+        next_occurrence:
+          type: string
+          format: date
+          description: Move the next scheduled occurrence. If the new date is today
+            or earlier, that cycle materializes immediately, in this same request.
+    RecurringExpenseUpdateRequest:
+      type: object
+      description: |-
+        All fields optional (PATCH semantics). amount/split_type/payers/splits
+        must be provided all-together-or-not-at-all — same reasoning as
+        ExpenseUpdateSerializer: changing the total alone while leaving stale
+        splits in place would silently misallocate every future occurrence.
+        start_date stays immutable (a historical record, nothing re-reads it
+        after creation) but next_occurrence is editable — see
+        services.update_recurring_expense's docstring for what happens if
+        the edit leaves it due immediately.
+      properties:
+        description:
+          type: string
+          minLength: 1
+          maxLength: 255
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        category_id:
+          type: string
+          format: uuid
+        note:
+          type: string
+        receipt:
+          type: string
+          format: binary
+          nullable: true
+        remove_receipt:
+          type: boolean
+          default: false
+        split_type:
+          $ref: '#/components/schemas/SplitTypeEnum'
+        payers:
+          description: 'A list of {"user_id": "<uuid>", "amount": "<decimal>"} — one
+            entry per payer, "amount" values must sum exactly to the template "amount".
+            Re-validated against current group membership on every occurrence, not
+            just at creation.'
+        splits:
+          description: A list with one entry per participant, shape depends on split_type
+            — same per-split_type shapes as a normal expense's splits field (see ExpenseCreateSerializer.splits).
+            Re-validated against current group membership on every occurrence, not
+            just at creation.
+        frequency:
+          $ref: '#/components/schemas/FrequencyEnum'
+        next_occurrence:
+          type: string
+          format: date
+          description: Move the next scheduled occurrence. If the new date is today
+            or earlier, that cycle materializes immediately, in this same request.
+    RequestOTPRequest:
+      type: object
+      properties:
+        phone_number:
+          type: string
+          minLength: 1
+      required:
+      - phone_number
+    ScopeContextEnum:
+      enum:
+      - friendship
+      - group
+      type: string
+      description: |-
+        * `friendship` - Friendship
+        * `group` - Group
+    ScopeEnum:
+      enum:
+      - friendship
+      - group
+      type: string
+      description: |-
+        * `friendship` - friendship
+        * `group` - group
+    SettlementRead:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        context:
+          $ref: '#/components/schemas/ScopeContextEnum'
+        friendship:
+          type: string
+          format: uuid
+          nullable: true
+        group:
+          type: string
+          format: uuid
+          nullable: true
+        payer:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          readOnly: true
+        payee:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          readOnly: true
+        recorded_by:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          readOnly: true
+        amount:
+          type: string
+          readOnly: true
+        currency:
+          type: string
+          readOnly: true
+        method:
+          $ref: '#/components/schemas/MethodEnum'
+        date:
+          type: string
+          format: date
+        note:
+          type: string
+        receipt:
+          type: string
+          format: uri
+          nullable: true
+        status:
+          $ref: '#/components/schemas/SettlementReadStatusEnum'
+        responded_at:
+          type: string
+          format: date-time
+          nullable: true
+        needs_your_confirmation:
+          type: boolean
+          readOnly: true
+        can_dispute:
+          type: boolean
+          readOnly: true
+        can_cancel:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - can_cancel
+      - can_dispute
+      - context
+      - created_at
+      - currency
+      - date
+      - id
+      - needs_your_confirmation
+      - payee
+      - payer
+      - recorded_by
+    SettlementReadStatusEnum:
+      enum:
+      - pending
+      - confirmed
+      - disputed
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `confirmed` - Confirmed
+        * `disputed` - Disputed
+    SplitTypeEnum:
+      enum:
+      - equal
+      - unequal
+      - adjustment
+      type: string
+      description: |-
+        * `equal` - Equal
+        * `unequal` - Unequal
+        * `adjustment` - Adjustment
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+    TokenRefreshRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+          minLength: 1
+      required:
+      - refresh
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        phone_number:
+          type: string
+          readOnly: true
+        full_name:
+          type: string
+          maxLength: 150
+        image:
+          type: string
+          format: uri
+          nullable: true
+        gender:
+          oneOf:
+          - $ref: '#/components/schemas/GenderEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        date_of_birth:
+          type: string
+          format: date
+          nullable: true
+        country:
+          $ref: '#/components/schemas/CountryEnum'
+        occupation:
+          type: string
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          nullable: true
+        default_currency:
+          type: string
+          maxLength: 3
+        profile_complete:
+          type: boolean
+          readOnly: true
+      required:
+      - id
+      - phone_number
+      - profile_complete
+    UserLedgerItem:
+      type: object
+      description: |-
+        One itemized ledger between two users — either the direct friendship
+        or one shared group. Consumes plain dicts from services.ledgers_with()
+        (`{"group": Group|None, "friendship": Friendship|None, "currency":
+        str, "net_amount": Decimal}`). The per-ledger counterpart to
+        PersonBalanceSerializer's combined-balance usage, which sums these
+        into one number.
+      properties:
+        scope:
+          allOf:
+          - $ref: '#/components/schemas/ScopeEnum'
+          readOnly: true
+        friendship_id:
+          type: string
+          format: uuid
+          nullable: true
+          readOnly: true
+        group_id:
+          type: string
+          format: uuid
+          nullable: true
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+        image:
+          type: string
+          nullable: true
+          readOnly: true
+        currency:
+          type: string
+        net_amount:
+          type: string
+          readOnly: true
+        direction:
+          allOf:
+          - $ref: '#/components/schemas/DirectionEnum'
+          readOnly: true
+      required:
+      - currency
+      - direction
+      - friendship_id
+      - group_id
+      - image
+      - label
+      - net_amount
+      - scope
+    UserLedgersResponse:
+      type: object
+      description: |-
+        Documentation-only shape for UserLedgersView's compound response —
+        the view builds this dict by hand (three independently-serialized
+        parts), it never actually instantiates this class.
+      properties:
+        other_user:
+          $ref: '#/components/schemas/UserSummary'
+        overall:
+          type: array
+          items:
+            $ref: '#/components/schemas/PersonBalance'
+        ledgers:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserLedgerItem'
+      required:
+      - ledgers
+      - other_user
+      - overall
+    UserRequest:
+      type: object
+      properties:
+        full_name:
+          type: string
+          maxLength: 150
+        image:
+          type: string
+          format: binary
+          nullable: true
+        gender:
+          oneOf:
+          - $ref: '#/components/schemas/GenderEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        date_of_birth:
+          type: string
+          format: date
+          nullable: true
+        country:
+          $ref: '#/components/schemas/CountryEnum'
+        occupation:
+          type: string
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          nullable: true
+          minLength: 1
+        default_currency:
+          type: string
+          maxLength: 3
+    UserSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        full_name:
+          type: string
+        phone_number:
+          type: string
+        image:
+          type: string
+          nullable: true
+      required:
+      - full_name
+      - id
+      - image
+      - phone_number
+    VerifyOTPRequest:
+      type: object
+      properties:
+        phone_number:
+          type: string
+          minLength: 1
+        code:
+          type: string
+          minLength: 4
+          maxLength: 6
+      required:
+      - code
+      - phone_number
+    WalletBreakdownItem:
+      type: object
+      description: |-
+        One component of a wallet row's breakdown — for a "person" row,
+        one shared scope (`group` set = that group, both null = the direct
+        friendship); for a "group" row, one co-member (`other_user` set).
+      properties:
+        group:
+          type: object
+          additionalProperties: {}
+          nullable: true
+          readOnly: true
+        friendship_id:
+          type: string
+          format: uuid
+          nullable: true
+        other_user:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          nullable: true
+          readOnly: true
+        net_amount:
+          type: string
+          readOnly: true
+        currency:
+          type: string
+      required:
+      - currency
+      - group
+      - net_amount
+      - other_user
+    WalletRow:
+      type: object
+      description: |-
+        One row of GET /api/expenses/wallet/ — either a person
+        (`row_type="person"`, `other_user` set, `group` null) or a group
+        (`row_type="group"`, `group` set, `other_user` null). `net_amount`
+        for a person row is already converted into the viewer's own
+        currency (see services.wallet_people); for a group row it's that
+        group's own currency, unconverted (see services.wallet_groups) —
+        `currency` always says which. `balance_count` (how many distinct
+        nonzero scopes make up this total) is only meaningful for person
+        rows; null on a group row.
+      properties:
+        row_type:
+          type: string
+        other_user:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          nullable: true
+          readOnly: true
+        group:
+          type: object
+          additionalProperties: {}
+          nullable: true
+          readOnly: true
+        net_amount:
+          type: string
+          readOnly: true
+        currency:
+          type: string
+        latest_activity:
+          type: string
+          format: date-time
+        balance_count:
+          type: integer
+          nullable: true
+          readOnly: true
+        breakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/WalletBreakdownItem'
+      required:
+      - balance_count
+      - breakdown
+      - currency
+      - group
+      - latest_activity
+      - net_amount
+      - other_user
+      - row_type
+    WalletSummary:
+      type: object
+      properties:
+        receivable:
+          type: string
+          readOnly: true
+        payable:
+          type: string
+          readOnly: true
+        net:
+          type: string
+          readOnly: true
+        currency:
+          type: string
+      required:
+      - currency
+      - net
+      - payable
+      - receivable
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

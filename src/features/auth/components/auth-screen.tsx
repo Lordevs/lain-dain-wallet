@@ -50,10 +50,11 @@ export default function AuthScreen() {
   }
 
   const handleProfileSubmit = (profileData: ProfileFormData) => {
-    const { tempCountryCode, tempPhoneNumber } = useAuthStore.getState()
+    // `phone` is already a full E.164 string (see PhoneForm) — no need to
+    // reassemble it from a country code + national number.
     const finalProfile = {
       name: profileData.fullName,
-      phone: `${tempCountryCode.code} ${tempPhoneNumber}`,
+      phone,
       ...profileData,
     }
     setProfile(finalProfile)
