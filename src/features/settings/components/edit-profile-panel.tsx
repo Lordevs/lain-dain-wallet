@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { Pencil, User } from 'lucide-react'
+import { useForm, Controller, useWatch } from 'react-hook-form'
 import FlowHeader from '@/components/shared/flow-header'
 import FormError from '@/components/shared/form-error'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -9,10 +10,25 @@ import { ROUTES } from '@/constants/routes'
 import { useUpdateProfileMutation } from '@/features/auth/api/use-auth-mutations'
 import { buildProfileFormData } from '@/features/auth/api/build-profile-form-data'
 import { mapUserToProfile } from '@/features/auth/api/map-user'
+import { cn } from '@/lib/utils'
 
 interface EditProfilePanelProps {
   onClose?: () => void
   onSuccess?: (msg: string) => void
+}
+
+interface FormValues {
+  fullName: string
+  email: string
+}
+
+// Backend field names (snake_case, from the DRF error body) → this form's
+// own field names — lets a server-side error (e.g. "email" already taken)
+// land on the exact input that caused it via setError, instead of only
+// showing as a generic banner.
+const BACKEND_FIELD_TO_FORM_FIELD: Record<string, keyof FormValues> = {
+  full_name: 'fullName',
+  email: 'email',
 }
 
 export default function EditProfilePanel({
@@ -23,20 +39,36 @@ export default function EditProfilePanel({
   const { userProfile, setProfile } = useAuthStore()
   const updateProfile = useUpdateProfileMutation()
 
-  // Local edit buffer, deliberately NOT synced to the store on every
-  // keystroke (the previous version did that) — that let an unsaved edit
-  // leak into every other screen reading the store before it was ever
-  // sent to the backend. The store only updates once the save actually
-  // succeeds, from the server's own response.
-  const [name, setName] = useState(userProfile?.name ?? '')
-  const [email, setEmail] = useState(userProfile?.email ?? '')
+  // Prefilled from the store, then edited locally — deliberately NOT
+  // synced back to the store on every keystroke (an earlier version did
+  // that), which let an unsaved edit leak into every other screen reading
+  // the store before it was ever sent to the backend. The store only
+  // updates once the save actually succeeds, from the server's response.
+  const { control, handleSubmit, setError } = useForm<FormValues>({
+    defaultValues: {
+      fullName: userProfile?.name ?? '',
+      email: userProfile?.email ?? '',
+    },
+  })
+
+  useEffect(() => {
+    if (!updateProfile.error) return
+    for (const [backendField, message] of Object.entries(updateProfile.error.fields)) {
+      const formField = BACKEND_FIELD_TO_FORM_FIELD[backendField]
+      if (formField) setError(formField, { type: 'server', message })
+    }
+  }, [updateProfile.error, setError])
+
+  // Only the bottom banner is shown for errors that don't map onto a
+  // specific field — once a field-level message is showing under its own
+  // input, repeating it in a banner too would just be the same sentence twice.
+  const hasFieldErrors = !!updateProfile.error && Object.keys(updateProfile.error.fields).length > 0
+
   const avatar = userProfile?.avatar || null
+  const name = useWatch({ control, name: 'fullName' })
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!name.trim()) return
-
-    const formData = await buildProfileFormData({ fullName: name.trim(), email: email.trim() })
+  const onFormSubmit = async (values: FormValues) => {
+    const formData = await buildProfileFormData({ fullName: values.fullName.trim(), email: values.email.trim() })
     updateProfile.mutate(formData, {
       onSuccess: (user) => {
         setProfile(mapUserToProfile(user))
@@ -59,7 +91,7 @@ export default function EditProfilePanel({
         onBack={onClose}
       />
 
-      <form onSubmit={handleSave} className="flex-1 flex flex-col justify-between px-6 pb-8 pt-2">
+      <form onSubmit={handleSubmit(onFormSubmit)} className="flex-1 flex flex-col justify-between px-6 pb-8 pt-2">
         <div className="space-y-6">
           {/* Avatar / Photo Uploader */}
           <div className="flex flex-col items-center">
@@ -101,16 +133,31 @@ export default function EditProfilePanel({
               <label className="text-[11px] font-semibold tracking-widest text-[#6B6B6B] uppercase px-1">
                 Full Name
               </label>
-              <div className="bg-white border-[0.8px] border-[#E8E4DC] focus-within:border-[#0B683A73] rounded-[16px] px-5 py-4 transition-all shadow-[0px_2px_10px_0px_rgba(0,0,0,0.03)]">
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="outline-none border-0 w-full text-[15px] font-medium text-[#1A1A1A] p-0 bg-transparent"
-                  required
-                  placeholder="Enter your name"
-                />
-              </div>
+              <Controller
+                name="fullName"
+                control={control}
+                rules={{ required: 'Full name is required' }}
+                render={({ field, fieldState }) => (
+                  <>
+                    <div
+                      className={cn(
+                        'bg-white border-[0.8px] focus-within:border-[#0B683A73] rounded-[16px] px-5 py-4 transition-all shadow-[0px_2px_10px_0px_rgba(0,0,0,0.03)]',
+                        fieldState.error ? 'border-tertiary' : 'border-[#E8E4DC]'
+                      )}
+                    >
+                      <input
+                        {...field}
+                        type="text"
+                        className="outline-none border-0 w-full text-[15px] font-medium text-[#1A1A1A] p-0 bg-transparent"
+                        placeholder="Enter your name"
+                      />
+                    </div>
+                    {fieldState.error && (
+                      <p className="text-xs font-medium text-tertiary px-1 mt-1">{fieldState.error.message}</p>
+                    )}
+                  </>
+                )}
+              />
             </div>
 
             {/* Phone Number (Verified, Read-Only) */}
@@ -131,27 +178,44 @@ export default function EditProfilePanel({
             {/* Email (Optional) */}
             <div className="space-y-1.5">
               <label className="text-[11px] font-semibold tracking-widest text-[#6B6B6B] uppercase px-1">
-                Email (Optional)
+                Email <span className='text-[#9A9590] font-normal'>(Optional)</span>
               </label>
-              <div className="bg-white border-[0.8px] border-[#E8E4DC] focus-within:border-[#0B683A73] rounded-[16px] px-5 py-4 transition-all shadow-[0px_2px_10px_0px_rgba(0,0,0,0.03)]">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="outline-none border-0 w-full text-[15px] font-medium text-[#1A1A1A] p-0 bg-transparent"
-                  placeholder="Add email address..."
-                />
-              </div>
+              <Controller
+                name="email"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <>
+                    <div
+                      className={cn(
+                        'bg-white border-[0.8px] focus-within:border-[#0B683A73] rounded-[16px] px-5 py-4 transition-all shadow-[0px_2px_10px_0px_rgba(0,0,0,0.03)]',
+                        fieldState.error ? 'border-tertiary' : 'border-[#E8E4DC]'
+                      )}
+                    >
+                      <input
+                        {...field}
+                        type="email"
+                        className="outline-none border-0 w-full text-[15px] font-medium text-[#1A1A1A] p-0 bg-transparent"
+                        placeholder="Add email address..."
+                      />
+                    </div>
+                    {fieldState.error && (
+                      <p className="text-xs font-medium text-tertiary px-1 mt-1">{fieldState.error.message}</p>
+                    )}
+                  </>
+                )}
+              />
             </div>
           </div>
         </div>
 
         {/* Bottom Save Changes Button */}
         <div className="mt-8">
-          <FormError message={updateProfile.error?.message} className="mb-4 justify-center" />
+          {!hasFieldErrors && (
+            <FormError message={updateProfile.error?.message} className="mb-4 justify-center" />
+          )}
           <button
             type="submit"
-            disabled={!name.trim() || updateProfile.isPending}
+            disabled={updateProfile.isPending}
             className="w-full h-14 bg-positive text-white rounded-full font-bold text-base shadow-[0px_8px_20px_rgba(11,104,58,0.3)] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center cursor-pointer"
           >
             {updateProfile.isPending ? 'Saving...' : 'Save Changes'}

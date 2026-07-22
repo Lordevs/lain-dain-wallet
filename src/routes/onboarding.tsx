@@ -34,7 +34,7 @@ function OnboardingComponent() {
           <ProfileForm
             onSubmit={handleSubmit}
             isSubmitting={updateProfile.isPending}
-            submitError={updateProfile.error?.message ?? null}
+            submitError={updateProfile.error ?? null}
           />
         </div>
       </div>

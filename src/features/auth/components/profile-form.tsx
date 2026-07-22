@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { pickFromGallery } from '@/lib/camera'
 import { haptic } from '@/lib/haptics'
@@ -23,6 +23,8 @@ import GenderSelectorDrawer from '@/components/shared/gender-selector-drawer'
 import OccupationSelectorDrawer from '@/components/shared/occupation-selector-drawer'
 import CountrySelectorDrawer from '@/components/shared/country-selector-drawer'
 import FormError from '@/components/shared/form-error'
+import { cn } from '@/lib/utils'
+import type { ApiError } from '@/lib/api/errors'
 
 /** Exported so auth-screen.tsx can type its handleProfileSubmit handler.
  * Field names mirror apps.accounts.models.User (see UserSerializer) — the
@@ -43,7 +45,7 @@ export interface ProfileFormData {
 interface ProfileFormProps {
   onSubmit: (profile: ProfileFormData) => void
   isSubmitting?: boolean
-  submitError?: string | null
+  submitError?: ApiError | null
 }
 
 interface FormValues {
@@ -55,8 +57,21 @@ interface FormValues {
   country: string
 }
 
+// Backend field names (snake_case, from the DRF error body) → this form's
+// own field names — lets a server-side validation error (e.g. "email" is
+// already taken) land on the exact input that caused it via setError,
+// instead of only showing as a generic banner.
+const BACKEND_FIELD_TO_FORM_FIELD: Record<string, keyof FormValues> = {
+  full_name: 'fullName',
+  date_of_birth: 'dob',
+  gender: 'gender',
+  email: 'email',
+  occupation: 'occupation',
+  country: 'country',
+}
+
 export default function ProfileForm({ onSubmit, isSubmitting = false, submitError = null }: ProfileFormProps) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit, setError } = useForm<FormValues>({
     defaultValues: {
       fullName: '',
       dob: undefined,
@@ -66,6 +81,20 @@ export default function ProfileForm({ onSubmit, isSubmitting = false, submitErro
       country: '',
     },
   })
+
+  useEffect(() => {
+    if (!submitError) return
+    for (const [backendField, message] of Object.entries(submitError.fields)) {
+      const formField = BACKEND_FIELD_TO_FORM_FIELD[backendField]
+      if (formField) setError(formField, { type: 'server', message })
+    }
+  }, [submitError, setError])
+
+  // Only the bottom banner is shown for errors that don't map onto a
+  // specific field (e.g. a network failure) — once a field-level message
+  // is showing under its own input, repeating it in a banner too would
+  // just be the same sentence twice.
+  const hasFieldErrors = !!submitError && Object.keys(submitError.fields).length > 0
 
   // Avatar uses a separate state since it's a File/URL, not a serialisable form field
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
@@ -147,19 +176,27 @@ export default function ProfileForm({ onSubmit, isSubmitting = false, submitErro
               <Controller
                 name="fullName"
                 control={control}
-                rules={{ required: true }}
-                render={({ field }) => (
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590]">
-                      <User size={18} />
-                    </span>
-                    <Input
-                      {...field}
-                      id="fullName"
-                      placeholder="Enter your full name"
-                      className="w-full h-12 pl-12 pr-4 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground text-sm! focus-visible:ring-1 focus-visible:ring-primary shadow-none font-normal placeholder:text-[#9A9590]"
-                    />
-                  </div>
+                rules={{ required: 'Full name is required' }}
+                render={({ field, fieldState }) => (
+                  <>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590]">
+                        <User size={18} />
+                      </span>
+                      <Input
+                        {...field}
+                        id="fullName"
+                        placeholder="Enter your full name"
+                        className={cn(
+                          "w-full h-12 pl-12 pr-4 rounded-full border-[0.98px] bg-[#FEF5EE] text-foreground text-sm! focus-visible:ring-1 focus-visible:ring-primary shadow-none font-normal placeholder:text-[#9A9590]",
+                          fieldState.error ? "border-tertiary" : "border-[#EFE7DD]"
+                        )}
+                      />
+                    </div>
+                    {fieldState.error && (
+                      <p className="text-xs font-medium text-tertiary px-1">{fieldState.error.message}</p>
+                    )}
+                  </>
                 )}
               />
             </div>
@@ -170,12 +207,15 @@ export default function ProfileForm({ onSubmit, isSubmitting = false, submitErro
               <Controller
                 name="dob"
                 control={control}
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <>
                     <button
                       type="button"
                       onClick={() => setIsDobOpen(true)}
-                      className="w-full h-12 pl-12 pr-4 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground hover:bg-[#FEF5EE] justify-start font-normal text-sm relative shadow-none focus:outline-none focus-visible:ring-1 focus-visible:ring-primary cursor-pointer text-left flex items-center"
+                      className={cn(
+                        "w-full h-12 pl-12 pr-4 rounded-full border-[0.98px] bg-[#FEF5EE] text-foreground hover:bg-[#FEF5EE] justify-start font-normal text-sm relative shadow-none focus:outline-none focus-visible:ring-1 focus-visible:ring-primary cursor-pointer text-left flex items-center",
+                        fieldState.error ? "border-tertiary" : "border-[#EFE7DD]"
+                      )}
                     >
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590]">
                         <Calendar size={18} />
@@ -186,6 +226,9 @@ export default function ProfileForm({ onSubmit, isSubmitting = false, submitErro
                         <span className="text-[#9A9590]">Enter your DOB</span>
                       )}
                     </button>
+                    {fieldState.error && (
+                      <p className="text-xs font-medium text-tertiary px-1">{fieldState.error.message}</p>
+                    )}
                     <SelectDateDrawer
                       isOpen={isDobOpen}
                       onClose={() => setIsDobOpen(false)}
@@ -204,13 +247,16 @@ export default function ProfileForm({ onSubmit, isSubmitting = false, submitErro
               <Controller
                 name="gender"
                 control={control}
-                rules={{ required: true }}
-                render={({ field }) => (
+                rules={{ required: 'Please select a gender' }}
+                render={({ field, fieldState }) => (
                   <>
                     <button
                       type="button"
                       onClick={() => setIsGenderOpen(true)}
-                      className="w-full h-12 pl-12 pr-10 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground text-sm focus:ring-0 focus:border-primary focus:outline-none relative flex items-center justify-between shadow-none font-normal cursor-pointer"
+                      className={cn(
+                        "w-full h-12 pl-12 pr-10 rounded-full border-[0.98px] bg-[#FEF5EE] text-foreground text-sm focus:ring-0 focus:border-primary focus:outline-none relative flex items-center justify-between shadow-none font-normal cursor-pointer",
+                        fieldState.error ? "border-tertiary" : "border-[#EFE7DD]"
+                      )}
                     >
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590]">
                         <User size={18} />
@@ -220,6 +266,9 @@ export default function ProfileForm({ onSubmit, isSubmitting = false, submitErro
                       </span>
                       <ChevronDown size={16} className="text-[#9A9590]" />
                     </button>
+                    {fieldState.error && (
+                      <p className="text-xs font-medium text-tertiary px-1">{fieldState.error.message}</p>
+                    )}
 
                     <GenderSelectorDrawer
                       isOpen={isGenderOpen}
@@ -238,13 +287,16 @@ export default function ProfileForm({ onSubmit, isSubmitting = false, submitErro
               <Controller
                 name="country"
                 control={control}
-                rules={{ required: true }}
-                render={({ field }) => (
+                rules={{ required: 'Please select a country' }}
+                render={({ field, fieldState }) => (
                   <>
                     <button
                       type="button"
                       onClick={() => setIsCountryOpen(true)}
-                      className="w-full h-12 pl-12 pr-10 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground text-sm focus:ring-0 focus:border-primary focus:outline-none relative flex items-center justify-between shadow-none font-normal cursor-pointer"
+                      className={cn(
+                        "w-full h-12 pl-12 pr-10 rounded-full border-[0.98px] bg-[#FEF5EE] text-foreground text-sm focus:ring-0 focus:border-primary focus:outline-none relative flex items-center justify-between shadow-none font-normal cursor-pointer",
+                        fieldState.error ? "border-tertiary" : "border-[#EFE7DD]"
+                      )}
                     >
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590]">
                         <Globe size={18} />
@@ -254,6 +306,9 @@ export default function ProfileForm({ onSubmit, isSubmitting = false, submitErro
                       </span>
                       <ChevronDown size={16} className="text-[#9A9590]" />
                     </button>
+                    {fieldState.error && (
+                      <p className="text-xs font-medium text-tertiary px-1">{fieldState.error.message}</p>
+                    )}
 
                     <CountrySelectorDrawer
                       isOpen={isCountryOpen}
@@ -272,13 +327,16 @@ export default function ProfileForm({ onSubmit, isSubmitting = false, submitErro
               <Controller
                 name="occupation"
                 control={control}
-                rules={{ required: true }}
-                render={({ field }) => (
+                rules={{ required: 'Please select an option' }}
+                render={({ field, fieldState }) => (
                   <>
                     <button
                       type="button"
                       onClick={() => setIsOccupationOpen(true)}
-                      className="w-full h-12 pl-12 pr-10 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground text-sm focus:ring-0 focus:border-primary focus:outline-none relative flex items-center justify-between shadow-none font-normal cursor-pointer"
+                      className={cn(
+                        "w-full h-12 pl-12 pr-10 rounded-full border-[0.98px] bg-[#FEF5EE] text-foreground text-sm focus:ring-0 focus:border-primary focus:outline-none relative flex items-center justify-between shadow-none font-normal cursor-pointer",
+                        fieldState.error ? "border-tertiary" : "border-[#EFE7DD]"
+                      )}
                     >
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590]">
                         <Briefcase size={18} />
@@ -288,6 +346,9 @@ export default function ProfileForm({ onSubmit, isSubmitting = false, submitErro
                       </span>
                       <ChevronDown size={16} className="text-[#9A9590]" />
                     </button>
+                    {fieldState.error && (
+                      <p className="text-xs font-medium text-tertiary px-1">{fieldState.error.message}</p>
+                    )}
 
                     <OccupationSelectorDrawer
                       isOpen={isOccupationOpen}
@@ -306,18 +367,26 @@ export default function ProfileForm({ onSubmit, isSubmitting = false, submitErro
               <Controller
                 name="email"
                 control={control}
-                render={({ field }) => (
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590]">
-                      <Mail size={18} />
-                    </span>
-                    <Input
-                      type="email"
-                      placeholder="Enter Email"
-                      className="h-12 pl-12 pr-4 rounded-full border-[0.98px] border-[#EFE7DD] bg-[#FEF5EE] text-foreground text-sm! placeholder:text-[#9A9590] shadow-none"
-                      {...field}
-                    />
-                  </div>
+                render={({ field, fieldState }) => (
+                  <>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A9590]">
+                        <Mail size={18} />
+                      </span>
+                      <Input
+                        type="email"
+                        placeholder="Enter Email"
+                        className={cn(
+                          "h-12 pl-12 pr-4 rounded-full border-[0.98px] bg-[#FEF5EE] text-foreground text-sm! placeholder:text-[#9A9590] shadow-none",
+                          fieldState.error ? "border-tertiary" : "border-[#EFE7DD]"
+                        )}
+                        {...field}
+                      />
+                    </div>
+                    {fieldState.error && (
+                      <p className="text-xs font-medium text-tertiary px-1">{fieldState.error.message}</p>
+                    )}
+                  </>
                 )}
               />
             </div>
@@ -326,7 +395,7 @@ export default function ProfileForm({ onSubmit, isSubmitting = false, submitErro
 
         {/* Bottom Actions */}
         <div className="mt-10 space-y-6 shrink-0">
-          <FormError message={submitError} className="justify-center" />
+          {!hasFieldErrors && <FormError message={submitError?.message} className="justify-center" />}
 
           <Button
             type="submit"
