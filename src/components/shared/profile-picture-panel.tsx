@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Camera, Image as ImageIcon, ChevronRight } from 'lucide-react'
+import { Camera, Image as ImageIcon, ChevronRight, AlertCircle } from 'lucide-react'
 import { Capacitor } from '@capacitor/core'
 import { takePhoto, pickFromGallery } from '@/lib/camera'
 import { haptic } from '@/lib/haptics'
@@ -12,7 +12,10 @@ interface ProfilePicturePanelProps {
   title?: string
   label?: string
   onClose: () => void
-  onSave: (newAvatar: string | null) => void
+  // May return a Promise (e.g. a real upload) — awaited before closing, so
+  // a failed save keeps the panel open with an error instead of navigating
+  // away as if it succeeded.
+  onSave: (newAvatar: string | null) => void | Promise<void>
 }
 
 export default function ProfilePicturePanel({
@@ -24,6 +27,8 @@ export default function ProfilePicturePanel({
   onSave,
 }: ProfilePicturePanelProps) {
   const [tempAvatar, setTempAvatar] = useState<string | null>(currentAvatar)
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // ─── Handlers ────────────────────────────────────────────────────────────────
 
@@ -48,10 +53,18 @@ export default function ProfilePicturePanel({
     }
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     haptic.success()
-    onSave(tempAvatar)
-    onClose()
+    setError(null)
+    setIsSaving(true)
+    try {
+      await onSave(tempAvatar)
+      onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save photo. Please try again.')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -122,12 +135,19 @@ export default function ProfilePicturePanel({
 
         {/* Save Photo Button */}
         <div>
+          {error && (
+            <div className="flex items-start gap-2 mb-4 text-tertiary justify-center">
+              <AlertCircle size={16} className="shrink-0 mt-0.5" />
+              <p className="text-sm font-medium">{error}</p>
+            </div>
+          )}
           <button
             type="button"
             onClick={handleSave}
-            className="w-full h-14 bg-positive text-white rounded-full font-bold text-base shadow-[0px_8px_20px_rgba(11,104,58,0.3)] active:scale-[0.98] transition-all flex items-center justify-center cursor-pointer"
+            disabled={isSaving}
+            className="w-full h-14 bg-positive text-white rounded-full font-bold text-base shadow-[0px_8px_20px_rgba(11,104,58,0.3)] active:scale-[0.98] disabled:opacity-70 transition-all flex items-center justify-center cursor-pointer"
           >
-            Save Photo
+            {isSaving ? 'Saving...' : 'Save Photo'}
           </button>
         </div>
       </div>

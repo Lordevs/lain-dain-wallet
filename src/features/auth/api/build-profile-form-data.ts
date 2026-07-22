@@ -8,8 +8,13 @@ import type { ProfileFormData } from '@/features/auth/components/profile-form'
  * (django_countries doesn't accept arbitrary display names), and the
  * avatar (a local webPath/blob URL, not yet a real file) is fetched into
  * a Blob so it can be attached as a real upload.
+ *
+ * Accepts a partial object so callers editing only a subset of fields
+ * (e.g. the settings screen's name/email-only form) can reuse this
+ * without needing to fill in the rest — PATCH only touches keys actually
+ * present in the FormData, so omitted fields are left untouched server-side.
  */
-export async function buildProfileFormData(data: ProfileFormData): Promise<FormData> {
+export async function buildProfileFormData(data: Partial<ProfileFormData>): Promise<FormData> {
   const formData = new FormData()
 
   if (data.fullName) formData.append('full_name', data.fullName)

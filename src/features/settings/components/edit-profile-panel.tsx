@@ -1,10 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { Pencil } from 'lucide-react'
+import { Pencil, AlertCircle, User } from 'lucide-react'
 import FlowHeader from '@/components/shared/flow-header'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuthStore } from '@/store/use-auth-store'
 import { ROUTES } from '@/constants/routes'
+import { useUpdateProfileMutation } from '@/features/auth/api/use-auth-mutations'
+import { buildProfileFormData } from '@/features/auth/api/build-profile-form-data'
+import { mapUserToProfile } from '@/features/auth/api/map-user'
 
 interface EditProfilePanelProps {
   onClose?: () => void
@@ -17,28 +20,29 @@ export default function EditProfilePanel({
 }: EditProfilePanelProps) {
   const navigate = useNavigate()
   const { userProfile, setProfile } = useAuthStore()
+  const updateProfile = useUpdateProfileMutation()
 
-  // Form states prefilled from store
-  const [name, setName] = useState(userProfile?.name || 'Muhammad Huzaifa')
-  const [email, setEmail] = useState(userProfile?.email || '')
+  // Local edit buffer, deliberately NOT synced to the store on every
+  // keystroke (the previous version did that) — that let an unsaved edit
+  // leak into every other screen reading the store before it was ever
+  // sent to the backend. The store only updates once the save actually
+  // succeeds, from the server's own response.
+  const [name, setName] = useState(userProfile?.name ?? '')
+  const [email, setEmail] = useState(userProfile?.email ?? '')
   const avatar = userProfile?.avatar || null
 
-
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return
 
-    setProfile({
-      ...userProfile,
-      name: name.trim(),
-      email: email.trim(),
-      avatar: avatar
+    const formData = await buildProfileFormData({ fullName: name.trim(), email: email.trim() })
+    updateProfile.mutate(formData, {
+      onSuccess: (user) => {
+        setProfile(mapUserToProfile(user))
+        onSuccess?.('Profile updated successfully!')
+        onClose()
+      },
     })
-
-    if (onSuccess) {
-      onSuccess('Profile updated successfully!')
-    }
-    onClose()
   }
 
   const initials = name
@@ -64,7 +68,7 @@ export default function EditProfilePanel({
                   <AvatarImage src={avatar} alt="Profile Picture" className="object-cover" />
                 ) : (
                   <AvatarFallback className="bg-[linear-gradient(140deg,#0B683A_3.67%,#14A558_96.33%)] text-white font-bold text-[28px] tracking-tight">
-                    {initials || 'MH'}
+                    {initials || <User size={32} />}
                   </AvatarFallback>
                 )}
               </Avatar>
@@ -100,10 +104,7 @@ export default function EditProfilePanel({
                 <input
                   type="text"
                   value={name}
-                  onChange={(e) => {
-                    setName(e.target.value)
-                    setProfile({ ...userProfile, name: e.target.value })
-                  }}
+                  onChange={(e) => setName(e.target.value)}
                   className="outline-none border-0 w-full text-[15px] font-medium text-[#1A1A1A] p-0 bg-transparent"
                   required
                   placeholder="Enter your name"
@@ -118,7 +119,7 @@ export default function EditProfilePanel({
               </label>
               <div className="flex items-center justify-between bg-white border-[0.8px] border-[#E8E4DC] rounded-[16px] px-5 py-4 shadow-[0px_2px_10px_0px_rgba(0,0,0,0.03)]">
                 <span className="text-[15px] font-medium text-[#1A1A1A]">
-                  {userProfile?.phone || '+92 300 1234567'}
+                  {userProfile?.phone}
                 </span>
                 <span className="bg-[#E4F2EB] text-positive text-[12px] font-bold px-3 py-1 rounded-full shrink-0 select-none">
                   Verified
@@ -135,10 +136,7 @@ export default function EditProfilePanel({
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value)
-                    setProfile({ ...userProfile, email: e.target.value })
-                  }}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="outline-none border-0 w-full text-[15px] font-medium text-[#1A1A1A] p-0 bg-transparent"
                   placeholder="Add email address..."
                 />
@@ -149,12 +147,18 @@ export default function EditProfilePanel({
 
         {/* Bottom Save Changes Button */}
         <div className="mt-8">
+          {updateProfile.isError && (
+            <div className="flex items-start gap-2 mb-4 text-tertiary justify-center">
+              <AlertCircle size={16} className="shrink-0 mt-0.5" />
+              <p className="text-sm font-medium">{updateProfile.error.message}</p>
+            </div>
+          )}
           <button
             type="submit"
-            disabled={!name.trim()}
+            disabled={!name.trim() || updateProfile.isPending}
             className="w-full h-14 bg-positive text-white rounded-full font-bold text-base shadow-[0px_8px_20px_rgba(11,104,58,0.3)] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center cursor-pointer"
           >
-            Save Changes
+            {updateProfile.isPending ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </form>
