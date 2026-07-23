@@ -3,19 +3,13 @@ import { Search, Users, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Contact } from '@/types'
 import { ROUTES } from '@/constants/routes'
+import { formatCurrency } from '@/lib/currency'
 
 interface SearchResultsOverlayProps {
   query: string
   contacts: Contact[]
   onPersonClick: (contactId: string) => void
   onClose: () => void
-}
-
-function formatAmount(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(Math.abs(amount))
 }
 
 function highlightMatch(text: string, query: string) {
@@ -82,7 +76,7 @@ function SearchResultRow({
           'text-[13px] font-bold shrink-0',
           isReceivable ? 'text-positive' : 'text-[#C96A1B]'
         )}>
-          {isReceivable ? '+' : '-'} Rs. {formatAmount(contact.netAmount)}
+          {isReceivable ? '+' : '-'} {formatCurrency(contact.netAmount, contact.currency ?? 'PKR')}
         </span>
       )}
     </button>

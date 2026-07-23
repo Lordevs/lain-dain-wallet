@@ -6,6 +6,7 @@ import OutstandingBalanceDrawer from '@/components/shared/outstanding-balance-dr
 import ConfirmActionDrawer from '@/components/shared/confirm-action-drawer'
 import { useAuthStore } from '@/store/use-auth-store'
 import { clearRefreshToken } from '@/lib/secure-storage'
+import { useDeleteAccountMutation } from '@/features/auth/api/use-auth-mutations'
 import { ROUTES } from '@/constants/routes'
 
 interface DeleteAccountPanelProps {
@@ -19,23 +20,27 @@ export default function DeleteAccountPanel({
 }: DeleteAccountPanelProps) {
   const navigate = useNavigate()
   const { logout } = useAuthStore()
-  const [isSettled, setIsSettled] = useState(false)
-  const [isOutstandingOpen, setIsOutstandingOpen] = useState(false)
+  const deleteAccount = useDeleteAccountMutation()
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+  // Only known to be an outstanding-balance block once the backend actually
+  // says so (delete_account settles/leaves everything it safely can and
+  // only then rejects) — never guessed client-side ahead of time. Holds
+  // the real message (names the friend/group and amount) so this drawer
+  // never shows a generic "you have a balance" that might not even be true.
+  const [blockedMessage, setBlockedMessage] = useState<string | null>(null)
 
-  const handleDeleteClick = () => {
-    if (!isSettled) {
-      setIsOutstandingOpen(true)
-    } else {
-      setIsConfirmOpen(true)
-    }
-  }
-
-  const handleConfirm = onConfirm ?? (async () => {
-    await clearRefreshToken()
-    logout()
-    navigate({ to: ROUTES.AUTH })
-  })
+  const handleConfirm =
+    onConfirm ??
+    (() => {
+      deleteAccount.mutate(undefined, {
+        onSuccess: async () => {
+          await clearRefreshToken()
+          logout()
+          navigate({ to: ROUTES.AUTH })
+        },
+        onError: (err) => setBlockedMessage(err.message),
+      })
+    })
 
   return (
     <div className="min-h-screen bg-[#FEFAF1] flex flex-col select-none overflow-y-auto text-[#1A1A1A]">
@@ -97,11 +102,12 @@ export default function DeleteAccountPanel({
           {/* Permanently Delete Button */}
           <button
             type="button"
-            onClick={handleDeleteClick}
-            className="w-full h-14 bg-tertiary text-white rounded-[16px] font-bold text-[17px] flex items-center justify-center gap-2 active:scale-[0.99] transition-all cursor-pointer shadow-[0px_4px_14px_0px_#C0392B4D]"
+            onClick={() => setIsConfirmOpen(true)}
+            disabled={deleteAccount.isPending}
+            className="w-full h-14 bg-tertiary text-white rounded-[16px] font-bold text-[17px] flex items-center justify-center gap-2 active:scale-[0.99] transition-all cursor-pointer shadow-[0px_4px_14px_0px_#C0392B4D] disabled:opacity-70"
           >
             <Trash2 size={17} strokeWidth={2.5} />
-            Permanently Delete
+            {deleteAccount.isPending ? 'Deleting...' : 'Permanently Delete'}
           </button>
 
           {/* Keep My Account Button */}
@@ -115,16 +121,15 @@ export default function DeleteAccountPanel({
         </div>
       </div>
 
-      {/* Reusable drawers connected */}
+      {/* Shown only after the backend actually rejects deletion for an
+          outstanding balance — warningText is its real error message. */}
       <OutstandingBalanceDrawer
-        isOpen={isOutstandingOpen}
-        onClose={() => setIsOutstandingOpen(false)}
+        isOpen={!!blockedMessage}
+        onClose={() => setBlockedMessage(null)}
         title="Permanently delete the Account"
-        warningText="You have pending balance.You can settle first and then delete."
-        onAction={() => {
-          setIsSettled(true)
-          setIsConfirmOpen(true)
-        }}
+        warningText={blockedMessage ?? ''}
+        buttonText="Got it"
+        onAction={() => setBlockedMessage(null)}
       />
 
       <ConfirmActionDrawer

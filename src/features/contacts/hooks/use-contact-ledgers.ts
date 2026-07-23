@@ -20,9 +20,10 @@ export function useContactLedgers(userId: string | undefined) {
 
   useEffect(() => {
     if (!userId) return
-    createFriendship.mutate(userId, {
-      onSettled: () => setEnsuredForUserId(userId),
-    })
+    createFriendship.mutate(
+      { userId },
+      { onSettled: () => setEnsuredForUserId(userId) },
+    )
     // Re-run only when the target user changes, not on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId])

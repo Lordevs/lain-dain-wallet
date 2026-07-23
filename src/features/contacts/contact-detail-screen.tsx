@@ -6,7 +6,8 @@ import { ROUTES } from '@/constants/routes'
 import { formatCurrency } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
-import ExpenseList, { type TransactionListItem } from '@/components/shared/expense-list'
+import ExpenseList, { type ExpenseListData } from '@/components/shared/expense-list'
+import EmptyState from '@/components/shared/empty-state'
 import { useContactLedgers } from '@/features/contacts/hooks/use-contact-ledgers'
 import { useFriendshipTransactionsQuery } from '@/features/contacts/api/use-friendship-transactions-query'
 
@@ -35,7 +36,7 @@ export default function ContactDetailScreen() {
   const ledgers = useContactLedgers(userId)
   const transactions = useFriendshipTransactionsQuery(ledgers.friendshipId)
 
-  const items: TransactionListItem[] = useMemo(() => {
+  const items: ExpenseListData[] = useMemo(() => {
     if (!transactions.data) return []
     return transactions.data.map((t) => {
       if (t.kind === 'expense') {
@@ -150,10 +151,13 @@ export default function ContactDetailScreen() {
           <p className="text-muted-foreground text-sm text-center py-8">Loading history...</p>
         )}
         {!transactions.isLoading && items.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 px-6 text-center select-none bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] shadow-[0px_4px_16px_rgba(0,0,0,0.02)]">
-            <p className="text-muted-foreground text-sm font-semibold">No transactions yet</p>
-            <p className="text-xs text-[#9A9590] mt-1 font-medium">Add an expense to start the ledger history</p>
-          </div>
+          <EmptyState
+            title="No transactions yet"
+            description="Add an expense to start tracking transactions with this contact."
+            actionLabel="Add Expense"
+            onAction={() => navigate({ to: ROUTES.CONTACT_ADD_EXPENSE, params: { id: userId } })}
+            className="py-6"
+          />
         )}
         {items.length > 0 && (
           <ExpenseList

@@ -6,6 +6,7 @@ import ContactList from '@/components/shared/contact-list'
 import ContactListItem from '@/components/shared/contact-list-item'
 import FormError from '@/components/shared/form-error'
 import InfiniteScrollSentinel from '@/components/shared/infinite-scroll-sentinel'
+import CurrencyMismatchDrawer from '@/features/contacts/components/currency-mismatch-drawer'
 import { shareInvite } from '@/lib/share-invite'
 import type { NewContactFlowState } from '../hooks/use-new-contact-flow'
 import { Button } from '@/components/ui/button'
@@ -181,6 +182,15 @@ export default function ChoiceStep({ flow }: ChoiceStepProps) {
           </span>
         </div>
       )}
+
+      <CurrencyMismatchDrawer
+        isOpen={!!flow.currencyMismatch}
+        onClose={flow.closeCurrencyMismatch}
+        mismatch={flow.currencyMismatch}
+        isSubmitting={flow.isSubmitting}
+        submitError={flow.submitError}
+        onConfirm={flow.resolveCurrencyMismatch}
+      />
     </div>
   )
 }

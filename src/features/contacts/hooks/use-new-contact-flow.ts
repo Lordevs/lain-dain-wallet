@@ -8,6 +8,7 @@ import { useContactsQuery } from '@/features/contacts/api/use-contacts-query'
 import { useCreateFriendshipMutation } from '@/features/contacts/api/use-friendship-mutations'
 import { useCreateGroupMutation } from '@/features/contacts/api/use-create-group-mutation'
 import { mapSyncedContact } from '@/features/contacts/lib/map-synced-contact'
+import { parseCurrencyMismatch, type CurrencyMismatch } from '@/features/contacts/lib/parse-currency-mismatch'
 import { useDeviceContactsSync, type ContactsSyncStatus } from './use-device-contacts-sync'
 
 // ─── Public interface of the hook ─────────────────────────────────────────────
@@ -69,6 +70,14 @@ export interface NewContactFlowState {
   createGroup: () => void
   isSubmitting: boolean
   submitError: string | null
+
+  // ── Currency mismatch (1:1 ledger start) ────────────────────────────────────
+  /** Non-null when starting a 1:1 ledger hit a currency mismatch — open
+   * <CurrencyMismatchDrawer> bound to this. */
+  currencyMismatch: CurrencyMismatch | null
+  closeCurrencyMismatch: () => void
+  /** Retries friendship creation with the user's chosen currency/rate */
+  resolveCurrencyMismatch: (currency: string, exchangeRate: string) => void
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
@@ -90,6 +99,7 @@ export function useNewContactFlow(): NewContactFlowState {
   const [selectedCategory, setSelectedCategory] = useState(MOCK_CATEGORIES[0].id)
   const [groupAvatar, setGroupAvatar] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [currencyMismatch, setCurrencyMismatch] = useState<CurrencyMismatch | null>(null)
 
   const deviceSync = useDeviceContactsSync()
   // Two independent, independently-paginated queries (backend's own
@@ -156,13 +166,40 @@ export function useNewContactFlow(): NewContactFlowState {
       // Single-contact selection starts the direct 1:1 ledger right away
       // (idempotent — safe even if it already existed) so the success
       // screen's "Add First Expense" CTA has a real relationship to land on.
-      createFriendship.mutate(selectedContacts[0], {
-        onSuccess: () => setStep('success'),
-        onError: (err) => setSubmitError(err.message),
-      })
+      createFriendship.mutate(
+        { userId: selectedContacts[0] },
+        {
+          onSuccess: () => setStep('success'),
+          onError: (err) => {
+            const mismatch = parseCurrencyMismatch(err.message)
+            if (mismatch) {
+              setCurrencyMismatch(mismatch)
+            } else {
+              setSubmitError(err.message)
+            }
+          },
+        },
+      )
     } else {
       setStep('group_details')
     }
+  }
+
+  const closeCurrencyMismatch = () => setCurrencyMismatch(null)
+
+  const resolveCurrencyMismatch = (currency: string, exchangeRate: string) => {
+    if (selectedContacts.length === 0) return
+    setSubmitError(null)
+    createFriendship.mutate(
+      { userId: selectedContacts[0], currency, exchangeRate },
+      {
+        onSuccess: () => {
+          setCurrencyMismatch(null)
+          setStep('success')
+        },
+        onError: (err) => setSubmitError(err.message),
+      },
+    )
   }
 
   const createGroup = () => {
@@ -225,5 +262,8 @@ export function useNewContactFlow(): NewContactFlowState {
     createGroup,
     isSubmitting: createFriendship.isPending || createGroupMutation.isPending,
     submitError,
+    currencyMismatch,
+    closeCurrencyMismatch,
+    resolveCurrencyMismatch,
   }
 }

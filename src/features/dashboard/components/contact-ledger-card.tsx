@@ -2,17 +2,11 @@ import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Contact } from '@/types'
 import { Status, StatusIndicator } from '@/components/kibo-ui/status'
+import { formatCurrency } from '@/lib/currency'
 
 interface ContactLedgerCardProps {
   contact: Contact
   onClick?: () => void
-}
-
-function formatAmount(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(Math.abs(amount))
 }
 
 /**
@@ -21,7 +15,7 @@ function formatAmount(amount: number): string {
  * Used in both Receivables and Payables lists.
  */
 export default function ContactLedgerCard({ contact, onClick }: ContactLedgerCardProps) {
-  const { name, initials, avatarColor, ledgerCount, netAmount, tags, isOnline, type } = contact
+  const { name, initials, avatarColor, ledgerCount, netAmount, currency, tags, isOnline, type } = contact
 
   const isReceivable = netAmount > 0
 
@@ -69,7 +63,7 @@ export default function ContactLedgerCard({ contact, onClick }: ContactLedgerCar
             'text-[15px] font-extrabold',
             isReceivable ? 'text-primary' : 'text-orange-payable'
           )}>
-            Rs. {formatAmount(netAmount)}
+            {formatCurrency(netAmount, currency ?? 'PKR')}
           </span>
           <ChevronRight size={16} className="text-muted-foreground" />
         </div>
@@ -92,7 +86,7 @@ export default function ContactLedgerCard({ contact, onClick }: ContactLedgerCar
                 'font-bold',
                 tag.amount > 0 ? 'text-primary' : 'text-orange-payable'
               )}>
-                {tag.amount > 0 ? '+' : '-'}{formatAmount(tag.amount)}
+                {tag.amount > 0 ? '+' : '-'}{formatCurrency(tag.amount, tag.currency ?? currency ?? 'PKR')}
               </span>
             </span>
           ))}

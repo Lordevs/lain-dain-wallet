@@ -42,6 +42,15 @@ export function useLogoutMutation() {
   })
 }
 
+export function useDeleteAccountMutation() {
+  return useMutation<void, ApiError, void>({
+    mutationFn: async () => {
+      const { error } = await apiClient.POST('/api/auth/profile/delete/')
+      if (error) throw toApiError(error)
+    },
+  })
+}
+
 export function useUpdateProfileMutation() {
   return useMutation<components['schemas']['User'], ApiError, FormData>({
     mutationFn: async (formData: FormData) => {

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { ROUTES } from '@/constants/routes'
 import AppHeader from '@/components/layout/app-header'
@@ -9,8 +9,10 @@ import SectionHeader from './components/section-header'
 import ContactLedgerCard from './components/contact-ledger-card'
 import SearchResultsOverlay from './components/search-results-overlay'
 import Fab from './components/fab'
-import { useShallow } from 'zustand/react/shallow'
-import { useContactStore, selectBalanceSummary, selectReceivables, selectPayables } from '@/store/use-contact-store'
+import EmptyState from '@/components/shared/empty-state'
+import { useWalletListQuery } from './api/use-wallet-list-query'
+import { useWalletSummaryQuery } from './api/use-wallet-summary-query'
+import { mapWalletRow } from './lib/map-wallet-row'
 
 
 /**
@@ -27,12 +29,29 @@ export default function DashboardScreen() {
   const [filterType, setFilterType] = useState<'all' | 'people' | 'groups'>('all')
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest')
 
-  const balanceSummary = useContactStore(useShallow(selectBalanceSummary))
-  const receivables = useContactStore(useShallow(selectReceivables))
-  const payables = useContactStore(useShallow(selectPayables))
+  const summaryQuery = useWalletSummaryQuery()
+  // Both tabs are fetched unconditionally (not just the active one) so
+  // search can look across receivables + payables at once, same as the
+  // old mock's combined `allContacts` — the list is small/bounded either
+  // way (see useWalletListQuery's docstring), so this is two lightweight
+  // calls, not real over-fetching.
+  const receivablesQuery = useWalletListQuery('receivables')
+  const payablesQuery = useWalletListQuery('payables')
 
-  // All contacts (receivables + payables) for search
-  const allContacts = useContactStore(useShallow((s) => s.contacts))
+  const balanceSummary = useMemo(() => {
+    const s = summaryQuery.data
+    return {
+      totalReceivable: s ? Number(s.receivable) : 0,
+      totalPayable: s ? Number(s.payable) : 0,
+      netBalance: s ? Number(s.net) : 0,
+      currency: s?.currency ?? 'PKR',
+    }
+  }, [summaryQuery.data])
+
+  const receivables = useMemo(() => (receivablesQuery.data ?? []).map(mapWalletRow), [receivablesQuery.data])
+  const payables = useMemo(() => (payablesQuery.data ?? []).map(mapWalletRow), [payablesQuery.data])
+  const allContacts = useMemo(() => [...receivables, ...payables], [receivables, payables])
+  const isLoading = receivablesQuery.isLoading || payablesQuery.isLoading
 
   const handleSearchFocus = () => {
     navigate({
@@ -56,19 +75,20 @@ export default function DashboardScreen() {
     return true
   })
 
-  // Sort contacts based on selected sort order
+  // Sort contacts based on selected sort order — latestActivity (a real
+  // timestamp from the backend) drives newest/oldest now; falls back to
+  // the id-based comparison only for any contact missing it.
   const sortedContacts = [...typedContacts].sort((a, b) => {
-    if (sortBy === 'newest') {
+    if (sortBy === 'newest' || sortBy === 'oldest') {
+      if (a.latestActivity && b.latestActivity) {
+        const diff = new Date(a.latestActivity).getTime() - new Date(b.latestActivity).getTime()
+        return sortBy === 'newest' ? -diff : diff
+      }
       const idA = isNaN(Number(a.id)) ? a.id : Number(a.id)
       const idB = isNaN(Number(b.id)) ? b.id : Number(b.id)
-      if (typeof idA === 'number' && typeof idB === 'number') return idB - idA
-      return String(idB).localeCompare(String(idA))
-    }
-    if (sortBy === 'oldest') {
-      const idA = isNaN(Number(a.id)) ? a.id : Number(a.id)
-      const idB = isNaN(Number(b.id)) ? b.id : Number(b.id)
-      if (typeof idA === 'number' && typeof idB === 'number') return idA - idB
-      return String(idA).localeCompare(String(idB))
+      const cmp =
+        typeof idA === 'number' && typeof idB === 'number' ? idA - idB : String(idA).localeCompare(String(idB))
+      return sortBy === 'newest' ? -cmp : cmp
     }
     if (sortBy === 'highest') return Math.abs(b.netAmount) - Math.abs(a.netAmount)
     if (sortBy === 'lowest') return Math.abs(a.netAmount) - Math.abs(b.netAmount)
@@ -159,7 +179,9 @@ export default function DashboardScreen() {
 
           {/* Contact/Group Ledger Cards */}
           <div className="flex flex-col gap-1.5 px-6 pb-6">
-            {filteredContacts.length > 0 ? (
+            {isLoading ? (
+              <p className="text-muted-foreground text-sm text-center py-8">Loading...</p>
+            ) : filteredContacts.length > 0 ? (
               filteredContacts.map((contact) => (
                 <ContactLedgerCard
                   key={contact.id}
@@ -179,10 +201,18 @@ export default function DashboardScreen() {
                   }}
                 />
               ))
+            ) : allContacts.length === 0 ? (
+              <EmptyState
+                title="Welcome! Let’s get started with your Lain Dain"
+                description="Add your first expense to begin."
+                actionLabel="Add First Expense"
+                onAction={() => navigate({ to: ROUTES.NEW_CONTACT })}
+              />
             ) : (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <p className="text-muted-foreground text-sm">No results found</p>
-              </div>
+              <EmptyState
+                title="No records found"
+                description="Try adjusting your active filters or sorting criteria."
+              />
             )}
           </div>
 

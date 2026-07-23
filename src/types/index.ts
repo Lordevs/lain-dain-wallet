@@ -45,6 +45,8 @@ export const SUPPORTED_CURRENCIES: Currency[] = [
 export interface LedgerTag {
   name: string
   amount: number // positive = receivable, negative = payable
+  /** Defaults to the parent Contact's own currency when omitted */
+  currency?: string
 }
 
 /** A person or group ledger. `type` distinguishes the two - there is no separate "Group" type. */
@@ -56,6 +58,14 @@ export interface Contact {
   avatar?: string | null
   ledgerCount: number
   netAmount: number // positive = owes you, negative = you owe
+  /** ISO 4217 code this contact's amounts are actually in — real wallet
+   * rows carry their own currency (a group row is its group's own
+   * currency, unconverted); falls back to PKR for older mock data that
+   * predates this field. */
+  currency?: string
+  /** ISO datetime of the most recent ledger activity — real sort key for
+   * "newest"/"oldest", unlike the mock data's id-based fallback. */
+  latestActivity?: string
   tags: LedgerTag[]
   isOnline?: boolean
   isOnLainDain?: boolean
