@@ -53,6 +53,55 @@ To see code changes instantly on your device or simulator without rebuilds:
 
 ---
 
+### 📶 Testing on a Physical Android Device over Wi-Fi (Wireless Debugging)
+
+No USB cable needed — pairs over Wi-Fi via `adb`. Do this once per phone/network; steps 1–3 only need repeating if the phone reboots or leaves the network.
+
+1. **Same Wi-Fi.** Confirm the phone and Mac are on the same network. Get your Mac's LAN IP:
+   ```bash
+   ipconfig getifaddr en0
+   ```
+
+2. **Pair the phone** (first time only, or after it's been "forgotten"):
+   On the phone: **Settings → Developer options → Wireless debugging → Pair device with pairing code**. It shows an IP:port and a 6-digit code.
+   ```bash
+   adb pair <ip>:<pairing-port>
+   # enter the 6-digit code when prompted
+   ```
+
+3. **Connect the phone** — back on the main "Wireless debugging" screen (not the pairing one), it shows a second IP:port.
+   ```bash
+   adb connect <ip>:<connect-port>
+   adb devices   # should list the phone as "device"
+   ```
+
+4. **Point the app at your Mac, not "localhost."** On the phone, `localhost` means the phone itself — update both `.env` files to use your Mac's LAN IP from step 1:
+   - `lain-dain-backend/.env` → add your IP to `ALLOWED_HOSTS` (e.g. `ALLOWED_HOSTS=localhost,127.0.0.1,192.168.1.21`)
+   - `lain-dain/.env` → `VITE_API_BASE_URL=http://<your-mac-ip>:8000`
+   - `lain-dain/.env` → `CAPACITOR_DEV_SERVER_URL=http://<your-mac-ip>:5173` (should already be set)
+
+5. **Start both dev servers bound to all interfaces**, not just localhost:
+   ```bash
+   # backend
+   uv run python manage.py runserver 0.0.0.0:8000
+
+   # frontend — use `npx vite --host` directly, NOT `pnpm run dev -- --host`:
+   # pnpm forwards that as a literal "-- --host" to vite, which silently
+   # fails to bind on all interfaces (only binds to localhost).
+   npx vite --host
+   ```
+
+6. **Sync and launch:**
+   ```bash
+   npx cap sync android
+   npx cap run android --target=<device-ip>:<connect-port>   # from step 3
+   ```
+   This installs the debug APK and launches it pointed at your live Vite dev server — edits hot-reload without a rebuild.
+
+If the app shows "Web page not available" / `ERR_CONNECTION_REFUSED`, it's almost always step 5's host binding — check with `lsof -iTCP:5173 -sTCP:LISTEN` that the process is listening on `*:5173`, not `localhost:5173`.
+
+---
+
 ### 📦 Running the App Without Live Reload (Static Assets)
 To test how the application behaves when fully offline or bundled statically:
 

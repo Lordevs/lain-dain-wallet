@@ -1,63 +1,13 @@
-import type { AppContact, ContactCategory } from '../types'
-
-// ─── Contacts to Invite ───────────────────────────────────────────────────────
-
-export const MOCK_INVITES: AppContact[] = [
-  {
-    id: 'i1',
-    name: 'Ayesha',
-    phone: '+92 300 1234567',
-    initials: 'A',
-    avatarColor: 'bg-[#EFE7DD] text-[#9A9590]',
-    isOnLainDain: false,
-  },
-  {
-    id: 'i2',
-    name: 'Hassan Ali',
-    phone: '+92 333 9876543',
-    initials: 'HA',
-    avatarColor: 'bg-[#EFE7DD] text-[#9A9590]',
-    isOnLainDain: false,
-  },
-  {
-    id: 'i3',
-    name: 'Kashif Jamil',
-    phone: '+92 321 4455667',
-    initials: 'KJ',
-    avatarColor: 'bg-[#EFE7DD] text-[#9A9590]',
-    isOnLainDain: false,
-  },
-  {
-    id: 'i4',
-    name: 'Nida Fatima',
-    phone: '+92 345 5566778',
-    initials: 'NF',
-    avatarColor: 'bg-[#EFE7DD] text-[#9A9590]',
-    isOnLainDain: false,
-  },
-  {
-    id: 'i5',
-    name: 'Waqas Ahmed',
-    phone: '+92 312 8899001',
-    initials: 'WA',
-    avatarColor: 'bg-[#EFE7DD] text-[#9A9590]',
-    isOnLainDain: false,
-  },
-  {
-    id: 'i6',
-    name: 'Sadia Malik',
-    phone: '+92 300 9900112',
-    initials: 'SM',
-    avatarColor: 'bg-[#EFE7DD] text-[#9A9590]',
-    isOnLainDain: false,
-  },
-]
+import type { ContactCategory } from '../types'
 
 // ─── Group Categories ─────────────────────────────────────────────────────────
+// ids match apps.ledger.models.GroupCategory's values exactly (see
+// GroupSerializer.category / CategoryEnum) — these go straight into
+// POST /api/ledger/groups/, no translation table needed.
 
 export const MOCK_CATEGORIES: ContactCategory[] = [
   {
-    id: 'cat1',
+    id: 'friends',
     name: 'Friend',
     description: 'Personal friend',
     icon: '👤',
@@ -65,7 +15,7 @@ export const MOCK_CATEGORIES: ContactCategory[] = [
     iconColor: 'text-[#1E3A8A]',
   },
   {
-    id: 'cat2',
+    id: 'family',
     name: 'Family',
     description: 'Family member',
     icon: '👥',
@@ -73,7 +23,7 @@ export const MOCK_CATEGORIES: ContactCategory[] = [
     iconColor: 'text-[#E65100]',
   },
   {
-    id: 'cat3',
+    id: 'colleague',
     name: 'Colleague',
     description: 'Work / office',
     icon: '💼',
@@ -81,7 +31,7 @@ export const MOCK_CATEGORIES: ContactCategory[] = [
     iconColor: 'text-positive',
   },
   {
-    id: 'cat4',
+    id: 'roommate',
     name: 'Roommate',
     description: 'Shared living',
     icon: '🏠',
@@ -89,7 +39,7 @@ export const MOCK_CATEGORIES: ContactCategory[] = [
     iconColor: 'text-[#4A148C]',
   },
   {
-    id: 'cat5',
+    id: 'classmate',
     name: 'Classmate',
     description: 'School / university',
     icon: '🎓',
@@ -97,7 +47,7 @@ export const MOCK_CATEGORIES: ContactCategory[] = [
     iconColor: 'text-[#F57F17]',
   },
   {
-    id: 'cat6',
+    id: 'travel',
     name: 'Travel',
     description: 'Trips & holidays',
     icon: '✈️',
@@ -105,7 +55,7 @@ export const MOCK_CATEGORIES: ContactCategory[] = [
     iconColor: 'text-[#006064]',
   },
   {
-    id: 'cat7',
+    id: 'business',
     name: 'Business',
     description: 'Professional / client',
     icon: '💵',
@@ -113,7 +63,7 @@ export const MOCK_CATEGORIES: ContactCategory[] = [
     iconColor: 'text-[#1B5E20]',
   },
   {
-    id: 'cat8',
+    id: 'other',
     name: 'Other',
     description: 'Everything else',
     icon: '⚠️',

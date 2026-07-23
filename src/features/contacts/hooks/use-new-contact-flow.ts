@@ -1,11 +1,24 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { ROUTES } from '@/constants/routes'
 import { MOCK_CATEGORIES } from '../data/mock-data'
-import { useContactStore, type Contact } from '@/store/use-contact-store'
+import type { Contact } from '@/store/use-contact-store'
 import type { NewFlowStep } from '../types'
+import { useContactsQuery } from '@/features/contacts/api/use-contacts-query'
+import { useCreateFriendshipMutation } from '@/features/contacts/api/use-friendship-mutations'
+import { useCreateGroupMutation } from '@/features/contacts/api/use-create-group-mutation'
+import { mapSyncedContact } from '@/features/contacts/lib/map-synced-contact'
+import { useDeviceContactsSync, type ContactsSyncStatus } from './use-device-contacts-sync'
 
 // ─── Public interface of the hook ─────────────────────────────────────────────
+
+/** Onscroll-fetch state for one independently-paginated list — wire to
+ * <InfiniteScrollSentinel> at the end of that list. */
+export interface ContactsPage {
+  hasMore: boolean
+  isFetchingMore: boolean
+  fetchMore: () => void
+}
 
 export interface NewContactFlowState {
   // ── Step navigation ─────────────────────────────────────────────────────────
@@ -13,12 +26,23 @@ export interface NewContactFlowState {
   setStep: (step: NewFlowStep) => void
   goBack: () => void
 
+  // ── Device contacts sync ────────────────────────────────────────────────────
+  syncStatus: ContactsSyncStatus
+  isSyncing: boolean
+  requestContactsAccess: () => Promise<boolean>
+
   // ── Contact selection ────────────────────────────────────────────────────────
   selectedContacts: string[]
   /** Full contact objects matching selectedContacts ids */
   selectedList: Contact[]
-  /** Contacts from the store filtered by current searchQuery */
+  /** On-app contacts matching current searchQuery — independently paginated */
   filteredContacts: Contact[]
+  onAppContactsPage: ContactsPage
+  /** Not-yet-on-the-app contacts matching current searchQuery — invite only,
+   * never selectable, independently paginated from the on-app list */
+  inviteContacts: Contact[]
+  inviteContactsPage: ContactsPage
+  isLoadingContacts: boolean
   toggleContact: (id: string) => void
   removeContact: (id: string) => void
 
@@ -39,10 +63,12 @@ export interface NewContactFlowState {
   setGroupAvatar: (v: string | null) => void
 
   // ── Step actions ─────────────────────────────────────────────────────────────
-  /** Advance from add_members → group_details (no-op if nothing selected) */
+  /** Advance from choice → success (creates the Friendship) or add_members → group_details */
   nextStep: () => void
-  /** Advance from group_details → success (no-op if groupName is empty) */
+  /** Creates the real Group, then advances to success */
   createGroup: () => void
+  isSubmitting: boolean
+  submitError: string | null
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
@@ -54,8 +80,6 @@ export interface NewContactFlowState {
  */
 export function useNewContactFlow(): NewContactFlowState {
   const navigate = useNavigate()
-  const contacts = useContactStore((state) => state.contacts)
-  const addContact = useContactStore((state) => state.addContact)
 
   const [step, setStep] = useState<NewFlowStep>('choice')
   const [selectedContacts, setSelectedContacts] = useState<string[]>([])
@@ -65,16 +89,31 @@ export function useNewContactFlow(): NewContactFlowState {
   const [currency, setCurrency] = useState('pkr')
   const [selectedCategory, setSelectedCategory] = useState(MOCK_CATEGORIES[0].id)
   const [groupAvatar, setGroupAvatar] = useState<string | null>(null)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+
+  const deviceSync = useDeviceContactsSync()
+  // Two independent, independently-paginated queries (backend's own
+  // on_lain_dain filter) — not one mixed feed split client-side. See
+  // useContactsQuery's docstring for why that matters for infinite scroll
+  // specifically: a single shared feed can make an on-app contact "appear"
+  // out of nowhere after scrolling past its alphabetical position.
+  const onAppQuery = useContactsQuery(true, searchQuery)
+  const inviteQuery = useContactsQuery(false, searchQuery)
+  const createFriendship = useCreateFriendshipMutation()
+  const createGroupMutation = useCreateGroupMutation()
 
   // ── Derived ──────────────────────────────────────────────────────────────────
 
-  const selectableContacts = contacts.filter((c) => c.type === 'person')
-
-  const filteredContacts = selectableContacts.filter((c) =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  const filteredContacts = useMemo(
+    () => onAppQuery.contacts.map(mapSyncedContact),
+    [onAppQuery.contacts],
+  )
+  const inviteContacts = useMemo(
+    () => inviteQuery.contacts.map(mapSyncedContact),
+    [inviteQuery.contacts],
   )
 
-  const selectedList = contacts.filter((c) => selectedContacts.includes(c.id))
+  const selectedList = filteredContacts.filter((c) => selectedContacts.includes(c.id))
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
 
@@ -110,39 +149,64 @@ export function useNewContactFlow(): NewContactFlowState {
   }
 
   const nextStep = () => {
-    if (selectedContacts.length > 0) {
-      if (step === 'choice') {
-        setStep('success')
-      } else {
-        setStep('group_details')
-      }
+    if (selectedContacts.length === 0) return
+    setSubmitError(null)
+
+    if (step === 'choice') {
+      // Single-contact selection starts the direct 1:1 ledger right away
+      // (idempotent — safe even if it already existed) so the success
+      // screen's "Add First Expense" CTA has a real relationship to land on.
+      createFriendship.mutate(selectedContacts[0], {
+        onSuccess: () => setStep('success'),
+        onError: (err) => setSubmitError(err.message),
+      })
+    } else {
+      setStep('group_details')
     }
   }
 
   const createGroup = () => {
-    if (groupName.trim()) {
-      const newGroup: Contact = {
-        id: 'g-' + Date.now(),
-        name: groupName,
-        initials: groupName.slice(0, 2).toUpperCase(),
-        avatarColor: groupAvatar || 'bg-[#01592B]',
-        ledgerCount: selectedContacts.length + 1,
-        netAmount: 0,
-        tags: [],
-        type: 'group',
-      }
-      addContact(newGroup)
-      setStep('success')
-    }
+    if (!groupName.trim()) return
+    setSubmitError(null)
+
+    createGroupMutation.mutate(
+      {
+        name: groupName.trim(),
+        description: description.trim(),
+        defaultCurrency: currency.toUpperCase(),
+        category: selectedCategory,
+        memberIds: selectedContacts,
+        image: groupAvatar,
+      },
+      {
+        onSuccess: () => setStep('success'),
+        onError: (err) => setSubmitError(err.message),
+      },
+    )
   }
 
   return {
     step,
     setStep,
     goBack,
+    syncStatus: deviceSync.status,
+    isSyncing: deviceSync.isSyncing,
+    requestContactsAccess: deviceSync.requestAccess,
     selectedContacts,
     selectedList,
     filteredContacts,
+    onAppContactsPage: {
+      hasMore: onAppQuery.hasNextPage,
+      isFetchingMore: onAppQuery.isFetchingNextPage,
+      fetchMore: onAppQuery.fetchNextPage,
+    },
+    inviteContacts,
+    inviteContactsPage: {
+      hasMore: inviteQuery.hasNextPage,
+      isFetchingMore: inviteQuery.isFetchingNextPage,
+      fetchMore: inviteQuery.fetchNextPage,
+    },
+    isLoadingContacts: onAppQuery.isLoading || inviteQuery.isLoading,
     toggleContact,
     removeContact,
     searchQuery,
@@ -159,5 +223,7 @@ export function useNewContactFlow(): NewContactFlowState {
     setGroupAvatar,
     nextStep,
     createGroup,
+    isSubmitting: createFriendship.isPending || createGroupMutation.isPending,
+    submitError,
   }
 }

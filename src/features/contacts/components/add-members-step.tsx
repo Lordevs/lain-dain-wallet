@@ -5,6 +5,7 @@ import SearchBar from '@/components/shared/search-bar'
 import ContactList from '@/components/shared/contact-list'
 import ContactListItem from '@/components/shared/contact-list-item'
 import SelectedMembersStrip from '@/components/shared/selected-members-strip'
+import InfiniteScrollSentinel from '@/components/shared/infinite-scroll-sentinel'
 import type { NewContactFlowState } from '../hooks/use-new-contact-flow'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -41,6 +42,9 @@ export default function AddMembersStep({ flow }: AddMembersStepProps) {
 
       {/* Contacts list */}
       <div className="flex-1 overflow-y-auto pb-4">
+        {flow.isLoadingContacts && (
+          <p className="text-xs text-muted-foreground text-center py-4">Loading contacts...</p>
+        )}
         <ContactList title="Contacts on Lain Dain" titleColor="primary">
           {flow.filteredContacts.map((contact) => {
             const isChecked = flow.selectedContacts.includes(contact.id)
@@ -67,6 +71,12 @@ export default function AddMembersStep({ flow }: AddMembersStepProps) {
             )
           })}
         </ContactList>
+
+        <InfiniteScrollSentinel
+          onLoadMore={flow.onAppContactsPage.fetchMore}
+          hasMore={flow.onAppContactsPage.hasMore}
+          isLoading={flow.onAppContactsPage.isFetchingMore}
+        />
       </div>
 
       {/* Sticky Next button */}

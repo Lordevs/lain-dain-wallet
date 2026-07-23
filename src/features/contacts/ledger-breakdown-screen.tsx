@@ -1,60 +1,47 @@
-import { useState } from 'react'
-import { useNavigate, useParams } from '@tanstack/react-router'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Users, AlertTriangle, Smile, Info } from 'lucide-react'
-import { useContactStore } from '@/store/use-contact-store'
+import { useParams, useNavigate } from '@tanstack/react-router'
+import { Users, Smile } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
-import { formatPKR } from '@/lib/currency'
+import { formatCurrency } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import ExpenseList, { type ExpenseListData } from '@/components/shared/expense-list'
 import ContactAvatar from '@/components/shared/contact-avatar'
 import FlowHeader from '@/components/shared/flow-header'
+import { useContactLedgers } from '@/features/contacts/hooks/use-contact-ledgers'
 
-// Styles mapper for group ledger icons and backgrounds matching the mockup
-const getTagStyle = (tagName: string) => {
-  const name = tagName.toLowerCase()
-  if (name.includes('1-to-1') || name.includes('personal')) {
-    return {
-      bgColor: 'bg-[#E3F2FD]',
-      textColor: 'text-[#1E3A8A]',
-      icon: <Users size={18} className="text-[#1E3A8A]" />,
-    }
-  }
-  if (name.includes('trip') || name.includes('murree')) {
-    return {
-      bgColor: 'bg-[#E8F5E9]',
-      textColor: 'text-positive',
-      icon: <AlertTriangle size={18} className="text-positive" />,
-    }
-  }
-  // Default/Smile group style
-  return {
-    bgColor: 'bg-[#FFF3E6]',
-    textColor: 'text-[#C96A1B]',
-    icon: <Smile size={18} className="text-[#C96A1B]" />,
-  }
+function initialsForName(name: string): string {
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .map((part) => part[0]?.toUpperCase() ?? '')
+      .join('')
+      .slice(0, 2) || '?'
+  )
 }
 
+/**
+ * LedgerBreakdownScreen — the itemized "ledgers" side of
+ * GET /api/expenses/with/{user_id}/: every shared group plus the direct
+ * 1:1, alongside the combined "overall" total ContactDetailScreen shows.
+ */
 export default function LedgerBreakdownScreen() {
-  const { id: contactId } = useParams({ from: '/contacts/$id/breakdown' })
+  const { id: userId } = useParams({ from: '/contacts/$id/breakdown' })
   const navigate = useNavigate()
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null)
 
-  const showToast = (message: string, type: 'success' | 'info' = 'info') => {
-    setToast({ message, type })
-    setTimeout(() => {
-      setToast(null)
-    }, 2500)
-  }
+  const ledgers = useContactLedgers(userId)
 
-  // Find contact in mock data
-  const contacts = useContactStore((state) => state.contacts)
-  const contact = contacts.find((c) => c.id === contactId)
-
-  if (!contact) {
+  if (ledgers.isLoading) {
     return (
       <div className="flex flex-col items-center justify-center p-6 bg-[#FEFAF1] h-[50vh]">
-        <p className="text-muted-foreground text-sm mb-4">Contact not found</p>
+        <p className="text-muted-foreground text-sm">Loading...</p>
+      </div>
+    )
+  }
+
+  if (ledgers.isError || !ledgers.data) {
+    return (
+      <div className="flex flex-col items-center justify-center p-6 bg-[#FEFAF1] h-[50vh]">
+        <p className="text-muted-foreground text-sm mb-4">Couldn't load this contact.</p>
         <button
           onClick={() => window.history.back()}
           className="text-primary font-bold hover:underline border-0 bg-transparent cursor-pointer"
@@ -65,12 +52,12 @@ export default function LedgerBreakdownScreen() {
     )
   }
 
-  // Overall balance calculation
-  const overallAmount = contact.netAmount
-  const isPositive = overallAmount > 0
-  const isNegative = overallAmount < 0
-  const absOverall = Math.abs(overallAmount)
-  const formattedOverall = formatPKR(absOverall)
+  const { other_user: otherUser, overall, ledgers: ledgerItems } = ledgers.data
+  const primaryBalance = overall[0]
+  const overallAmount = primaryBalance ? Number(primaryBalance.net_amount) : 0
+  const isPositive = primaryBalance?.direction === 'owed_to_you'
+  const isNegative = primaryBalance?.direction === 'you_owe'
+  const formattedOverall = formatCurrency(overallAmount, primaryBalance?.currency ?? 'PKR')
 
   const overallAmountColorClass = isPositive
     ? 'text-positive'
@@ -78,90 +65,65 @@ export default function LedgerBreakdownScreen() {
       ? 'text-[#C96A1B]'
       : 'text-[#1A1A1A]'
 
-  const ledgerItems: ExpenseListData[] = contact.tags.map((tag) => {
-    const style = getTagStyle(tag.name)
-    const subtitleText = tag.amount > 0
-      ? `${contact.name.split(' ')[0]} owes you`
-      : tag.amount < 0
-        ? `You owe ${contact.name.split(' ')[0]}`
-        : 'Settled up'
+  const listItems: ExpenseListData[] = ledgerItems.map((item) => {
+    const isGroup = item.scope === 'group'
+    const firstName = otherUser.full_name.split(' ')[0]
+    const subtitleText =
+      item.direction === 'owed_to_you'
+        ? `${firstName} owes you`
+        : item.direction === 'you_owe'
+          ? `You owe ${firstName}`
+          : 'Settled up'
 
     return {
-      id: tag.name,
-      name: tag.name,
-      amount: Math.abs(tag.amount),
+      id: isGroup ? `group-${item.group_id}` : `friendship-${item.friendship_id}`,
+      name: item.label,
+      amount: Number(item.net_amount),
+      currency: item.currency,
       subtitle: subtitleText,
-      amountColor: tag.amount > 0 ? 'green' : tag.amount < 0 ? 'orange' : 'black',
+      amountColor: item.direction === 'owed_to_you' ? 'green' : item.direction === 'you_owe' ? 'orange' : 'black',
       showChevron: true,
       leftSlot: (
-        <div className={cn("w-10 h-10 rounded-[14px] flex items-center justify-center shrink-0", style.bgColor)}>
-          {style.icon}
+        <div
+          className={cn(
+            'w-10 h-10 rounded-[14px] flex items-center justify-center shrink-0',
+            isGroup ? 'bg-[#FFF3E6]' : 'bg-[#E3F2FD]',
+          )}
+        >
+          {isGroup ? (
+            <Smile size={18} className="text-[#C96A1B]" />
+          ) : (
+            <Users size={18} className="text-[#1E3A8A]" />
+          )}
         </div>
-      )
+      ),
     }
   })
 
-  const handleItemClick = (tagId: string | number) => {
-    const tagName = String(tagId)
-    const isOneToOne = tagName.toLowerCase().includes('1-to-1') || tagName.toLowerCase().includes('personal')
-    if (isOneToOne) {
-      navigate({
-        to: ROUTES.CONTACT_DETAILS,
-        params: { id: contact.id },
-      })
+  const handleItemClick = (itemId: string | number) => {
+    const [scope, id] = String(itemId).split('-')
+    if (scope === 'group') {
+      navigate({ to: ROUTES.GROUP_DETAILS, params: { id } })
     } else {
-      const foundGroup = contacts.find(
-        (g) => g.type === 'group' && (
-          tagName.toLowerCase().includes(g.name.toLowerCase()) ||
-          g.name.toLowerCase().includes(tagName.toLowerCase())
-        )
-      )
-      if (foundGroup) {
-        navigate({
-          to: ROUTES.GROUP_DETAILS,
-          params: { id: foundGroup.id },
-        })
-      } else {
-        showToast(`Group ledger details not found.`)
-      }
+      navigate({ to: ROUTES.CONTACT_DETAILS, params: { id: userId } })
     }
   }
 
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-10 relative select-none text-[#1A1A1A]">
-      {/* Toast Alert overlay */}
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            initial={{ opacity: 0, y: -20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className="fixed top-6 left-6 right-6 z-100 mx-auto max-w-[380px] bg-white/90 backdrop-blur-md border border-[#EFE7DD] shadow-[0px_10px_30px_rgba(0,0,0,0.08)] rounded-2xl p-4 flex items-center gap-3"
-          >
-            <div className="w-8 h-8 rounded-full bg-[#FFF3E6] flex items-center justify-center text-[#C96A1B] shrink-0">
-              <Info size={16} />
-            </div>
-            <span className="text-sm font-semibold text-[#1A1A1A]">{toast.message}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Unified Header */}
       <FlowHeader
-        title={contact.name}
+        title={otherUser.full_name}
         onBack={() => window.history.back()}
         backVariant="minimal"
         avatar={
           <div className="relative shrink-0 flex items-center">
             <ContactAvatar
-              initials={contact.initials}
-              avatarColor={contact.avatarColor}
+              initials={initialsForName(otherUser.full_name)}
+              avatarColor="bg-[#E3F2FD] text-[#1E3A8A]"
+              src={otherUser.image ?? undefined}
               size="md"
               className="size-11 text-sm font-bold"
             />
-            {contact.isOnline && (
-              <span className="absolute bottom-0.5 right-0.5 w-3 h-3 bg-[#14A558] border border-[#FEFAF1] rounded-full" />
-            )}
           </div>
         }
       />
@@ -171,15 +133,13 @@ export default function LedgerBreakdownScreen() {
         <div className="bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-6 flex items-center justify-between">
           <div className="flex flex-col text-left">
             <div className="flex items-baseline gap-2">
-              <span className={cn("text-[36px] font-black leading-none tracking-tight", overallAmountColorClass)}>
+              <span className={cn('text-[36px] font-black leading-none tracking-tight', overallAmountColorClass)}>
                 {formattedOverall}
               </span>
-              <span className="text-[#6B6B6B] text-base font-semibold">
-                overall
-              </span>
+              <span className="text-[#6B6B6B] text-base font-semibold">overall</span>
             </div>
             <span className="text-[#6B6B6B] text-xs font-medium mt-2">
-              Net across {contact.tags.length} ledgers
+              Net across {ledgerItems.length} ledger{ledgerItems.length === 1 ? '' : 's'}
             </span>
           </div>
         </div>
@@ -188,12 +148,15 @@ export default function LedgerBreakdownScreen() {
       {/* Breakdown Section */}
       <div className="px-6 flex flex-col text-left">
         <h3 className="text-[17px] font-bold text-[#1A1A1A] mb-3">Breakdown by ledger</h3>
-
-        <ExpenseList
-          expenses={ledgerItems}
-          onItemClick={handleItemClick}
-          className="border-[#EFE7DD] divide-[#EFE7DD]"
-        />
+        {listItems.length === 0 ? (
+          <p className="text-muted-foreground text-sm text-center py-8">No shared ledgers yet.</p>
+        ) : (
+          <ExpenseList
+            expenses={listItems}
+            onItemClick={handleItemClick}
+            className="border-[#EFE7DD] divide-[#EFE7DD]"
+          />
+        )}
       </div>
     </div>
   )

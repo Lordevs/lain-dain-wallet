@@ -28,10 +28,10 @@ export default function GroupSuccessStep({ flow }: GroupSuccessStepProps) {
   const memberSummary = (() => {
     const names = flow.selectedList.map((c) => c.name.split(' ')[0])
     if (names.length === 0) return ''
-    if (names.length === 1) return `${names[0]} has been added.`
+    if (names.length === 1) return `${names[0]} has been invited.`
     const rest = names.slice(0, 3).join(', ')
     const suffix = flow.selectedList.length > 3 ? ' and others' : ''
-    return `${rest}${suffix} have been added.`
+    return `${rest}${suffix} have been invited.`
   })()
 
   const handleAddFirstExpense = () => {

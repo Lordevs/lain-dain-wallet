@@ -54,5 +54,8 @@
 	<string>Lain Dain accesses your photo library so you can attach receipt images to expenses.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Lain Dain saves receipt photos to your library when requested.</string>
+	<!-- Contacts permission — required by App Store (will reject without this) -->
+	<key>NSContactsUsageDescription</key>
+	<string>Lain Dain checks your contacts against the app so you can see who's already on Lain Dain and split expenses with them.</string>
 </dict>
 </plist>

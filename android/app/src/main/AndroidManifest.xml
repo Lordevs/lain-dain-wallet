@@ -38,4 +38,12 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- Photo library access (Android 13+) -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- Contacts: to detect which device contacts are already on Lain Dain.
+         WRITE_CONTACTS is never actually used (this app only reads the
+         address book) but @capacitor-community/contacts groups both under
+         one "contacts" permission alias — if WRITE_CONTACTS isn't declared
+         here too, Android auto-denies it, and the alias never reports as
+         fully granted even after the user allows READ_CONTACTS. -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
 </manifest>

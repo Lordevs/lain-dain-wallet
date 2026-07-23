@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils'
 import SelectedMembersStrip from '@/components/shared/selected-members-strip'
 import CurrencySelectDrawer from '@/components/shared/currency-select-drawer'
 import { MOCK_CATEGORIES } from '../data/mock-data'
+import FormError from '@/components/shared/form-error'
 import type { NewContactFlowState } from '../hooks/use-new-contact-flow'
 import imagePlaceholder from '@/assets/image-placeholder.svg'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
@@ -38,14 +39,14 @@ interface GroupDetailsStepProps {
 // ─── Category Icon Map ─────────────────────────────────────────────────────────
 
 const CATEGORY_ICON_MAP: Record<string, React.ComponentType<any>> = {
-  cat1: User,
-  cat2: Users,
-  cat3: Briefcase,
-  cat4: Home,
-  cat5: GraduationCap,
-  cat6: Plane,
-  cat7: DollarSign,
-  cat8: AlertCircle,
+  friends: User,
+  family: Users,
+  colleague: Briefcase,
+  roommate: Home,
+  classmate: GraduationCap,
+  travel: Plane,
+  business: DollarSign,
+  other: AlertCircle,
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -234,11 +235,13 @@ export default function GroupDetailsStep({ flow }: GroupDetailsStepProps) {
       {/* Sticky Create Group button */}
       {flow.groupName.trim() && flow.selectedCategory && (
         <div className="fixed bottom-3 left-3 right-3 z-10">
+          <FormError message={flow.submitError} className="mb-3 justify-center" />
           <Button
             onClick={flow.createGroup}
-            className="w-full h-14 rounded-full bg-primary text-white font-extrabold text-[15px] shadow-lg active:scale-[0.98] transition-transform cursor-pointer"
+            disabled={flow.isSubmitting}
+            className="w-full h-14 rounded-full bg-primary text-white font-extrabold text-[15px] shadow-lg active:scale-[0.98] transition-transform cursor-pointer disabled:opacity-70"
           >
-            Create Group
+            {flow.isSubmitting ? 'Creating...' : 'Create Group'}
           </Button>
         </div>
       )}
