@@ -21,9 +21,13 @@ export interface ConfirmExpenseData {
   description: string
   category: string
   dateValue: string
+  /** Real YYYY-MM-DD for the selected date — dateValue is only a display label */
+  dateISO: string
   receiptFile: { name: string; size: string; dataUrl?: string } | null
   noteText: string
   paidBy?: string
+  /** Populated only when paidBy === 'multiple' — id -> amount contributed */
+  multiplePayerAmounts?: Record<string, number>
   splitData?: SplitData
 }
 
@@ -46,7 +50,10 @@ interface AddExpenseBaseProps {
     avatarColor: string
   }
   initialData?: InitialExpenseData
-  onConfirm: (data: ConfirmExpenseData) => void
+  // Async-aware — the success screen only shows once this resolves; a
+  // rejection keeps the form open so the caller's own error UI stays
+  // visible instead of showing "success" for a submission that failed.
+  onConfirm: (data: ConfirmExpenseData) => void | Promise<void>
   onSuccessComplete: () => void
   onBack: () => void
 }
@@ -69,6 +76,10 @@ export default function AddExpenseBase({
   const [description, setDescription] = useState(initialData?.description || '')
   const [selectedCategory, setSelectedCategory] = useState(initialData?.category || '')
   const [dateValue, setDateValue] = useState(initialData?.dateValue || 'Today')
+  const [dateISO, setDateISO] = useState(() => {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  })
   const [receiptFile, setReceiptFile] = useState<{ name: string; size: string; dataUrl?: string } | null>(null)
   const showReceiptOverlay = subDrawer === 'receipt'
   const [noteText, setNoteText] = useState('')
@@ -78,6 +89,7 @@ export default function AddExpenseBase({
 
   // Shared Expense Specific State
   const [paidBy, setPaidBy] = useState<string>(initialData?.paidBy || 'you')
+  const [multiplePayerAmounts, setMultiplePayerAmounts] = useState<Record<string, number> | undefined>(undefined)
   const [showPaidBy, setShowPaidBy] = useState(false)
   const [splitData, setSplitData] = useState<SplitData>(initialData?.splitData || {
     type: 'equal',
@@ -120,25 +132,37 @@ export default function AddExpenseBase({
     })
   }
 
-  // Submit entry handler
-  const handleFormSubmit = (e: React.FormEvent) => {
+  // Submit entry handler — awaits onConfirm so the success screen only
+  // shows once a real (possibly async) submission actually succeeds; a
+  // rejection leaves the form open with whatever error UI the caller
+  // renders, instead of showing "success" for a failed submission.
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     const parsedAmount = Number(amount) || 0
-    if (parsedAmount <= 0) return
+    if (parsedAmount <= 0 || isSubmitting) return
 
-    onConfirm({
-      amount: parsedAmount,
-      description: description || 'Unnamed Expense',
-      category: selectedCategory,
-      dateValue,
-      receiptFile,
-      noteText,
-      paidBy: showPaidByAndSplit ? paidBy : undefined,
-      splitData: showPaidByAndSplit ? splitData : undefined,
-    })
-
-    setShowSuccess(true)
+    setIsSubmitting(true)
+    try {
+      await onConfirm({
+        amount: parsedAmount,
+        description: description || 'Unnamed Expense',
+        category: selectedCategory,
+        dateValue,
+        dateISO,
+        receiptFile,
+        noteText,
+        paidBy: showPaidByAndSplit ? paidBy : undefined,
+        multiplePayerAmounts: showPaidByAndSplit && paidBy === 'multiple' ? multiplePayerAmounts : undefined,
+        splitData: showPaidByAndSplit ? splitData : undefined,
+      })
+      setShowSuccess(true)
+    } catch {
+      // Caller's onConfirm is responsible for surfacing its own error UI.
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   if (showSuccess) {
@@ -165,7 +189,7 @@ export default function AddExpenseBase({
           showPaidByAndSplit ? (
             <button
               type="submit"
-              disabled={isFormInvalid}
+              disabled={isFormInvalid || isSubmitting}
               className="text-positive font-extrabold text-base bg-transparent border-0 cursor-pointer p-2 outline-none transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Check size={22} strokeWidth={2.5} />
@@ -318,10 +342,10 @@ export default function AddExpenseBase({
 
           <Button
             type="submit"
-            disabled={isFormInvalid}
+            disabled={isFormInvalid || isSubmitting}
             className="w-full h-14 rounded-full bg-primary text-white font-bold text-base cursor-pointer transition-transform active:scale-[0.99] disabled:opacity-50 disabled:bg-[#D0CBC0]"
           >
-            Confirm
+            {isSubmitting ? 'Saving...' : 'Confirm'}
           </Button>
         </div>
       </div>
@@ -360,7 +384,10 @@ export default function AddExpenseBase({
           isOpen={showPaidBy}
           onClose={closePaidBy}
           selectedValue={paidBy}
-          onSelect={setPaidBy}
+          onSelect={(value, payerAmounts) => {
+            setPaidBy(value)
+            setMultiplePayerAmounts(payerAmounts)
+          }}
           contactName={contact.name}
           contactInitials={contact.initials}
           contactAvatarColor={contact.avatarColor}
@@ -403,6 +430,7 @@ export default function AddExpenseBase({
             setDateValue(val)
           }
         }}
+        onSelectISODate={setDateISO}
       />
     </form>
   )

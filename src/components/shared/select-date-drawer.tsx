@@ -13,31 +13,43 @@ interface SelectDateDrawerProps {
   onClose: () => void
   onSelect?: (dateText: string) => void
   onSelectDate?: (date: Date) => void
+  /** Fires alongside onSelect (expense mode only) with a real YYYY-MM-DD —
+   * onSelect's string is a display label ("today"/"yesterday"/"23 Jul"),
+   * not something a backend date field can parse. */
+  onSelectISODate?: (iso: string) => void
   selectedValue?: string // 'today' | 'yesterday' or standard display date
   selectedDateValue?: Date
   type?: 'expense' | 'dob'
 }
 
-// May 2026 default references
-const DEFAULT_YEAR = 2026
-const DEFAULT_MONTH_INDEX = 4 // May is 4 (0-indexed)
-const TODAY_MOCK_DATE = new Date(DEFAULT_YEAR, DEFAULT_MONTH_INDEX, 18)
-const YESTERDAY_MOCK_DATE = new Date(DEFAULT_YEAR, DEFAULT_MONTH_INDEX, 17)
+function startOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+}
+
+function toISODate(date: Date): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+const TODAY_DATE = startOfDay(new Date())
+const YESTERDAY_DATE = new Date(TODAY_DATE.getFullYear(), TODAY_DATE.getMonth(), TODAY_DATE.getDate() - 1)
 
 type DatePill = 'today' | 'yesterday' | 'custom'
 
 function getInitialDateState(selectedValue: string): { selectedDate: Date; activePill: DatePill } {
   if (selectedValue === 'yesterday') {
-    return { selectedDate: YESTERDAY_MOCK_DATE, activePill: 'yesterday' }
+    return { selectedDate: YESTERDAY_DATE, activePill: 'yesterday' }
   }
   if (selectedValue === 'today') {
-    return { selectedDate: TODAY_MOCK_DATE, activePill: 'today' }
+    return { selectedDate: TODAY_DATE, activePill: 'today' }
   }
   // Parse a custom date text if possible, fallback to Today
   const dayMatch = selectedValue.match(/^(\d+)/)
   const selectedDate = dayMatch
-    ? new Date(DEFAULT_YEAR, DEFAULT_MONTH_INDEX, Number(dayMatch[1]))
-    : TODAY_MOCK_DATE
+    ? new Date(TODAY_DATE.getFullYear(), TODAY_DATE.getMonth(), Number(dayMatch[1]))
+    : TODAY_DATE
   return { selectedDate, activePill: 'custom' }
 }
 
@@ -46,6 +58,7 @@ export default function SelectDateDrawer({
   onClose,
   onSelect,
   onSelectDate,
+  onSelectISODate,
   selectedValue = 'today',
   selectedDateValue,
   type = 'expense',
@@ -67,6 +80,7 @@ export default function SelectDateDrawer({
           onClose={onClose}
           onSelect={onSelect}
           onSelectDate={onSelectDate}
+          onSelectISODate={onSelectISODate}
           selectedValue={selectedValue}
           selectedDateValue={selectedDateValue}
           type={type}
@@ -80,6 +94,7 @@ function SelectDateDrawerContent({
   onClose,
   onSelect,
   onSelectDate,
+  onSelectISODate,
   selectedValue = 'today',
   selectedDateValue,
   type = 'expense',
@@ -101,11 +116,11 @@ function SelectDateDrawerContent({
   const handlePillClick = (type: 'today' | 'yesterday' | 'custom') => {
     setActivePill(type)
     if (type === 'today') {
-      setSelectedDate(TODAY_MOCK_DATE)
-      setCurrentMonth(new Date(DEFAULT_YEAR, DEFAULT_MONTH_INDEX, 1))
+      setSelectedDate(TODAY_DATE)
+      setCurrentMonth(new Date(TODAY_DATE.getFullYear(), TODAY_DATE.getMonth(), 1))
     } else if (type === 'yesterday') {
-      setSelectedDate(YESTERDAY_MOCK_DATE)
-      setCurrentMonth(new Date(DEFAULT_YEAR, DEFAULT_MONTH_INDEX, 1))
+      setSelectedDate(YESTERDAY_DATE)
+      setCurrentMonth(new Date(YESTERDAY_DATE.getFullYear(), YESTERDAY_DATE.getMonth(), 1))
     }
   }
 
@@ -125,6 +140,7 @@ function SelectDateDrawerContent({
     } else {
       const displayDate = activePill === 'today' ? 'today' : activePill === 'yesterday' ? 'yesterday' : `${selectedDate.getDate()} ${getMonthName(selectedDate)}`
       onSelect?.(displayDate)
+      onSelectISODate?.(toISODate(selectedDate))
     }
     onClose()
   }
@@ -166,9 +182,9 @@ function SelectDateDrawerContent({
               if (date) {
                 setSelectedDate(date)
                 if (!isDob) {
-                  if (isSameDay(date, TODAY_MOCK_DATE)) {
+                  if (isSameDay(date, TODAY_DATE)) {
                     setActivePill('today')
-                  } else if (isSameDay(date, YESTERDAY_MOCK_DATE)) {
+                  } else if (isSameDay(date, YESTERDAY_DATE)) {
                     setActivePill('yesterday')
                   } else {
                     setActivePill('custom')
@@ -178,18 +194,7 @@ function SelectDateDrawerContent({
             }}
             month={currentMonth}
             onMonthChange={setCurrentMonth}
-            disabled={
-              isDob
-                ? (date) => date > new Date()
-                : [
-                    new Date(DEFAULT_YEAR, DEFAULT_MONTH_INDEX, 2),
-                    new Date(DEFAULT_YEAR, DEFAULT_MONTH_INDEX, 8),
-                    new Date(DEFAULT_YEAR, DEFAULT_MONTH_INDEX, 9),
-                    new Date(DEFAULT_YEAR, DEFAULT_MONTH_INDEX, 15),
-                    new Date(DEFAULT_YEAR, DEFAULT_MONTH_INDEX, 21),
-                    new Date(DEFAULT_YEAR, DEFAULT_MONTH_INDEX, 28)
-                  ]
-            }
+            disabled={(date) => date > new Date()}
             captionLayout={isDob ? 'dropdown' : 'label'}
             startMonth={isDob ? new Date(1920, 0) : undefined}
             endMonth={isDob ? new Date() : undefined}

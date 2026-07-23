@@ -16,7 +16,10 @@ import {
 interface PaidByDrawerProps {
   isOpen: boolean
   onClose: () => void
-  onSelect: (value: string) => void
+  /** `payerAmounts` (id -> amount) is only populated when `value === 'multiple'` —
+   * the actual per-person contribution, needed to build a real multi-payer
+   * expense; lost otherwise since a single payer's amount is just the total. */
+  onSelect: (value: string, payerAmounts?: Record<string, number>) => void
   selectedValue: string
   contactName: string
   contactInitials: string
@@ -151,7 +154,11 @@ function PaidByDrawerContent({
 
   const handleConfirmAction = () => {
     if (view === 'multiple') {
-      onSelect('multiple')
+      const amounts: Record<string, number> = {}
+      members.forEach((m) => {
+        amounts[m.id] = Number(payerAmounts[m.id]) || 0
+      })
+      onSelect('multiple', amounts)
     } else {
       onSelect(tempValue)
     }
