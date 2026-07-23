@@ -31,6 +31,17 @@ export function useVerifyOtpMutation() {
   })
 }
 
+export function useLogoutMutation() {
+  return useMutation<void, ApiError, string>({
+    mutationFn: async (refreshToken: string) => {
+      const { error } = await apiClient.POST('/api/auth/logout/', {
+        body: { refresh: refreshToken },
+      })
+      if (error) throw toApiError(error)
+    },
+  })
+}
+
 export function useUpdateProfileMutation() {
   return useMutation<components['schemas']['User'], ApiError, FormData>({
     mutationFn: async (formData: FormData) => {

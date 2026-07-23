@@ -4,6 +4,30 @@
  */
 
 export interface paths {
+    "/api/auth/logout/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description POST /api/auth/logout/ — blacklists the given refresh token (requires
+         *     rest_framework_simplejwt.token_blacklist, already installed) so it can
+         *     no longer be used to mint new access tokens. The already-issued access
+         *     token stays valid until it expires (ACCESS_TOKEN_LIFETIME=30min) since
+         *     that's stateless and can't be revoked — this only stops silent
+         *     re-authentication via refresh.
+         */
+        post: operations["auth_logout_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/otp/request/": {
         parameters: {
             query?: never;
@@ -2201,6 +2225,9 @@ export interface components {
          * @enum {string}
          */
         IssueReportStatusEnum: "open" | "in_progress" | "resolved" | "closed";
+        LogoutRequest: {
+            refresh: string;
+        };
         /**
          * @description * `cash` - Cash
          *     * `bank_transfer` - Bank Transfer
@@ -3007,6 +3034,38 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    auth_logout_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LogoutRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["LogoutRequest"];
+                "multipart/form-data": components["schemas"]["LogoutRequest"];
+            };
+        };
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
     auth_otp_request_create: {
         parameters: {
             query?: never;

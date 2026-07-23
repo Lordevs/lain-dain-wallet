@@ -3,7 +3,8 @@ import { useNavigate } from '@tanstack/react-router'
 import FlowHeader from '@/components/shared/flow-header'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuthStore } from '@/store/use-auth-store'
-import { clearRefreshToken } from '@/lib/secure-storage'
+import { getRefreshToken, clearRefreshToken } from '@/lib/secure-storage'
+import { useLogoutMutation } from '@/features/auth/api/use-auth-mutations'
 import { ROUTES } from '@/constants/routes'
 
 interface LogoutPanelProps {
@@ -17,8 +18,18 @@ export default function LogoutPanel({
 }: LogoutPanelProps) {
   const navigate = useNavigate()
   const { userProfile, logout } = useAuthStore()
+  const logoutMutation = useLogoutMutation()
 
   const handleConfirm = onConfirm ?? (async () => {
+    const refreshToken = await getRefreshToken()
+    if (refreshToken) {
+      // Best-effort: blacklists the refresh token server-side so it can't
+      // silently re-authenticate the app later. If this fails (offline,
+      // already expired, etc.) we still log the device out locally —
+      // the user asked to leave, and their own device's session is the
+      // one thing we can always clear.
+      await logoutMutation.mutateAsync(refreshToken).catch(() => {})
+    }
     // logout() only clears in-memory state — the refresh token sitting in
     // secure storage has to be cleared explicitly, or a "logged out" app
     // could still silently re-authenticate with it on next launch.
@@ -85,11 +96,12 @@ export default function LogoutPanel({
           <button
             type="button"
             onClick={handleConfirm}
+            disabled={logoutMutation.isPending}
             // box-shadow: 0px 3px 12px 0px #C85A0026;
-            className="w-full h-14 bg-[#FFF3E6] border-[0.8px] border-[#C85A0033] text-tertiary rounded-[16px] font-bold text-[17px] flex items-center justify-center gap-2 active:scale-[0.99] transition-all cursor-pointer shadow-[0px_3px_12px_0px_#C85A0026]"
+            className="w-full h-14 bg-[#FFF3E6] border-[0.8px] border-[#C85A0033] text-tertiary rounded-[16px] font-bold text-[17px] flex items-center justify-center gap-2 active:scale-[0.99] transition-all cursor-pointer shadow-[0px_3px_12px_0px_#C85A0026] disabled:opacity-70"
           >
             <LogOut size={17} strokeWidth={2.5} />
-            Yes, Log Out
+            {logoutMutation.isPending ? 'Logging out...' : 'Yes, Log Out'}
           </button>
 
           {/* Cancel Button */}

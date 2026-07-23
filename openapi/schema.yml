@@ -4,6 +4,41 @@ info:
   version: 0.1.0
   description: Backend API for the Lain Dain expense-sharing app.
 paths:
+  /api/auth/logout/:
+    post:
+      operationId: auth_logout_create
+      description: |-
+        POST /api/auth/logout/ — blacklists the given refresh token (requires
+        rest_framework_simplejwt.token_blacklist, already installed) so it can
+        no longer be used to mint new access tokens. The already-issued access
+        token stays valid until it expires (ACCESS_TOKEN_LIFETIME=30min) since
+        that's stateless and can't be revoked — this only stops silent
+        re-authentication via refresh.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: ''
   /api/auth/otp/request/:
     post:
       operationId: auth_otp_request_create
@@ -4272,6 +4307,14 @@ components:
         * `in_progress` - In progress
         * `resolved` - Resolved
         * `closed` - Closed
+    LogoutRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+          minLength: 1
+      required:
+      - refresh
     MethodEnum:
       enum:
       - cash
