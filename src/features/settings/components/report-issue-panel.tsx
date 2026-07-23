@@ -12,10 +12,14 @@ import {
   Camera,
   Check,
   Send,
-  AlertCircle
+  AlertCircle,
+  X
 } from 'lucide-react'
 import FlowHeader from '@/components/shared/flow-header'
+import FormError from '@/components/shared/form-error'
 import { useAuthStore } from '@/store/use-auth-store'
+import { useReportIssueMutation } from '@/features/settings/api/use-report-issue-mutation'
+import { buildIssueReportFormData } from '@/features/settings/api/build-issue-report-form-data'
 
 interface ReportIssuePanelProps {
   onClose?: () => void
@@ -24,27 +28,49 @@ interface ReportIssuePanelProps {
 
 type IssueType = 'payment' | 'split' | 'agreement' | 'bug' | 'other'
 
+// Mirrors apps/support/validators.py's validate_screenshot so a bad file is
+// caught at selection time instead of only after a round-trip 400.
+const MAX_SCREENSHOT_BYTES = 5 * 1024 * 1024
+const ALLOWED_SCREENSHOT_TYPES = ['image/jpeg', 'image/png']
+
 export default function ReportIssuePanel({
   onClose = () => window.history.back(),
   onSuccess,
 }: ReportIssuePanelProps) {
   const { userProfile } = useAuthStore()
+  const reportIssue = useReportIssueMutation()
 
   // Form states
   const [selectedIssue, setSelectedIssue] = useState<IssueType>('payment')
-  const [description, setDescription] = useState(
-    'I paid Ali Rs. 1,000 via Easypaisa on 5th June but he says he didn\'t receive it. The transaction shows completed on my end.'
-  )
+  const [description, setDescription] = useState('')
   const [screenshot, setScreenshot] = useState<string | null>(null)
+  const [screenshotError, setScreenshotError] = useState<string | null>(null)
   const [email, setEmail] = useState(userProfile?.email || '')
 
   const maxChars = 300
+
+  // Both the native webPath and the web dataURL are local URLs, not yet a
+  // known File — fetch each into a Blob so type/size can be checked the
+  // same way regardless of platform.
+  const validateAndSetScreenshot = async (localUrl: string) => {
+    setScreenshotError(null)
+    const blob = await fetch(localUrl).then((res) => res.blob())
+    if (!ALLOWED_SCREENSHOT_TYPES.includes(blob.type)) {
+      setScreenshotError('Screenshot must be a JPG or PNG image.')
+      return
+    }
+    if (blob.size > MAX_SCREENSHOT_BYTES) {
+      setScreenshotError('Screenshot must be 5MB or smaller.')
+      return
+    }
+    setScreenshot(localUrl)
+  }
 
   const handleScreenshotPick = async () => {
     haptic.light()
     if (Capacitor.isNativePlatform()) {
       const photo = await pickFromGallery()
-      if (photo?.webPath) setScreenshot(photo.webPath)
+      if (photo?.webPath) await validateAndSetScreenshot(photo.webPath)
     } else {
       // Web dev fallback: file picker
       const input = document.createElement('input')
@@ -54,21 +80,34 @@ export default function ReportIssuePanel({
         const file = input.files?.[0]
         if (!file) return
         const reader = new FileReader()
-        reader.onloadend = () => setScreenshot(reader.result as string)
+        reader.onloadend = () => validateAndSetScreenshot(reader.result as string)
         reader.readAsDataURL(file)
       }
       input.click()
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!description.trim()) return
 
-    if (onSuccess) {
-      onSuccess('Thank you! Issue report submitted successfully.')
-    }
-    onClose()
+    // category is a free string on the backend (see IssueReport's model
+    // docstring) — the selected issue's display title doubles as it, so
+    // the category taxonomy can change here without a backend deploy.
+    const category = issuesList.find((item) => item.id === selectedIssue)?.title ?? selectedIssue
+    const formData = await buildIssueReportFormData({
+      category,
+      description: description.trim(),
+      screenshot,
+      contactEmail: email.trim(),
+    })
+
+    reportIssue.mutate(formData, {
+      onSuccess: () => {
+        onSuccess?.('Thank you! Issue report submitted successfully.')
+        onClose()
+      },
+    })
   }
 
   const issuesList = [
@@ -202,23 +241,46 @@ export default function ReportIssuePanel({
             <h3 className="text-[11px] font-semibold tracking-widest text-[#6B6B6B] uppercase mb-1.5 px-1">
               Attach Screenshot (Optional)
             </h3>
-            <button
-              type="button"
-              onClick={handleScreenshotPick}
-              className="w-full flex items-center gap-4 bg-white border-[1.5px] border-dashed border-[#E8E4DC] rounded-[18px] p-4 cursor-pointer transition-colors shadow-[0px_2px_10px_rgba(0,0,0,0.01)] text-left outline-none"
-            >
-              <div className="w-11 h-11 rounded-[13px] bg-[#E4F2EB] flex items-center justify-center text-primary shrink-0">
-                <Camera size={20} strokeWidth={2.2} />
+            {screenshot ? (
+              <div className="relative w-full h-48 rounded-[18px] overflow-hidden border border-[#E8E4DC] shadow-[0px_2px_10px_rgba(0,0,0,0.03)] bg-white group">
+                <img
+                  src={screenshot}
+                  alt="Screenshot preview"
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    haptic.heavy()
+                    setScreenshot(null)
+                    setScreenshotError(null)
+                  }}
+                  className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/55 hover:bg-black/70 text-white flex items-center justify-center cursor-pointer transition-all border-0 outline-none shadow-md"
+                  aria-label="Remove screenshot"
+                >
+                  <X size={16} strokeWidth={2.5} />
+                </button>
               </div>
-              <div>
-                <span className="text-[15px] font-semibold text-[#1A1A1A] block leading-tight">
-                  {screenshot ? 'Screenshot Attached' : 'Upload screenshot'}
-                </span>
-                <span className="text-[12px] text-[#6B6B6B] mt-1 block">
-                  {screenshot ? 'Tap to replace · JPG, PNG up to 5MB' : 'Helps us resolve faster · JPG, PNG up to 5MB'}
-                </span>
-              </div>
-            </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleScreenshotPick}
+                className="w-full flex items-center gap-4 bg-white border-[1.5px] border-dashed border-[#E8E4DC] rounded-[18px] p-4 cursor-pointer transition-colors shadow-[0px_2px_10px_rgba(0,0,0,0.01)] text-left outline-none"
+              >
+                <div className="w-11 h-11 rounded-[13px] bg-[#E4F2EB] flex items-center justify-center text-primary shrink-0">
+                  <Camera size={20} strokeWidth={2.2} />
+                </div>
+                <div>
+                  <span className="text-[15px] font-semibold text-[#1A1A1A] block leading-tight">
+                    Upload screenshot
+                  </span>
+                  <span className="text-[12px] text-[#6B6B6B] mt-1 block">
+                    Helps us resolve faster · JPG, PNG up to 5MB
+                  </span>
+                </div>
+              </button>
+            )}
+            <FormError message={screenshotError} className="mt-2" />
           </div>
 
           {/* Your Email */}
@@ -250,12 +312,20 @@ export default function ReportIssuePanel({
 
         {/* Submit Button */}
         <div className="mt-8">
+          <FormError message={reportIssue.error?.message} className="mb-4 justify-center" />
           <button
             type="submit"
-            className="w-full h-14 bg-primary text-white rounded-full font-bold text-[17px] shadow-[0px_4px_16px_0px_#0B683A4D] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+            disabled={reportIssue.isPending}
+            className="w-full h-14 bg-primary text-white rounded-full font-bold text-[17px] shadow-[0px_4px_16px_0px_#0B683A4D] active:scale-[0.98] disabled:opacity-70 transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
-            <Send size={16} className="shrink-0" />
-            Submit Report
+            {reportIssue.isPending ? (
+              'Submitting...'
+            ) : (
+              <>
+                <Send size={16} className="shrink-0" />
+                Submit Report
+              </>
+            )}
           </button>
         </div>
       </form>
