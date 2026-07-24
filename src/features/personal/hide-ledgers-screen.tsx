@@ -1,19 +1,78 @@
 import { useState } from 'react'
 import { Info } from 'lucide-react'
-import { useContactStore } from '@/store/use-contact-store'
+import { useFriendshipsQuery } from '@/features/contacts/api/use-friendships-query'
+import { useGroupsQuery } from '@/features/contacts/api/use-groups-query'
+import { usePersonalExpenseSettingsQuery } from '@/features/expenses/api/use-personal-expense-settings-query'
+import { useUpdatePersonalExpenseSettingsMutation } from '@/features/expenses/api/use-update-personal-expense-settings-mutation'
+import { colorForName, initialsForName } from '@/lib/avatar-visuals'
 import FlowHeader from '@/components/shared/flow-header'
 import SearchBar from '@/components/shared/search-bar'
+import ContactListSkeleton from '@/components/shared/contact-list-skeleton'
 import { cn } from '@/lib/utils'
 import ContactAvatar from '@/components/shared/contact-avatar'
 
+interface LedgerItem {
+  id: string
+  kind: 'friendship' | 'group'
+  name: string
+  subtitle: string
+  initials: string
+  avatarColor: string
+}
+
 export default function HideLedgersScreen() {
-  const { contacts, hiddenLedgerIds, setHiddenLedgerIds } = useContactStore()
+  const friendshipsQuery = useFriendshipsQuery()
+  const groupsQuery = useGroupsQuery()
+  const settingsQuery = usePersonalExpenseSettingsQuery()
 
-  // Search state for main screen (groups & contacts)
+  const isLoading = friendshipsQuery.isLoading || groupsQuery.isLoading || settingsQuery.isLoading
+
+  if (isLoading || !friendshipsQuery.data || !groupsQuery.data || !settingsQuery.data) {
+    return (
+      <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen select-none overflow-hidden text-left relative">
+        <FlowHeader title="Hide from My Expenses" backVariant="circle" />
+        <div className="flex-1 px-6 pb-12 mt-3">
+          <ContactListSkeleton />
+        </div>
+      </div>
+    )
+  }
+
+  const items: LedgerItem[] = [
+    ...friendshipsQuery.data.map((f) => ({
+      id: f.id,
+      kind: 'friendship' as const,
+      name: f.friend.full_name,
+      subtitle: 'Personal ledger',
+      initials: initialsForName(f.friend.full_name),
+      avatarColor: colorForName(f.friend.full_name),
+    })),
+    ...groupsQuery.data.map((g) => ({
+      id: g.id,
+      kind: 'group' as const,
+      name: g.name,
+      subtitle: `${g.members.length} member${g.members.length === 1 ? '' : 's'}`,
+      initials: initialsForName(g.name),
+      avatarColor: colorForName(g.name),
+    })),
+  ]
+
+  // Mounted only once real data exists, so its own useState lazy
+  // initializer picks up the real hidden ids on first render.
+  return (
+    <HideLedgersForm
+      items={items}
+      initialSelectedIds={[...settingsQuery.data.hidden_friendship_ids, ...settingsQuery.data.hidden_group_ids]}
+    />
+  )
+}
+
+function HideLedgersForm({ items, initialSelectedIds }: { items: LedgerItem[]; initialSelectedIds: string[] }) {
+  const updateSettings = useUpdatePersonalExpenseSettingsMutation()
+
   const [searchQuery, setSearchQuery] = useState('')
-
-  // Unified selected hidden IDs
-  const [selectedIds, setSelectedIds] = useState<string[]>(() => hiddenLedgerIds)
+  const [selectedIds, setSelectedIds] = useState<string[]>(initialSelectedIds)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const handleToggle = (id: string) => {
     setSelectedIds((prev) =>
@@ -22,17 +81,22 @@ export default function HideLedgersScreen() {
   }
 
   const handleSave = () => {
-    setHiddenLedgerIds(selectedIds)
-    window.history.back()
+    setSaveError(null)
+    const selectedFriendshipIds = items.filter((i) => i.kind === 'friendship' && selectedIds.includes(i.id)).map((i) => i.id)
+    const selectedGroupIds = items.filter((i) => i.kind === 'group' && selectedIds.includes(i.id)).map((i) => i.id)
+    updateSettings.mutate(
+      { hidden_friendship_ids: selectedFriendshipIds, hidden_group_ids: selectedGroupIds },
+      {
+        onSuccess: () => window.history.back(),
+        onError: (err) => setSaveError(err.message),
+      },
+    )
   }
 
-  // Filter groups & contacts in a unified list
-  const filteredList = contacts.filter((c) =>
+  const filteredList = items.filter((c) =>
     c.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
-
-  // Derive all selected hidden items (both groups and people) for the horizontal strip
-  const selectedItems = contacts.filter((c) => selectedIds.includes(c.id))
+  const selectedItems = items.filter((c) => selectedIds.includes(c.id))
 
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen select-none overflow-hidden text-left relative">
@@ -43,7 +107,8 @@ export default function HideLedgersScreen() {
         rightSlot={
           <button
             onClick={handleSave}
-            className="text-positive font-bold text-[15px] bg-transparent border-0 cursor-pointer outline-none hover:opacity-85"
+            disabled={updateSettings.isPending}
+            className="text-positive font-bold text-[15px] bg-transparent border-0 cursor-pointer outline-none hover:opacity-85 disabled:opacity-50"
           >
             Save
           </button>
@@ -63,6 +128,10 @@ export default function HideLedgersScreen() {
               hidden balances wont appear in your personal 'My Expenses'.
             </p>
           </div>
+        )}
+
+        {saveError && (
+          <p className="text-sm font-semibold text-tertiary text-center">{saveError}</p>
         )}
 
         {/* Search Groups Block */}
@@ -144,7 +213,7 @@ export default function HideLedgersScreen() {
                         {item.name}
                       </span>
                       <span className="text-[12px] font-semibold text-[#6B6B6B] mt-0.5">
-                        {item.type === 'group' ? `${item.ledgerCount} members` : 'Personal ledger'}
+                        {item.subtitle}
                       </span>
                     </div>
                   </div>

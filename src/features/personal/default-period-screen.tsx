@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { Info } from 'lucide-react'
-import { useContactStore } from '@/store/use-contact-store'
+import { usePersonalExpenseSettingsQuery } from '@/features/expenses/api/use-personal-expense-settings-query'
+import { useUpdatePersonalExpenseSettingsMutation } from '@/features/expenses/api/use-update-personal-expense-settings-mutation'
 import FlowHeader from '@/components/shared/flow-header'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 
 function getOrdinal(n: number) {
@@ -12,29 +14,50 @@ function getOrdinal(n: number) {
 }
 
 export default function DefaultPeriodScreen() {
-  const { resetDay, setResetDay } = useContactStore()
-  const [tempResetDay, setTempResetDay] = useState(resetDay)
+  const settingsQuery = usePersonalExpenseSettingsQuery()
+
+  if (settingsQuery.isLoading || !settingsQuery.data) {
+    return (
+      <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen select-none overflow-hidden text-[#1A1A1A] text-left">
+        <FlowHeader title="Default Period" backVariant="circle" />
+        <div className="flex-1 px-6 pb-24 flex flex-col gap-5 mt-2">
+          <Skeleton className="h-4 w-64" />
+          <Skeleton className="h-80 rounded-[24px]" />
+        </div>
+      </div>
+    )
+  }
+
+  // Mounted only once real data exists, so its own useState lazy
+  // initializer picks up the real value on first render — no effect
+  // needed to "sync" it in afterward.
+  return <DefaultPeriodForm initialResetDay={settingsQuery.data.period_start_day} />
+}
+
+function DefaultPeriodForm({ initialResetDay }: { initialResetDay: number }) {
+  const updateSettings = useUpdatePersonalExpenseSettingsMutation()
+  const [tempResetDay, setTempResetDay] = useState(initialResetDay)
 
   const handleSave = () => {
-    setResetDay(tempResetDay)
-    window.history.back()
+    updateSettings.mutate(
+      { period_start_day: tempResetDay },
+      { onSuccess: () => window.history.back() },
+    )
   }
 
   const days = Array.from({ length: 31 }, (_, i) => i + 1)
-
-  // Calculate previous day for the "How this works" explanation
   const prevDay = tempResetDay - 1 === 0 ? 31 : tempResetDay - 1
 
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen select-none overflow-hidden text-[#1A1A1A] text-left">
-      {/* Top Header */}
       <FlowHeader
         title="Default Period"
         backVariant="circle"
         rightSlot={
           <button
             onClick={handleSave}
-            className="text-positive font-bold text-base bg-transparent border-0 cursor-pointer outline-none hover:opacity-85"
+            disabled={updateSettings.isPending}
+            className="text-positive font-bold text-base bg-transparent border-0 cursor-pointer outline-none hover:opacity-85 disabled:opacity-50"
           >
             Save
           </button>
@@ -118,6 +141,7 @@ export default function DefaultPeriodScreen() {
       <div className="fixed bottom-3 left-3 right-3 z-10">
         <Button
           onClick={handleSave}
+          disabled={updateSettings.isPending}
           className="w-full max-w-md h-14 rounded-full bg-positive hover:bg-positive/95 text-white font-bold text-base"
         >
           Save

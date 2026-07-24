@@ -1,9 +1,13 @@
 import { useState } from 'react'
 import { Info } from 'lucide-react'
-import { useContactStore } from '@/store/use-contact-store'
+import { usePersonalExpenseSettingsQuery } from '@/features/expenses/api/use-personal-expense-settings-query'
+import { useUpdatePersonalExpenseSettingsMutation } from '@/features/expenses/api/use-update-personal-expense-settings-mutation'
+import { useMyExpensesSummaryQuery } from '@/features/expenses/api/use-my-expenses-summary-query'
+import { formatCurrency } from '@/lib/currency'
 import FlowHeader from '@/components/shared/flow-header'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
+import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 
 function getOrdinal(n: number) {
@@ -13,21 +17,58 @@ function getOrdinal(n: number) {
 }
 
 export default function BudgetLimitScreen() {
-  const {
-    resetDay,
-    budgetLimit,
-    alertThreshold,
-    setBudgetLimit,
-    setAlertThreshold
-  } = useContactStore()
+  const settingsQuery = usePersonalExpenseSettingsQuery()
 
-  const [limitValue, setLimitValue] = useState(budgetLimit)
-  const [thresholdValue, setThresholdValue] = useState(alertThreshold)
+  if (settingsQuery.isLoading || !settingsQuery.data) {
+    return (
+      <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen select-none overflow-hidden text-[#1A1A1A]">
+        <FlowHeader title="Monthly Budget Limit" backVariant="circle" />
+        <div className="flex-1 px-6 pb-28 flex flex-col gap-5 mt-2">
+          <div className="flex items-center gap-4">
+            <Skeleton className="flex-1 h-24 rounded-[20px]" />
+            <Skeleton className="flex-1 h-24 rounded-[20px]" />
+          </div>
+          <Skeleton className="h-96 rounded-[24px]" />
+        </div>
+      </div>
+    )
+  }
+
+  // Mounted only once real data exists, so its own useState lazy
+  // initializers pick up the real values on first render — no effect
+  // needed to "sync" them in afterward.
+  return (
+    <BudgetLimitForm
+      periodStartDay={settingsQuery.data.period_start_day}
+      initialLimit={settingsQuery.data.monthly_budget_limit ? Number(settingsQuery.data.monthly_budget_limit) : 0}
+      initialThreshold={settingsQuery.data.budget_alert_threshold_percent}
+    />
+  )
+}
+
+function BudgetLimitForm({
+  periodStartDay,
+  initialLimit,
+  initialThreshold,
+}: {
+  periodStartDay: number
+  initialLimit: number
+  initialThreshold: number
+}) {
+  const updateSettings = useUpdatePersonalExpenseSettingsMutation()
+  const summaryQuery = useMyExpensesSummaryQuery()
+
+  const [limitValue, setLimitValue] = useState(initialLimit)
+  const [thresholdValue, setThresholdValue] = useState(initialThreshold)
 
   const handleSave = () => {
-    setBudgetLimit(limitValue)
-    setAlertThreshold(thresholdValue)
-    window.history.back()
+    updateSettings.mutate(
+      {
+        monthly_budget_limit: limitValue > 0 ? limitValue.toFixed(2) : null,
+        budget_alert_threshold_percent: thresholdValue,
+      },
+      { onSuccess: () => window.history.back() },
+    )
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,6 +86,9 @@ export default function BudgetLimitScreen() {
 
   const thresholdPresets = [70, 80, 90]
 
+  const currency = summaryQuery.data?.currency ?? 'PKR'
+  const spentThisMonth = summaryQuery.data ? Number(summaryQuery.data.spent) : null
+
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen select-none overflow-hidden text-[#1A1A1A]">
       {/* Top Header */}
@@ -54,7 +98,8 @@ export default function BudgetLimitScreen() {
         rightSlot={
           <button
             onClick={handleSave}
-            className="text-positive font-bold text-base bg-transparent border-0 cursor-pointer outline-none hover:opacity-85"
+            disabled={updateSettings.isPending}
+            className="text-positive font-bold text-base bg-transparent border-0 cursor-pointer outline-none hover:opacity-85 disabled:opacity-50"
           >
             Save
           </button>
@@ -70,9 +115,13 @@ export default function BudgetLimitScreen() {
             <span className="text-[12px] font-semibold text-[#6B6B6B]">
               Spent this month
             </span>
-            <span className="text-[20px] font-extrabold text-[#1A1A1A] mt-2 leading-none tracking-tight">
-              Rs. 28,450
-            </span>
+            {spentThisMonth === null ? (
+              <Skeleton className="h-6 w-20 mt-2" />
+            ) : (
+              <span className="text-[20px] font-extrabold text-[#1A1A1A] mt-2 leading-none tracking-tight">
+                {formatCurrency(spentThisMonth, currency)}
+              </span>
+            )}
           </div>
 
           {/* Budget Limit Status */}
@@ -81,7 +130,7 @@ export default function BudgetLimitScreen() {
               Budget limit
             </span>
             <span className="text-[20px] font-extrabold text-positive mt-2 leading-none tracking-tight">
-              Rs. {limitValue.toLocaleString('en-US')}
+              {limitValue > 0 ? formatCurrency(limitValue, currency) : 'Not set'}
             </span>
           </div>
         </div>
@@ -198,7 +247,7 @@ export default function BudgetLimitScreen() {
           </h4>
           <p className="text-[13px] text-[#6B6B6B] font-normal leading-relaxed">
             This limit covers all your personal expenses across groups and 1-to-1 ledgers. It resets on the{' '}
-            <span className="font-bold text-positive">{getOrdinal(resetDay)}</span> of each month based on your default period
+            <span className="font-bold text-positive">{getOrdinal(periodStartDay)}</span> of each month based on your default period
             setting.
           </p>
         </div>
@@ -208,6 +257,7 @@ export default function BudgetLimitScreen() {
       <div className="fixed bottom-3 left-3 right-3 z-10">
         <Button
           onClick={handleSave}
+          disabled={updateSettings.isPending}
           className="w-full max-w-md h-14 rounded-full bg-positive hover:bg-positive/95 text-white font-bold text-base"
         >
           Save Budget Limit

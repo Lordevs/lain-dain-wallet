@@ -2,10 +2,15 @@ import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { ChevronRight, Download, AlertCircle, Trash2 } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
+import { formatCurrency } from '@/lib/currency'
 import FlowHeader from '@/components/shared/flow-header'
 import { Switch } from '@/components/ui/switch'
+import { Skeleton } from '@/components/ui/skeleton'
 import ConfirmActionDrawer from '@/components/shared/confirm-action-drawer'
-import { useContactStore } from '@/store/use-contact-store'
+import { usePersonalExpenseSettingsQuery } from '@/features/expenses/api/use-personal-expense-settings-query'
+import { useUpdatePersonalExpenseSettingsMutation } from '@/features/expenses/api/use-update-personal-expense-settings-mutation'
+import { useCategoryBudgetsQuery } from '@/features/expenses/api/use-category-budgets-query'
+import { useClearPersonalHistoryMutation } from '@/features/expenses/api/use-clear-personal-history-mutation'
 
 function getOrdinal(n: number) {
   const s = ['th', 'st', 'nd', 'rd']
@@ -15,10 +20,15 @@ function getOrdinal(n: number) {
 
 export default function PersonalSettingsScreen() {
   const navigate = useNavigate()
-  const { resetDay, budgetLimit } = useContactStore()
+  const settingsQuery = usePersonalExpenseSettingsQuery()
+  const updateSettings = useUpdatePersonalExpenseSettingsMutation()
+  const categoryBudgetsQuery = useCategoryBudgetsQuery()
+  const clearHistory = useClearPersonalHistoryMutation()
+
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false)
-  const [showSpendingComp, setShowSpendingComp] = useState(true)
-  const [monthlyAlert, setMonthlyAlert] = useState(true)
+  const [clearError, setClearError] = useState<string | null>(null)
+
+  const settings = settingsQuery.data
 
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen select-none overflow-hidden">
@@ -37,7 +47,7 @@ export default function PersonalSettingsScreen() {
             Display
           </h4>
           <div className="bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] divide-y divide-[#EFE7DD] overflow-hidden text-left">
-            {/* Default View */}
+            {/* Hide Ledgers */}
             <div
               className="p-5 flex items-center justify-between transition-colors hover:bg-muted/5 cursor-pointer"
               onClick={() => navigate({ to: ROUTES.PERSONAL_HIDE_LEDGERS })}
@@ -62,7 +72,11 @@ export default function PersonalSettingsScreen() {
                 <span className="text-[12px] font-normal text-[#6B6B6B] mt-1 leading-normal">Time range shown on open</span>
               </div>
               <div className="flex items-center gap-1.5 shrink-0 select-none">
-                <span className="text-[13px] font-semibold text-[#6B6B6B]">{getOrdinal(resetDay)}</span>
+                {settings ? (
+                  <span className="text-[13px] font-semibold text-[#6B6B6B]">{getOrdinal(settings.period_start_day)}</span>
+                ) : (
+                  <Skeleton className="h-3.5 w-8" />
+                )}
                 <ChevronRight size={14} className="text-[#6B6B6B]" strokeWidth={2.5} />
               </div>
             </div>
@@ -70,14 +84,19 @@ export default function PersonalSettingsScreen() {
             {/* Show spending comparison */}
             <div
               className="p-5 flex items-center justify-between transition-colors hover:bg-muted/5 cursor-pointer"
-              onClick={() => setShowSpendingComp(!showSpendingComp)}
+              onClick={() => settings && updateSettings.mutate({ show_spending_comparison: !settings.show_spending_comparison })}
             >
               <div className="flex flex-col text-left pr-4">
                 <span className="text-[15px] font-semibold text-[#1A1A1A] leading-tight">Show spending comparison</span>
                 <span className="text-[12px] font-normal text-[#6B6B6B] mt-1 leading-normal">"Rs. X more than last month"</span>
               </div>
               <div className="shrink-0 select-none" onClick={(e) => e.stopPropagation()}>
-                <Switch checked={showSpendingComp} onCheckedChange={setShowSpendingComp} size="lg" />
+                <Switch
+                  checked={settings?.show_spending_comparison ?? false}
+                  disabled={!settings}
+                  onCheckedChange={(checked) => updateSettings.mutate({ show_spending_comparison: checked })}
+                  size="lg"
+                />
               </div>
             </div>
 
@@ -94,14 +113,19 @@ export default function PersonalSettingsScreen() {
             {/* Monthly spending alert */}
             <div
               className="p-5 flex items-center justify-between transition-colors hover:bg-muted/5 cursor-pointer"
-              onClick={() => setMonthlyAlert(!monthlyAlert)}
+              onClick={() => settings && updateSettings.mutate({ budget_alert_enabled: !settings.budget_alert_enabled })}
             >
               <div className="flex flex-col text-left pr-4">
                 <span className="text-[15px] font-semibold text-[#1A1A1A] leading-tight">Monthly spending alert</span>
                 <span className="text-[12px] font-normal text-[#6B6B6B] mt-1 leading-normal">Notify when nearing budget</span>
               </div>
               <div className="shrink-0 select-none" onClick={(e) => e.stopPropagation()}>
-                <Switch checked={monthlyAlert} onCheckedChange={setMonthlyAlert} size="lg" />
+                <Switch
+                  checked={settings?.budget_alert_enabled ?? false}
+                  disabled={!settings}
+                  onCheckedChange={(checked) => updateSettings.mutate({ budget_alert_enabled: checked })}
+                  size="lg"
+                />
               </div>
             </div>
           </div>
@@ -124,9 +148,15 @@ export default function PersonalSettingsScreen() {
                 <span className="text-[12px] font-normal text-[#6B6B6B] mt-1 leading-normal">Get alerted if you go over</span>
               </div>
               <div className="flex items-center gap-1.5 shrink-0 select-none">
-                <span className="text-[13px] font-semibold text-[#6B6B6B]">
-                  Rs. {budgetLimit.toLocaleString('en-US')}
-                </span>
+                {settings ? (
+                  <span className="text-[13px] font-semibold text-[#6B6B6B]">
+                    {settings.monthly_budget_limit
+                      ? formatCurrency(Number(settings.monthly_budget_limit), 'PKR')
+                      : 'Not set'}
+                  </span>
+                ) : (
+                  <Skeleton className="h-3.5 w-14" />
+                )}
                 <ChevronRight size={14} className="text-[#6B6B6B]" strokeWidth={2.5} />
               </div>
             </div>
@@ -182,7 +212,9 @@ export default function PersonalSettingsScreen() {
                 </div>
                 <div className="flex flex-col text-left min-w-0">
                   <span className="text-[15px] font-semibold text-[#1A1A1A] leading-tight">Manage Categories</span>
-                  <span className="text-[12px] font-normal text-[#6B6B6B] mt-1 leading-normal">8 categories</span>
+                  <span className="text-[12px] font-normal text-[#6B6B6B] mt-1 leading-normal">
+                    {categoryBudgetsQuery.data ? `${categoryBudgetsQuery.data.categories.length} categories` : '...'}
+                  </span>
                 </div>
               </div>
               <div className="flex items-center gap-1.5 shrink-0 select-none">
@@ -198,7 +230,7 @@ export default function PersonalSettingsScreen() {
           <h4 className="text-[11px] font-semibold text-[#6B6B6B] tracking-[0.8px] mb-0.5 px-1 uppercase">
             Danger Zone
           </h4>
-          <div className="bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] divide-y divide-[#EFE7DD] overflow-hidden text-left mb-10">
+          <div className="bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] divide-y divide-[#EFE7DD] overflow-hidden text-left mb-4">
 
             {/* Clear All Personal Expenses */}
             <div
@@ -222,6 +254,10 @@ export default function PersonalSettingsScreen() {
           </div>
         </div>
 
+        {clearError && (
+          <p className="text-sm font-semibold text-tertiary text-center mb-6">{clearError}</p>
+        )}
+
       </div>
 
       {/* Clear All Expenses Confirmation Drawer */}
@@ -234,7 +270,11 @@ export default function PersonalSettingsScreen() {
         buttonText="Clear All Expenses"
         variant="danger"
         onConfirm={() => {
-          setIsClearConfirmOpen(false)
+          setClearError(null)
+          clearHistory.mutate(undefined, {
+            onSuccess: () => setIsClearConfirmOpen(false),
+            onError: (err) => setClearError(err.message),
+          })
         }}
       />
     </div>
