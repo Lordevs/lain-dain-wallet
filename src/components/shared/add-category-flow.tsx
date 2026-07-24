@@ -1,22 +1,6 @@
 import { useState } from 'react'
-import {
-  ChevronLeft,
-  Coffee,
-  Truck,
-  ShoppingBag,
-  ShoppingCart,
-  Briefcase,
-  Activity,
-  Video,
-  FileText,
-  Home,
-  Camera,
-  Wallet,
-  User,
-  Clock,
-  Hexagon,
-  Plus,
-} from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
+import { ADD_CATEGORY_ICON_OPTIONS as ICON_OPTIONS } from '@/features/expenses/lib/category-icons'
 
 const COLORS = [
   '#0B683A', // Green
@@ -28,28 +12,11 @@ const COLORS = [
   '#00BCD4', // Teal/Cyan
 ]
 
-const ICON_OPTIONS = [
-  { name: 'Coffee', icon: Coffee },
-  { name: 'Truck', icon: Truck },
-  { name: 'ShoppingBag', icon: ShoppingBag },
-  { name: 'ShoppingCart', icon: ShoppingCart },
-  { name: 'Briefcase', icon: Briefcase },
-  { name: 'Activity', icon: Activity },
-  { name: 'Video', icon: Video },
-  { name: 'FileText', icon: FileText },
-  { name: 'Home', icon: Home },
-  { name: 'Camera', icon: Camera },
-  { name: 'Wallet', icon: Wallet },
-  { name: 'User', icon: User },
-  { name: 'Clock', icon: Clock },
-  { name: 'Hexagon', icon: Hexagon },
-  { name: 'Plus', icon: Plus },
-]
-
 interface AddCategoryFlowProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (name: string, icon: any, color: string) => void
+  /** `icon` is the backend-facing icon name (see category-icons.ts), not a component */
+  onSave: (name: string, icon: string, color: string) => void
 }
 
 export default function AddCategoryFlow({
@@ -64,7 +31,7 @@ export default function AddCategoryFlow({
 
   const handleSave = () => {
     if (!categoryName.trim()) return
-    onSave(categoryName.trim(), activeIcon, selectedColor)
+    onSave(categoryName.trim(), ICON_OPTIONS[selectedIconIndex].name, selectedColor)
   }
 
   return (

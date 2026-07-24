@@ -27,6 +27,8 @@ export default function AddReceiptFlow(props: AddReceiptFlowProps) {
   return <AddReceiptFlowContent {...props} />
 }
 
+const ALLOWED_RECEIPT_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
+
 function AddReceiptFlowContent({
   amount,
   description,
@@ -36,6 +38,7 @@ function AddReceiptFlowContent({
   initialFile = null,
 }: AddReceiptFlowProps) {
   const [tempFile, setTempFile] = useState<ReceiptFile | null>(initialFile)
+  const [fileError, setFileError] = useState<string | null>(null)
 
   // Resolve category details
   const activeCategory = CATEGORIES.find((cat) => cat.id === category) || CATEGORIES.find((cat) => cat.id === 'other')
@@ -74,10 +77,9 @@ function AddReceiptFlowContent({
     }
   }
 
-  // Files option always uses the web-style file picker (supports PDF too)
   const handleFiles = () => {
     haptic.light()
-    openWebFilePicker(true)
+    openWebFilePicker()
   }
 
   const handleReplace = async () => {
@@ -90,13 +92,19 @@ function AddReceiptFlowContent({
     }
   }
 
-  const openWebFilePicker = (includePdf = false) => {
+  const openWebFilePicker = () => {
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = includePdf ? 'image/*,application/pdf' : 'image/*'
+    input.accept = 'image/jpeg,image/png,image/webp'
     input.onchange = () => {
       const file = input.files?.[0]
       if (!file) return
+      if (!ALLOWED_RECEIPT_TYPES.has(file.type)) {
+        setFileError('Receipt must be a JPG, PNG, or WebP image.')
+        haptic.heavy()
+        return
+      }
+      setFileError(null)
       const sizeInMB = file.size / (1024 * 1024)
       const formattedSize =
         sizeInMB < 0.1 ? `${(file.size / 1024).toFixed(1)} KB` : `${sizeInMB.toFixed(1)} MB`
@@ -139,6 +147,11 @@ function AddReceiptFlowContent({
       <div className="flex-1 px-6 flex flex-col justify-between pb-8 mt-2">
         {/* Top/Middle Section */}
         <div className="flex flex-col gap-6">
+          {fileError && (
+            <div className="w-full bg-[#FFF0F0] border-[0.8px] border-[#FADBD8] rounded-2xl p-3.5">
+              <p className="text-sm font-semibold text-[#C0392B]">{fileError}</p>
+            </div>
+          )}
           {/* Transaction Summary Card (Empty State) */}
           {!tempFile && (
             <div className="w-full bg-white rounded-2xl border-[0.8px] border-divider p-4 flex items-center gap-3.5 shadow-[0px_2px_10px_rgba(0,0,0,0.03)] select-none">

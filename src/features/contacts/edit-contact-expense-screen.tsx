@@ -1,35 +1,91 @@
+import { useEffect, useState } from 'react'
+import { X } from 'lucide-react'
 import { useParams, useNavigate } from '@tanstack/react-router'
-import AddExpenseBase, { type ConfirmExpenseData } from '@/components/shared/add-expense-base'
-import { useContactStore } from '@/store/use-contact-store'
-import { useTransactionStore } from '@/store/use-transaction-store'
-import { calculateContactOwesAmount } from '@/lib/split'
+import AddExpenseBase, { type ConfirmExpenseData, type InitialExpenseData } from '@/components/shared/add-expense-base'
+import ExpenseFormSkeleton from '@/components/shared/expense-form-skeleton'
+import { useExpenseQuery } from '@/features/expenses/api/use-expense-query'
+import { useUpdateExpenseMutation } from '@/features/expenses/api/use-update-expense-mutation'
+import { useCategoriesQuery } from '@/features/expenses/api/use-categories-query'
+import { useAuthStore } from '@/store/use-auth-store'
+import { colorForName, initialsForName } from '@/lib/avatar-visuals'
 import { ROUTES } from '@/constants/routes'
+import type {
+  FriendshipExpensePayer,
+  FriendshipExpenseSplit,
+} from '@/features/contacts/lib/build-friendship-expense-form-data'
+
+function receiptFileName(url: string): string {
+  try {
+    return decodeURIComponent(new URL(url).pathname.split('/').pop() || 'Receipt')
+  } catch {
+    return 'Receipt'
+  }
+}
+
+function buildPayers(
+  paidBy: string,
+  amount: number,
+  myId: string,
+  otherId: string,
+  multipleAmounts: Record<string, number> | undefined,
+): FriendshipExpensePayer[] {
+  if (paidBy === 'multiple' && multipleAmounts) {
+    const payers: FriendshipExpensePayer[] = []
+    if ((multipleAmounts.you ?? 0) > 0) payers.push({ user_id: myId, amount: multipleAmounts.you.toFixed(2) })
+    if ((multipleAmounts.contact ?? 0) > 0) payers.push({ user_id: otherId, amount: multipleAmounts.contact.toFixed(2) })
+    return payers.length > 0 ? payers : [{ user_id: myId, amount: amount.toFixed(2) }]
+  }
+  const payerId = paidBy === 'contact' ? otherId : myId
+  return [{ user_id: payerId, amount: amount.toFixed(2) }]
+}
+
+function buildSplits(data: ConfirmExpenseData, myId: string, otherId: string): FriendshipExpenseSplit[] {
+  const idFor = (localId: string) => (localId === 'contact' ? otherId : myId)
+  const splitData = data.splitData
+  if (!splitData || splitData.type === 'equal') {
+    const members = splitData?.selectedMembers ?? ['you', 'contact']
+    return members.map((m) => ({ user_id: idFor(m) }))
+  }
+  if (splitData.type === 'unequal') {
+    return ['you', 'contact'].map((m) => ({
+      user_id: idFor(m),
+      amount_owed: (splitData.unequalAmounts[m] ?? 0).toFixed(2),
+    }))
+  }
+  return ['you', 'contact'].map((m) => ({
+    user_id: idFor(m),
+    extra_amount: (splitData.adjustmentAmounts[m] ?? 0).toFixed(2),
+  }))
+}
 
 export default function EditContactExpenseScreen() {
   const { id: txId } = useParams({ from: '/transactions/$id/edit' })
   const navigate = useNavigate()
+  const userProfile = useAuthStore((s) => s.userProfile)
+  const myId = userProfile?.id ?? ''
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
-  const transactionsByContact = useTransactionStore((state) => state.transactionsByContact)
-  let foundContactId = ''
-  let tx = null
+  useEffect(() => {
+    if (!submitError) return
+    const timer = setTimeout(() => setSubmitError(null), 5000)
+    return () => clearTimeout(timer)
+  }, [submitError])
 
-  for (const cId in transactionsByContact) {
-    const t = transactionsByContact[cId].find((item) => item.id === txId)
-    if (t) {
-      foundContactId = cId
-      tx = t
-      break
-    }
+  const expenseQuery = useExpenseQuery(txId)
+  const updateExpense = useUpdateExpenseMutation()
+  const categoriesQuery = useCategoriesQuery()
+
+  if (expenseQuery.isLoading) {
+    return <ExpenseFormSkeleton />
   }
 
-  const contacts = useContactStore((state) => state.contacts)
-  const contact = contacts.find((c) => c.id === foundContactId)
+  const expense = expenseQuery.data
 
-  if (!contact || !tx) {
+  if (expenseQuery.isError || !expense) {
     return (
       <div className="flex items-center justify-center p-6 bg-[#FEFAF1] h-[50vh]">
         <div className="text-center">
-          <p className="text-lg font-bold text-[#1A1A1A]">Transaction or Contact not found</p>
+          <p className="text-lg font-bold text-[#1A1A1A]">Expense not found</p>
           <button
             onClick={() => window.history.back()}
             className="mt-4 px-4 py-2 bg-positive text-white rounded-full font-bold border-0 cursor-pointer"
@@ -41,101 +97,159 @@ export default function EditContactExpenseScreen() {
     )
   }
 
-  // Prefill data configuration from tx record
-  const initialData = {
-    amount: tx ? Math.abs(tx.amount).toString() : '',
-    description: tx?.name || '',
-    category: tx?.category || 'bills',
-    dateValue: tx?.dateValue || 'Today',
-    paidBy: tx ? (tx.amount > 0 ? 'you' as const : 'contact' as const) : 'you' as const,
-    splitData: {
-      type: (tx?.splitType || 'equal') as 'equal' | 'unequal' | 'adjustment',
-      selectedMembers: ['you', 'contact'],
-      unequalAmounts: { you: 0, contact: 0 },
-      adjustmentAmounts: { you: 0, contact: 0 },
-    }
+  const otherParticipant = [...expense.payers, ...expense.splits].find((p) => p.id !== myId)
+  if (!otherParticipant) {
+    return (
+      <div className="flex items-center justify-center p-6 bg-[#FEFAF1] h-[50vh]">
+        <div className="text-center">
+          <p className="text-lg font-bold text-[#1A1A1A]">Couldn't determine the other participant</p>
+          <button
+            onClick={() => window.history.back()}
+            className="mt-4 px-4 py-2 bg-positive text-white rounded-full font-bold border-0 cursor-pointer"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    )
   }
 
-  const handleConfirm = (data: ConfirmExpenseData) => {
-    const parsedAmount = data.amount
-    const paidBy = data.paidBy || 'you'
-    const splitData = data.splitData || {
-      type: 'equal',
-      selectedMembers: ['you', 'contact'],
-      unequalAmounts: { you: 0, contact: 0 },
-      adjustmentAmounts: { you: 0, contact: 0 },
+  const contactVisuals = {
+    id: otherParticipant.id,
+    name: otherParticipant.full_name,
+    initials: initialsForName(otherParticipant.full_name),
+    avatarColor: colorForName(otherParticipant.full_name),
+  }
+
+  const isPayer = (id: string) => expense.payers.some((p) => p.id === id)
+  const paidBy: string =
+    expense.payers.length > 1
+      ? 'multiple'
+      : isPayer(myId)
+        ? 'you'
+        : 'contact'
+
+  const multiplePayerAmounts =
+    expense.payers.length > 1
+      ? Object.fromEntries(
+          expense.payers.map((p) => [p.id === myId ? 'you' : 'contact', Number(p.amount)]),
+        )
+      : undefined
+
+  const idToLocal = (id: string) => (id === myId ? 'you' : 'contact')
+
+  const splitData =
+    expense.split_type === 'unequal'
+      ? {
+          type: 'unequal' as const,
+          selectedMembers: expense.splits.map((s) => idToLocal(s.id)),
+          unequalAmounts: Object.fromEntries(expense.splits.map((s) => [idToLocal(s.id), Number(s.amount_owed)])),
+          adjustmentAmounts: { you: 0, contact: 0 },
+        }
+      : expense.split_type === 'adjustment'
+        ? {
+            type: 'adjustment' as const,
+            selectedMembers: expense.splits.map((s) => idToLocal(s.id)),
+            unequalAmounts: { you: 0, contact: 0 },
+            adjustmentAmounts: Object.fromEntries(expense.splits.map((s) => [idToLocal(s.id), Number(s.extra_amount)])),
+          }
+        : {
+            type: 'equal' as const,
+            selectedMembers: expense.splits.map((s) => idToLocal(s.id)),
+            unequalAmounts: { you: 0, contact: 0 },
+            adjustmentAmounts: { you: 0, contact: 0 },
+          }
+
+  const initialData: InitialExpenseData = {
+    amount: expense.amount,
+    description: expense.description,
+    category: expense.category.icon,
+    dateValue: new Date(expense.date + 'T00:00:00').toLocaleDateString('en-US', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    }),
+    dateISO: expense.date,
+    noteText: expense.note ?? '',
+    receiptFile: expense.receipt
+      ? { name: receiptFileName(expense.receipt), size: '', dataUrl: expense.receipt }
+      : null,
+    paidBy,
+    multiplePayerAmounts,
+    splitData,
+  }
+
+  const handleConfirm = async (data: ConfirmExpenseData) => {
+    setSubmitError(null)
+    const paidByValue = data.paidBy || 'you'
+    const category = categoriesQuery.data?.find((c) => c.icon === data.category)
+      ?? categoriesQuery.data?.find((c) => c.icon === 'other')
+
+    if (!category) {
+      const message = 'No matching category found.'
+      setSubmitError(message)
+      throw new Error(message)
     }
 
-    const contactOwesAmount = calculateContactOwesAmount(parsedAmount, paidBy as 'you' | 'contact', splitData)
+    // Only touch the receipt at all if the user actually opened the picker
+    // and changed something — otherwise omit both fields so the existing
+    // receipt (if any) is left alone instead of being silently deleted, and
+    // we never try to refetch/re-upload the already-uploaded file.
+    const receiptChanged = data.receiptTouched && data.receiptFile?.dataUrl !== expense.receipt
+    const receiptCleared = data.receiptTouched && !data.receiptFile
 
-    const oldContactOwesAmount = tx ? tx.amount : 0
-    const oldName = tx ? tx.name : ''
-
-    // Update store
-    if (tx) {
-      const updatedTx = {
-        ...tx,
-        name: data.description || 'Edited Expense',
-        amount: contactOwesAmount,
-        category: data.category as any,
-        subtitle: paidBy === 'you' ? 'You paid' : `${contact.name.split(' ')[0]} paid`,
-        splitType: splitData.type,
-        dateValue: data.dateValue
-      }
-      useTransactionStore.getState().updateTransaction(contact.id, updatedTx)
-    }
-
-    // Update contact's netAmount balance
-    const diff = contactOwesAmount - oldContactOwesAmount
-    const updatedNetAmount = contact.netAmount + diff
-
-    // Update tags array
-    const updatedTags = [...contact.tags]
-    const tagIndex = updatedTags.findIndex((t) => t.name === oldName || t.name === (data.description || 'New Split Expense'))
-    if (tagIndex !== -1) {
-      updatedTags[tagIndex] = {
-        name: data.description || 'Edited Expense',
-        amount: contactOwesAmount
-      }
-    } else {
-      updatedTags.push({
-        name: data.description || 'Edited Expense',
-        amount: contactOwesAmount
+    try {
+      await updateExpense.mutateAsync({
+        id: expense.id,
+        values: {
+          description: data.description,
+          amount: data.amount.toFixed(2),
+          date: data.dateISO,
+          categoryId: category.id,
+          note: data.noteText,
+          receipt: receiptChanged && !receiptCleared ? data.receiptFile?.dataUrl : undefined,
+          removeReceipt: receiptCleared,
+          splitType: data.splitData?.type ?? 'equal',
+          payers: buildPayers(paidByValue, data.amount, myId, otherParticipant.id, data.multiplePayerAmounts),
+          splits: buildSplits(data, myId, otherParticipant.id),
+        },
       })
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+      throw err
     }
-
-    useContactStore.getState().updateContact(contact.id, {
-      netAmount: updatedNetAmount,
-      tags: updatedTags
-    })
-
-    navigate({
-      to: ROUTES.TRANSACTION_DETAILS,
-      params: { id: tx.id },
-      replace: true,
-    })
   }
 
   return (
-    <AddExpenseBase
-      title="Edit Expense"
-      showPaidByAndSplit={true}
-      contact={{
-        id: contact.id,
-        name: contact.name,
-        initials: contact.initials,
-        avatarColor: contact.avatarColor,
-      }}
-      initialData={initialData}
-      onConfirm={handleConfirm}
-      onSuccessComplete={() => {
-        navigate({
-          to: ROUTES.TRANSACTION_DETAILS,
-          params: { id: tx.id },
-          replace: true,
-        })
-      }}
-      onBack={() => window.history.back()}
-    />
+    <>
+      <AddExpenseBase
+        title="Edit Expense"
+        showPaidByAndSplit={true}
+        contact={contactVisuals}
+        initialData={initialData}
+        onConfirm={handleConfirm}
+        onSuccessComplete={() => {
+          navigate({
+            to: ROUTES.TRANSACTION_DETAILS,
+            params: { id: expense.id },
+            replace: true,
+          })
+        }}
+        onBack={() => window.history.back()}
+      />
+      {submitError && (
+        <div className="fixed bottom-6 left-6 right-6 z-70 bg-white border border-tertiary rounded-2xl p-4 shadow-lg flex items-start gap-3">
+          <p className="text-sm font-semibold text-tertiary flex-1">{submitError}</p>
+          <button
+            type="button"
+            onClick={() => setSubmitError(null)}
+            className="text-tertiary shrink-0 bg-transparent border-0 cursor-pointer p-0.5"
+            aria-label="Dismiss"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+    </>
   )
 }

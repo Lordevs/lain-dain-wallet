@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useNavigate, useSearch } from '@tanstack/react-router'
 import { FileText, ChevronRight, ChevronDown, Users, Check } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { useAuthStore } from '@/store/use-auth-store'
@@ -24,6 +23,11 @@ export interface ConfirmExpenseData {
   /** Real YYYY-MM-DD for the selected date — dateValue is only a display label */
   dateISO: string
   receiptFile: { name: string; size: string; dataUrl?: string } | null
+  /** True only if the user actually opened the receipt picker and saved/removed
+   * something this session — lets the caller tell "untouched, leave as-is"
+   * apart from "explicitly cleared" when editing an expense that already had
+   * a receipt (see edit-contact-expense-screen.tsx's removeReceipt logic). */
+  receiptTouched: boolean
   noteText: string
   paidBy?: string
   /** Populated only when paidBy === 'multiple' — id -> amount contributed */
@@ -36,7 +40,14 @@ export interface InitialExpenseData {
   description?: string
   category?: string
   dateValue?: string
+  dateISO?: string
+  noteText?: string
+  receiptFile?: { name: string; size: string; dataUrl?: string } | null
   paidBy?: string
+  /** Seeds the paid-by drawer's per-person inputs when paidBy === 'multiple' —
+   * without this the drawer would default to a guessed equal split instead
+   * of the expense's real original amounts. */
+  multiplePayerAmounts?: Record<string, number>
   splitData?: SplitData
 }
 
@@ -67,29 +78,31 @@ export default function AddExpenseBase({
   onSuccessComplete,
   onBack,
 }: AddExpenseBaseProps) {
-  const navigate = useNavigate()
-  const search = useSearch({ strict: false }) as any
-  const subDrawer = search?.subDrawer
-
   // State management
   const { amount, handleAmountChange, formattedAmount } = useFormattedAmountInput(initialData?.amount || '')
   const [description, setDescription] = useState(initialData?.description || '')
   const [selectedCategory, setSelectedCategory] = useState(initialData?.category || '')
   const [dateValue, setDateValue] = useState(initialData?.dateValue || 'Today')
   const [dateISO, setDateISO] = useState(() => {
+    if (initialData?.dateISO) return initialData.dateISO
     const now = new Date()
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   })
-  const [receiptFile, setReceiptFile] = useState<{ name: string; size: string; dataUrl?: string } | null>(null)
-  const showReceiptOverlay = subDrawer === 'receipt'
-  const [noteText, setNoteText] = useState('')
-  const showNoteOverlay = subDrawer === 'note'
+  const [receiptFile, setReceiptFile] = useState<{ name: string; size: string; dataUrl?: string } | null>(
+    initialData?.receiptFile ?? null,
+  )
+  const [receiptTouched, setReceiptTouched] = useState(false)
+  const [showReceiptOverlay, setShowReceiptOverlay] = useState(false)
+  const [noteText, setNoteText] = useState(initialData?.noteText || '')
+  const [showNoteOverlay, setShowNoteOverlay] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [showDateDrawer, setShowDateDrawer] = useState(false)
 
   // Shared Expense Specific State
   const [paidBy, setPaidBy] = useState<string>(initialData?.paidBy || 'you')
-  const [multiplePayerAmounts, setMultiplePayerAmounts] = useState<Record<string, number> | undefined>(undefined)
+  const [multiplePayerAmounts, setMultiplePayerAmounts] = useState<Record<string, number> | undefined>(
+    initialData?.multiplePayerAmounts,
+  )
   const [showPaidBy, setShowPaidBy] = useState(false)
   const [splitData, setSplitData] = useState<SplitData>(initialData?.splitData || {
     type: 'equal',
@@ -108,6 +121,8 @@ export default function AddExpenseBase({
   const closePaidBy = useDrawerBackHandler(showPaidBy, () => setShowPaidBy(false))
   const closeSplit = useDrawerBackHandler(showSplit, () => setShowSplit(false))
   const closeDateDrawer = useDrawerBackHandler(showDateDrawer, () => setShowDateDrawer(false))
+  const closeReceiptOverlay = useDrawerBackHandler(showReceiptOverlay, () => setShowReceiptOverlay(false))
+  const closeNoteOverlay = useDrawerBackHandler(showNoteOverlay, () => setShowNoteOverlay(false))
 
   const payerName = paidBy === 'you'
     ? 'You'
@@ -121,15 +136,11 @@ export default function AddExpenseBase({
   }
 
   const handleToggleReceipt = () => {
-    (navigate as any)({
-      search: (prev: any) => ({ ...prev, subDrawer: 'receipt' })
-    })
+    setShowReceiptOverlay(true)
   }
 
   const handleToggleNote = () => {
-    (navigate as any)({
-      search: (prev: any) => ({ ...prev, subDrawer: 'note' })
-    })
+    setShowNoteOverlay(true)
   }
 
   // Submit entry handler — awaits onConfirm so the success screen only
@@ -152,6 +163,7 @@ export default function AddExpenseBase({
         dateValue,
         dateISO,
         receiptFile,
+        receiptTouched,
         noteText,
         paidBy: showPaidByAndSplit ? paidBy : undefined,
         multiplePayerAmounts: showPaidByAndSplit && paidBy === 'multiple' ? multiplePayerAmounts : undefined,
@@ -356,10 +368,11 @@ export default function AddExpenseBase({
         amount={Number(amount) || 0}
         description={description}
         category={selectedCategory}
-        onClose={() => { (navigate as any)({ search: (prev: any) => { const next = { ...prev }; delete next.subDrawer; return next } }); }}
+        onClose={closeReceiptOverlay}
         onSave={(file) => {
-          setReceiptFile(file);
-          (navigate as any)({ search: (prev: any) => { const next = { ...prev }; delete next.subDrawer; return next } });
+          setReceiptFile(file)
+          setReceiptTouched(true)
+          closeReceiptOverlay()
         }}
         initialFile={receiptFile}
       />
@@ -371,10 +384,10 @@ export default function AddExpenseBase({
         description={description}
         category={selectedCategory}
         initialNote={noteText}
-        onClose={() => { (navigate as any)({ search: (prev: any) => { const next = { ...prev }; delete next.subDrawer; return next } }); }}
+        onClose={closeNoteOverlay}
         onSave={(text) => {
-          setNoteText(text);
-          (navigate as any)({ search: (prev: any) => { const next = { ...prev }; delete next.subDrawer; return next } });
+          setNoteText(text)
+          closeNoteOverlay()
         }}
       />
 
@@ -392,6 +405,7 @@ export default function AddExpenseBase({
           contactInitials={contact.initials}
           contactAvatarColor={contact.avatarColor}
           amount={Number(amount) || 0}
+          initialPayerAmounts={multiplePayerAmounts}
         />
       )}
 

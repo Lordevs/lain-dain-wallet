@@ -25,6 +25,10 @@ interface PaidByDrawerProps {
   contactInitials: string
   contactAvatarColor: string
   amount?: number
+  /** Seeds the per-person inputs from the expense's real original amounts
+   * when editing — without this, reopening this view guesses an equal
+   * split instead. */
+  initialPayerAmounts?: Record<string, number>
 }
 
 export default function PaidByDrawer({
@@ -36,6 +40,7 @@ export default function PaidByDrawer({
   contactInitials,
   contactAvatarColor,
   amount = 5000,
+  initialPayerAmounts,
 }: PaidByDrawerProps) {
   // Bumped whenever isOpen transitions to true, forcing PaidByDrawerContent to remount
   // with fresh initial state - the idiomatic replacement for a "resync on open" effect.
@@ -58,6 +63,7 @@ export default function PaidByDrawer({
           contactInitials={contactInitials}
           contactAvatarColor={contactAvatarColor}
           amount={amount}
+          initialPayerAmounts={initialPayerAmounts}
         />
       </DrawerContent>
     </Drawer>
@@ -72,6 +78,7 @@ function PaidByDrawerContent({
   contactInitials,
   contactAvatarColor,
   amount,
+  initialPayerAmounts,
 }: Omit<PaidByDrawerProps, 'isOpen' | 'amount'> & { amount: number }) {
   const [view, setView] = useState<'selection' | 'multiple'>(selectedValue === 'multiple' ? 'multiple' : 'selection')
   const [tempValue, setTempValue] = useState<string>(selectedValue)
@@ -104,7 +111,7 @@ function PaidByDrawerContent({
     const initialAmounts: Record<string, string> = {}
     members.forEach((m) => {
       if (selectedValue === 'multiple') {
-        const share = Math.round(amount / members.length)
+        const share = initialPayerAmounts?.[m.id] ?? Math.round(amount / members.length)
         initialAmounts[m.id] = share.toString()
       } else {
         initialAmounts[m.id] = m.id === selectedValue ? amount.toString() : ''

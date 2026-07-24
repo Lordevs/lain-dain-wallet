@@ -1,80 +1,66 @@
-import { useState, useEffect } from 'react'
+import { useState, createElement } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
-import { ChevronLeft, Pencil, Trash2, FileText, Coffee, HelpCircle, Check } from 'lucide-react'
+import { ChevronLeft, Pencil, Trash2, FileText, Check } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
-import { useContactStore } from '@/store/use-contact-store'
-import { useTransactionStore } from '@/store/use-transaction-store'
 import { ROUTES } from '@/constants/routes'
-import { CATEGORIES } from '@/features/personal/components/category-picker'
-import receiptMockup from '@/assets/receipt_mockup.png'
-import ReceiptPreviewFlow from './components/receipt-preview-flow'
-import { useDrawerBackHandler } from '@/hooks/use-drawer-back-handler'
-
-const getCategoryEmoji = (id: string) => {
-  switch (id) {
-    case 'transport': return '🚗'
-    case 'shopping': return '🛍️'
-    case 'grocery': return '🛒'
-    case 'bills': return '🧾'
-    case 'entertainment': return '🎬'
-    case 'health': return '🏥'
-    case 'education': return '🎓'
-    case 'food': return '🍔'
-    case 'payment': return '💵'
-    default: return '📦'
-  }
-}
+import { useAuthStore } from '@/store/use-auth-store'
+import { useExpenseQuery } from '@/features/expenses/api/use-expense-query'
+import { useDeleteExpenseMutation } from '@/features/expenses/api/use-delete-expense-mutation'
+import { iconForCategory } from '@/features/expenses/lib/category-icons'
+import { formatCurrency } from '@/lib/currency'
+import ConfirmActionDrawer from '@/components/shared/confirm-action-drawer'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function TransactionDetailScreen() {
   const { id } = useParams({ from: '/transactions/$id' })
   const navigate = useNavigate()
+  const myId = useAuthStore((s) => s.userProfile?.id)
 
-  // All hooks must be declared before any conditional return to satisfy Rules of Hooks
-  const [isReceiptOpen, setIsReceiptOpen] = useState(false)
-  const closeReceipt = useDrawerBackHandler(isReceiptOpen, () => setIsReceiptOpen(false))
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null)
+  const expenseQuery = useExpenseQuery(id)
+  const deleteExpense = useDeleteExpenseMutation()
+  const [toast, setToast] = useState<{ message: string } | null>(null)
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false)
 
-  useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => {
-        setToast(null)
-      }, 3000)
-      return () => clearTimeout(timer)
-    }
-  }, [toast])
-
-  // Find transaction and contact ID
-  let foundContactId = ''
-  let tx = null
-
-  const resolvedTxId = id
-  const transactionsByContact = useTransactionStore((state) => state.transactionsByContact)
-
-  for (const contactId in transactionsByContact) {
-    const t = transactionsByContact[contactId].find((item) => item.id === resolvedTxId)
-    if (t) {
-      foundContactId = contactId
-      tx = t
-      break
-    }
+  if (expenseQuery.isLoading) {
+    return (
+      <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24">
+        <div className="flex items-center px-6 pt-5 pb-3">
+          <Skeleton className="size-10 rounded-full" />
+        </div>
+        <div className="px-6 flex flex-col gap-6">
+          <div className="bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] p-6 flex flex-col gap-6">
+            <div className="flex items-center gap-4">
+              <Skeleton className="w-14 h-14 rounded-[18px] shrink-0" />
+              <div className="flex flex-col gap-2">
+                <Skeleton className="h-4 w-36" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+            <Skeleton className="h-9 w-32" />
+          </div>
+          <div className="bg-white rounded-[24px] border-[0.8px] border-[#EBEBEB] divide-y divide-[#EBEBEB] overflow-hidden">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="px-5 py-4 flex items-center justify-between">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
   }
 
-  // Find contact
-  const contacts = useContactStore((state) => state.contacts)
-  const contact = contacts.find((c) => c.id === foundContactId)
-
-  if (!tx || !contact) {
+  const expense = expenseQuery.data
+  if (expenseQuery.isError || !expense) {
     return (
       <div className="flex flex-col items-center justify-center p-6 bg-[#FEFAF1] select-none text-[#1A1A1A] h-[50vh]">
         <p className="text-muted-foreground text-sm mb-4">Transaction not found</p>
         <button
           onClick={() => {
-            if (window.history.length > 1) {
-              window.history.back()
-            } else {
-              navigate({ to: ROUTES.DASHBOARD })
-            }
+            if (window.history.length > 1) window.history.back()
+            else navigate({ to: ROUTES.DASHBOARD })
           }}
           className="text-primary font-bold hover:underline border-0 bg-transparent cursor-pointer"
         >
@@ -84,31 +70,43 @@ export default function TransactionDetailScreen() {
     )
   }
 
-  const absAmount = Math.abs(tx.amount)
-  const paidByText = tx.amount > 0 ? 'You (full amount)' : `${contact.name} (full amount)`
+  // The other participant in a friendship expense — payers/splits carry
+  // full user info directly, so there's no need for a separate contact
+  // lookup the way the old mock version needed one.
+  const otherParticipant = [...expense.payers, ...expense.splits].find((p) => p.id !== myId)
+  const backTarget = otherParticipant
+    ? { to: ROUTES.CONTACT_DETAILS, params: { id: otherParticipant.id } }
+    : { to: ROUTES.DASHBOARD }
 
-  const categoryObj = CATEGORIES.find((c) => c.id === tx.category) || { label: 'Other', icon: HelpCircle, color: '#7F8C8D' }
-  const categoryName = tx.category === 'payment' ? 'Payment' : categoryObj.label
-  const categoryEmoji = getCategoryEmoji(tx.category)
+  const goBack = () => {
+    if (window.history.length > 1) window.history.back()
+    else navigate(backTarget as never)
+  }
 
-  const CategoryIcon = tx.name.toLowerCase().includes('hotel') ? Coffee : (categoryObj.icon || HelpCircle)
-  const categoryColor = tx.name.toLowerCase().includes('hotel') ? '#C96A1B' : (categoryObj.color || '#7F8C8D')
+  const formattedAmount = formatCurrency(Number(expense.amount), expense.currency)
 
-  const groupName = contact.type === 'group' ? contact.name : 'Murree Trip'
-  const dateStr = tx.dateValue || 'Today, 18 May 2026'
-  const noteText = tx.note || 'Pearl Continental, Murree'
-  const shareVal = absAmount === 3000 ? 1250 : Math.round(absAmount / 2)
-  const formattedShare = `Rs. ${shareVal.toLocaleString('en-US')}`
+  const payerNames = expense.payers
+    .map((p) => (p.id === myId ? 'You' : p.full_name))
+    .join(', ')
+  const paidByText = expense.payers.length > 1 ? `${payerNames} (split payment)` : `${payerNames} (full amount)`
 
-  const handleDownload = () => {
-    const link = document.createElement('a')
-    link.href = receiptMockup
-    link.download = `Receipt_${tx.name.replace(/\s+/g, '_')}.png`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+  const mySplit = expense.splits.find((s) => s.id === myId)
+  const myShare = mySplit ? Number(mySplit.amount_owed) + Number(mySplit.extra_amount) : 0
 
-    setToast({ message: 'Receipt image downloaded successfully!', type: 'success' })
+  const formattedDate = new Date(expense.date + 'T00:00:00').toLocaleDateString('en-US', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+
+  const handleDelete = () => {
+    deleteExpense.mutate(expense.id, {
+      onSuccess: () => {
+        navigate(backTarget as never)
+      },
+      onError: (err) => setToast({ message: err.message }),
+    })
   }
 
   return (
@@ -120,6 +118,7 @@ export default function TransactionDetailScreen() {
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            onAnimationComplete={() => setTimeout(() => setToast(null), 3000)}
             className="fixed top-6 left-6 right-6 z-120 mx-auto max-w-[380px] bg-white/90 backdrop-blur-md border border-[#EFE7DD] shadow-[0px_10px_30px_rgba(0,0,0,0.08)] rounded-2xl p-4 flex items-center gap-3"
           >
             <div className="w-8 h-8 rounded-full bg-[#E4F2EB] flex items-center justify-center text-positive shrink-0">
@@ -133,17 +132,7 @@ export default function TransactionDetailScreen() {
       {/* Header */}
       <div className="flex items-center px-6 pt-5 pb-3 relative shrink-0">
         <button
-          onClick={() => {
-            if (window.history.length > 1) {
-              window.history.back()
-            } else {
-              if (contact.type === 'group') {
-                navigate({ to: ROUTES.GROUP_DETAILS, params: { id: contact.id } })
-              } else {
-                navigate({ to: ROUTES.CONTACT_DETAILS, params: { id: contact.id } })
-              }
-            }
-          }}
+          onClick={goBack}
           className="size-10 rounded-full bg-white border border-[#EBEBEB] flex items-center justify-center cursor-pointer shadow-[0px_2px_8px_rgba(0,0,0,0.04)] outline-none"
         >
           <ChevronLeft size={20} className="text-[#1A1A1A]" />
@@ -153,34 +142,34 @@ export default function TransactionDetailScreen() {
         </h3>
       </div>
 
-      {/* Main Info Card */}
-      {/* Scrollable breakdown container */}
       <div className="flex-1 overflow-y-auto px-6 pb-6 flex flex-col gap-6">
-
+        {/* Main Info Card */}
         <div className="bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-6 flex flex-col text-left">
           <div className="flex items-center gap-4">
             <div
               className="w-14 h-14 rounded-[18px] flex items-center justify-center shrink-0"
-              style={{ backgroundColor: `${categoryColor}15` }}
+              style={{ backgroundColor: `${expense.category.color}15` }}
             >
-              <CategoryIcon size={26} style={{ color: categoryColor }} strokeWidth={1.5} />
+              {createElement(iconForCategory(expense.category.icon), { size: 26, style: { color: expense.category.color }, strokeWidth: 1.5 })}
             </div>
             <div className="flex flex-col">
               <span className="font-extrabold text-[17px] text-[#1A1A1A] leading-none">
-                {tx.name || 'Unnamed Expense'}
+                {expense.description}
               </span>
-              <span className="text-[12px] text-[#6B6B6B] font-medium mt-1.5 leading-none">
-                {contact.name}
-              </span>
+              {otherParticipant && (
+                <span className="text-[12px] text-[#6B6B6B] font-medium mt-1.5 leading-none">
+                  {otherParticipant.full_name}
+                </span>
+              )}
             </div>
           </div>
 
           <span className="text-[34px] font-extrabold text-[#1A1A1A] mt-6 tracking-tight leading-none">
-            Rs. {absAmount.toLocaleString('en-US')}
+            {formattedAmount}
           </span>
 
           <span className="text-[13px] text-[#6B6B6B] font-semibold mt-3.5 leading-none">
-            {tx.amount > 0 ? 'You paid the full amount' : `${contact.name.split(' ')[0]} paid the full amount`}
+            {paidByText}
           </span>
         </div>
 
@@ -191,62 +180,59 @@ export default function TransactionDetailScreen() {
           </div>
 
           <div className="bg-white rounded-[24px] border-[0.8px] border-[#EBEBEB] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] divide-y divide-[#EBEBEB] overflow-hidden">
-            {/* Description Row */}
             <div className="px-5 py-4 flex items-center justify-between">
               <span className="text-sm font-medium text-[#6B6B6B]">Description</span>
-              <span className="text-sm font-bold text-[#1A1A1A]">{tx.name || 'Unnamed Expense'}</span>
+              <span className="text-sm font-bold text-[#1A1A1A]">{expense.description}</span>
             </div>
 
-            {/* Category Row */}
             <div className="px-5 py-4 flex items-center justify-between">
               <span className="text-sm font-medium text-[#6B6B6B]">Category</span>
               <span className="text-sm font-bold text-[#1A1A1A] flex items-center gap-1.5">
-                <span>{categoryEmoji}</span> {categoryName}
+                {createElement(iconForCategory(expense.category.icon), { size: 14, style: { color: expense.category.color } })}
+                {expense.category.name}
               </span>
             </div>
 
-            {/* Group Row */}
-            <div className="px-5 py-4 flex items-center justify-between">
-              <span className="text-sm font-medium text-[#6B6B6B]">Group</span>
-              <span className="text-sm font-bold text-[#1A1A1A]">{groupName}</span>
-            </div>
-
-            {/* Date Row */}
             <div className="px-5 py-4 flex items-center justify-between">
               <span className="text-sm font-medium text-[#6B6B6B]">Date</span>
-              <span className="text-sm font-bold text-[#1A1A1A]">{dateStr}</span>
+              <span className="text-sm font-bold text-[#1A1A1A]">{formattedDate}</span>
             </div>
 
-            {/* Paid By Row */}
             <div className="px-5 py-4 flex items-center justify-between">
               <span className="text-sm font-medium text-[#6B6B6B]">Paid by</span>
-              <span className="text-sm font-bold text-positive">{paidByText}</span>
+              <span className="text-sm font-bold text-positive">{payerNames}</span>
             </div>
 
-            {/* Receipt Row */}
             <div className="px-5 py-3.5 flex items-center justify-between">
               <span className="text-sm font-medium text-[#6B6B6B]">Receipt</span>
-              <button
-                type="button"
-                onClick={() => setIsReceiptOpen(true)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#EBEBEB] bg-white text-[12px] font-bold text-[#6B6B6B] hover:bg-[#F7F5F0] transition-colors cursor-pointer outline-none active:scale-95 shadow-[0px_1px_3px_rgba(0,0,0,0.02)]"
-              >
-                <FileText size={13} className="text-[#C0392B]" />
-                Receipt.pdf
-              </button>
+              {expense.receipt ? (
+                <a
+                  href={expense.receipt}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#EBEBEB] bg-white text-[12px] font-bold text-[#6B6B6B] hover:bg-[#F7F5F0] transition-colors cursor-pointer outline-none active:scale-95 shadow-[0px_1px_3px_rgba(0,0,0,0.02)]"
+                >
+                  <FileText size={13} className="text-[#C0392B]" />
+                  View Receipt
+                </a>
+              ) : (
+                <span className="text-sm font-medium text-[#9A9590]">None</span>
+              )}
             </div>
 
-            {/* Note Row */}
             <div className="px-5 py-4 flex items-center justify-between">
               <span className="text-sm font-medium text-[#6B6B6B]">Note</span>
-              <span className="text-sm font-medium text-[#6B6B6B]">{noteText}</span>
+              <span className="text-sm font-medium text-[#6B6B6B] line-clamp-1 truncate max-w-40">{expense.note || '—'}</span>
             </div>
 
-            {/* Your Share Row */}
-            <div className="px-5 py-4 flex items-center justify-between">
-              <span className="text-sm font-medium text-[#6B6B6B]">Your share</span>
-              <span className="text-sm font-extrabold text-[#1A1A1A]">{formattedShare}</span>
-            </div>
+            {mySplit && (
+              <div className="px-5 py-4 flex items-center justify-between">
+                <span className="text-sm font-medium text-[#6B6B6B]">Your share</span>
+                <span className="text-sm font-extrabold text-[#1A1A1A]">
+                  {formatCurrency(myShare, expense.currency)}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -256,110 +242,74 @@ export default function TransactionDetailScreen() {
             <span className="text-[13px] font-bold text-[#6B6B6B] uppercase tracking-wider">
               How it was split
             </span>
-            <span className="text-[13px] font-bold text-[#1A1A1A]">
-              {tx.splitType === 'unequal' ? 'Un-Equal' : 'Equal'}
+            <span className="text-[13px] font-bold text-[#1A1A1A] capitalize">
+              {expense.split_type}
             </span>
           </div>
 
           <div className="bg-white border border-[#EFE7DD] rounded-[24px] divide-y divide-[#EFE7DD] overflow-hidden shadow-[0px_4px_16px_rgba(0,0,0,0.02)]">
-            {/* Item 1: You */}
-            <div className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-positive text-white flex items-center justify-center font-extrabold text-sm shadow-[0px_2px_8px_rgba(11,104,58,0.12)] select-none">
-                  MH
+            {expense.splits.map((split) => {
+              const isMe = split.id === myId
+              const shareAmount = Number(split.amount_owed) + Number(split.extra_amount)
+              return (
+                <div key={split.id} className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={cn(
+                        'w-10 h-10 rounded-full text-white flex items-center justify-center font-extrabold text-sm shadow-sm select-none',
+                        isMe ? 'bg-positive' : 'bg-[#1E3A8A]',
+                      )}
+                    >
+                      {split.full_name
+                        .split(/\s+/)
+                        .map((p) => p[0]?.toUpperCase())
+                        .slice(0, 2)
+                        .join('')}
+                    </div>
+                    <span className="font-bold text-sm text-[#1A1A1A]">{isMe ? 'You' : split.full_name}</span>
+                  </div>
+                  <span className={cn('font-extrabold text-sm', isMe ? 'text-[#C96A1B]' : 'text-[#1A1A1A]')}>
+                    {formatCurrency(shareAmount, expense.currency)}
+                  </span>
                 </div>
-                <span className="font-bold text-sm text-[#1A1A1A]">You</span>
-              </div>
-              <span className="font-extrabold text-sm text-[#C96A1B]">
-                Rs. {tx.splitType === 'unequal' ? '1,000' : (absAmount / 2).toLocaleString('en-US')}
-              </span>
-            </div>
-
-            {/* Item 2: Contact */}
-            <div className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className={cn("w-10 h-10 rounded-full text-white flex items-center justify-center font-extrabold text-sm shadow-sm select-none", contact.avatarColor || 'bg-[#1E3A8A]')}>
-                  {contact.initials}
-                </div>
-                <span className="font-bold text-sm text-[#1A1A1A]">{contact.name}</span>
-              </div>
-              <span className="font-extrabold text-sm text-[#1A1A1A]">
-                Rs. {tx.splitType === 'unequal' ? '2,000' : (absAmount / 2).toLocaleString('en-US')}
-              </span>
-            </div>
+              )
+            })}
           </div>
         </div>
 
-
         {/* Absolute Bottom Actions */}
         <div className="fixed bottom-3 left-3 right-3 z-10 flex items-center gap-4">
-          {/* Edit Button */}
           <button
             type="button"
-            onClick={() => {
-              navigate({
-                to: `/transactions/${tx.id}/edit`
-              })
-            }}
+            onClick={() => navigate({ to: `/transactions/${expense.id}/edit` as never })}
             className="flex-1 h-14 rounded-[20px] bg-white border border-[#EFE7DD] text-[#6B6B6B] font-extrabold text-base cursor-pointer shadow-sm hover:bg-muted/5 transition-colors flex items-center justify-center gap-2 outline-none"
           >
             <Pencil size={18} className="text-[#6B6B6B]" />
             Edit
           </button>
 
-          {/* Delete Button */}
           <button
             type="button"
-            onClick={() => {
-              if (tx && contact) {
-                // Remove from useTransactionStore
-                useTransactionStore.getState().deleteTransaction(contact.id, tx.id)
-
-                // Update contact netAmount balance and tags array
-                const updatedTags = contact.tags.filter((t) => t.name !== tx.name && t.amount !== tx.amount)
-                const updatedNetAmount = contact.netAmount - tx.amount
-                useContactStore.getState().updateContact(contact.id, {
-                  netAmount: updatedNetAmount,
-                  tags: updatedTags,
-                  ledgerCount: updatedTags.length
-                })
-              }
-
-              if (contact) {
-                if (contact.type === 'group') {
-                  navigate({ to: ROUTES.GROUP_DETAILS, params: { id: contact.id } })
-                } else {
-                  navigate({ to: ROUTES.CONTACT_DETAILS, params: { id: contact.id } })
-                }
-              }
-            }}
-            className="flex-1 h-14 rounded-[20px] bg-[#FFF3F3] border border-[#C0392B40] text-[#C0392B] font-extrabold text-base cursor-pointer shadow-sm hover:bg-[#FFF3F3]/80 transition-colors flex items-center justify-center gap-2 outline-none"
+            onClick={() => setIsConfirmDeleteOpen(true)}
+            disabled={deleteExpense.isPending}
+            className="flex-1 h-14 rounded-[20px] bg-[#FFF3F3] border border-[#C0392B40] text-[#C0392B] font-extrabold text-base cursor-pointer shadow-sm hover:bg-[#FFF3F3]/80 transition-colors flex items-center justify-center gap-2 outline-none disabled:opacity-60"
           >
             <Trash2 size={18} className="text-[#C0392B]" />
-            Delete
+            {deleteExpense.isPending ? 'Deleting...' : 'Delete'}
           </button>
         </div>
       </div>
 
-      {/* Receipt Preview Overlay */}
-      <AnimatePresence>
-        {isReceiptOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: '100%' }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: '100%' }}
-            transition={{ duration: 0.12, ease: 'easeOut' }}
-            className="fixed inset-0 z-50 bg-[#FEFAF1]"
-          >
-            <ReceiptPreviewFlow
-              isOpen={isReceiptOpen}
-              onClose={closeReceipt}
-              tx={tx}
-              onDownload={handleDownload}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <ConfirmActionDrawer
+        isOpen={isConfirmDeleteOpen}
+        onClose={() => setIsConfirmDeleteOpen(false)}
+        title="Delete this expense"
+        confirmTitle="Delete this expense permanently?"
+        confirmDescription="This will remove it from the ledger and update both balances. This cannot be undone."
+        buttonText="Delete"
+        variant="danger"
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }

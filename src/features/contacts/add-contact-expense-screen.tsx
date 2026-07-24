@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
+import { X } from 'lucide-react'
 import AddExpenseBase, { type ConfirmExpenseData } from '@/components/shared/add-expense-base'
+import ExpenseFormSkeleton from '@/components/shared/expense-form-skeleton'
 import { useEnsureFriendship } from '@/features/contacts/hooks/use-ensure-friendship'
-import { useCategoriesQuery } from '@/features/contacts/api/use-categories-query'
+import { useCategoriesQuery } from '@/features/expenses/api/use-categories-query'
 import { useCreateFriendshipExpenseMutation } from '@/features/contacts/api/use-create-friendship-expense-mutation'
 import { useAuthStore } from '@/store/use-auth-store'
 import { colorForName, initialsForName } from '@/lib/avatar-visuals'
@@ -60,16 +62,18 @@ export default function AddContactExpenseScreen() {
   const userProfile = useAuthStore((s) => s.userProfile)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (!submitError) return
+    const timer = setTimeout(() => setSubmitError(null), 5000)
+    return () => clearTimeout(timer)
+  }, [submitError])
+
   const ensureFriendship = useEnsureFriendship(userId)
   const categoriesQuery = useCategoriesQuery()
   const createExpense = useCreateFriendshipExpenseMutation()
 
   if (ensureFriendship.isLoading || categoriesQuery.isLoading) {
-    return (
-      <div className="flex items-center justify-center p-6 bg-[#FEFAF1] h-[50vh]">
-        <p className="text-muted-foreground text-sm">Loading...</p>
-      </div>
-    )
+    return <ExpenseFormSkeleton />
   }
 
   if (ensureFriendship.isError || !ensureFriendship.friendship) {
@@ -146,8 +150,16 @@ export default function AddContactExpenseScreen() {
         onBack={() => window.history.back()}
       />
       {submitError && (
-        <div className="fixed bottom-6 left-6 right-6 z-70 bg-white border border-tertiary rounded-2xl p-4 shadow-lg">
-          <p className="text-sm font-semibold text-tertiary">{submitError}</p>
+        <div className="fixed bottom-6 left-6 right-6 z-70 bg-white border border-tertiary rounded-2xl p-4 shadow-lg flex items-start gap-3">
+          <p className="text-sm font-semibold text-tertiary flex-1">{submitError}</p>
+          <button
+            type="button"
+            onClick={() => setSubmitError(null)}
+            className="text-tertiary shrink-0 bg-transparent border-0 cursor-pointer p-0.5"
+            aria-label="Dismiss"
+          >
+            <X size={16} />
+          </button>
         </div>
       )}
     </>
