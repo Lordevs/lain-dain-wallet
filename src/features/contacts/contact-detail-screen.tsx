@@ -8,6 +8,8 @@ import { cn } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
 import ExpenseList, { type ExpenseListData } from '@/components/shared/expense-list'
 import EmptyState from '@/components/shared/empty-state'
+import ExpenseListSkeleton from '@/components/shared/expense-list-skeleton'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useContactLedgers } from '@/features/contacts/hooks/use-contact-ledgers'
 import { useFriendshipTransactionsQuery } from '@/features/contacts/api/use-friendship-transactions-query'
 
@@ -71,8 +73,23 @@ export default function ContactDetailScreen() {
 
   if (ledgers.isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-[#FEFAF1]">
-        <p className="text-muted-foreground text-sm">Loading...</p>
+      <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24">
+        <div className="flex items-center gap-3 px-6 pt-5 pb-3">
+          <Skeleton className="size-11 rounded-full shrink-0" />
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-24" />
+          </div>
+        </div>
+        <div className="px-6 mb-6">
+          <div className="bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] p-6 flex flex-col gap-3">
+            <Skeleton className="h-3 w-28" />
+            <Skeleton className="h-8 w-36" />
+          </div>
+        </div>
+        <div className="px-6">
+          <ExpenseListSkeleton />
+        </div>
       </div>
     )
   }
@@ -147,9 +164,7 @@ export default function ContactDetailScreen() {
 
       {/* Transaction history */}
       <div className="flex flex-col gap-5 px-6 pb-12 overflow-y-auto">
-        {transactions.isLoading && (
-          <p className="text-muted-foreground text-sm text-center py-8">Loading history...</p>
-        )}
+        {transactions.isLoading && <ExpenseListSkeleton />}
         {!transactions.isLoading && items.length === 0 && (
           <EmptyState
             title="No transactions yet"

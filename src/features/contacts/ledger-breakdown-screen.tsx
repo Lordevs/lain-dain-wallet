@@ -7,6 +7,8 @@ import ExpenseList, { type ExpenseListData } from '@/components/shared/expense-l
 import ContactAvatar from '@/components/shared/contact-avatar'
 import FlowHeader from '@/components/shared/flow-header'
 import { useContactLedgers } from '@/features/contacts/hooks/use-contact-ledgers'
+import ExpenseListSkeleton from '@/components/shared/expense-list-skeleton'
+import { Skeleton } from '@/components/ui/skeleton'
 
 function initialsForName(name: string): string {
   return (
@@ -32,8 +34,21 @@ export default function LedgerBreakdownScreen() {
 
   if (ledgers.isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center p-6 bg-[#FEFAF1] h-[50vh]">
-        <p className="text-muted-foreground text-sm">Loading...</p>
+      <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-10">
+        <div className="flex items-center gap-3 px-6 pt-5 pb-3">
+          <Skeleton className="size-11 rounded-full shrink-0" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+        <div className="px-6 mb-6 mt-4">
+          <div className="bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] p-6 flex flex-col gap-3">
+            <Skeleton className="h-9 w-40" />
+            <Skeleton className="h-3 w-28" />
+          </div>
+        </div>
+        <div className="px-6">
+          <Skeleton className="h-5 w-40 mb-3" />
+          <ExpenseListSkeleton rows={3} />
+        </div>
       </div>
     )
   }

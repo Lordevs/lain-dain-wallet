@@ -6,6 +6,7 @@ import ContactList from '@/components/shared/contact-list'
 import ContactListItem from '@/components/shared/contact-list-item'
 import FormError from '@/components/shared/form-error'
 import InfiniteScrollSentinel from '@/components/shared/infinite-scroll-sentinel'
+import ContactListSkeleton from '@/components/shared/contact-list-skeleton'
 import CurrencyMismatchDrawer from '@/features/contacts/components/currency-mismatch-drawer'
 import { shareInvite } from '@/lib/share-invite'
 import type { NewContactFlowState } from '../hooks/use-new-contact-flow'
@@ -89,9 +90,7 @@ export default function ChoiceStep({ flow }: ChoiceStepProps) {
 
       {/* Scrollable contact lists */}
       <div className="space-y-6">
-        {flow.isLoadingContacts && (
-          <p className="text-xs text-muted-foreground text-center py-4">Loading contacts...</p>
-        )}
+        {flow.isLoadingContacts && <ContactListSkeleton />}
         {!flow.isLoadingContacts && flow.filteredContacts.length === 0 && flow.inviteContacts.length === 0 && (
           <p className="text-xs text-muted-foreground text-center py-4">
             {flow.searchQuery ? 'No contacts match your search.' : 'No synced contacts yet.'}

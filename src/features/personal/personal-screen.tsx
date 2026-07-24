@@ -9,6 +9,7 @@ import { useMyExpensesListQuery } from '@/features/expenses/api/use-my-expenses-
 import ExpenseSummaryCard from './components/expense-summary-card'
 import ViewReportsCard from './components/view-reports-card'
 import ExpenseList from '@/components/shared/expense-list'
+import ExpenseListSkeleton from '@/components/shared/expense-list-skeleton'
 import MonthFilterDropdown from './components/month-filter-drawer'
 import FlowHeader from '@/components/shared/flow-header'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -88,18 +89,7 @@ export default function PersonalScreen() {
         {/* Expenses List */}
         <div className="px-6">
           {listQuery.isLoading ? (
-            <div className="bg-white rounded-[24px] border-[0.8px] border-divider overflow-hidden divide-y divide-divider">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-3 p-4">
-                  <Skeleton className="w-12 h-12 rounded-[13px] shrink-0" />
-                  <div className="flex-1 flex flex-col gap-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-3 w-20" />
-                  </div>
-                  <Skeleton className="h-4 w-16" />
-                </div>
-              ))}
-            </div>
+            <ExpenseListSkeleton />
           ) : items.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-6">No expenses this period.</p>
           ) : (

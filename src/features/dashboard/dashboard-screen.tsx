@@ -10,6 +10,7 @@ import ContactLedgerCard from './components/contact-ledger-card'
 import SearchResultsOverlay from './components/search-results-overlay'
 import Fab from './components/fab'
 import EmptyState from '@/components/shared/empty-state'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useWalletListQuery } from './api/use-wallet-list-query'
 import { useWalletSummaryQuery } from './api/use-wallet-summary-query'
 import { mapWalletRow } from './lib/map-wallet-row'
@@ -163,7 +164,19 @@ export default function DashboardScreen() {
         /* Main Content */
         <>
           {/* Balance Summary Card */}
-          <BalanceSummaryCard summary={balanceSummary} />
+          {summaryQuery.isLoading ? (
+            <div className="bg-white rounded-lg border-[1.08px] border-border-card shadow-[0px_2.69px_10.76px_0px_#0000000D] mx-6 mt-3 flex divide-x divide-border-card">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex-1 py-3 px-2 flex flex-col items-center gap-3">
+                  <Skeleton className="h-3 w-16" />
+                  <Skeleton className="h-5 w-14" />
+                  <Skeleton className="size-10 rounded-full" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <BalanceSummaryCard summary={balanceSummary} />
+          )}
 
           {/* Tab Switcher */}
           <LedgerTabs activeTab={activeTab} onTabChange={setActiveTab} />
@@ -180,7 +193,19 @@ export default function DashboardScreen() {
           {/* Contact/Group Ledger Cards */}
           <div className="flex flex-col gap-1.5 px-6 pb-6">
             {isLoading ? (
-              <p className="text-muted-foreground text-sm text-center py-8">Loading...</p>
+              Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="bg-white rounded-lg border-[1.08px] border-border-card px-4 pt-4 pb-3 flex items-center gap-3"
+                >
+                  <Skeleton className="size-12 rounded-full shrink-0" />
+                  <div className="flex-1 flex flex-col gap-2">
+                    <Skeleton className="h-3.5 w-24" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              ))
             ) : filteredContacts.length > 0 ? (
               filteredContacts.map((contact) => (
                 <ContactLedgerCard
