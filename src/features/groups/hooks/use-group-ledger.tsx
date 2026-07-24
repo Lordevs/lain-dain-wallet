@@ -3,7 +3,7 @@ import { Handshake, HelpCircle, Building2 } from 'lucide-react'
 import { useContactStore } from '@/store/use-contact-store'
 import { useTransactionStore } from '@/store/use-transaction-store'
 import { type TransactionListItem } from '@/components/shared/expense-list'
-import { CATEGORIES } from '@/features/personal/components/category-picker'
+import { CATEGORIES } from '@/components/shared/category-picker'
 
 export const getCategoryDetails = (catId: string) => {
   if (catId === 'payment') {

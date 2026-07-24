@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { FileText, ChevronRight, ChevronDown, Calendar, Users, User } from 'lucide-react'
 import { useFormattedAmountInput } from '@/hooks/use-formatted-amount-input'
-import CategoryPicker, { CATEGORIES } from '@/features/personal/components/category-picker'
+import CategoryPicker, { CATEGORIES } from '@/components/shared/category-picker'
 import PaidByDrawer from '@/components/shared/paid-by-drawer'
 import SplitExpenseDrawer, { type SplitData } from '@/components/shared/split-expense-drawer'
 import SelectDateDrawer from '@/components/shared/select-date-drawer'

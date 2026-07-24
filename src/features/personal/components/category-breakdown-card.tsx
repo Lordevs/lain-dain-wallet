@@ -1,13 +1,10 @@
 import { useState, useMemo } from 'react'
-import MonthFilterDropdown from './month-filter-drawer'
 import { formatCurrency } from '@/lib/currency'
 import type { CategoryBreakdownItem } from '../types'
 
 interface CategoryBreakdownCardProps {
   categories: CategoryBreakdownItem[]
   currency: string
-  activePeriod: 'this_month' | 'last_month' | 'all_time'
-  onPeriodChange: (val: 'this_month' | 'last_month' | 'all_time') => void
 }
 
 function polarToCartesian(cx: number, cy: number, r: number, angleInDegrees: number) {
@@ -30,18 +27,20 @@ function getSlicePath(cx: number, cy: number, r: number, startPercent: number, e
 export default function CategoryBreakdownCard({
   categories,
   currency,
-  activePeriod,
-  onPeriodChange,
 }: CategoryBreakdownCardProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
-  // Calculate coordinates for slices and labels
+  // Calculate coordinates for slices and labels — each slice's start is
+  // the running total of every percentage before it.
   const slices = useMemo(() => {
-    let accumulatedPercent = 0
+    const starts = categories.reduce<number[]>((acc, cat, idx) => {
+      acc.push(idx === 0 ? 0 : acc[idx - 1] + categories[idx - 1].percentage / 100)
+      return acc
+    }, [])
+
     return categories.map((cat, idx) => {
-      const start = accumulatedPercent
-      const end = accumulatedPercent + cat.percentage / 100
-      accumulatedPercent = end
+      const start = starts[idx]
+      const end = start + cat.percentage / 100
 
       // Midpoint for label placing
       const midAngle = (start + (end - start) / 2) * 360
@@ -81,18 +80,11 @@ export default function CategoryBreakdownCard({
           </div>
           <h2 className="text-[19px] font-extrabold text-[#1A1A1A]">By Category</h2>
         </div>
-
-        <MonthFilterDropdown
-          value={activePeriod}
-          options={[
-            { value: 'this_month', label: 'This month' },
-            { value: 'last_month', label: 'Last month' },
-            { value: 'all_time', label: 'All time' },
-          ]}
-          onChange={(val) => onPeriodChange(val as any)}
-        />
       </div>
 
+      {categories.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-4">No expenses this period.</p>
+      ) : (
       <div className="flex items-center justify-between gap-4">
         {/* Left Side: SVG Pie Chart */}
         <div className="relative w-[38%] aspect-square flex items-center justify-center shrink-0 min-w-[100px] max-w-[150px]">
@@ -169,6 +161,7 @@ export default function CategoryBreakdownCard({
           })}
         </div>
       </div>
+      )}
     </div>
   )
 }

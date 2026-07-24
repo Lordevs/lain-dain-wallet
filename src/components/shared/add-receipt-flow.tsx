@@ -4,7 +4,7 @@ import { Capacitor } from '@capacitor/core'
 import { takePhoto, pickFromGallery } from '@/lib/camera'
 import { haptic } from '@/lib/haptics'
 import FlowHeader from '@/components/shared/flow-header'
-import { CATEGORIES } from '../../features/personal/components/category-picker'
+import { CATEGORIES } from './category-picker'
 
 interface ReceiptFile {
   name: string

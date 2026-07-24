@@ -37,6 +37,19 @@ function getBarColor(monthAbbr: string, isHighlighted: boolean): string {
   return '#8BBBA2' // Light green
 }
 
+/** A "nice" round axis max (and its 4 evenly-spaced ticks) that comfortably
+ * fits the largest value in the data — replaces a hardcoded max so the
+ * chart scales to whatever a real period's spending actually is instead of
+ * clipping anything above a fixed guess. */
+function computeYAxis(values: number[]): { maxVal: number; ticks: number[] } {
+  const max = Math.max(0, ...values)
+  if (max === 0) return { maxVal: 4, ticks: [4, 3, 2, 1, 0] }
+  const magnitude = Math.pow(10, Math.floor(Math.log10(max)))
+  const maxVal = Math.ceil(max / magnitude) * magnitude
+  const step = maxVal / 4
+  return { maxVal, ticks: [4, 3, 2, 1, 0].map((n) => step * n) }
+}
+
 const getBarPath = (x: number, y: number, w: number, h: number, r: number) => {
   if (h <= 0) return ''
   // Safety check: ensure rounding radius is not larger than height/width
@@ -67,8 +80,7 @@ export default function MonthlySpendingCard({
   const barWidth = 14
   const gap = 13
 
-  const maxVal = 60000
-  const yTicks = [60000, 45000, 30000, 15000, 0]
+  const { maxVal, ticks: yTicks } = computeYAxis(monthlySpending.map((item) => item.amount))
 
   return (
     <div className="bg-white rounded-[24px] border-[0.8px] border-[#EBEBEB] shadow-[0px_2px_10px_0px_#0000000D] p-5 mx-4 mt-4 mb-24 flex flex-col">
@@ -89,7 +101,7 @@ export default function MonthlySpendingCard({
           {/* Grid Lines & Y-Axis labels */}
           {yTicks.map((tick) => {
             const y = bottomY - (tick / maxVal) * chartHeight
-            const label = tick === 0 ? '0' : `${tick / 1000}K`
+            const label = tick === 0 ? '0' : tick >= 1000 ? `${tick / 1000}K` : `${tick}`
 
             return (
               <g key={tick} className="opacity-80">

@@ -1,19 +1,11 @@
 // ─── Personal Expenses Types ──────────────────────────────────────────────────
 
-export interface PersonalExpense {
-  id: string
-  name: string
-  subtitle: string
-  amount: number
-  currency: string
-  category: 'food' | 'fuel' | 'shopping' | 'other'
-}
-
 export interface MonthlyExpenseSummary {
   totalSpent: number
   currency: string
-  differenceAmount: number
-  differenceMonth: string
+  /** null when comparison is turned off in settings, or there's no
+   * previous-period data to compare against. */
+  comparison: { amount: number; direction: 'up' | 'down'; previousPeriodLabel: string } | null
 }
 
 export interface CategoryBreakdownItem {
@@ -27,11 +19,5 @@ export interface CategoryBreakdownItem {
 export interface MonthlySpendingItem {
   month: string // e.g. 'Jan'
   amount: number
-}
-
-export interface ReportData {
-  summary: MonthlyExpenseSummary
-  categories: CategoryBreakdownItem[]
-  monthlySpending: MonthlySpendingItem[]
 }
 

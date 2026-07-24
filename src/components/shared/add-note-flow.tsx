@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import FlowHeader from '@/components/shared/flow-header'
-import { CATEGORIES } from '../../features/personal/components/category-picker'
+import { CATEGORIES } from './category-picker'
 
 interface AddNoteFlowProps {
   isOpen: boolean
