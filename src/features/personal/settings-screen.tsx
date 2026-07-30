@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { toast } from 'sonner'
 import { ChevronRight, Download, AlertCircle, Trash2 } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import { formatCurrency } from '@/lib/currency'
@@ -26,7 +27,6 @@ export default function PersonalSettingsScreen() {
   const clearHistory = useClearPersonalHistoryMutation()
 
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false)
-  const [clearError, setClearError] = useState<string | null>(null)
 
   const settings = settingsQuery.data
 
@@ -254,10 +254,6 @@ export default function PersonalSettingsScreen() {
           </div>
         </div>
 
-        {clearError && (
-          <p className="text-sm font-semibold text-tertiary text-center mb-6">{clearError}</p>
-        )}
-
       </div>
 
       {/* Clear All Expenses Confirmation Drawer */}
@@ -270,10 +266,12 @@ export default function PersonalSettingsScreen() {
         buttonText="Clear All Expenses"
         variant="danger"
         onConfirm={() => {
-          setClearError(null)
           clearHistory.mutate(undefined, {
-            onSuccess: () => setIsClearConfirmOpen(false),
-            onError: (err) => setClearError(err.message),
+            onSuccess: () => {
+              setIsClearConfirmOpen(false)
+              toast.success('All personal expenses cleared')
+            },
+            onError: (err) => toast.error(err.message),
           })
         }}
       />

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Info } from 'lucide-react'
+import { toast } from 'sonner'
 import { useFriendshipsQuery } from '@/features/contacts/api/use-friendships-query'
 import { useGroupsQuery } from '@/features/contacts/api/use-groups-query'
 import { usePersonalExpenseSettingsQuery } from '@/features/expenses/api/use-personal-expense-settings-query'
@@ -72,7 +73,6 @@ function HideLedgersForm({ items, initialSelectedIds }: { items: LedgerItem[]; i
 
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedIds, setSelectedIds] = useState<string[]>(initialSelectedIds)
-  const [saveError, setSaveError] = useState<string | null>(null)
 
   const handleToggle = (id: string) => {
     setSelectedIds((prev) =>
@@ -81,14 +81,13 @@ function HideLedgersForm({ items, initialSelectedIds }: { items: LedgerItem[]; i
   }
 
   const handleSave = () => {
-    setSaveError(null)
     const selectedFriendshipIds = items.filter((i) => i.kind === 'friendship' && selectedIds.includes(i.id)).map((i) => i.id)
     const selectedGroupIds = items.filter((i) => i.kind === 'group' && selectedIds.includes(i.id)).map((i) => i.id)
     updateSettings.mutate(
       { hidden_friendship_ids: selectedFriendshipIds, hidden_group_ids: selectedGroupIds },
       {
         onSuccess: () => window.history.back(),
-        onError: (err) => setSaveError(err.message),
+        onError: (err) => toast.error(err.message),
       },
     )
   }
@@ -128,10 +127,6 @@ function HideLedgersForm({ items, initialSelectedIds }: { items: LedgerItem[]; i
               hidden balances wont appear in your personal 'My Expenses'.
             </p>
           </div>
-        )}
-
-        {saveError && (
-          <p className="text-sm font-semibold text-tertiary text-center">{saveError}</p>
         )}
 
         {/* Search Groups Block */}
@@ -179,7 +174,7 @@ function HideLedgersForm({ items, initialSelectedIds }: { items: LedgerItem[]; i
                       ×
                     </button>
                   </div>
-                  <span className="text-[11px] font-medium text-foreground mt-1 max-w-[56px] truncate text-center">
+                  <span className="text-[11px] font-medium text-foreground mt-1 max-w-14 truncate text-center">
                     {item.name.split(' ')[0]}
                   </span>
                 </div>
@@ -209,7 +204,7 @@ function HideLedgersForm({ items, initialSelectedIds }: { items: LedgerItem[]; i
                       size="md"
                     />
                     <div className="flex flex-col text-left">
-                      <span className="font-extrabold text-[15px] text-[#1A1A1A] leading-tight truncate max-w-[180px]">
+                      <span className="font-extrabold text-[15px] text-[#1A1A1A] leading-tight truncate max-w-45">
                         {item.name}
                       </span>
                       <span className="text-[12px] font-semibold text-[#6B6B6B] mt-0.5">

@@ -1,5 +1,6 @@
 import { createElement, useState } from 'react'
 import { useParams } from '@tanstack/react-router'
+import { toast } from 'sonner'
 import { usePersonalExpenseSettingsQuery } from '@/features/expenses/api/use-personal-expense-settings-query'
 import { useCategoryBudgetsQuery } from '@/features/expenses/api/use-category-budgets-query'
 import { useSetCategoryBudgetMutation } from '@/features/expenses/api/use-set-category-budget-mutation'
@@ -83,21 +84,18 @@ function SetCategoryLimitForm({
   const removeCategoryBudget = useRemoveCategoryBudgetMutation()
 
   const [limitValue, setLimitValue] = useState(row.limit_amount ? Number(row.limit_amount) : 5000)
-  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const handleSave = () => {
-    setSubmitError(null)
     setCategoryBudget.mutate(
       { categoryId: catId, limitAmount: limitValue.toFixed(2) },
-      { onSuccess: () => window.history.back(), onError: (err) => setSubmitError(err.message) },
+      { onSuccess: () => window.history.back(), onError: (err) => toast.error(err.message) },
     )
   }
 
   const handleRemove = () => {
-    setSubmitError(null)
     removeCategoryBudget.mutate(catId, {
       onSuccess: () => window.history.back(),
-      onError: (err) => setSubmitError(err.message),
+      onError: (err) => toast.error(err.message),
     })
   }
 
@@ -274,10 +272,6 @@ function SetCategoryLimitForm({
             </div>
           </div>
         </div>
-
-        {submitError && (
-          <p className="text-sm font-semibold text-tertiary text-center">{submitError}</p>
-        )}
 
         {/* Remove Limit Button */}
         {hasExistingLimit && (
