@@ -1,5 +1,6 @@
 import { ArrowDown, ArrowUp, Wallet } from 'lucide-react'
 import { formatCurrency } from '@/lib/currency'
+import { cn } from '@/lib/utils'
 import type { BalanceSummary } from '@/types'
 
 interface BalanceSummaryCardProps {
@@ -21,11 +22,11 @@ export default function BalanceSummaryCard({ summary }: BalanceSummaryCardProps)
     <div className="bg-white rounded-lg border-[1.08px] border-border-card shadow-[0px_2.69px_10.76px_0px_#0000000D] mx-6 mt-3">
       <div className="flex divide-x divide-border-card text-center">
         {/* Receivable Column */}
-        <div className="flex-1 py-3 px-2 space-y-3">
-          <p className="text-xs font-normal text-primary leading-tight">
+        <div className="flex-1 py-3 px-1 sm:px-2 space-y-3 min-w-0">
+          <p className="text-xs font-normal text-primary leading-tight truncate">
             You will receive
           </p>
-          <p className="text-[18px] font-extrabold text-primary leading-none">
+          <p className="text-[15px] sm:text-[18px] font-extrabold text-primary leading-none whitespace-nowrap truncate">
             {format(totalReceivable)}
           </p>
           <div className="w-10 h-10 rounded-full bg-positive-soft-bg flex items-center justify-center mx-auto">
@@ -34,11 +35,11 @@ export default function BalanceSummaryCard({ summary }: BalanceSummaryCardProps)
         </div>
 
         {/* Payable Column */}
-        <div className="flex-1 py-3 px-2 space-y-3">
-          <p className="text-xs font-normal text-orange-payable leading-tight">
+        <div className="flex-1 py-3 px-1 sm:px-2 space-y-3 min-w-0">
+          <p className="text-xs font-normal text-orange-payable leading-tight truncate">
             You will pay
           </p>
-          <p className="text-[18px] font-extrabold text-orange-payable leading-none">
+          <p className="text-[15px] sm:text-[18px] font-extrabold text-orange-payable leading-none whitespace-nowrap truncate">
             {format(totalPayable)}
           </p>
           <div className="w-10 h-10 rounded-full bg-orange-soft-bg flex items-center justify-center mx-auto">
@@ -47,11 +48,14 @@ export default function BalanceSummaryCard({ summary }: BalanceSummaryCardProps)
         </div>
 
         {/* Net Balance Column */}
-        <div className="flex-1 py-3 px-2 space-y-3">
-          <p className="text-xs font-normal text-foreground leading-tight">
+        <div className="flex-1 py-3 px-1 sm:px-2 space-y-3 min-w-0">
+          <p className="text-xs font-normal text-foreground leading-tight truncate">
             Net balance
           </p>
-          <p className="text-[18px] font-extrabold text-foreground leading-none">
+          <p className={cn(
+            "text-[15px] sm:text-[18px] font-extrabold leading-none whitespace-nowrap truncate",
+            netBalance > 0 ? "text-positive" : netBalance < 0 ? "text-orange-payable" : "text-foreground"
+          )}>
             {format(netBalance)}
           </p>
           <div className="w-10 h-10 rounded-full bg-[#FFF8E1] flex items-center justify-center mx-auto">

@@ -6,13 +6,15 @@ import { SUPPORTED_CURRENCIES, type Currency } from '@/types'
  */
 export function formatCurrency(amount: number, currencyCode: string): string {
   const currency = getCurrency(currencyCode)
+  const isNegative = amount < 0
   const formatted = new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   }).format(Math.abs(amount))
   // PKR symbol already ends with a period; no space needed (e.g. "Rs.1,500" not "Rs. 1,500")
   const separator = currencyCode.toUpperCase() === 'PKR' ? '' : ' '
-  return `${currency.symbol}${separator}${formatted}`
+  const sign = isNegative ? '\u2011' : ''
+  return `${sign}${currency.symbol}${separator}${formatted}`
 }
 
 /** Formats an amount in PKR, e.g. formatPKR(1500) → "Rs.1,500" */
@@ -32,6 +34,7 @@ export function getCurrency(code: string): Currency {
  */
 export function formatCompact(amount: number, currencyCode: string): string {
   const currency = getCurrency(currencyCode)
+  const isNegative = amount < 0
   const abs = Math.abs(amount)
   let formatted: string
 
@@ -43,5 +46,6 @@ export function formatCompact(amount: number, currencyCode: string): string {
     formatted = abs.toString()
   }
 
-  return `${currency.symbol}${formatted}`
+  const sign = isNegative ? '-' : ''
+  return `${sign}${currency.symbol}${formatted}`
 }
