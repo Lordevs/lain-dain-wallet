@@ -1,4 +1,5 @@
 
+import { useState } from 'react'
 import { MoreVertical, Camera, Pencil, Plus, LogOut, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
@@ -6,13 +7,19 @@ import ContactListItem from '@/components/shared/contact-list-item'
 import MemberOptionsDrawer from '@/components/shared/member-options-drawer'
 import OutstandingBalanceDrawer from '@/components/shared/outstanding-balance-drawer'
 import ConfirmActionDrawer from '@/components/shared/confirm-action-drawer'
+import AddGroupMemberDrawer from './components/add-group-member-drawer'
 import { ROUTES } from '@/constants/routes'
 import { useGroupSettings } from './hooks/use-group-settings'
 
 export default function GroupSettingsScreen() {
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false)
 
   const {
-    contact,
+    group,
+    isLoading,
+    isOwner,
+    isAdmin,
+    creatorName,
     smartSettleEnabled,
     setSmartSettleEnabled,
     groupPhoto,
@@ -25,6 +32,7 @@ export default function GroupSettingsScreen() {
     pendingAfterClose,
     selectedMember,
     handleToggleAdmin,
+    handleTransferOwnership,
     handleRemoveMember,
     handleBlockReport,
     handleLeaveGroup,
@@ -32,9 +40,15 @@ export default function GroupSettingsScreen() {
     navigate,
   } = useGroupSettings()
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-[#FEFAF1]">
+        <p className="text-muted-foreground text-sm">Loading group settings...</p>
+      </div>
+    )
+  }
 
-
-  if (!contact || contact.type !== 'group') {
+  if (!group) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-[#FEFAF1]">
         <p className="text-muted-foreground text-sm mb-4">Group not found</p>
@@ -53,7 +67,7 @@ export default function GroupSettingsScreen() {
     if (window.history.length > 1) {
       window.history.back()
     } else {
-      navigate({ to: ROUTES.GROUP_DETAILS, params: { id: contact.id } })
+      navigate({ to: ROUTES.GROUP_DETAILS, params: { id: group.id } })
     }
   }
 
@@ -91,28 +105,35 @@ export default function GroupSettingsScreen() {
             {groupName}
           </h2>
           <p className="text-xs text-[#6B6B6B] font-bold mt-1">
-            {members.length} members · Created by You
+            {members.length} members · Created by {creatorName}
           </p>
+          {group.description ? (
+            <p className="text-xs text-[#6B6B6B] font-medium mt-1.5 max-w-65 text-center leading-relaxed">
+              {group.description}
+            </p>
+          ) : null}
 
           {/* Action Pills */}
-          <div className="flex items-center gap-3 mt-4">
-            <button
-              type="button"
-              onClick={() => navigate({ to: ROUTES.GROUP_PHOTO, params: { id: contact.id } })}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#0B683A33] bg-[#E4F2EB] text-positive text-xs font-bold transition-all hover:bg-[#E4F2EB]/80 shrink-0 cursor-pointer outline-none"
-            >
-              <Camera size={14} className="text-positive" strokeWidth={2.5} />
-              Photo
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate({ to: ROUTES.GROUP_NAME, params: { id: contact.id } })}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#0B683A33] bg-[#E4F2EB] text-positive text-xs font-bold transition-all hover:bg-[#E4F2EB]/80 shrink-0 cursor-pointer outline-none"
-            >
-              <Pencil size={14} className="text-positive" strokeWidth={2.5} />
-              Name
-            </button>
-          </div>
+          {isAdmin && (
+            <div className="flex items-center gap-3 mt-4">
+              <button
+                type="button"
+                onClick={() => navigate({ to: ROUTES.GROUP_PHOTO, params: { id: group.id } })}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#0B683A33] bg-[#E4F2EB] text-positive text-xs font-bold transition-all hover:bg-[#E4F2EB]/80 shrink-0 cursor-pointer outline-none"
+              >
+                <Camera size={14} className="text-positive" strokeWidth={2.5} />
+                Photo
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate({ to: ROUTES.GROUP_NAME, params: { id: group.id } })}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#0B683A33] bg-[#E4F2EB] text-positive text-xs font-bold transition-all hover:bg-[#E4F2EB]/80 shrink-0 cursor-pointer outline-none"
+              >
+                <Pencil size={14} className="text-positive" strokeWidth={2.5} />
+                Name
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Members Section */}
@@ -127,19 +148,30 @@ export default function GroupSettingsScreen() {
               <ContactListItem
                 contact={{
                   id: 'you',
-                  name: 'You',
-                  initials: 'MH',
-                  avatarColor: 'bg-positive text-white',
+                  name: members.find(m => m.id === 'you')!.name,
+                  initials: members.find(m => m.id === 'you')!.initials,
+                  avatarColor: members.find(m => m.id === 'you')!.avatarColor,
+                  src: members.find(m => m.id === 'you')!.avatar || undefined,
                 }}
                 subtitle={
                   <span className="text-[#6B6B6B] text-[12px]">
-                    Admin · Group creator
+                    {members.find(m => m.id === 'you')!.role === 'owner'
+                      ? 'Owner'
+                      : members.find(m => m.id === 'you')!.role === 'admin'
+                      ? 'Admin'
+                      : 'Member'}
                   </span>
                 }
                 rightSlot={
-                  <span className="bg-[#ECF6F0] text-positive text-[11px] font-bold px-3 py-1 rounded-full">
-                    Admin
-                  </span>
+                  members.find(m => m.id === 'you')!.role === 'owner' ? (
+                    <span className="bg-[#FEF3C7] text-[#D97706] text-[11px] font-bold px-3 py-1 rounded-full">
+                      Owner
+                    </span>
+                  ) : members.find(m => m.id === 'you')!.role === 'admin' ? (
+                    <span className="bg-[#ECF6F0] text-positive text-[11px] font-bold px-3 py-1 rounded-full">
+                      Admin
+                    </span>
+                  ) : null
                 }
                 className="py-4 px-5 bg-white hover:bg-transparent"
               />
@@ -154,15 +186,21 @@ export default function GroupSettingsScreen() {
                   name: m.name,
                   initials: m.initials,
                   avatarColor: m.avatarColor,
+                  src: m.avatar || undefined,
                 }}
                 subtitle={
                   <span className="text-[#6B6B6B] text-[12px]">
-                    {m.isAdmin ? 'Admin' : 'Member'}
+                    {m.role === 'owner' ? 'Owner' : m.role === 'admin' ? 'Admin' : 'Member'}
                   </span>
                 }
                 rightSlot={
                   <div className="flex items-center gap-2">
-                    {m.isAdmin && (
+                    {m.role === 'owner' && (
+                      <span className="bg-[#FEF3C7] text-[#D97706] text-[11px] font-bold px-3 py-1 rounded-full">
+                        Owner
+                      </span>
+                    )}
+                    {m.role === 'admin' && (
                       <span className="bg-[#ECF6F0] text-positive text-[11px] font-bold px-3 py-1 rounded-full">
                         Admin
                       </span>
@@ -172,7 +210,7 @@ export default function GroupSettingsScreen() {
                         Pending
                       </span>
                     )}
-                    {!m.isPending && (
+                    {!m.isPending && isAdmin && (
                       <button
                         type="button"
                         onClick={(e) => {
@@ -186,27 +224,30 @@ export default function GroupSettingsScreen() {
                     )}
                   </div>
                 }
-                onClick={() => !m.isPending && setSelectedMemberId(m.id)}
+                onClick={() => !m.isPending && isAdmin && setSelectedMemberId(m.id)}
                 className="py-4 px-5 bg-white hover:bg-muted/5 transition-colors"
               />
             ))}
 
             {/* Add Member Row */}
-            <div
-              role="button"
-              tabIndex={0}
-              className="flex items-center gap-3.5 p-5 transition-colors cursor-pointer bg-white hover:bg-muted/5"
-            >
-              {/* Plus icon inside dashed border green circle */}
-              <div className="w-11 h-11 rounded-full border-2 border-dashed border-[#0B683A33] bg-[#E8F5E9]/30 flex items-center justify-center text-positive shrink-0">
-                <Plus size={20} strokeWidth={2.5} />
+            {isAdmin && (
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => setIsAddMemberOpen(true)}
+                className="flex items-center gap-3.5 p-5 transition-colors cursor-pointer bg-white hover:bg-muted/5 outline-none"
+              >
+                {/* Plus icon inside dashed border green circle */}
+                <div className="w-11 h-11 rounded-full border-2 border-dashed border-[#0B683A33] bg-[#E8F5E9]/30 flex items-center justify-center text-positive shrink-0">
+                  <Plus size={20} strokeWidth={2.5} />
+                </div>
+                <div>
+                  <p className="font-bold text-[14px] text-positive">
+                    Add Member
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="font-bold text-[14px] text-positive">
-                  Add Member
-                </p>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -228,7 +269,7 @@ export default function GroupSettingsScreen() {
                 </p>
                 <button
                   type="button"
-                  onClick={() => navigate({ to: ROUTES.GROUP_SMART_SETTLE, params: { id: contact.id } })}
+                  onClick={() => navigate({ to: ROUTES.GROUP_SMART_SETTLE, params: { id: group.id } })}
                   className="text-[12px] text-[#C96A1B] font-bold mt-1.5 block hover:underline border-0 bg-transparent cursor-pointer p-0 text-left outline-none"
                 >
                   Learn More
@@ -238,9 +279,11 @@ export default function GroupSettingsScreen() {
               {/* Reactive Custom Switch Toggle */}
               <button
                 type="button"
+                disabled={!isAdmin}
                 onClick={() => setSmartSettleEnabled(!smartSettleEnabled)}
                 className={cn(
-                  "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none self-start mt-0.5",
+                  "relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none self-start mt-0.5",
+                  isAdmin ? "cursor-pointer" : "cursor-not-allowed opacity-60",
                   smartSettleEnabled ? "bg-positive" : "bg-[#D1D1D6]"
                 )}
               >
@@ -257,7 +300,7 @@ export default function GroupSettingsScreen() {
             <div
               role="button"
               tabIndex={0}
-              onClick={() => navigate({ to: ROUTES.GROUP_RECURRING, params: { id: contact.id } })}
+              onClick={() => navigate({ to: ROUTES.GROUP_RECURRING, params: { id: group.id } })}
               className="bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-5 flex flex-col cursor-pointer hover:bg-muted/5 transition-colors outline-none"
             >
               <p className="font-bold text-[15px] text-[#1A1A1A]">
@@ -311,7 +354,9 @@ export default function GroupSettingsScreen() {
         isOpen={selectedMemberId !== null}
         onClose={() => setSelectedMemberId(null)}
         member={selectedMember}
+        isCurrentUserOwner={isOwner}
         onToggleAdmin={handleToggleAdmin}
+        onTransferOwnership={handleTransferOwnership}
         onRemove={handleRemoveMember}
         onBlockReport={handleBlockReport}
       />
@@ -347,6 +392,16 @@ export default function GroupSettingsScreen() {
         variant={drawerConfig.buttonVariant}
         onConfirm={drawerConfig.onAction || (() => { })}
       />
+
+      {/* Add Member Drawer */}
+      {group && (
+        <AddGroupMemberDrawer
+          isOpen={isAddMemberOpen}
+          onClose={() => setIsAddMemberOpen(false)}
+          groupId={group.id}
+          existingMemberUserIds={group.members.map((m) => m.id)}
+        />
+      )}
     </div>
   )
 }

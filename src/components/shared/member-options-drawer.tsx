@@ -1,4 +1,4 @@
-import { ShieldCheck, UserMinus, Ban } from 'lucide-react'
+import { ShieldCheck, UserMinus, Ban, Crown } from 'lucide-react'
 import { Drawer, DrawerContent } from '@/components/ui/drawer'
 import ContactAvatar from './contact-avatar'
 
@@ -7,7 +7,10 @@ export interface MemberOptionData {
   name: string
   initials: string
   avatarColor: string
+  avatar?: string | null
   src?: string
+  role?: 'owner' | 'admin' | 'member'
+  isOwner?: boolean
   isAdmin: boolean
   owesText?: string // e.g. "Member · Owes you Rs. 2,000"
 }
@@ -16,7 +19,9 @@ interface MemberOptionsDrawerProps {
   isOpen: boolean
   onClose: () => void
   member: MemberOptionData | null
+  isCurrentUserOwner?: boolean
   onToggleAdmin?: (memberId: string) => void
+  onTransferOwnership?: (memberId: string) => void
   onRemove?: (memberId: string) => void
   onBlockReport?: (memberId: string) => void
 }
@@ -25,11 +30,19 @@ export default function MemberOptionsDrawer({
   isOpen,
   onClose,
   member,
+  isCurrentUserOwner,
   onToggleAdmin,
+  onTransferOwnership,
   onRemove,
   onBlockReport,
 }: MemberOptionsDrawerProps) {
   if (!member) return null
+
+  const roleLabel = member.isOwner
+    ? 'Owner'
+    : member.isAdmin
+    ? 'Admin'
+    : 'Member'
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -39,7 +52,7 @@ export default function MemberOptionsDrawer({
           <ContactAvatar
             initials={member.initials}
             avatarColor={member.avatarColor}
-            src={member.src}
+            src={member.src || member.avatar || undefined}
             size="md"
           />
           <div className="flex flex-col text-left">
@@ -47,15 +60,34 @@ export default function MemberOptionsDrawer({
               {member.name}
             </h4>
             <span className="text-[12px] text-muted-foreground font-medium mt-0.5">
-              {member.owesText || `${member.isAdmin ? 'Admin' : 'Member'} · On Lain Dain`}
+              {member.owesText || `${roleLabel} · On Lain Dain`}
             </span>
           </div>
         </div>
 
         {/* Action List Options */}
         <div className="flex flex-col divide-y divide-border-card/60">
-          {/* Make / Remove Admin */}
-          {onToggleAdmin && (
+          {/* Transfer Ownership (Only for Group Owner) */}
+          {isCurrentUserOwner && !member.isOwner && onTransferOwnership && (
+            <button
+              type="button"
+              onClick={() => {
+                onTransferOwnership(member.id)
+                onClose()
+              }}
+              className="flex items-center gap-4 px-6 py-4 hover:bg-muted/5 transition-colors cursor-pointer border-0 bg-transparent text-left w-full outline-none"
+            >
+              <div className="w-11 h-11 rounded-[14px] bg-[#E3F2FD] flex items-center justify-center text-[#1976D2] shrink-0">
+                <Crown size={20} strokeWidth={2.5} />
+              </div>
+              <span className="font-bold text-[15px] text-foreground">
+                Make Group Owner
+              </span>
+            </button>
+          )}
+
+          {/* Make / Remove Admin (Not applicable to the Owner) */}
+          {onToggleAdmin && !member.isOwner && (
             <button
               type="button"
               onClick={() => {
@@ -74,7 +106,7 @@ export default function MemberOptionsDrawer({
           )}
 
           {/* Remove from Group */}
-          {onRemove && (
+          {onRemove && !member.isOwner && (
             <button
               type="button"
               onClick={() => {
@@ -93,7 +125,7 @@ export default function MemberOptionsDrawer({
           )}
 
           {/* Block & Report */}
-          {onBlockReport && (
+          {onBlockReport && !member.isOwner && (
             <button
               type="button"
               onClick={() => {

@@ -1,13 +1,29 @@
-import { useState } from 'react'
+import { useParams } from '@tanstack/react-router'
 import { cn } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
 import smartSettleImg from '@/assets/smart-settle.png'
-
+import { useAuthStore } from '@/store/use-auth-store'
+import { useGroupQuery } from '@/features/groups/api/use-group-query'
+import { useUpdateGroupMutation } from '@/features/groups/api/use-update-group-mutation'
 
 export default function SmartSettleScreen() {
-  // Local state for the dynamic "Simplify" toggle
-  const [isSimplified, setIsSimplified] = useState(true)
+  const { id } = useParams({ strict: false })
+  const userProfile = useAuthStore((state) => state.userProfile)
+  const myId = userProfile?.id ?? ''
 
+  const groupQuery = useGroupQuery(id)
+  const group = groupQuery.data
+  const updateGroup = useUpdateGroupMutation(id ?? '')
+
+  const myMember = group?.members.find((m) => m.id === myId)
+  const isAdmin = myMember?.role === 'owner' || myMember?.role === 'admin' || group?.created_by === myId
+
+  const isSimplified = group?.smart_settle_enabled ?? true
+
+  const handleToggle = () => {
+    if (!id || !isAdmin || updateGroup.isPending) return
+    updateGroup.mutate({ smart_settle_enabled: !isSimplified })
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FEFAF1] pb-12 select-none text-left overflow-y-auto">
@@ -48,9 +64,11 @@ export default function SmartSettleScreen() {
           <span className="text-sm font-extrabold text-[#1A1A1A]">Simplify:</span>
           <button
             type="button"
-            onClick={() => setIsSimplified(!isSimplified)}
+            onClick={handleToggle}
+            disabled={updateGroup.isPending || !isAdmin}
             className={cn(
-              "relative inline-flex h-7 w-15 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none",
+              "relative inline-flex h-7 w-15 shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none disabled:opacity-50",
+              isAdmin ? "cursor-pointer" : "cursor-not-allowed",
               isSimplified ? "bg-positive" : "bg-[#9A9590]"
             )}
           >

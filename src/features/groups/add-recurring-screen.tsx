@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import { FileText, ChevronRight, ChevronDown, Calendar, Users, User } from 'lucide-react'
 import { useFormattedAmountInput } from '@/hooks/use-formatted-amount-input'
 import CategoryPicker, { CATEGORIES } from '@/components/shared/category-picker'
@@ -8,9 +9,17 @@ import SelectDateDrawer from '@/components/shared/select-date-drawer'
 import AddReceiptFlow from '@/components/shared/add-receipt-flow'
 import AddNoteFlow from '@/components/shared/add-note-flow'
 import SuccessCheck from '@/components/shared/success-check'
-import { useRecurringStore, type RecurringPaymentRecord } from '@/store/use-recurring-store'
-import { getMemberName } from '@/features/groups/data/group-members'
-import { useContactStore } from '@/store/use-contact-store'
+import FormError from '@/components/shared/form-error'
+import { useAuthStore } from '@/store/use-auth-store'
+import { useGroupQuery } from '@/features/groups/api/use-group-query'
+import { useCategoriesQuery } from '@/features/expenses/api/use-categories-query'
+import { useGroupRecurringQuery } from '@/features/groups/api/use-group-recurring-query'
+import {
+  useCreateGroupRecurringMutation,
+  useUpdateGroupRecurringMutation,
+  type GroupRecurringFormValues,
+} from '@/features/groups/api/use-group-recurring-mutations'
+import { initialsForName, colorForName } from '@/lib/avatar-visuals'
 import RecurringFormHeader from '@/features/groups/components/recurring-form-header'
 import FrequencyToggle, { type RecurringFrequency } from '@/features/groups/components/frequency-toggle'
 import RecurringAttachmentsStrip from '@/features/groups/components/recurring-attachments-strip'
@@ -22,47 +31,97 @@ interface AddRecurringScreenProps {
   onSuccess?: () => void
 }
 
+function parseDateToIso(dateStr: string): string {
+  const d = dateStr.toLowerCase()
+  const now = new Date()
+  if (d === 'today' || !dateStr) {
+    return now.toISOString().split('T')[0]
+  }
+  if (d === 'yesterday') {
+    const y = new Date(now)
+    y.setDate(y.getDate() - 1)
+    return y.toISOString().split('T')[0]
+  }
+  const parsed = new Date(dateStr)
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toISOString().split('T')[0]
+  }
+  return now.toISOString().split('T')[0]
+}
+
 export default function AddRecurringScreen({
   groupId,
   editPaymentId,
   onClose = () => window.history.back(),
   onSuccess = () => window.history.back(),
 }: AddRecurringScreenProps) {
-  const { getPayments, addPayment, updatePayment } = useRecurringStore()
+  const navigate = useNavigate()
+  const userProfile = useAuthStore((state) => state.userProfile)
+  const myId = userProfile?.id ?? ''
 
-  // Find the group details
-  const contacts = useContactStore((state) => state.contacts)
-  const group = useMemo(() => {
-    return contacts.find((c) => c.id === groupId)
-  }, [groupId, contacts])
+  const { data: group } = useGroupQuery(groupId)
+  const { data: payments = [] } = useGroupRecurringQuery(groupId)
+  const categoriesQuery = useCategoriesQuery()
+  const categories = categoriesQuery.data ?? []
 
-  // Look up payment if editing from the Zustand store
+  const createMutation = useCreateGroupRecurringMutation(groupId)
+  const updateMutation = useUpdateGroupRecurringMutation(groupId, editPaymentId ?? '')
+
+  // Look up payment if editing
   const editingPayment = useMemo(() => {
     if (!editPaymentId) return null
-    return getPayments(groupId).find((p) => p.id === editPaymentId) ?? null
-  }, [groupId, editPaymentId, getPayments])
+    return payments.find((p) => p.id === editPaymentId) ?? null
+  }, [payments, editPaymentId])
 
-  // Form states - lazily seeded from editingPayment on mount. This component is only ever
-  // mounted fresh when the drawer opens (see recurring-payments-screen.tsx), so a plain
-  // lazy initializer is enough; no effect is needed to resync on reopen.
-  const { amount, handleAmountChange, formattedAmount } = useFormattedAmountInput(
-    editingPayment ? String(editingPayment.amount) : ''
-  )
-  const [description, setDescription] = useState(() => editingPayment?.name ?? '')
-  const [selectedCategory, setSelectedCategory] = useState(() => editingPayment?.category ?? 'bills')
-  const [frequency, setFrequency] = useState<RecurringFrequency>(() => editingPayment?.frequency ?? 'Monthly')
-  const [dateValue, setDateValue] = useState(() => editingPayment?.startsOn ?? '15 June 2026')
-  const [paidBy, setPaidBy] = useState(() => editingPayment?.paidById ?? 'you')
-  const [splitData, setSplitData] = useState<SplitData>(() => ({
-    type: editingPayment?.splitType || 'equal',
-    selectedMembers: ['you', 'contact'],
-    unequalAmounts: { you: 0, contact: 0 },
-    adjustmentAmounts: { you: 0, contact: 0 },
-  }))
+  const { amount, handleAmountChange, formattedAmount } = useFormattedAmountInput('')
+  const [description, setDescription] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('bills')
+  const [frequency, setFrequency] = useState<RecurringFrequency>('Monthly')
+  const [dateValue, setDateValue] = useState('Today')
+  const [paidBy, setPaidBy] = useState('you')
+  const [splitData, setSplitData] = useState<SplitData>({
+    type: 'equal',
+    selectedMembers: ['you'],
+    unequalAmounts: {},
+    adjustmentAmounts: {},
+  })
 
   // Attachment overlay states
   const [receiptFile, setReceiptFile] = useState<{ name: string; size: string; dataUrl?: string } | null>(null)
   const [noteText, setNoteText] = useState('')
+
+  // Track if form has been populated from editingPayment
+  const [hasPopulated, setHasPopulated] = useState(false)
+
+  useEffect(() => {
+    if (editingPayment && !hasPopulated) {
+      const amtStr = String(editingPayment.amount)
+      handleAmountChange({ target: { value: amtStr } } as any)
+      setDescription(editingPayment.description ?? '')
+      setSelectedCategory(editingPayment.category?.icon ?? 'bills')
+      setFrequency(editingPayment.frequency?.toLowerCase() === 'weekly' ? 'Weekly' : 'Monthly')
+      setDateValue(editingPayment.next_occurrence ?? 'Today')
+
+      const rawPayer = editingPayment.payers?.[0]?.id
+      setPaidBy(!rawPayer || rawPayer === myId ? 'you' : rawPayer)
+
+      const initialSplits = editingPayment.splits?.map((s) => (s.id === myId ? 'you' : s.id)) ?? []
+      setSplitData({
+        type: (editingPayment.split_type as 'equal' | 'unequal' | 'adjustment') || 'equal',
+        selectedMembers: initialSplits.length > 0 ? initialSplits : ['you'],
+        unequalAmounts: {},
+        adjustmentAmounts: {},
+      })
+
+      if (editingPayment.receipt) {
+        setReceiptFile({ name: 'Receipt', size: '', dataUrl: editingPayment.receipt })
+      }
+      if (editingPayment.note) {
+        setNoteText(editingPayment.note)
+      }
+      setHasPopulated(true)
+    }
+  }, [editingPayment, hasPopulated, myId, handleAmountChange])
 
   // UI trigger states
   const [showPaidBy, setShowPaidBy] = useState(false)
@@ -72,39 +131,100 @@ export default function AddRecurringScreen({
   const [showNoteOverlay, setShowNoteOverlay] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
 
-  // Resolve payer full name from shared members list
-  const payerName = useMemo(() => getMemberName(paidBy), [paidBy])
+  // Build real member list for PaidByDrawer and SplitExpenseDrawer
+  const drawerMembers = useMemo(() => {
+    if (!group?.members) return []
+    return group.members
+      .filter((m) => m.status === 'active')
+      .map((m) => {
+        const isMe = m.id === myId
+        const name = isMe ? 'You' : m.full_name
+        return {
+          id: isMe ? 'you' : m.id,
+          name,
+          initials: initialsForName(m.full_name),
+          avatarColor: colorForName(m.full_name),
+          src: m.image ?? undefined,
+          isOrganizer: isMe,
+        }
+      })
+  }, [group?.members, myId])
 
-  const handleSave = (e?: React.FormEvent) => {
+  const defaultSelectedMembers = useMemo(() => {
+    return drawerMembers.map((m) => m.id)
+  }, [drawerMembers])
+
+  // Resolve payer display name
+  const payerName = useMemo(() => {
+    if (paidBy === 'you' || paidBy === myId) return 'You'
+    const found = group?.members.find((m) => m.id === paidBy)
+    return found?.full_name ?? 'Member'
+  }, [paidBy, myId, group])
+
+  const activeMutation = editPaymentId ? updateMutation : createMutation
+
+  const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
     const parsedAmount = Number(amount) || 0
     if (parsedAmount <= 0) return
 
-    const record: RecurringPaymentRecord = {
-      id: editingPayment ? editingPayment.id : `r-${Date.now()}`,
-      name: description || 'Subscription Split',
-      amount: parsedAmount,
-      paidById: paidBy,
-      paidByName: payerName,
-      nextBillingDate: dateValue,
-      nextBillingStatus: 'green',
-      category: selectedCategory,
-      frequency,
-      startsOn: dateValue,
-      splitType: splitData.type,
-    }
+    const matchedCategory =
+      categories.find((c) => c.icon === selectedCategory || c.id === selectedCategory) ?? categories[0]
+    const categoryId = matchedCategory?.id ?? ''
 
-    if (editingPayment) {
-      updatePayment(groupId, record)
+    const payerUserId = paidBy === 'you' ? myId : paidBy
+    const payers = [{ user_id: payerUserId, amount: String(parsedAmount) }]
+
+    const activeMembers = group?.members.filter((m) => m.status === 'active') ?? []
+    const membersInGroup = activeMembers.map((m) => m.id)
+
+    let splits: GroupRecurringFormValues['splits'] = []
+    if (splitData.type === 'equal') {
+      const targetMembers = splitData.selectedMembers.length > 0 ? splitData.selectedMembers : membersInGroup
+      splits = targetMembers.map((id) => ({ user_id: id === 'you' ? myId : id }))
+    } else if (splitData.type === 'unequal') {
+      splits = Object.entries(splitData.unequalAmounts).map(([id, amt]) => ({
+        user_id: id === 'you' ? myId : id,
+        amount_owed: String(amt),
+      }))
     } else {
-      addPayment(groupId, record)
+      splits = Object.entries(splitData.adjustmentAmounts).map(([id, amt]) => ({
+        user_id: id === 'you' ? myId : id,
+        extra_amount: String(amt),
+      }))
     }
 
-    setShowSuccess(true)
+    const isoDate = parseDateToIso(dateValue)
+    const freqLower = frequency.toLowerCase() as GroupRecurringFormValues['frequency']
+
+    const formValues: GroupRecurringFormValues = {
+      description: description || 'Subscription Split',
+      amount: String(parsedAmount),
+      frequency: freqLower,
+      startDate: isoDate,
+      nextOccurrence: isoDate,
+      categoryId,
+      note: noteText,
+      receipt: receiptFile?.dataUrl ?? null,
+      splitType: splitData.type,
+      payers,
+      splits,
+    }
+
+    try {
+      await activeMutation.mutateAsync(formValues)
+      setShowSuccess(true)
+    } catch {
+      // Toast error is handled in mutation onError
+    }
   }
 
   const handleSuccessComplete = () => {
-    onSuccess()
+    if (window.history.length > 1) {
+      onSuccess()
+    } else {
+      navigate({ to: '/groups/$id/recurring', params: { id: groupId } })
+    }
   }
 
   if (showSuccess) {
@@ -115,19 +235,27 @@ export default function AddRecurringScreen({
     )
   }
 
+  // Form Validation
+  const parsedAmount = Number(amount) || 0
+  const isAmountValid = parsedAmount > 0
+  const isDescriptionValid = description.trim().length > 0
+  const isFormValid = isAmountValid && isDescriptionValid && !activeMutation.isPending
+
   return (
     <form
       onSubmit={handleSave}
-      className="min-h-screen flex flex-col bg-background select-none justify-between text-left overflow-y-auto pb-12"
+      className="min-h-screen flex flex-col bg-background select-none justify-between text-left overflow-y-auto pb-24 relative"
     >
       <div className="flex flex-col flex-1 pb-4">
         <RecurringFormHeader
-          title={editingPayment ? "Edit Recurring Payment" : "Add Recurring Payment"}
+          title={editPaymentId ? 'Edit Recurring Payment' : 'Add Recurring Payment'}
           onBack={onClose}
         />
 
-        {/* Form Body - Tighter spacings */}
+        {/* Form Body */}
         <div className="px-5 flex flex-col mt-2 gap-4">
+          <FormError message={activeMutation.error?.message} className="justify-center" />
+
           {/* Amount field */}
           <div className="flex flex-col">
             <span className="text-[13px] font-bold text-muted-foreground mb-1.5 px-1 uppercase tracking-wide">
@@ -142,7 +270,7 @@ export default function AddRecurringScreen({
               <div className="flex-1 flex items-center px-5">
                 <input
                   type="text"
-                  inputMode='decimal'
+                  inputMode="decimal"
                   value={formattedAmount}
                   onChange={handleAmountChange}
                   className="w-full bg-transparent border-0 outline-none text-[32px] font-extrabold text-foreground placeholder:text-[#CCCCCC] font-sans"
@@ -205,10 +333,10 @@ export default function AddRecurringScreen({
                   <span className="text-[10px] text-muted-foreground font-semibold leading-none">Split between</span>
                   <span className="text-[13px] font-black text-foreground mt-1 leading-none truncate">
                     {splitData.type === 'equal'
-                      ? `${splitData.selectedMembers.length} people`
+                      ? `${(splitData.selectedMembers.length > 0 ? splitData.selectedMembers : defaultSelectedMembers).length} people`
                       : splitData.type === 'unequal'
-                        ? 'Unequal'
-                        : 'Adjustment'}
+                      ? 'Unequal'
+                      : 'Adjustment'}
                   </span>
                 </div>
               </div>
@@ -255,29 +383,36 @@ export default function AddRecurringScreen({
         </div>
       </div>
 
-      {/* Footer / Attachments Strip & Save Button */}
-      <div className="flex flex-col shrink-0">
-        <RecurringAttachmentsStrip
-          frequency={frequency}
-          onToggleFrequency={() => setFrequency(frequency === 'Monthly' ? 'Weekly' : 'Monthly')}
-          hasReceipt={!!receiptFile}
-          onToggleReceipt={() => setShowReceiptOverlay(true)}
-          hasNote={!!noteText}
-          onToggleNote={() => setShowNoteOverlay(true)}
-        />
+      <RecurringAttachmentsStrip
+        frequency={frequency}
+        onToggleFrequency={() => setFrequency(frequency === 'Monthly' ? 'Weekly' : 'Monthly')}
+        hasReceipt={!!receiptFile}
+        onToggleReceipt={() => setShowReceiptOverlay(true)}
+        hasNote={!!noteText}
+        onToggleNote={() => setShowNoteOverlay(true)}
+      />
 
+      {/* Sticky Fixed Bottom Action Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 flex flex-col bg-background border-t border-divider/60 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
         {/* Primary Save Button */}
-        <div className="px-6 py-6 bg-background">
+        <div className="px-6 py-4">
           <button
             type="submit"
-            className="w-full h-14 rounded-full bg-positive shadow-[0px_6px_20px_rgba(11,104,58,0.3)] text-white font-bold text-[16px] cursor-pointer transition-transform active:scale-[0.99] border-0 flex items-center justify-center"
+            disabled={!isFormValid}
+            className="w-full h-14 rounded-full bg-positive shadow-[0px_6px_20px_rgba(11,104,58,0.3)] text-white font-bold text-[16px] cursor-pointer transition-transform active:scale-[0.99] border-0 flex items-center justify-center disabled:opacity-50 disabled:pointer-events-none"
           >
-            Save Recurring Payment
+            {activeMutation.isPending
+              ? editPaymentId
+                ? 'Updating…'
+                : 'Saving…'
+              : editPaymentId
+              ? 'Update Recurring Payment'
+              : 'Save Recurring Payment'}
           </button>
         </div>
       </div>
 
-      {/* Attachments Flows (Receipt / Note) */}
+      {/* Attachments Flows */}
       <AddReceiptFlow
         isOpen={showReceiptOverlay}
         amount={Number(amount) || 0}
@@ -312,8 +447,9 @@ export default function AddRecurringScreen({
           selectedValue={paidBy}
           onSelect={setPaidBy}
           contactName={group.name}
-          contactInitials={group.initials}
-          contactAvatarColor={group.avatarColor}
+          contactInitials={group.name.slice(0, 2).toUpperCase()}
+          contactAvatarColor="bg-positive"
+          members={drawerMembers}
           amount={Number(amount) || 0}
         />
       )}
@@ -331,10 +467,15 @@ export default function AddRecurringScreen({
             setSplitData(data)
             setShowSplit(false)
           }}
-          initialSplitData={splitData}
+          initialSplitData={
+            splitData.selectedMembers.length > 0
+              ? splitData
+              : { ...splitData, selectedMembers: defaultSelectedMembers }
+          }
           contactName={group.name}
-          contactInitials={group.initials}
-          contactAvatarColor={group.avatarColor}
+          contactInitials={group.name.slice(0, 2).toUpperCase()}
+          contactAvatarColor="bg-positive"
+          members={drawerMembers}
           isRecurring={true}
           frequency={frequency}
           startsOn={dateValue}

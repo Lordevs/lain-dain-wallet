@@ -1,7 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router'
-import GroupSettingsScreen from '@/features/groups/group-settings-screen'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/groups/$id/settings')({
-  component: GroupSettingsScreen,
+  component: () => <Outlet />,
 })
-

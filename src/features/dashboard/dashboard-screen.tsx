@@ -51,7 +51,15 @@ export default function DashboardScreen() {
 
   const receivables = useMemo(() => (receivablesQuery.data ?? []).map(mapWalletRow), [receivablesQuery.data])
   const payables = useMemo(() => (payablesQuery.data ?? []).map(mapWalletRow), [payablesQuery.data])
-  const allContacts = useMemo(() => [...receivables, ...payables], [receivables, payables])
+  const allContacts = useMemo(() => {
+    const map = new Map<string, typeof receivables[number]>()
+    ;[...receivables, ...payables].forEach((item) => {
+      if (!map.has(item.id)) {
+        map.set(item.id, item)
+      }
+    })
+    return Array.from(map.values())
+  }, [receivables, payables])
   const isLoading = receivablesQuery.isLoading || payablesQuery.isLoading
 
   const handleSearchFocus = () => {

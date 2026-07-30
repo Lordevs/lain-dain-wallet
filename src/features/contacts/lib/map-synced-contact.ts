@@ -30,3 +30,13 @@ export function mapSyncedContact(c: components['schemas']['Contact']): Contact {
     type: 'person',
   }
 }
+
+export function mapSyncedContactToContactInfo(c: components['schemas']['Contact']) {
+  const id = c.is_on_lain_dain && c.lain_dain_user_id ? c.lain_dain_user_id : c.id
+  return {
+    id,
+    name: c.display_name,
+    initials: initialsForName(c.display_name),
+    avatarColor: colorForName(c.display_name),
+  }
+}
