@@ -116,9 +116,10 @@ export default function LedgerBreakdownScreen() {
   })
 
   const handleItemClick = (itemId: string | number) => {
-    const [scope, id] = String(itemId).split('-')
-    if (scope === 'group') {
-      navigate({ to: ROUTES.GROUP_DETAILS, params: { id } })
+    const idStr = String(itemId)
+    if (idStr.startsWith('group-')) {
+      const groupId = idStr.slice('group-'.length)
+      navigate({ to: ROUTES.GROUP_DETAILS, params: { id: groupId } })
     } else {
       navigate({ to: ROUTES.CONTACT_DETAILS, params: { id: userId } })
     }
