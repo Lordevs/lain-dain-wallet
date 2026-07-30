@@ -11,6 +11,7 @@ import {
   useLeaveGroupMutation,
   useDeleteGroupMutation,
   useTransferOwnershipMutation,
+  useCancelInvitationMutation,
 } from '@/features/groups/api/use-group-actions-mutations'
 import { resolveGroupRole, getGroupPermissions } from '@/features/groups/lib/group-roles'
 import { initialsForName, colorForName } from '@/lib/avatar-visuals'
@@ -120,6 +121,7 @@ export function useGroupSettings() {
   const leaveGroupMutation = useLeaveGroupMutation(id ?? '')
   const deleteGroupMutation = useDeleteGroupMutation(id ?? '')
   const transferOwnershipMutation = useTransferOwnershipMutation(id ?? '')
+  const cancelInvitationMutation = useCancelInvitationMutation(id ?? '')
 
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null)
   const [drawerConfig, setDrawerConfig] = useState<DrawerConfig>({
@@ -169,6 +171,21 @@ export function useGroupSettings() {
         },
       })
     }
+  }
+
+  const handleCancelInvitation = (memberId: string) => {
+    setSelectedMemberId(null)
+    if (!id) return
+    setDrawerConfig({
+      type: 'confirm',
+      title: 'Cancel Invitation',
+      confirmTitle: 'Cancel this invitation?',
+      confirmDescription: "They won't be able to join the group via this invite anymore. You can re-invite them later.",
+      buttonText: 'Confirm',
+      onAction: () => {
+        cancelInvitationMutation.mutate(memberId)
+      },
+    })
   }
 
   const handleBlockReport = (memberId: string) => {
@@ -254,6 +271,7 @@ export function useGroupSettings() {
     handleToggleAdmin,
     handleTransferOwnership,
     handleRemoveMember,
+    handleCancelInvitation,
     handleBlockReport,
     handleLeaveGroup,
     handleDeleteGroup,

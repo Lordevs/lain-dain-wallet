@@ -33,6 +33,7 @@ export default function GroupSettingsScreen() {
     handleToggleAdmin,
     handleTransferOwnership,
     handleRemoveMember,
+    handleCancelInvitation,
     handleBlockReport,
     handleLeaveGroup,
     handleDeleteGroup,
@@ -207,7 +208,7 @@ export default function GroupSettingsScreen() {
                         Pending
                       </span>
                     )}
-                    {!m.isPending && isAdmin && (
+                    {isAdmin && (
                       <button
                         type="button"
                         onClick={(e) => {
@@ -221,7 +222,7 @@ export default function GroupSettingsScreen() {
                     )}
                   </div>
                 }
-                onClick={() => !m.isPending && isAdmin && setSelectedMemberId(m.id)}
+                onClick={() => isAdmin && setSelectedMemberId(m.id)}
                 className="py-4 px-5 bg-white hover:bg-muted/5 transition-colors"
               />
             ))}
@@ -356,6 +357,7 @@ export default function GroupSettingsScreen() {
         onTransferOwnership={handleTransferOwnership}
         onRemove={handleRemoveMember}
         onBlockReport={handleBlockReport}
+        onCancelInvitation={handleCancelInvitation}
       />
 
 

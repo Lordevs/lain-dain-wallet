@@ -2146,12 +2146,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/Group'
           description: ''
-  /api/ledger/groups/{group_id}/invitations/{invitation_id}/cancel/:
+  /api/ledger/groups/{group_id}/invitations/{user_id}/cancel/:
     post:
       operationId: ledger_groups_invitations_cancel_create
       description: |-
-        POST /api/ledger/groups/{group_id}/invitations/{invitation_id}/cancel/
-        — admin withdraws a pending invitation before the invitee responds.
+        POST /api/ledger/groups/{group_id}/invitations/{user_id}/cancel/ —
+        admin withdraws a pending invitation before the invitee responds.
+        Keyed by the invited user's id, not the GroupInvitation's own id —
+        GroupParticipantSerializer (the group's merged active/pending member
+        list, what the admin UI actually has on hand) only ever exposes the
+        user id, never a separate invitation id. Safe to look up this way
+        since (group, invited_user) is unique — see services._invite_one.
       parameters:
       - in: path
         name: group_id
@@ -2160,7 +2165,7 @@ paths:
           format: uuid
         required: true
       - in: path
-        name: invitation_id
+        name: user_id
         schema:
           type: string
           format: uuid

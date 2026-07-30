@@ -1129,7 +1129,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/ledger/groups/{group_id}/invitations/{invitation_id}/cancel/": {
+    "/api/ledger/groups/{group_id}/invitations/{user_id}/cancel/": {
         parameters: {
             query?: never;
             header?: never;
@@ -1139,8 +1139,13 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * @description POST /api/ledger/groups/{group_id}/invitations/{invitation_id}/cancel/
-         *     — admin withdraws a pending invitation before the invitee responds.
+         * @description POST /api/ledger/groups/{group_id}/invitations/{user_id}/cancel/ —
+         *     admin withdraws a pending invitation before the invitee responds.
+         *     Keyed by the invited user's id, not the GroupInvitation's own id —
+         *     GroupParticipantSerializer (the group's merged active/pending member
+         *     list, what the admin UI actually has on hand) only ever exposes the
+         *     user id, never a separate invitation id. Safe to look up this way
+         *     since (group, invited_user) is unique — see services._invite_one.
          */
         post: operations["ledger_groups_invitations_cancel_create"];
         delete?: never;
@@ -4649,7 +4654,7 @@ export interface operations {
             header?: never;
             path: {
                 group_id: string;
-                invitation_id: string;
+                user_id: string;
             };
             cookie?: never;
         };
