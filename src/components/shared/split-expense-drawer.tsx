@@ -7,7 +7,7 @@ import {
   DrawerClose,
   FULLSCREEN_DRAWER_CN,
 } from '@/components/ui/drawer'
-import { useSplitExpense, type SplitData } from './split-expense/use-split-expense'
+import { useSplitExpense, type SplitData, type SplitMember } from './split-expense/use-split-expense'
 import EqualSplitView from './split-expense/equal-split-view'
 import UnequalSplitView from './split-expense/unequal-split-view'
 import AdjustmentSplitView from './split-expense/adjustment-split-view'
@@ -44,9 +44,15 @@ interface SplitExpenseDrawerProps {
   contactName: string
   contactInitials: string
   contactAvatarColor: string
+  /** Real member list (you first, then everyone else) for a group expense —
+   * when provided this replaces the 2-person contact-based list. */
+  members?: SplitMember[]
   isRecurring?: boolean
   frequency?: 'Monthly' | 'Weekly'
   startsOn?: string
+  /** Per-person paid amounts when paidBy === 'multiple'; used by EqualSplitView
+   * to show net balance (paid minus share) for each member. */
+  multiplePayerAmounts?: Record<string, number>
 }
 
 export type { SplitData }
@@ -64,9 +70,11 @@ export default function SplitExpenseDrawer({
   contactName,
   contactInitials,
   contactAvatarColor,
+  members,
   isRecurring = false,
   frequency = 'Monthly',
   startsOn = '',
+  multiplePayerAmounts,
 }: SplitExpenseDrawerProps) {
   // Bumped whenever isOpen transitions to true, forcing SplitExpenseDrawerContent to
   // remount with fresh initial state - the idiomatic replacement for a "resync on open"
@@ -93,9 +101,11 @@ export default function SplitExpenseDrawer({
           contactName={contactName}
           contactInitials={contactInitials}
           contactAvatarColor={contactAvatarColor}
+          members={members}
           isRecurring={isRecurring}
           frequency={frequency}
           startsOn={startsOn}
+          multiplePayerAmounts={multiplePayerAmounts}
         />
       </DrawerContent>
     </Drawer>
@@ -113,9 +123,11 @@ function SplitExpenseDrawerContent({
   contactName,
   contactInitials,
   contactAvatarColor,
+  members: membersProp,
   isRecurring = false,
   frequency = 'Monthly',
   startsOn = '',
+  multiplePayerAmounts,
 }: Omit<SplitExpenseDrawerProps, 'isOpen' | 'onClose'>) {
   const {
     members,
@@ -141,6 +153,7 @@ function SplitExpenseDrawerContent({
     contactName,
     contactInitials,
     contactAvatarColor,
+    members: membersProp,
     initialSplitData,
     onSave,
   })
@@ -258,7 +271,7 @@ function SplitExpenseDrawerContent({
         </div>
 
         {/* Banner Info Box */}
-        <div className="w-full bg-[#E8F5EE] rounded-[14px] p-[18px] flex gap-4 text-left mb-6 items-center shrink-0">
+        <div className="w-full bg-[#E8F5EE] rounded-[14px] p-4.5 flex gap-4 text-left mb-6 items-center shrink-0">
           <div className="size-11 rounded-full bg-positive flex items-center justify-center shrink-0">
             <Info size={20} className="text-white" strokeWidth={2.5} />
           </div>
@@ -288,6 +301,7 @@ function SplitExpenseDrawerContent({
               const allSelected = selectedMembers.length === members.length
               setSelectedMembers(allSelected ? ['you'] : members.map((m) => m.id))
             }}
+            multiplePayerAmounts={multiplePayerAmounts}
           />
         )}
 

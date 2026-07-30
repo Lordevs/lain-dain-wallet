@@ -62,6 +62,7 @@ export function useSplitExpense({
   contactName,
   contactInitials,
   contactAvatarColor,
+  members: membersProp,
   initialSplitData,
   onSave,
 }: {
@@ -69,33 +70,22 @@ export function useSplitExpense({
   contactName: string
   contactInitials: string
   contactAvatarColor: string
+  /** Real member list (you first, then everyone else) for a group expense —
+   * when provided this replaces the 2-person contact-based list below. */
+  members?: SplitMember[]
   initialSplitData: SplitData | null
   onSave: (splitData: SplitData) => void
 }) {
   const userProfile = useAuthStore((state) => state.userProfile)
   const youInitials = getInitials(userProfile?.name || 'You')
 
-  const isGroup = useMemo(() => {
-    return (
-      contactName.toLowerCase().includes('trip') ||
-      contactName.toLowerCase().includes('family') ||
-      contactName.toLowerCase().includes('group')
-    )
-  }, [contactName])
-
   const members = useMemo(() => {
-    return isGroup
-      ? [
-          { id: 'you', name: 'You', initials: youInitials, avatarColor: 'bg-positive', isOrganizer: true },
-          { id: 'ali', name: 'Ali Hassan', initials: 'AH', avatarColor: 'bg-[#2F80ED]', isOrganizer: false },
-          { id: 'sara', name: 'Sara Khan', initials: 'SK', avatarColor: 'bg-orange-payable', isOrganizer: false },
-          { id: 'hassan', name: 'Hassan', initials: 'HS', avatarColor: 'bg-[#475569]', isOrganizer: false },
-        ]
-      : [
-          { id: 'you', name: 'You', initials: youInitials, avatarColor: 'bg-positive', isOrganizer: true },
-          { id: 'contact', name: contactName, initials: contactInitials, avatarColor: contactAvatarColor || 'bg-[#2F80ED]', isOrganizer: false },
-        ]
-  }, [isGroup, contactName, contactInitials, contactAvatarColor, youInitials])
+    if (membersProp) return membersProp
+    return [
+      { id: 'you', name: 'You', initials: youInitials, avatarColor: 'bg-positive', isOrganizer: true },
+      { id: 'contact', name: contactName, initials: contactInitials, avatarColor: contactAvatarColor || 'bg-[#2F80ED]', isOrganizer: false },
+    ]
+  }, [membersProp, contactName, contactInitials, contactAvatarColor, youInitials])
 
   const initial = getInitialSplitState(members, initialSplitData, amount)
   const [splitType, setSplitType] = useState<'equal' | 'unequal' | 'adjustment'>(initial.splitType)
@@ -205,7 +195,6 @@ export function useSplitExpense({
   }
 
   return {
-    isGroup,
     members,
     splitType,
     setSplitType,

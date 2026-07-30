@@ -1,37 +1,92 @@
-
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
-import { MoreVertical, ChevronRight, ListFilter } from 'lucide-react'
+import { MoreVertical } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
-import { formatPKR } from '@/lib/currency'
+import { formatCurrency } from '@/lib/currency'
 import { cn } from '@/lib/utils'
+import { colorForName, initialsForName } from '@/lib/avatar-visuals'
 import FlowHeader from '@/components/shared/flow-header'
+import ContactAvatar from '@/components/shared/contact-avatar'
 import ContactList from '@/components/shared/contact-list'
 import ContactListItem from '@/components/shared/contact-list-item'
-import { useGroupLedger } from '@/features/groups/hooks/use-group-ledger'
-import GroupBalanceCarousel from '@/features/groups/components/group-balance-carousel'
-import GroupExpensesFilterDrawer, {
-  type GroupSortBy,
-  type GroupViewBy,
-} from '@/features/groups/components/group-expenses-filter-drawer'
-import ExpenseList from '@/components/shared/expense-list'
+import ExpenseList, { type ExpenseListData } from '@/components/shared/expense-list'
+import EmptyState from '@/components/shared/empty-state'
+import ExpenseListSkeleton from '@/components/shared/expense-list-skeleton'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useGroupQuery } from '@/features/groups/api/use-group-query'
+import { useGroupBalanceQuery } from '@/features/groups/api/use-group-balance-query'
+import { useGroupTransactionsQuery } from '@/features/groups/api/use-group-transactions-query'
 
 /**
- * GroupDetailScreen — handles detailed views and features for groups.
+ * GroupDetailScreen — real ledger view for one group: per-member
+ * balances plus the merged expense/settlement transaction history.
+ * Mirrors ContactDetailScreen's structure for the 1:1 case.
  */
 export default function GroupDetailScreen() {
-  const { id } = useParams({ from: '/groups/$id/' })
+  const { id: groupId } = useParams({ from: '/groups/$id/' })
   const navigate = useNavigate({ from: '/groups/$id/' })
 
-  const { contact, groupExpensesData, categoriesSummary, groupBalances } = useGroupLedger(id)
+  const groupQuery = useGroupQuery(groupId)
+  const balanceQuery = useGroupBalanceQuery(groupId)
+  const transactionsQuery = useGroupTransactionsQuery(groupId)
 
-  const [sortBy, setSortBy] = useState<GroupSortBy>('newest')
-  const [viewBy, setViewBy] = useState<GroupViewBy>('category')
+  const items: ExpenseListData[] = useMemo(() => {
+    if (!transactionsQuery.data) return []
+    return transactionsQuery.data.map((t) => {
+      if (t.kind === 'expense') {
+        const payerNames = t.data.payers.length > 1 ? 'Split payment' : t.data.payers[0]?.full_name
+        return {
+          id: t.data.id,
+          name: t.data.description,
+          subtitle: payerNames ? `${payerNames} paid` : 'Paid',
+          amount: Number(t.data.amount),
+          currency: t.data.currency,
+          rightSubtitle: new Date(t.data.date).toLocaleDateString(),
+          showChevron: true,
+          amountColor: 'default' as const,
+        }
+      }
+      return {
+        id: t.data.id,
+        name: t.data.status === 'confirmed' ? 'Settlement' : 'Settlement (pending)',
+        subtitle: `${t.data.payer.full_name} paid ${t.data.payee.full_name}`,
+        amount: Number(t.data.amount),
+        currency: t.data.currency,
+        rightSubtitle: new Date(t.data.date).toLocaleDateString(),
+        showChevron: true,
+        amountColor: 'green' as const,
+      }
+    })
+  }, [transactionsQuery.data])
 
-  if (!contact || contact.type !== 'group') {
+  if (groupQuery.isLoading) {
+    return (
+      <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24">
+        <div className="flex items-center gap-3 px-6 pt-5 pb-3">
+          <Skeleton className="size-11 rounded-full shrink-0" />
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-24" />
+          </div>
+        </div>
+        <div className="px-6 mb-6">
+          <div className="bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] p-6 flex flex-col gap-3">
+            <Skeleton className="h-3 w-28" />
+            <Skeleton className="h-8 w-36" />
+          </div>
+        </div>
+        <div className="px-6">
+          <ExpenseListSkeleton />
+        </div>
+      </div>
+    )
+  }
+
+  const group = groupQuery.data
+  if (groupQuery.isError || !group) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-[#FEFAF1]">
-        <p className="text-muted-foreground text-sm mb-4">Group not found</p>
+        <p className="text-muted-foreground text-sm mb-4">Couldn't load this group.</p>
         <button
           onClick={() => navigate({ to: ROUTES.DASHBOARD })}
           className="text-primary font-bold hover:underline border-0 bg-transparent cursor-pointer"
@@ -42,47 +97,30 @@ export default function GroupDetailScreen() {
     )
   }
 
-  const isGroupReceivable = contact.netAmount > 0
-  const formattedGroupVal = formatPKR(Math.abs(contact.netAmount))
-
-  // Sort raw expenses list when viewing all
-  const sortedExpenses = useMemo(() => {
-    const data = [...groupExpensesData]
-    if (sortBy === 'oldest') {
-      return data.reverse()
-    }
-    if (sortBy === 'highest') {
-      return data.sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
-    }
-    if (sortBy === 'lowest') {
-      return data.sort((a, b) => Math.abs(a.amount) - Math.abs(b.amount))
-    }
-    // 'newest' default
-    return data
-  }, [groupExpensesData, sortBy])
-
-  const handleExpenseClick = (expenseId: string | number) => {
-    navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: expenseId.toString() } })
-  }
-
-  const isFilterActive = sortBy !== 'newest' || viewBy !== 'category'
+  const groupInitials = initialsForName(group.name)
+  const groupAvatarColor = colorForName(group.name)
+  const activeMembers = group.members.filter((m) => m.status === 'active')
+  const balances = balanceQuery.data ?? []
 
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24 relative select-none">
-      {/* Unified Header */}
       <FlowHeader
-        title={contact.name}
-        subtitle={`${contact.ledgerCount} members`}
+        title={group.name}
+        subtitle={`${activeMembers.length} member${activeMembers.length === 1 ? '' : 's'}`}
         backVariant="minimal"
         avatar={
-          <div className={cn("w-11 h-11 rounded-full flex items-center justify-center text-xl shrink-0 border border-[#EFE7DD] shadow-[0px_2px_8px_rgba(0,0,0,0.02)]", contact.avatarColor)}>
-            {contact.initials}
-          </div>
+          <ContactAvatar
+            initials={groupInitials}
+            avatarColor={groupAvatarColor}
+            src={group.image ?? undefined}
+            size="md"
+            className="size-11 text-sm font-bold"
+          />
         }
         rightSlot={
           <button
             type="button"
-            onClick={() => navigate({ to: ROUTES.GROUP_SETTINGS, params: { id: contact.id } })}
+            onClick={() => navigate({ to: ROUTES.GROUP_SETTINGS, params: { id: groupId } })}
             className="text-[#6B6B6B] cursor-pointer border-0 bg-transparent flex items-center justify-center p-2"
           >
             <MoreVertical size={20} />
@@ -90,157 +128,74 @@ export default function GroupDetailScreen() {
         }
       />
 
-      <GroupBalanceCarousel
-        isReceivable={isGroupReceivable}
-        formattedNetAmount={formattedGroupVal}
-        onRemind={() => navigate({ to: ROUTES.GROUP_REMINDER, params: { id: contact.id } })}
-      />
-
-      {/* Scrollable breakdown container */}
       <div className="flex-1 overflow-y-auto px-6 pb-12 flex flex-col gap-6">
-
         {/* Balances Section */}
-        <div className="flex flex-col text-left">
-          <div className="flex items-center justify-between mb-3 mt-1">
-            <h3 className="text-sm font-bold text-[#1A1A1A]">Balances</h3>
-            <button className="flex items-center gap-1 text-[13px] font-bold text-positive bg-transparent border-0 cursor-pointer outline-none">
-              View all <ChevronRight size={14} className="rotate-90 text-positive" strokeWidth={2.5} />
-            </button>
-          </div>
-
-          <ContactList>
-            {groupBalances.map((mb) => (
-              <ContactListItem
-                key={mb.id}
-                contact={{
-                  id: mb.id,
-                  name: mb.name,
-                  initials: mb.initials,
-                  avatarColor: mb.avatarColor,
-                }}
-                subtitle={
-                  <span className={cn(
-                    mb.direction === 'in' ? 'text-positive' : 'text-[#C96A1B]'
-                  )}>
-                    {mb.subtitle}
-                  </span>
-                }
-                rightSlot={
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-0.5">
-                      {mb.direction === 'in' ? (
-                        <span className="text-positive font-semibold text-[13px]">↓</span>
-                      ) : (
-                        <span className="font-semibold text-[13px] text-[#C96A1B]">↑</span>
-                      )}
-                      <span className={cn(
-                        "text-[13px] font-black",
-                        mb.direction === 'in' ? 'text-positive' : 'text-[#C96A1B]'
-                      )}>
-                        Rs. {new Intl.NumberFormat('en-US').format(mb.amount)}
-                      </span>
-                    </div>
-                  </div>
-                }
-                className="p-4 hover:bg-muted/5 transition-all bg-white"
-              />
-            ))}
-          </ContactList>
-        </div>
-
-        {/* Expenses Section */}
-        <div className="flex flex-col text-left">
-          <div className="flex items-center justify-between mb-3 mt-1">
-            <h3 className="text-sm font-bold text-[#1A1A1A]">
-              Expenses <span className="text-[#6B6B6B] font-medium">({viewBy === 'category' ? categoriesSummary.length : sortedExpenses.length} {viewBy === 'category' ? 'categories' : 'items'})</span>
-            </h3>
-            
-            <GroupExpensesFilterDrawer
-              sortBy={sortBy}
-              onSortByChange={setSortBy}
-              viewBy={viewBy}
-              onViewByChange={setViewBy}
-            >
-              <button
-                type="button"
-                className={cn(
-                  'w-9 h-9 rounded-full bg-white! border-[1.08px] border-border-card flex items-center justify-center text-muted-faint hover:text-foreground hover:bg-white transition-colors shadow-[0px_2px_8px_0px_#0000000A] p-0 shrink-0 cursor-pointer outline-none',
-                  isFilterActive && 'border-primary text-primary bg-primary/5 hover:bg-primary/5',
-                )}
-                aria-label="Filter Expenses"
-              >
-                <ListFilter size={16} strokeWidth={2} />
-              </button>
-            </GroupExpensesFilterDrawer>
-          </div>
-
-          {viewBy === 'category' ? (
-            <div className="bg-white border border-[#EFE7DD] rounded-xl divide-y! divide-[#EFE7DD]! overflow-hidden shadow-[0px_4px_16px_rgba(0,0,0,0.02)]">
-              {categoriesSummary.map((summary) => {
-                const IconComp = summary.icon
-                const formattedVal = formatPKR(summary.total)
+        {balances.length > 0 && (
+          <div className="flex flex-col text-left">
+            <h3 className="text-sm font-bold text-[#1A1A1A] mb-3 mt-1">Balances</h3>
+            <ContactList>
+              {balances.map((b) => {
+                const isReceivable = b.direction === 'owed_to_you'
+                const initials = initialsForName(b.other_user.full_name)
+                const avatarColor = colorForName(b.other_user.full_name)
                 return (
-                  <button
-                    key={summary.id}
-                    type="button"
-                    onClick={() => navigate({ to: ROUTES.GROUP_CATEGORY, params: { id: contact.id, catId: summary.id } })}
-                    className="w-full flex items-center justify-between p-4 hover:bg-muted/5 transition-colors border-0 outline-none text-left cursor-pointer bg-white"
-                  >
-                    <div className="flex items-center gap-3.5">
-                      <div
-                        className="w-10 h-10 rounded-[14px] flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: `${summary.color}15` }}
-                      >
-                        <IconComp size={20} style={{ color: summary.color }} />
-                      </div>
-                      <div className="flex flex-col text-left">
-                        <span className="font-semibold text-sm text-[#1A1A1A]">
-                          {summary.label}
-                        </span>
-                        <span className="text-xs text-[#6B6B6B] font-normal mt-0.5">
-                          {summary.count} {summary.count === 1 ? 'item' : 'items'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm text-[#1A1A1A]">
-                        {formattedVal}
+                  <ContactListItem
+                    key={b.other_user.id}
+                    contact={{ id: b.other_user.id, name: b.other_user.full_name, initials, avatarColor }}
+                    subtitle={
+                      <span className={cn(isReceivable ? 'text-positive' : 'text-[#C96A1B]')}>
+                        {isReceivable ? 'owes you' : b.direction === 'you_owe' ? 'you owe' : 'settled'}
                       </span>
-                      <ChevronRight size={16} className="text-[#9A9590]" strokeWidth={2.5} />
-                    </div>
-                  </button>
+                    }
+                    rightSlot={
+                      <span className={cn('text-[13px] font-black', isReceivable ? 'text-positive' : 'text-[#C96A1B]')}>
+                        {formatCurrency(Math.abs(Number(b.net_amount)), b.currency)}
+                      </span>
+                    }
+                    className="p-4 hover:bg-muted/5 transition-all bg-white"
+                  />
                 )
               })}
-            </div>
-          ) : (
-            <div className="bg-white border border-[#EFE7DD] rounded-xl overflow-hidden shadow-[0px_4px_16px_rgba(0,0,0,0.02)]">
-              <ExpenseList
-                expenses={sortedExpenses}
-                onItemClick={handleExpenseClick}
-                className="border-0 divide-[#EFE7DD]"
-              />
-            </div>
+            </ContactList>
+          </div>
+        )}
+
+        {/* Transaction history */}
+        <div className="flex flex-col gap-3 text-left">
+          <h3 className="text-sm font-bold text-[#1A1A1A]">
+            Expenses <span className="text-[#6B6B6B] font-medium">({items.length} items)</span>
+          </h3>
+          {transactionsQuery.isLoading && <ExpenseListSkeleton />}
+          {!transactionsQuery.isLoading && items.length === 0 && (
+            <EmptyState
+              title="No transactions yet"
+              description="Add an expense to start tracking this group's spending."
+              actionLabel="Add Expense"
+              onAction={() => navigate({ to: ROUTES.GROUP_ADD_EXPENSE, params: { id: groupId } })}
+              className="py-6"
+            />
+          )}
+          {items.length > 0 && (
+            <ExpenseList
+              expenses={items}
+              onItemClick={(tid) => navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: tid.toString() } })}
+            />
           )}
         </div>
-
       </div>
 
       {/* Sticky Bottom Row Buttons */}
       <div className="fixed bottom-3 left-3 right-3 z-10 flex items-center gap-4">
-        {/* Add Expense */}
         <button
           type="button"
-          onClick={() => navigate({ to: ROUTES.GROUP_ADD_EXPENSE, params: { id: contact.id } })}
+          onClick={() => navigate({ to: ROUTES.GROUP_ADD_EXPENSE, params: { id: groupId } })}
           className="flex-1 h-12 rounded-full bg-primary text-white font-extrabold text-base cursor-pointer hover:bg-neutral-800 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
         >
           Add Expense
         </button>
-
-        {/* Settle Up */}
         <button
           type="button"
-          onClick={() => navigate({ to: ROUTES.SETTLE_UP, search: { groupId: contact.id } })}
+          onClick={() => navigate({ to: ROUTES.SETTLE_UP, search: { groupId } })}
           className="flex-1 h-12 rounded-full bg-[#FDB105] text-[#1A1A1A] font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
         >
           Settle Up

@@ -10,7 +10,7 @@ import AttachmentTabs from '@/features/personal/components/attachment-tabs'
 import AddReceiptFlow from '@/components/shared/add-receipt-flow'
 import AddNoteFlow from '@/components/shared/add-note-flow'
 import SuccessCheck from '@/components/shared/success-check'
-import PaidByDrawer from '@/components/shared/paid-by-drawer'
+import PaidByDrawer, { type PaidByMember } from '@/components/shared/paid-by-drawer'
 import SplitExpenseDrawer, { type SplitData } from '@/components/shared/split-expense-drawer'
 import SelectDateDrawer from '@/components/shared/select-date-drawer'
 import { useDrawerBackHandler } from '@/hooks/use-drawer-back-handler'
@@ -60,6 +60,9 @@ interface AddExpenseBaseProps {
     initials: string
     avatarColor: string
   }
+  /** Real member list (you first, then everyone else) for a group expense —
+   * when provided this replaces `contact`'s 2-person shape. */
+  members?: PaidByMember[]
   initialData?: InitialExpenseData
   // Async-aware — the success screen only shows once this resolves; a
   // rejection keeps the form open so the caller's own error UI stays
@@ -73,6 +76,7 @@ export default function AddExpenseBase({
   title,
   showPaidByAndSplit,
   contact,
+  members,
   initialData,
   onConfirm,
   onSuccessComplete,
@@ -99,14 +103,15 @@ export default function AddExpenseBase({
   const [showDateDrawer, setShowDateDrawer] = useState(false)
 
   // Shared Expense Specific State
-  const [paidBy, setPaidBy] = useState<string>(initialData?.paidBy || 'you')
+  const defaultPayerId = members?.[0]?.id ?? 'you'
+  const [paidBy, setPaidBy] = useState<string>(initialData?.paidBy || defaultPayerId)
   const [multiplePayerAmounts, setMultiplePayerAmounts] = useState<Record<string, number> | undefined>(
     initialData?.multiplePayerAmounts,
   )
   const [showPaidBy, setShowPaidBy] = useState(false)
   const [splitData, setSplitData] = useState<SplitData>(initialData?.splitData || {
     type: 'equal',
-    selectedMembers: ['you', 'contact'],
+    selectedMembers: members ? members.map((m) => m.id) : ['you', 'contact'],
     unequalAmounts: { you: 0, contact: 0 },
     adjustmentAmounts: { you: 0, contact: 0 },
   })
@@ -124,11 +129,13 @@ export default function AddExpenseBase({
   const closeReceiptOverlay = useDrawerBackHandler(showReceiptOverlay, () => setShowReceiptOverlay(false))
   const closeNoteOverlay = useDrawerBackHandler(showNoteOverlay, () => setShowNoteOverlay(false))
 
-  const payerName = paidBy === 'you'
-    ? 'You'
-    : paidBy === 'multiple'
-      ? 'Multiple people'
-      : (contact?.name || 'Contact')
+  const payerName = paidBy === 'multiple'
+    ? 'Multiple people'
+    : members
+      ? (members.find((m) => m.id === paidBy)?.name ?? 'Someone')
+      : paidBy === 'you'
+        ? 'You'
+        : (contact?.name || 'Contact')
 
   // Toggle helpers
   const handleToggleDate = () => {
@@ -258,7 +265,7 @@ export default function AddExpenseBase({
           </div>
 
           {/* Paid by & Split row (Only in Shared Mode) */}
-          {showPaidByAndSplit && contact && (
+          {showPaidByAndSplit && (contact || members) && (
             <div className="flex gap-4 mt-6">
               {/* Paid by */}
               <button
@@ -275,22 +282,25 @@ export default function AddExpenseBase({
                   {/* Avatars */}
                   {paidBy === 'multiple' ? (
                     <div className="flex -space-x-2 shrink-0">
-                      <div className="size-6 rounded-full border border-white bg-positive text-white flex items-center justify-center font-extrabold text-[8px] select-none shadow-sm">
-                        {youInitials}
-                      </div>
-                      <div className="size-6 rounded-full border border-white bg-[#2F80ED] text-white flex items-center justify-center font-extrabold text-[8px] select-none shadow-sm">
-                        AH
-                      </div>
-                      <div className="size-6 rounded-full border border-white bg-orange-payable text-white flex items-center justify-center font-extrabold text-[8px] select-none shadow-sm">
-                        SK
-                      </div>
+                      {(members ?? [
+                        { id: 'you', name: 'You', initials: youInitials, avatarColor: 'bg-positive' },
+                        { id: 'contact', name: contact?.name ?? '', initials: contact?.initials ?? '', avatarColor: contact?.avatarColor || 'bg-[#2F80ED]' },
+                      ]).slice(0, 3).map((m) => (
+                        <div key={m.id} className={cn("size-6 rounded-full border border-white text-white flex items-center justify-center font-extrabold text-[8px] select-none shadow-sm", m.avatarColor)}>
+                          {m.initials}
+                        </div>
+                      ))}
                     </div>
                   ) : (
                     <div className={cn(
                       "size-6 rounded-full text-white flex items-center justify-center font-extrabold text-[9px] select-none shadow-sm",
-                      paidBy === 'you' ? "bg-positive" : (contact.avatarColor || 'bg-[#2F80ED]')
+                      members
+                        ? (members.find((m) => m.id === paidBy)?.avatarColor ?? 'bg-positive')
+                        : (paidBy === 'you' ? "bg-positive" : (contact?.avatarColor || 'bg-[#2F80ED]'))
                     )}>
-                      {paidBy === 'you' ? youInitials : contact.initials}
+                      {members
+                        ? (members.find((m) => m.id === paidBy)?.initials ?? youInitials)
+                        : (paidBy === 'you' ? youInitials : contact?.initials)}
                     </div>
                   )}
 
@@ -300,7 +310,7 @@ export default function AddExpenseBase({
                       "text-[14px] font-black mt-1.5 leading-none",
                       paidBy === 'multiple' ? "text-positive" : "text-foreground"
                     )}>
-                      {paidBy === 'multiple' ? '3 people' : payerName}
+                      {paidBy === 'multiple' ? `${members?.length ?? 3} people` : payerName}
                     </span>
                   </div>
                 </div>
@@ -392,7 +402,7 @@ export default function AddExpenseBase({
       />
 
       {/* Paid By Selection Drawer */}
-      {showPaidByAndSplit && contact && (
+      {showPaidByAndSplit && (contact || members) && (
         <PaidByDrawer
           isOpen={showPaidBy}
           onClose={closePaidBy}
@@ -401,16 +411,17 @@ export default function AddExpenseBase({
             setPaidBy(value)
             setMultiplePayerAmounts(payerAmounts)
           }}
-          contactName={contact.name}
-          contactInitials={contact.initials}
-          contactAvatarColor={contact.avatarColor}
+          contactName={contact?.name ?? ''}
+          contactInitials={contact?.initials ?? ''}
+          contactAvatarColor={contact?.avatarColor ?? ''}
+          members={members}
           amount={Number(amount) || 0}
           initialPayerAmounts={multiplePayerAmounts}
         />
       )}
 
       {/* Split Expense Drawer */}
-      {showPaidByAndSplit && contact && (
+      {showPaidByAndSplit && (contact || members) && (
         <SplitExpenseDrawer
           isOpen={showSplit}
           amount={Number(amount) || 0}
@@ -424,9 +435,11 @@ export default function AddExpenseBase({
             closeSplit()
           }}
           initialSplitData={splitData}
-          contactName={contact.name}
-          contactInitials={contact.initials}
-          contactAvatarColor={contact.avatarColor}
+          contactName={contact?.name ?? ''}
+          contactInitials={contact?.initials ?? ''}
+          contactAvatarColor={contact?.avatarColor ?? ''}
+          members={members?.map((m) => ({ ...m, isOrganizer: m.id === defaultPayerId }))}
+          multiplePayerAmounts={paidBy === 'multiple' ? multiplePayerAmounts : undefined}
         />
       )}
 

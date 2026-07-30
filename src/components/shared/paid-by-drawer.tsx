@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Check, X, Info, Users, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react'
+import { Check, X, Info, Users, ChevronLeft, ChevronRight, AlertTriangle, LockKeyhole } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { useAuthStore } from '@/store/use-auth-store'
 import {
@@ -13,6 +13,13 @@ import {
   AvatarFallback,
 } from '@/components/ui/avatar'
 
+export interface PaidByMember {
+  id: string
+  name: string
+  initials: string
+  avatarColor: string
+}
+
 interface PaidByDrawerProps {
   isOpen: boolean
   onClose: () => void
@@ -24,6 +31,9 @@ interface PaidByDrawerProps {
   contactName: string
   contactInitials: string
   contactAvatarColor: string
+  /** Real member list (you first, then everyone else) for a group expense —
+   * when provided this replaces the 2-person contact-based list below. */
+  members?: PaidByMember[]
   amount?: number
   /** Seeds the per-person inputs from the expense's real original amounts
    * when editing — without this, reopening this view guesses an equal
@@ -39,7 +49,8 @@ export default function PaidByDrawer({
   contactName,
   contactInitials,
   contactAvatarColor,
-  amount = 5000,
+  members,
+  amount = 0,
   initialPayerAmounts,
 }: PaidByDrawerProps) {
   // Bumped whenever isOpen transitions to true, forcing PaidByDrawerContent to remount
@@ -62,6 +73,7 @@ export default function PaidByDrawer({
           contactName={contactName}
           contactInitials={contactInitials}
           contactAvatarColor={contactAvatarColor}
+          members={members}
           amount={amount}
           initialPayerAmounts={initialPayerAmounts}
         />
@@ -77,6 +89,7 @@ function PaidByDrawerContent({
   contactName,
   contactInitials,
   contactAvatarColor,
+  members: membersProp,
   amount,
   initialPayerAmounts,
 }: Omit<PaidByDrawerProps, 'isOpen' | 'amount'> & { amount: number }) {
@@ -87,24 +100,17 @@ function PaidByDrawerContent({
   const youName = userProfile?.name || 'You'
   const youInitials = getInitials(youName)
 
-  // Resolve members list dynamically based on group or single contact
-  const isGroup = useMemo(() => {
-    return contactName.toLowerCase().includes('trip') || contactName.toLowerCase().includes('family') || contactName.toLowerCase().includes('group')
-  }, [contactName])
-
   const members = useMemo(() => {
-    return isGroup
-      ? [
-        { id: 'you', name: 'You', subname: youName, initials: youInitials, avatarColor: 'bg-positive' },
-        { id: 'ali', name: 'Ali Hassan', subname: 'Ali Hassan', initials: 'AH', avatarColor: 'bg-[#2F80ED]' },
-        { id: 'sara', name: 'Sara Khan', subname: 'Sara Khan', initials: 'SK', avatarColor: 'bg-orange-payable' },
-        { id: 'hassan', name: 'Hassan', subname: 'Hassan', initials: 'HS', avatarColor: 'bg-[#475569]' },
-      ]
-      : [
-        { id: 'you', name: 'You', subname: youName, initials: youInitials, avatarColor: 'bg-positive' },
-        { id: 'contact', name: contactName, subname: contactName, initials: contactInitials, avatarColor: contactAvatarColor || 'bg-[#2F80ED]' },
-      ]
-  }, [isGroup, contactName, contactInitials, contactAvatarColor, youName, youInitials])
+    if (membersProp) {
+      return membersProp.map((m) => ({ id: m.id, name: m.name, subname: m.name, initials: m.initials, avatarColor: m.avatarColor }))
+    }
+    return [
+      { id: 'you', name: 'You', subname: youName, initials: youInitials, avatarColor: 'bg-positive' },
+      { id: 'contact', name: contactName, subname: contactName, initials: contactInitials, avatarColor: contactAvatarColor || 'bg-[#2F80ED]' },
+    ]
+  }, [membersProp, contactName, contactInitials, contactAvatarColor, youName, youInitials])
+
+  const defaultId = members[0]?.id ?? 'you'
 
   // Amount inputs for multiple payers - seeded once from the initial selection/amount
   const [payerAmounts, setPayerAmounts] = useState<Record<string, string>>(() => {
@@ -120,20 +126,23 @@ function PaidByDrawerContent({
     return initialAmounts
   })
 
+  // When no amount has been entered on the form yet, the inputs are locked.
+  const hasAmount = amount > 0
+
   // Calculated multi-payer assignments
-  const totalAmount = amount || 5000
+  const totalAmount = amount || 0
   const totalAssigned = members.reduce((sum, member) => sum + (Number(payerAmounts[member.id]) || 0), 0)
   const totalUnassigned = Math.max(0, totalAmount - totalAssigned)
 
   const handleAmountChange = (memberId: string, val: string) => {
     const rawVal = val.replace(/\D/g, '')
     const numVal = Number(rawVal) || 0
-    
+
     // Calculate the sum of contributions from all other members
     const otherSum = members
       .filter((m) => m.id !== memberId)
       .reduce((sum, m) => sum + (Number(payerAmounts[m.id]) || 0), 0)
-      
+
     // Max allowed for this member is the remaining unassigned amount
     const maxAllowed = Math.max(0, totalAmount - otherSum)
     const cappedVal = numVal > maxAllowed ? maxAllowed.toString() : rawVal
@@ -149,7 +158,7 @@ function PaidByDrawerContent({
     if (remaining <= 0) return
     setPayerAmounts((prev) => ({
       ...prev,
-      you: ((Number(prev.you) || 0) + remaining).toString()
+      [defaultId]: ((Number(prev[defaultId]) || 0) + remaining).toString()
     }))
   }
 
@@ -166,10 +175,11 @@ function PaidByDrawerContent({
         amounts[m.id] = Number(payerAmounts[m.id]) || 0
       })
       onSelect('multiple', amounts)
+      onClose()
     } else {
       onSelect(tempValue)
+      onClose()
     }
-    onClose()
   }
 
   return (
@@ -232,7 +242,7 @@ function PaidByDrawerContent({
                       </Avatar>
                       <div className="flex flex-col text-left">
                         <span className="font-semibold text-sm text-foreground leading-tight">
-                          {member.name} {member.id === 'you' && '(default)'}
+                          {member.name} {member.id === defaultId && '(default)'}
                         </span>
                         <span className="text-[11px] text-muted-foreground font-medium mt-1 leading-none">
                           Paid the full amount
@@ -295,17 +305,26 @@ function PaidByDrawerContent({
             <span className="text-[13px] font-semibold text-muted-foreground">
               How much did each person pay?
             </span>
-            <div className="flex items-center justify-between mt-3 mb-2">
-              <span className={cn("text-[13px] font-bold", totalUnassigned === 0 ? "text-positive" : "text-orange-payable")}>
-                {totalUnassigned === 0
-                  ? `Rs. ${totalAmount.toLocaleString('en-US')} assigned`
-                  : `Rs. ${totalAssigned.toLocaleString('en-US')} assigned`
-                }
-              </span>
-              <span className="text-[13px] font-semibold text-muted-faint">
-                of Rs. {totalAmount.toLocaleString('en-US')}
-              </span>
-            </div>
+            {!hasAmount ? (
+              <div className="flex items-center gap-2 mt-3 mb-2 px-3.5 py-2.5 rounded-[14px] bg-amber-50 border border-amber-200">
+                <LockKeyhole size={14} className="text-amber-600 shrink-0" />
+                <span className="text-[12px] font-semibold text-amber-700">
+                  Enter an expense amount first to assign contributions.
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between mt-3 mb-2">
+                <span className={cn("text-[13px] font-bold", totalUnassigned === 0 ? "text-positive" : "text-orange-payable")}>
+                  {totalUnassigned === 0
+                    ? `Rs. ${totalAmount.toLocaleString('en-US')} assigned`
+                    : `Rs. ${totalAssigned.toLocaleString('en-US')} assigned`
+                  }
+                </span>
+                <span className="text-[13px] font-semibold text-muted-faint">
+                  of Rs. {totalAmount.toLocaleString('en-US')}
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="flex-1 overflow-y-auto divide-y divide-divider text-left">
@@ -333,18 +352,21 @@ function PaidByDrawerContent({
 
                   {/* Input Box */}
                   <div className={cn(
-                    "w-28 h-12 rounded-[14px] border-[1.5px] flex items-center px-4 transition-all focus-within:border-positive/35 focus-within:bg-[#F5FBF7]",
-                    hasValue
-                      ? "border-positive/30 bg-white"
-                      : "border-border-card bg-hover-bg"
+                    "w-28 h-12 rounded-[14px] border-[1.5px] flex items-center px-4 transition-all",
+                    !hasAmount
+                      ? "border-border-card bg-hover-bg opacity-50 cursor-not-allowed"
+                      : hasValue
+                        ? "border-positive/30 bg-white focus-within:border-positive/35 focus-within:bg-[#F5FBF7]"
+                        : "border-border-card bg-hover-bg focus-within:border-positive/35 focus-within:bg-[#F5FBF7]"
                   )}>
                     <input
                       type="text"
                       inputMode="decimal"
                       placeholder="Rs. 0"
+                      disabled={!hasAmount}
                       value={getFormattedMemberAmount(member.id)}
                       onChange={(e) => handleAmountChange(member.id, e.target.value)}
-                      className="w-full text-right outline-none bg-transparent font-extrabold text-sm text-foreground placeholder:text-muted-faint/50"
+                      className="w-full text-right outline-none bg-transparent font-extrabold text-sm text-foreground placeholder:text-muted-faint/50 disabled:cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -356,7 +378,7 @@ function PaidByDrawerContent({
 
       {/* Pinned Bottom Confirm Action Button */}
       <div className="flex flex-col shrink-0 bg-white border-t border-border-card/40">
-        {view === 'multiple' && totalUnassigned > 0 && (
+        {view === 'multiple' && hasAmount && totalUnassigned > 0 && (
           <div className="mx-6 py-3 flex items-center justify-between">
             <span className="text-[13px] font-bold text-orange-payable flex items-center gap-1.5">
               <AlertTriangle size={15} className="text-orange-payable" />
@@ -376,7 +398,7 @@ function PaidByDrawerContent({
           <button
             type="button"
             onClick={handleConfirmAction}
-            disabled={view === 'multiple' && totalUnassigned !== 0}
+            disabled={view === 'multiple' && (!hasAmount || totalUnassigned !== 0)}
             className="w-full h-14 rounded-[20px] bg-positive text-white font-extrabold text-base cursor-pointer shadow-[0px_4px_16px_rgba(11,104,58,0.15)] hover:opacity-95 disabled:opacity-50 transition-all flex items-center justify-center outline-none border-0"
           >
             Confirm

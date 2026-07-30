@@ -1,31 +1,85 @@
 import { useParams, useNavigate } from '@tanstack/react-router'
-import AddExpenseBase, { type ConfirmExpenseData } from '@/components/shared/add-expense-base'
-import { useContactStore } from '@/store/use-contact-store'
-import { useTransactionStore } from '@/store/use-transaction-store'
-import { calculateContactOwesAmount } from '@/lib/split'
+import { toast } from 'sonner'
+import AddExpenseBase, { type ConfirmExpenseData, type InitialExpenseData } from '@/components/shared/add-expense-base'
+import ExpenseFormSkeleton from '@/components/shared/expense-form-skeleton'
+import { useExpenseQuery } from '@/features/expenses/api/use-expense-query'
+import { useUpdateExpenseMutation } from '@/features/expenses/api/use-update-expense-mutation'
+import { useCategoriesQuery } from '@/features/expenses/api/use-categories-query'
+import { useGroupQuery } from '@/features/groups/api/use-group-query'
+import { useAuthStore } from '@/store/use-auth-store'
+import { initialsForName, colorForName } from '@/lib/avatar-visuals'
 import { ROUTES } from '@/constants/routes'
+import type {
+  FriendshipExpensePayer as LedgerExpensePayer,
+  FriendshipExpenseSplit as LedgerExpenseSplit,
+} from '@/features/contacts/lib/build-friendship-expense-form-data'
 
+function receiptFileName(url: string): string {
+  try {
+    return decodeURIComponent(new URL(url).pathname.split('/').pop() || 'Receipt')
+  } catch {
+    return 'Receipt'
+  }
+}
+
+function buildPayers(
+  paidBy: string,
+  amount: number,
+  multipleAmounts: Record<string, number> | undefined,
+): LedgerExpensePayer[] {
+  if (paidBy === 'multiple' && multipleAmounts) {
+    const payers = Object.entries(multipleAmounts)
+      .filter(([, amt]) => amt > 0)
+      .map(([userId, amt]) => ({ user_id: userId, amount: amt.toFixed(2) }))
+    return payers.length > 0 ? payers : [{ user_id: paidBy, amount: amount.toFixed(2) }]
+  }
+  return [{ user_id: paidBy, amount: amount.toFixed(2) }]
+}
+
+function buildSplits(data: ConfirmExpenseData): LedgerExpenseSplit[] {
+  const splitData = data.splitData
+  if (!splitData || splitData.type === 'equal') {
+    const members = splitData?.selectedMembers ?? []
+    return members.map((id) => ({ user_id: id }))
+  }
+  if (splitData.type === 'unequal') {
+    return Object.entries(splitData.unequalAmounts).map(([id, amt]) => ({
+      user_id: id,
+      amount_owed: amt.toFixed(2),
+    }))
+  }
+  return Object.entries(splitData.adjustmentAmounts).map(([id, amt]) => ({
+    user_id: id,
+    extra_amount: amt.toFixed(2),
+  }))
+}
+
+/** Edit form for a group expense — reached only via the shared
+ * /transactions/$id/edit dispatcher, which already confirmed
+ * expense.context === 'group' before rendering this. */
 export default function EditGroupExpenseScreen() {
   const { id: txId } = useParams({ from: '/transactions/$id/edit' })
   const navigate = useNavigate()
+  const userProfile = useAuthStore((s) => s.userProfile)
+  const myId = userProfile?.id ?? ''
 
-  const transactionsByContact = useTransactionStore((state) => state.transactionsByContact)
-  let groupId = ''
-  for (const cId in transactionsByContact) {
-    if (transactionsByContact[cId].some((item) => item.id === txId)) {
-      groupId = cId
-      break
-    }
+  const expenseQuery = useExpenseQuery(txId)
+  const groupQuery = useGroupQuery(expenseQuery.data?.group ?? undefined)
+  const updateExpense = useUpdateExpenseMutation()
+  const categoriesQuery = useCategoriesQuery()
+
+  if (expenseQuery.isLoading || (!!expenseQuery.data?.group && groupQuery.isLoading)) {
+    return <ExpenseFormSkeleton />
   }
-  // Find group by id from store
-  const contacts = useContactStore((state) => state.contacts)
-  const contact = contacts.find((c) => c.id === groupId)
 
-  if (!contact || contact.type !== 'group') {
+  const expense = expenseQuery.data
+  const group = groupQuery.data
+
+  if (expenseQuery.isError || !expense || !group) {
     return (
       <div className="flex items-center justify-center p-6 bg-[#FEFAF1] h-[50vh]">
         <div className="text-center">
-          <p className="text-lg font-bold text-[#1A1A1A]">Group not found</p>
+          <p className="text-lg font-bold text-[#1A1A1A]">Expense not found</p>
           <button
             onClick={() => window.history.back()}
             className="mt-4 px-4 py-2 bg-positive text-white rounded-full font-bold border-0 cursor-pointer"
@@ -37,87 +91,97 @@ export default function EditGroupExpenseScreen() {
     )
   }
 
-  // Find the transaction record to edit from TRANSACTION_STORE
-  const txList = useTransactionStore.getState().transactionsByContact[contact.id] || []
-  const tx = txList.find((t) => t.id === txId)
+  const activeMembers = group.members.filter((m) => m.status === 'active')
+  const orderedMembers = [...activeMembers].sort((a, b) => (a.id === myId ? -1 : b.id === myId ? 1 : 0))
+  const members = orderedMembers.map((m) => ({
+    id: m.id,
+    name: m.id === myId ? 'You' : m.full_name,
+    initials: initialsForName(m.full_name),
+    avatarColor: colorForName(m.full_name),
+  }))
 
-  // Prefill data configuration from tx record
-  const initialData = {
-    amount: tx ? Math.abs(tx.amount).toString() : '',
-    description: tx?.name || '',
-    category: tx?.category || 'bills',
-    dateValue: tx?.dateValue || 'Today',
-    paidBy: tx ? (tx.amount > 0 ? 'you' as const : 'contact' as const) : 'you' as const,
-    splitData: {
-      type: (tx?.splitType || 'equal') as 'equal' | 'unequal' | 'adjustment',
-      selectedMembers: ['you', 'contact'],
-      unequalAmounts: { you: 0, contact: 0 },
-      adjustmentAmounts: { you: 0, contact: 0 },
-    }
+  const paidBy: string = expense.payers.length > 1 ? 'multiple' : (expense.payers[0]?.id ?? myId)
+
+  const multiplePayerAmounts =
+    expense.payers.length > 1
+      ? Object.fromEntries(expense.payers.map((p) => [p.id, Number(p.amount)]))
+      : undefined
+
+  const splitData = {
+    type: expense.split_type,
+    selectedMembers: expense.splits.map((s) => s.id),
+    unequalAmounts: Object.fromEntries(expense.splits.map((s) => [s.id, Number(s.amount_owed)])),
+    adjustmentAmounts: Object.fromEntries(expense.splits.map((s) => [s.id, Number(s.extra_amount)])),
   }
 
-  const handleConfirm = (data: ConfirmExpenseData) => {
-    const parsedAmount = data.amount
-    const paidBy = data.paidBy || 'you'
-    const splitData = data.splitData || {
-      type: 'equal',
-      selectedMembers: ['you', 'contact'],
-      unequalAmounts: { you: 0, contact: 0 },
-      adjustmentAmounts: { you: 0, contact: 0 },
+  const initialData: InitialExpenseData = {
+    amount: expense.amount,
+    description: expense.description,
+    category: expense.category.icon,
+    dateValue: new Date(expense.date + 'T00:00:00').toLocaleDateString('en-US', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    }),
+    dateISO: expense.date,
+    noteText: expense.note ?? '',
+    receiptFile: expense.receipt
+      ? { name: receiptFileName(expense.receipt), size: '', dataUrl: expense.receipt }
+      : null,
+    paidBy,
+    multiplePayerAmounts,
+    splitData,
+  }
+
+  const handleConfirm = async (data: ConfirmExpenseData) => {
+    const paidByValue = data.paidBy || myId
+    const category = categoriesQuery.data?.find((c) => c.icon === data.category)
+      ?? categoriesQuery.data?.find((c) => c.icon === 'other')
+
+    if (!category) {
+      const message = 'No matching category found.'
+      toast.error(message)
+      throw new Error(message)
     }
 
-    const contactOwesAmount = calculateContactOwesAmount(parsedAmount, paidBy as 'you' | 'contact', splitData)
+    const receiptChanged = data.receiptTouched && data.receiptFile?.dataUrl !== expense.receipt
+    const receiptCleared = data.receiptTouched && !data.receiptFile
 
-    if (tx) {
-      const oldAmount = tx.amount
-      const oldName = tx.name
-
-      const updatedTx = {
-        ...tx,
-        name: data.description || 'Edited Group Expense',
-        amount: contactOwesAmount,
-        category: data.category as any,
-        subtitle: paidBy === 'you' ? 'You paid' : `${contact.name.split(' ')[0]} paid`,
-        splitType: splitData.type,
-        dateValue: data.dateValue,
-      }
-
-      useTransactionStore.getState().updateTransaction(contact.id, updatedTx)
-
-      // Diff-based netAmount update avoids double-apply on repeated edits
-      const updatedNetAmount = contact.netAmount + (contactOwesAmount - oldAmount)
-
-      // Use original name/amount to locate the tag before it was changed
-      const updatedTags = [...contact.tags]
-      const tagIndex = updatedTags.findIndex((t) => t.name === oldName || t.amount === oldAmount)
-      if (tagIndex !== -1) {
-        updatedTags[tagIndex] = {
-          name: data.description || 'Edited Group Expense',
-          amount: contactOwesAmount,
-        }
-      }
-
-      useContactStore.getState().updateContact(contact.id, {
-        netAmount: updatedNetAmount,
-        tags: updatedTags
+    try {
+      await updateExpense.mutateAsync({
+        id: expense.id,
+        values: {
+          description: data.description,
+          amount: data.amount.toFixed(2),
+          date: data.dateISO,
+          categoryId: category.id,
+          note: data.noteText,
+          receipt: receiptChanged && !receiptCleared ? data.receiptFile?.dataUrl : undefined,
+          removeReceipt: receiptCleared,
+          splitType: data.splitData?.type ?? 'equal',
+          payers: buildPayers(paidByValue, data.amount, data.multiplePayerAmounts),
+          splits: buildSplits(data),
+        },
       })
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+      throw err
     }
   }
 
   return (
     <AddExpenseBase
-      title="Edit Group Expense"
+      title="Edit Expense"
       showPaidByAndSplit={true}
+      members={members}
       initialData={initialData}
-      contact={{
-        id: contact.id,
-        name: contact.name,
-        initials: contact.initials,
-        avatarColor: contact.avatarColor,
-      }}
       onConfirm={handleConfirm}
       onSuccessComplete={() => {
-        navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: txId }, replace: true })
+        navigate({
+          to: ROUTES.TRANSACTION_DETAILS,
+          params: { id: expense.id },
+          replace: true,
+        })
       }}
       onBack={() => window.history.back()}
     />
