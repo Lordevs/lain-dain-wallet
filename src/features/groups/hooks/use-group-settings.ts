@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
 import { useAuthStore } from '@/store/use-auth-store'
 import { useGroupQuery } from '@/features/groups/api/use-group-query'
@@ -127,8 +127,6 @@ export function useGroupSettings() {
     title: '',
   })
 
-  const pendingAfterClose = useRef<(() => void) | null>(null)
-
   const selectedMember = useMemo(() => {
     return members.find((m) => m.id === selectedMemberId) || null
   }, [members, selectedMemberId])
@@ -149,25 +147,15 @@ export function useGroupSettings() {
     if (!member || !id) return
 
     if (member.balance !== 0) {
+      // Blocking: unsettled balance means removal isn't allowed at all —
+      // this just informs the admin, it never leads into the confirm-remove
+      // drawer (see handleLeaveGroup's identical rule for the same reason).
       setDrawerConfig({
         type: 'outstanding',
         title: 'Permanently Remove the Member from the group',
         warningText: 'This member has unsettled balances in the group. Ask them to settle first before they can be removed.',
-        buttonText: 'Settle Balance',
-        onAction: () => {
-          pendingAfterClose.current = () => {
-            setDrawerConfig({
-              type: 'confirm',
-              title: 'Permanently Remove the Member from the group',
-              confirmTitle: 'Remove the account Permanently–',
-              confirmDescription: "They'll lose access to the group and its expenses. Their past contributions will remain visible to other members.",
-              buttonText: 'Confirm',
-              onAction: () => {
-                removeMemberMutation.mutate(memberId)
-              },
-            })
-          }
-        },
+        buttonText: 'Got it',
+        onAction: () => {},
       })
     } else {
       setDrawerConfig({
@@ -192,25 +180,16 @@ export function useGroupSettings() {
     const hasBalances = members.some((m) => m.id !== 'you' && m.balance !== 0)
 
     if (hasBalances) {
+      // Blocking: unsettled balance means you can't leave at all — this
+      // sends you to actually settle up, it never leads into the
+      // confirm-leave drawer (see handleRemoveMember's identical rule).
       setDrawerConfig({
         type: 'outstanding',
         title: `Leave ${groupName} Permanently`,
         warningText: `You have unsettled balances in ${groupName}. You must settle all balances before you can leave the group.`,
         buttonText: 'Settle Balance',
         onAction: () => {
-          pendingAfterClose.current = () => {
-            setDrawerConfig({
-              type: 'confirm',
-              title: `Leave ${groupName} Permanently`,
-              confirmTitle: 'Leave Group permanently?',
-              confirmDescription: "You'll lose access to this group and its expenses. Other members will still see your past contributions.",
-              buttonText: 'Confirm',
-              onAction: async () => {
-                await leaveGroupMutation.mutateAsync()
-                navigate({ to: ROUTES.DASHBOARD })
-              },
-            })
-          }
+          navigate({ to: ROUTES.SETTLE_UP, search: { groupId: id } })
         },
       })
     } else {
@@ -271,7 +250,6 @@ export function useGroupSettings() {
     setSelectedMemberId,
     drawerConfig,
     setDrawerConfig,
-    pendingAfterClose,
     selectedMember,
     handleToggleAdmin,
     handleTransferOwnership,

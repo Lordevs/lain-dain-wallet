@@ -29,7 +29,6 @@ export default function GroupSettingsScreen() {
     setSelectedMemberId,
     drawerConfig,
     setDrawerConfig,
-    pendingAfterClose,
     selectedMember,
     handleToggleAdmin,
     handleTransferOwnership,
@@ -363,16 +362,7 @@ export default function GroupSettingsScreen() {
       {/* Outstanding Balance Drawer */}
       <OutstandingBalanceDrawer
         isOpen={drawerConfig.type === 'outstanding'}
-        onClose={() => {
-          setDrawerConfig((prev) => ({ ...prev, type: null }))
-          // Fire pending action (e.g. open confirm drawer) after this drawer closes
-          if (pendingAfterClose.current) {
-            const action = pendingAfterClose.current
-            pendingAfterClose.current = null
-            // Small rAF to let the close animation settle before opening next drawer
-            requestAnimationFrame(() => action())
-          }
-        }}
+        onClose={() => setDrawerConfig((prev) => ({ ...prev, type: null }))}
         title={drawerConfig.title}
         warningText={drawerConfig.warningText || ''}
         buttonText={drawerConfig.buttonText}
