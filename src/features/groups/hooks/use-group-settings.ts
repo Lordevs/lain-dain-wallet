@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
 import { useAuthStore } from '@/store/use-auth-store'
 import { useGroupQuery } from '@/features/groups/api/use-group-query'
@@ -12,6 +12,7 @@ import {
   useDeleteGroupMutation,
   useTransferOwnershipMutation,
 } from '@/features/groups/api/use-group-actions-mutations'
+import { resolveGroupRole, getGroupPermissions } from '@/features/groups/lib/group-roles'
 import { initialsForName, colorForName } from '@/lib/avatar-visuals'
 import { ROUTES } from '@/constants/routes'
 
@@ -79,18 +80,13 @@ export function useGroupSettings() {
   const groupName = group?.name || ''
   const isNamePanelOpen = false
 
-  const myMember = group?.members.find((m) => m.id === myId)
-  const hasOwnerRole = group?.members.some((mem) => mem.role === 'owner')
-  const isOwner = hasOwnerRole ? myMember?.role === 'owner' : group?.created_by === myId
-  const isAdmin = isOwner || myMember?.role === 'admin'
+  const { isOwner, isAdmin } = getGroupPermissions(group, myId)
 
   const creator = group?.members.find((m) => m.id === group?.created_by)
   const creatorName = group?.created_by === myId ? 'You' : creator?.full_name || 'Owner'
 
-  const [members, setMembers] = useState<GroupMember[]>([])
-
-  useEffect(() => {
-    if (!group) return
+  const members: GroupMember[] = useMemo(() => {
+    if (!group) return []
     const balanceMap: Record<string, number> = {}
     if (Array.isArray(balanceQuery.data)) {
       balanceQuery.data.forEach((b) => {
@@ -98,34 +94,24 @@ export function useGroupSettings() {
         balanceMap[b.other_user.id] = b.direction === 'owed_to_you' ? net : b.direction === 'you_owe' ? -net : 0
       })
     }
-    const hasGroupOwner = group.members.some((mem) => mem.role === 'owner')
 
-    const apiMembers: GroupMember[] = group.members.map((m) => {
+    return group.members.map((m) => {
       const isMe = m.id === myId
-      const name = isMe ? 'You' : m.full_name
-      const bal = balanceMap[m.id] ?? 0
-      const memberIsOwner = hasGroupOwner ? m.role === 'owner' : m.id === group.created_by
-      const memberIsAdmin = memberIsOwner || m.role === 'admin'
-      const role: 'owner' | 'admin' | 'member' = memberIsOwner
-        ? 'owner'
-        : m.role === 'admin'
-        ? 'admin'
-        : 'member'
+      const role = resolveGroupRole(group, m.id)
 
       return makeMember({
         id: isMe ? 'you' : m.id,
-        name,
+        name: isMe ? 'You' : m.full_name,
         initials: initialsForName(m.full_name),
         avatarColor: colorForName(m.full_name),
         avatar: m.image ?? null,
-        balance: bal,
+        balance: balanceMap[m.id] ?? 0,
         role,
-        isOwner: memberIsOwner,
-        isAdmin: memberIsAdmin,
+        isOwner: role === 'owner',
+        isAdmin: role !== 'member',
         isPending: m.status === 'pending',
       })
     })
-    setMembers(apiMembers)
   }, [group, balanceQuery.data, myId])
 
   const makeAdminMutation = useMakeAdminMutation(id ?? '')

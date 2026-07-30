@@ -411,9 +411,9 @@ export default function AddExpenseBase({
             setPaidBy(value)
             setMultiplePayerAmounts(payerAmounts)
           }}
-          contactName={contact?.name ?? ''}
-          contactInitials={contact?.initials ?? ''}
-          contactAvatarColor={contact?.avatarColor ?? ''}
+          contactName={contact?.name}
+          contactInitials={contact?.initials}
+          contactAvatarColor={contact?.avatarColor}
           members={members}
           amount={Number(amount) || 0}
           initialPayerAmounts={multiplePayerAmounts}
@@ -435,9 +435,9 @@ export default function AddExpenseBase({
             closeSplit()
           }}
           initialSplitData={splitData}
-          contactName={contact?.name ?? ''}
-          contactInitials={contact?.initials ?? ''}
-          contactAvatarColor={contact?.avatarColor ?? ''}
+          contactName={contact?.name}
+          contactInitials={contact?.initials}
+          contactAvatarColor={contact?.avatarColor}
           members={members?.map((m) => ({ ...m, isOrganizer: m.id === defaultPayerId }))}
           multiplePayerAmounts={paidBy === 'multiple' ? multiplePayerAmounts : undefined}
         />

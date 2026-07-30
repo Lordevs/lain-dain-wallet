@@ -3,6 +3,7 @@ import ProfilePicturePanel from '@/components/shared/profile-picture-panel'
 import { useAuthStore } from '@/store/use-auth-store'
 import { useGroupQuery } from '@/features/groups/api/use-group-query'
 import { useUpdateGroupMutation } from '@/features/groups/api/use-update-group-mutation'
+import { getGroupPermissions } from '@/features/groups/lib/group-roles'
 import { initialsForName } from '@/lib/avatar-visuals'
 
 function GroupPhotoRouteComponent() {
@@ -18,8 +19,7 @@ function GroupPhotoRouteComponent() {
 
   if (groupQuery.isLoading) return null
 
-  const myMember = group?.members.find((m) => m.id === myId)
-  const isAdmin = myMember?.role === 'admin' || group?.created_by === myId
+  const { isAdmin } = getGroupPermissions(group, myId)
 
   if (!group || !isAdmin) {
     return <Navigate to="/groups/$id/settings" params={{ id }} replace />

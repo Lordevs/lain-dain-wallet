@@ -31,7 +31,7 @@ export function useUpdateGroupMutation(groupId: string) {
 
       if (values.image !== undefined) {
         if (values.image === null) {
-          formData.append('image', '')
+          formData.append('remove_image', 'true')
         } else {
           const blob = await fetch(values.image).then((r) => r.blob())
           const ext = blob.type.split('/')[1] || 'jpg'

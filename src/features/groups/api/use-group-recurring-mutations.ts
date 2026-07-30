@@ -3,49 +3,22 @@ import { toast } from 'sonner'
 import { apiClient } from '@/lib/api/client'
 import { ApiError, toApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
+import { appendLedgerExpenseFields, type LedgerExpenseCoreValues } from '@/features/expenses/lib/append-ledger-expense-fields'
 
-export interface GroupRecurringFormValues {
-  description: string
-  amount: string
+export interface GroupRecurringFormValues extends LedgerExpenseCoreValues {
   frequency: 'weekly' | 'biweekly' | 'monthly' | 'yearly'
   startDate: string // YYYY-MM-DD
   nextOccurrence: string // YYYY-MM-DD
-  categoryId: string
-  note?: string
-  receipt?: string | File | null
-  splitType: 'equal' | 'unequal' | 'adjustment'
-  payers: { user_id: string; amount: string }[]
-  splits: ({ user_id: string } | { user_id: string; amount_owed: string } | { user_id: string; extra_amount: string })[]
 }
 
 async function buildRecurringExpenseFormData(data: GroupRecurringFormValues, isUpdate = false): Promise<FormData> {
   const formData = new FormData()
-  formData.append('description', data.description)
-  formData.append('amount', data.amount)
   formData.append('frequency', data.frequency)
   if (!isUpdate) {
     formData.append('start_date', data.startDate)
   }
   formData.append('next_occurrence', data.nextOccurrence)
-  formData.append('category_id', data.categoryId)
-  if (data.note) formData.append('note', data.note)
-  formData.append('split_type', data.splitType)
-  formData.append('payers', JSON.stringify(data.payers))
-  formData.append('splits', JSON.stringify(data.splits))
-
-  if (data.receipt) {
-    if (typeof data.receipt === 'string' && (data.receipt.startsWith('blob:') || data.receipt.startsWith('data:'))) {
-      try {
-        const blob = await fetch(data.receipt).then((res) => res.blob())
-        formData.append('receipt', blob, 'receipt.jpg')
-      } catch (err) {
-        console.warn('Failed to fetch receipt blob:', err)
-      }
-    } else if (data.receipt instanceof File) {
-      formData.append('receipt', data.receipt)
-    }
-  }
-
+  await appendLedgerExpenseFields(formData, data)
   return formData
 }
 

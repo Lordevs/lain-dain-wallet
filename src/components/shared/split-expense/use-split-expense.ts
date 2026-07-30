@@ -59,17 +59,18 @@ export function getInitialSplitState(
 
 export function useSplitExpense({
   amount,
-  contactName,
-  contactInitials,
-  contactAvatarColor,
+  contactName = '',
+  contactInitials = '',
+  contactAvatarColor = '',
   members: membersProp,
   initialSplitData,
   onSave,
 }: {
   amount: number
-  contactName: string
-  contactInitials: string
-  contactAvatarColor: string
+  /** Only meaningful when `members` is omitted (1:1 contact mode). */
+  contactName?: string
+  contactInitials?: string
+  contactAvatarColor?: string
   /** Real member list (you first, then everyone else) for a group expense —
    * when provided this replaces the 2-person contact-based list below. */
   members?: SplitMember[]

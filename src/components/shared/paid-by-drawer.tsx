@@ -28,9 +28,11 @@ interface PaidByDrawerProps {
    * expense; lost otherwise since a single payer's amount is just the total. */
   onSelect: (value: string, payerAmounts?: Record<string, number>) => void
   selectedValue: string
-  contactName: string
-  contactInitials: string
-  contactAvatarColor: string
+  /** Only meaningful when `members` is omitted (1:1 contact mode) — ignored
+   * entirely once a real `members` list is provided. */
+  contactName?: string
+  contactInitials?: string
+  contactAvatarColor?: string
   /** Real member list (you first, then everyone else) for a group expense —
    * when provided this replaces the 2-person contact-based list below. */
   members?: PaidByMember[]
@@ -46,9 +48,9 @@ export default function PaidByDrawer({
   onClose,
   onSelect,
   selectedValue,
-  contactName,
-  contactInitials,
-  contactAvatarColor,
+  contactName = '',
+  contactInitials = '',
+  contactAvatarColor = '',
   members,
   amount = 0,
   initialPayerAmounts,

@@ -75,6 +75,7 @@ export function useLeaveGroupMutation(groupId: string) {
       if (error) throw toApiError(error)
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['groups', 'list'] })
       queryClient.invalidateQueries({ queryKey: ['user-ledgers'] })
       queryClient.invalidateQueries({ queryKey: ['wallet'] })
     },
@@ -95,6 +96,7 @@ export function useDeleteGroupMutation(groupId: string) {
       if (error) throw toApiError(error)
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['groups', 'list'] })
       queryClient.invalidateQueries({ queryKey: ['user-ledgers'] })
       queryClient.invalidateQueries({ queryKey: ['wallet'] })
     },

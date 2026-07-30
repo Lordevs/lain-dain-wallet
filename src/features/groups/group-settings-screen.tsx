@@ -62,6 +62,8 @@ export default function GroupSettingsScreen() {
     )
   }
 
+  const you = members.find((m) => m.id === 'you')
+
   // Handle back navigation
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -144,30 +146,26 @@ export default function GroupSettingsScreen() {
 
           <div className="bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] divide-y divide-[#EFE7DD] overflow-hidden">
             {/* Render You (static, no options trigger) */}
-            {members.find(m => m.id === 'you') && (
+            {you && (
               <ContactListItem
                 contact={{
                   id: 'you',
-                  name: members.find(m => m.id === 'you')!.name,
-                  initials: members.find(m => m.id === 'you')!.initials,
-                  avatarColor: members.find(m => m.id === 'you')!.avatarColor,
-                  src: members.find(m => m.id === 'you')!.avatar || undefined,
+                  name: you.name,
+                  initials: you.initials,
+                  avatarColor: you.avatarColor,
+                  src: you.avatar || undefined,
                 }}
                 subtitle={
                   <span className="text-[#6B6B6B] text-[12px]">
-                    {members.find(m => m.id === 'you')!.role === 'owner'
-                      ? 'Owner'
-                      : members.find(m => m.id === 'you')!.role === 'admin'
-                      ? 'Admin'
-                      : 'Member'}
+                    {you.role === 'owner' ? 'Owner' : you.role === 'admin' ? 'Admin' : 'Member'}
                   </span>
                 }
                 rightSlot={
-                  members.find(m => m.id === 'you')!.role === 'owner' ? (
+                  you.role === 'owner' ? (
                     <span className="bg-[#FEF3C7] text-[#D97706] text-[11px] font-bold px-3 py-1 rounded-full">
                       Owner
                     </span>
-                  ) : members.find(m => m.id === 'you')!.role === 'admin' ? (
+                  ) : you.role === 'admin' ? (
                     <span className="bg-[#ECF6F0] text-positive text-[11px] font-bold px-3 py-1 rounded-full">
                       Admin
                     </span>

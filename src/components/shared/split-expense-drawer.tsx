@@ -41,9 +41,11 @@ interface SplitExpenseDrawerProps {
   onClose: () => void
   onSave: (splitData: SplitData) => void
   initialSplitData?: SplitData | null
-  contactName: string
-  contactInitials: string
-  contactAvatarColor: string
+  /** Only meaningful when `members` is omitted (1:1 contact mode) — ignored
+   * entirely once a real `members` list is provided. */
+  contactName?: string
+  contactInitials?: string
+  contactAvatarColor?: string
   /** Real member list (you first, then everyone else) for a group expense —
    * when provided this replaces the 2-person contact-based list. */
   members?: SplitMember[]
@@ -67,9 +69,9 @@ export default function SplitExpenseDrawer({
   onClose,
   onSave,
   initialSplitData = null,
-  contactName,
-  contactInitials,
-  contactAvatarColor,
+  contactName = '',
+  contactInitials = '',
+  contactAvatarColor = '',
   members,
   isRecurring = false,
   frequency = 'Monthly',

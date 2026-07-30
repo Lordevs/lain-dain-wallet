@@ -5,6 +5,7 @@ import smartSettleImg from '@/assets/smart-settle.png'
 import { useAuthStore } from '@/store/use-auth-store'
 import { useGroupQuery } from '@/features/groups/api/use-group-query'
 import { useUpdateGroupMutation } from '@/features/groups/api/use-update-group-mutation'
+import { getGroupPermissions } from '@/features/groups/lib/group-roles'
 
 export default function SmartSettleScreen() {
   const { id } = useParams({ strict: false })
@@ -15,8 +16,7 @@ export default function SmartSettleScreen() {
   const group = groupQuery.data
   const updateGroup = useUpdateGroupMutation(id ?? '')
 
-  const myMember = group?.members.find((m) => m.id === myId)
-  const isAdmin = myMember?.role === 'owner' || myMember?.role === 'admin' || group?.created_by === myId
+  const { isAdmin } = getGroupPermissions(group, myId)
 
   const isSimplified = group?.smart_settle_enabled ?? true
 

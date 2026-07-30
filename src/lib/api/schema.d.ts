@@ -142,6 +142,13 @@ export interface paths {
          *     When `is_on_lain_dain` is true, use `lain_dain_user_id` instead: that's
          *     the actual User.id, the value `POST /api/ledger/friendships/`
          *     (`user_id`) and `POST /api/ledger/groups/` (`member_ids`) expect.
+         *
+         *     Excludes the caller's own number outright — a common real case (their
+         *     own number saved in their own address book, e.g. under "Me"), and
+         *     showing it here would be pointless clutter at best: `POST
+         *     /api/ledger/friendships/` already rejects starting a ledger with
+         *     yourself (see FriendshipStartSerializer.validate_user_id), so there's
+         *     nothing a client could do with a self-match anyway.
          */
         get: operations["contacts_list"];
         put?: never;
@@ -2168,6 +2175,13 @@ export interface components {
          *     inherit create's required fields. Currency exchange rates are
          *     managed separately (POST/DELETE .../currency-rates/), not through
          *     this PATCH — see GroupCurrencyRateSetSerializer.
+         *
+         *     `remove_image` clears the group's photo without a replacement upload
+         *     — DRF's ImageField can't distinguish "no change" from "clear this"
+         *     given an empty value in multipart data, so this is a separate
+         *     write-only flag, same convention as ExpenseUpdateSerializer's
+         *     remove_receipt. Ignored if a new `image` is uploaded in the same
+         *     request — a real upload always wins.
          */
         GroupUpdate: {
             name: string;
@@ -2185,6 +2199,13 @@ export interface components {
          *     inherit create's required fields. Currency exchange rates are
          *     managed separately (POST/DELETE .../currency-rates/), not through
          *     this PATCH — see GroupCurrencyRateSetSerializer.
+         *
+         *     `remove_image` clears the group's photo without a replacement upload
+         *     — DRF's ImageField can't distinguish "no change" from "clear this"
+         *     given an empty value in multipart data, so this is a separate
+         *     write-only flag, same convention as ExpenseUpdateSerializer's
+         *     remove_receipt. Ignored if a new `image` is uploaded in the same
+         *     request — a real upload always wins.
          */
         GroupUpdateRequest: {
             name: string;
@@ -2192,6 +2213,8 @@ export interface components {
             /** Format: binary */
             image?: string | null;
             smart_settle_enabled?: boolean;
+            /** @default false */
+            remove_image: boolean;
         };
         InviteMembersRequest: {
             member_ids: string[];
@@ -2505,6 +2528,13 @@ export interface components {
          *     inherit create's required fields. Currency exchange rates are
          *     managed separately (POST/DELETE .../currency-rates/), not through
          *     this PATCH — see GroupCurrencyRateSetSerializer.
+         *
+         *     `remove_image` clears the group's photo without a replacement upload
+         *     — DRF's ImageField can't distinguish "no change" from "clear this"
+         *     given an empty value in multipart data, so this is a separate
+         *     write-only flag, same convention as ExpenseUpdateSerializer's
+         *     remove_receipt. Ignored if a new `image` is uploaded in the same
+         *     request — a real upload always wins.
          */
         PatchedGroupUpdateRequest: {
             name?: string;
@@ -2512,6 +2542,8 @@ export interface components {
             /** Format: binary */
             image?: string | null;
             smart_settle_enabled?: boolean;
+            /** @default false */
+            remove_image: boolean;
         };
         /**
          * @description Write shape for PATCH /api/expenses/my-expenses/settings/ — every

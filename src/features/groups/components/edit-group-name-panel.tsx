@@ -1,10 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useParams, Navigate } from '@tanstack/react-router'
 import FlowHeader from '@/components/shared/flow-header'
 import FormError from '@/components/shared/form-error'
 import { useAuthStore } from '@/store/use-auth-store'
 import { useGroupQuery } from '@/features/groups/api/use-group-query'
 import { useUpdateGroupMutation } from '@/features/groups/api/use-update-group-mutation'
+import { getGroupPermissions } from '@/features/groups/lib/group-roles'
+import type { components } from '@/lib/api/schema'
+
+type Group = components['schemas']['Group']
 
 /** Edit group info (name + description) standalone screen.
  * Route: /groups/$id/settings/name */
@@ -17,21 +21,6 @@ export default function EditGroupNamePanel() {
   const groupQuery = useGroupQuery(id)
   const group = groupQuery.data
 
-  const myMember = group?.members.find((m) => m.id === myId)
-  const isAdmin = myMember?.role === 'admin' || group?.created_by === myId
-
-  const [name, setName] = useState(group?.name ?? '')
-  const [description, setDescription] = useState(group?.description ?? '')
-
-  useEffect(() => {
-    if (group) {
-      setName(group.name ?? '')
-      setDescription(group.description ?? '')
-    }
-  }, [group])
-
-  const updateGroup = useUpdateGroupMutation(id)
-
   if (groupQuery.isLoading) {
     return (
       <div className="min-h-screen bg-[#FEFAF1] flex items-center justify-center">
@@ -40,9 +29,22 @@ export default function EditGroupNamePanel() {
     )
   }
 
+  const { isAdmin } = getGroupPermissions(group, myId)
+
   if (!group || !isAdmin) {
     return <Navigate to="/groups/$id/settings" params={{ id }} replace />
   }
+
+  // Mounted only once the group is loaded, so its own useState lazy
+  // initializer picks up the real name/description on first render.
+  return <EditGroupNameForm id={id} group={group} />
+}
+
+function EditGroupNameForm({ id, group }: { id: string; group: Group }) {
+  const [name, setName] = useState(group.name ?? '')
+  const [description, setDescription] = useState(group.description ?? '')
+
+  const updateGroup = useUpdateGroupMutation(id)
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()

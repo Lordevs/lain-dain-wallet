@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { FileText, ChevronRight, ChevronDown, Calendar, Users, User } from 'lucide-react'
 import { useFormattedAmountInput } from '@/hooks/use-formatted-amount-input'
@@ -10,10 +10,11 @@ import AddReceiptFlow from '@/components/shared/add-receipt-flow'
 import AddNoteFlow from '@/components/shared/add-note-flow'
 import SuccessCheck from '@/components/shared/success-check'
 import FormError from '@/components/shared/form-error'
+import ExpenseFormSkeleton from '@/components/shared/expense-form-skeleton'
 import { useAuthStore } from '@/store/use-auth-store'
 import { useGroupQuery } from '@/features/groups/api/use-group-query'
 import { useCategoriesQuery } from '@/features/expenses/api/use-categories-query'
-import { useGroupRecurringQuery } from '@/features/groups/api/use-group-recurring-query'
+import { useGroupRecurringQuery, type RecurringExpenseRead } from '@/features/groups/api/use-group-recurring-query'
 import {
   useCreateGroupRecurringMutation,
   useUpdateGroupRecurringMutation,
@@ -23,6 +24,10 @@ import { initialsForName, colorForName } from '@/lib/avatar-visuals'
 import RecurringFormHeader from '@/features/groups/components/recurring-form-header'
 import FrequencyToggle, { type RecurringFrequency } from '@/features/groups/components/frequency-toggle'
 import RecurringAttachmentsStrip from '@/features/groups/components/recurring-attachments-strip'
+import type { components } from '@/lib/api/schema'
+
+type Group = components['schemas']['Group']
+type Category = components['schemas']['Category']
 
 interface AddRecurringScreenProps {
   groupId: string
@@ -55,73 +60,108 @@ export default function AddRecurringScreen({
   onClose = () => window.history.back(),
   onSuccess = () => window.history.back(),
 }: AddRecurringScreenProps) {
+  const groupQuery = useGroupQuery(groupId)
+  const recurringQuery = useGroupRecurringQuery(groupId)
+  const categoriesQuery = useCategoriesQuery()
+
+  const editingPayment = useMemo(() => {
+    if (!editPaymentId) return null
+    return recurringQuery.data?.find((p) => p.id === editPaymentId) ?? null
+  }, [recurringQuery.data, editPaymentId])
+
+  const isLoading =
+    groupQuery.isLoading || categoriesQuery.isLoading || (!!editPaymentId && recurringQuery.isLoading)
+
+  if (isLoading) {
+    return <ExpenseFormSkeleton />
+  }
+
+  if (!groupQuery.data || (editPaymentId && !editingPayment)) {
+    return (
+      <div className="flex items-center justify-center p-6 bg-[#FEFAF1] h-[50vh]">
+        <div className="text-center">
+          <p className="text-lg font-bold text-[#1A1A1A]">
+            {editPaymentId ? 'Recurring payment not found' : 'Group not found'}
+          </p>
+          <button
+            onClick={onClose}
+            className="mt-4 px-4 py-2 bg-positive text-white rounded-full font-bold border-0 cursor-pointer"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Mounted only once the group (and, when editing, the payment) is
+  // loaded, so its own useState lazy initializers pick up the real
+  // values on first render — no effect needed to resync.
+  return (
+    <AddRecurringForm
+      groupId={groupId}
+      editPaymentId={editPaymentId}
+      group={groupQuery.data}
+      editingPayment={editingPayment}
+      categories={categoriesQuery.data ?? []}
+      onClose={onClose}
+      onSuccess={onSuccess}
+    />
+  )
+}
+
+function AddRecurringForm({
+  groupId,
+  editPaymentId,
+  group,
+  editingPayment,
+  categories,
+  onClose,
+  onSuccess,
+}: {
+  groupId: string
+  editPaymentId?: string
+  group: Group
+  editingPayment: RecurringExpenseRead | null
+  categories: Category[]
+  onClose: () => void
+  onSuccess: () => void
+}) {
   const navigate = useNavigate()
   const userProfile = useAuthStore((state) => state.userProfile)
   const myId = userProfile?.id ?? ''
 
-  const { data: group } = useGroupQuery(groupId)
-  const { data: payments = [] } = useGroupRecurringQuery(groupId)
-  const categoriesQuery = useCategoriesQuery()
-  const categories = categoriesQuery.data ?? []
-
   const createMutation = useCreateGroupRecurringMutation(groupId)
   const updateMutation = useUpdateGroupRecurringMutation(groupId, editPaymentId ?? '')
 
-  // Look up payment if editing
-  const editingPayment = useMemo(() => {
-    if (!editPaymentId) return null
-    return payments.find((p) => p.id === editPaymentId) ?? null
-  }, [payments, editPaymentId])
-
-  const { amount, handleAmountChange, formattedAmount } = useFormattedAmountInput('')
-  const [description, setDescription] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('bills')
-  const [frequency, setFrequency] = useState<RecurringFrequency>('Monthly')
-  const [dateValue, setDateValue] = useState('Today')
-  const [paidBy, setPaidBy] = useState('you')
-  const [splitData, setSplitData] = useState<SplitData>({
-    type: 'equal',
-    selectedMembers: ['you'],
-    unequalAmounts: {},
-    adjustmentAmounts: {},
+  const { amount, formattedAmount, handleAmountChange } = useFormattedAmountInput(
+    editingPayment ? String(editingPayment.amount) : ''
+  )
+  const [description, setDescription] = useState(editingPayment?.description ?? '')
+  const [selectedCategory, setSelectedCategory] = useState(editingPayment?.category?.icon ?? 'bills')
+  const [frequency, setFrequency] = useState<RecurringFrequency>(
+    editingPayment?.frequency?.toLowerCase() === 'weekly' ? 'Weekly' : 'Monthly'
+  )
+  const [dateValue, setDateValue] = useState(editingPayment?.next_occurrence ?? 'Today')
+  const [paidBy, setPaidBy] = useState(() => {
+    const rawPayer = editingPayment?.payers?.[0]?.id
+    return !rawPayer || rawPayer === myId ? 'you' : rawPayer
+  })
+  const [splitData, setSplitData] = useState<SplitData>(() => {
+    const initialSplits = editingPayment?.splits?.map((s) => (s.id === myId ? 'you' : s.id)) ?? []
+    return {
+      type: (editingPayment?.split_type as 'equal' | 'unequal' | 'adjustment') || 'equal',
+      selectedMembers: initialSplits.length > 0 ? initialSplits : ['you'],
+      unequalAmounts: {},
+      adjustmentAmounts: {},
+    }
   })
 
   // Attachment overlay states
-  const [receiptFile, setReceiptFile] = useState<{ name: string; size: string; dataUrl?: string } | null>(null)
-  const [noteText, setNoteText] = useState('')
-
-  // Track if form has been populated from editingPayment
-  const [hasPopulated, setHasPopulated] = useState(false)
-
-  useEffect(() => {
-    if (editingPayment && !hasPopulated) {
-      const amtStr = String(editingPayment.amount)
-      handleAmountChange({ target: { value: amtStr } } as any)
-      setDescription(editingPayment.description ?? '')
-      setSelectedCategory(editingPayment.category?.icon ?? 'bills')
-      setFrequency(editingPayment.frequency?.toLowerCase() === 'weekly' ? 'Weekly' : 'Monthly')
-      setDateValue(editingPayment.next_occurrence ?? 'Today')
-
-      const rawPayer = editingPayment.payers?.[0]?.id
-      setPaidBy(!rawPayer || rawPayer === myId ? 'you' : rawPayer)
-
-      const initialSplits = editingPayment.splits?.map((s) => (s.id === myId ? 'you' : s.id)) ?? []
-      setSplitData({
-        type: (editingPayment.split_type as 'equal' | 'unequal' | 'adjustment') || 'equal',
-        selectedMembers: initialSplits.length > 0 ? initialSplits : ['you'],
-        unequalAmounts: {},
-        adjustmentAmounts: {},
-      })
-
-      if (editingPayment.receipt) {
-        setReceiptFile({ name: 'Receipt', size: '', dataUrl: editingPayment.receipt })
-      }
-      if (editingPayment.note) {
-        setNoteText(editingPayment.note)
-      }
-      setHasPopulated(true)
-    }
-  }, [editingPayment, hasPopulated, myId, handleAmountChange])
+  const [receiptFile, setReceiptFile] = useState<{ name: string; size: string; dataUrl?: string } | null>(
+    editingPayment?.receipt ? { name: 'Receipt', size: '', dataUrl: editingPayment.receipt } : null
+  )
+  const [noteText, setNoteText] = useState(editingPayment?.note ?? '')
 
   // UI trigger states
   const [showPaidBy, setShowPaidBy] = useState(false)
@@ -133,7 +173,6 @@ export default function AddRecurringScreen({
 
   // Build real member list for PaidByDrawer and SplitExpenseDrawer
   const drawerMembers = useMemo(() => {
-    if (!group?.members) return []
     return group.members
       .filter((m) => m.status === 'active')
       .map((m) => {
@@ -148,7 +187,7 @@ export default function AddRecurringScreen({
           isOrganizer: isMe,
         }
       })
-  }, [group?.members, myId])
+  }, [group.members, myId])
 
   const defaultSelectedMembers = useMemo(() => {
     return drawerMembers.map((m) => m.id)
@@ -157,7 +196,7 @@ export default function AddRecurringScreen({
   // Resolve payer display name
   const payerName = useMemo(() => {
     if (paidBy === 'you' || paidBy === myId) return 'You'
-    const found = group?.members.find((m) => m.id === paidBy)
+    const found = group.members.find((m) => m.id === paidBy)
     return found?.full_name ?? 'Member'
   }, [paidBy, myId, group])
 
@@ -175,10 +214,10 @@ export default function AddRecurringScreen({
     const payerUserId = paidBy === 'you' ? myId : paidBy
     const payers = [{ user_id: payerUserId, amount: String(parsedAmount) }]
 
-    const activeMembers = group?.members.filter((m) => m.status === 'active') ?? []
+    const activeMembers = group.members.filter((m) => m.status === 'active')
     const membersInGroup = activeMembers.map((m) => m.id)
 
-    let splits: GroupRecurringFormValues['splits'] = []
+    let splits: GroupRecurringFormValues['splits']
     if (splitData.type === 'equal') {
       const targetMembers = splitData.selectedMembers.length > 0 ? splitData.selectedMembers : membersInGroup
       splits = targetMembers.map((id) => ({ user_id: id === 'you' ? myId : id }))
@@ -440,47 +479,37 @@ export default function AddRecurringScreen({
       />
 
       {/* Drawers (PaidBy / Split / Date) */}
-      {group && (
-        <PaidByDrawer
-          isOpen={showPaidBy}
-          onClose={() => setShowPaidBy(false)}
-          selectedValue={paidBy}
-          onSelect={setPaidBy}
-          contactName={group.name}
-          contactInitials={group.name.slice(0, 2).toUpperCase()}
-          contactAvatarColor="bg-positive"
-          members={drawerMembers}
-          amount={Number(amount) || 0}
-        />
-      )}
+      <PaidByDrawer
+        isOpen={showPaidBy}
+        onClose={() => setShowPaidBy(false)}
+        selectedValue={paidBy}
+        onSelect={setPaidBy}
+        members={drawerMembers}
+        amount={Number(amount) || 0}
+      />
 
-      {group && (
-        <SplitExpenseDrawer
-          isOpen={showSplit}
-          amount={Number(amount) || 0}
-          description={description}
-          categoryLabel={CATEGORIES.find((cat) => cat.id === selectedCategory)?.label || 'Other'}
-          categoryColor={CATEGORIES.find((cat) => cat.id === selectedCategory)?.color || '#7F8C8D'}
-          CategoryIcon={CATEGORIES.find((cat) => cat.id === selectedCategory)?.icon || CATEGORIES[7].icon}
-          onClose={() => setShowSplit(false)}
-          onSave={(data) => {
-            setSplitData(data)
-            setShowSplit(false)
-          }}
-          initialSplitData={
-            splitData.selectedMembers.length > 0
-              ? splitData
-              : { ...splitData, selectedMembers: defaultSelectedMembers }
-          }
-          contactName={group.name}
-          contactInitials={group.name.slice(0, 2).toUpperCase()}
-          contactAvatarColor="bg-positive"
-          members={drawerMembers}
-          isRecurring={true}
-          frequency={frequency}
-          startsOn={dateValue}
-        />
-      )}
+      <SplitExpenseDrawer
+        isOpen={showSplit}
+        amount={Number(amount) || 0}
+        description={description}
+        categoryLabel={CATEGORIES.find((cat) => cat.id === selectedCategory)?.label || 'Other'}
+        categoryColor={CATEGORIES.find((cat) => cat.id === selectedCategory)?.color || '#7F8C8D'}
+        CategoryIcon={CATEGORIES.find((cat) => cat.id === selectedCategory)?.icon || CATEGORIES[7].icon}
+        onClose={() => setShowSplit(false)}
+        onSave={(data) => {
+          setSplitData(data)
+          setShowSplit(false)
+        }}
+        initialSplitData={
+          splitData.selectedMembers.length > 0
+            ? splitData
+            : { ...splitData, selectedMembers: defaultSelectedMembers }
+        }
+        members={drawerMembers}
+        isRecurring={true}
+        frequency={frequency}
+        startsOn={dateValue}
+      />
 
       <SelectDateDrawer
         isOpen={showDateDrawer}

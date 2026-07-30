@@ -9,7 +9,9 @@ import { useAuthStore } from '@/store/use-auth-store'
 import { useGroupQuery } from '@/features/groups/api/use-group-query'
 import { useGroupRecurringQuery } from '@/features/groups/api/use-group-recurring-query'
 import { useDeleteGroupRecurringMutation } from '@/features/groups/api/use-group-recurring-mutations'
+import { getGroupPermissions } from '@/features/groups/lib/group-roles'
 import { initialsForName, colorForName } from '@/lib/avatar-visuals'
+import { formatCurrency } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import { ROUTES } from '@/constants/routes'
 
@@ -28,8 +30,7 @@ export default function RecurringPaymentsScreen({ groupId, onClose }: RecurringP
   const { data: payments = [], isLoading } = useGroupRecurringQuery(groupId)
   const deleteMutation = useDeleteGroupRecurringMutation(groupId)
 
-  const myMember = group?.members.find((m) => m.id === myId)
-  const isAdmin = myMember?.role === 'owner' || myMember?.role === 'admin' || group?.created_by === myId
+  const { isAdmin } = getGroupPermissions(group, myId)
 
   // Calculate Monthly total dynamically from API items
   const monthlyTotal = useMemo(() => {
@@ -151,14 +152,14 @@ export default function RecurringPaymentsScreen({ groupId, onClose }: RecurringP
                               initials={payerInitials}
                               avatarColor={payerColor}
                               src={mainPayer?.image ?? undefined}
-                              size="sm"
+                              size="xs"
                             />
                             <span className="text-[13px] text-[#6B6B6B] font-semibold truncate leading-none">
                               Paid by {payerName}
                             </span>
                           </div>
                           <span className="text-[15px] font-black text-[#1A1A1A] leading-none shrink-0">
-                            {p.currency ?? 'PKR'} {amountNum.toLocaleString('en-US')}
+                            {formatCurrency(amountNum, p.currency ?? 'PKR')}
                           </span>
                         </div>
 

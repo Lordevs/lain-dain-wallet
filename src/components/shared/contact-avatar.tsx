@@ -9,6 +9,7 @@ import {
 // ─── Size Map ─────────────────────────────────────────────────────────────────
 
 const SIZE_CLASSES = {
+  xs: 'size-5 text-[8px]',
   sm: 'size-9 text-xs',
   md: 'size-11 text-sm',
   lg: 'size-14 text-base',
