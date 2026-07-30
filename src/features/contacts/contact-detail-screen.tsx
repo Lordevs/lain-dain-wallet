@@ -9,6 +9,7 @@ import FlowHeader from '@/components/shared/flow-header'
 import ExpenseList, { type ExpenseListData } from '@/components/shared/expense-list'
 import EmptyState from '@/components/shared/empty-state'
 import ExpenseListSkeleton from '@/components/shared/expense-list-skeleton'
+import InfiniteScrollSentinel from '@/components/shared/infinite-scroll-sentinel'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useContactLedgers } from '@/features/contacts/hooks/use-contact-ledgers'
 import { useFriendshipTransactionsQuery } from '@/features/contacts/api/use-friendship-transactions-query'
@@ -53,20 +54,36 @@ export default function ContactDetailScreen() {
           subtitle: youPaid ? 'You paid' : `${payerNames} paid`,
           amount: Number(t.data.amount),
           currency: t.data.currency,
+          categoryIcon: t.data.category.icon,
+          categoryColor: t.data.category.color,
           rightSubtitle: new Date(t.data.date).toLocaleDateString(),
           showChevron: true,
           amountColor: 'default' as const,
+          kind: 'expense' as const,
         }
       }
+      const isConfirmed = t.data.status === 'confirmed'
+      const isPending = t.data.status === 'pending'
+      const otherUserId = ledgers.data?.other_user.id
+      const paymentSummary = t.data.payer.id === otherUserId
+        ? `${t.data.payer.full_name} paid you`
+        : `You paid ${t.data.payee.full_name}`
+
       return {
         id: t.data.id,
-        name: t.data.status === 'confirmed' ? 'Settlement' : 'Settlement (pending)',
-        subtitle: `${t.data.payer.full_name} paid ${t.data.payee.full_name}`,
+        name: isConfirmed ? 'Payment settled' : isPending ? 'Payment pending' : 'Payment disputed',
+        subtitle: isConfirmed ? `${paymentSummary}\nBalance adjusted` : paymentSummary,
         amount: Number(t.data.amount),
         currency: t.data.currency,
-        rightSubtitle: new Date(t.data.date).toLocaleDateString(),
-        showChevron: true,
-        amountColor: 'green' as const,
+        category: isConfirmed ? 'payment' as const : 'other' as const,
+        rightSubtitle: new Date(t.data.created_at).toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+        }),
+        showChevron: !isConfirmed,
+        amountColor: isConfirmed ? 'green' as const : isPending ? 'orange' as const : 'black' as const,
+        className: isConfirmed ? 'bg-[#DCEFE4] hover:bg-[#DCEFE4]/90' : undefined,
+        kind: 'settlement' as const,
       }
     })
   }, [transactions.data, ledgers.data])
@@ -108,8 +125,10 @@ export default function ContactDetailScreen() {
     )
   }
 
-  const { other_user: otherUser, overall } = ledgers.data
-  const primaryBalance = overall[0]
+  const { other_user: otherUser, ledgers: ledgerItems } = ledgers.data
+  // This screen and its transaction history are scoped to the direct
+  // friendship. Cross-group totals belong on ContactBreakdownScreen.
+  const primaryBalance = ledgerItems.find((item) => item.scope === 'friendship')
   const amount = primaryBalance ? Number(primaryBalance.net_amount) : 0
   const isPositive = primaryBalance?.direction === 'owed_to_you'
   const isNegative = primaryBalance?.direction === 'you_owe'
@@ -140,7 +159,7 @@ export default function ContactDetailScreen() {
         rightSlot={undefined}
       />
 
-      {/* Overall Balance Stat Card */}
+      {/* Direct 1-to-1 Balance Stat Card */}
       <div className="px-6 mb-6">
         <div className="bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-6 flex items-center justify-between">
           <div className="flex flex-col text-left">
@@ -175,10 +194,21 @@ export default function ContactDetailScreen() {
           />
         )}
         {items.length > 0 && (
-          <ExpenseList
-            expenses={items}
-            onItemClick={(tid) => navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: tid.toString() } })}
-          />
+          <>
+            <ExpenseList
+              expenses={items}
+              onItemClick={(tid, kind) =>
+                kind === 'settlement'
+                  ? navigate({ to: ROUTES.SETTLEMENT_DETAILS, params: { id: tid.toString() } })
+                  : navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: tid.toString() } })
+              }
+            />
+            <InfiniteScrollSentinel
+              onLoadMore={transactions.fetchNextPage}
+              hasMore={transactions.hasNextPage}
+              isLoading={transactions.isFetchingNextPage}
+            />
+          </>
         )}
       </div>
 

@@ -1,7 +1,5 @@
-import { createElement } from 'react'
 import type { components } from '@/lib/api/schema'
 import type { ExpenseListData } from '@/components/shared/expense-list'
-import { iconForCategory } from '@/features/expenses/lib/category-icons'
 
 type MyExpenseItem = components['schemas']['MyExpenseItem']
 
@@ -23,18 +21,12 @@ export function toExpenseListItem(item: MyExpenseItem, myId: string | undefined)
     subtitle: paidByLabel(item, myId),
     amount: Number(item.your_share),
     currency: item.currency,
+    categoryIcon: item.category.icon,
+    categoryColor: item.category.color,
     rightSubtitle: new Date(item.date + 'T00:00:00').toLocaleDateString('en-US', {
       day: 'numeric',
       month: 'short',
     }),
     amountColor: 'black',
-    leftSlot: (
-      <div
-        className="w-12 h-12 rounded-[13px] flex items-center justify-center shrink-0"
-        style={{ backgroundColor: `${item.category.color}1A` }}
-      >
-        {createElement(iconForCategory(item.category.icon), { size: 22, style: { color: item.category.color } })}
-      </div>
-    ),
   }
 }

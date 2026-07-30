@@ -12,6 +12,7 @@ import ExpenseList from '@/components/shared/expense-list'
 import ExpenseListSkeleton from '@/components/shared/expense-list-skeleton'
 import MonthFilterDropdown from './components/month-filter-drawer'
 import FlowHeader from '@/components/shared/flow-header'
+import InfiniteScrollSentinel from '@/components/shared/infinite-scroll-sentinel'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toExpenseSummary } from './lib/map-my-expenses-summary'
 import { toExpenseListItem } from './lib/map-my-expense-item'
@@ -93,10 +94,17 @@ export default function PersonalScreen() {
           ) : items.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-6">No expenses this period.</p>
           ) : (
-            <ExpenseList
-              expenses={items}
-              onItemClick={(id) => navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: String(id) } })}
-            />
+            <>
+              <ExpenseList
+                expenses={items}
+                onItemClick={(id) => navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: String(id) } })}
+              />
+              <InfiniteScrollSentinel
+                onLoadMore={listQuery.fetchNextPage}
+                hasMore={listQuery.hasNextPage}
+                isLoading={listQuery.isFetchingNextPage}
+              />
+            </>
           )}
         </div>
       </div>

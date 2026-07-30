@@ -1,6 +1,8 @@
+import { createElement } from 'react'
 import { Coffee, Fuel, ShoppingCart, Truck, Handshake, Layers, ChevronRight } from 'lucide-react'
 import { formatCurrency } from '@/lib/currency'
 import { cn } from '@/lib/utils'
+import { iconForCategory } from '@/features/expenses/lib/category-icons'
 
 export type ExpenseCategory = 'food' | 'fuel' | 'shopping' | 'transport' | 'payment' | 'other'
 
@@ -10,6 +12,8 @@ export interface ExpenseItemProps {
   amount: number
   currency?: string
   category?: ExpenseCategory
+  categoryIcon?: string
+  categoryColor?: string
   amountColor?: 'green' | 'orange' | 'black' | 'default'
   showChevron?: boolean
   rightSubtitle?: string
@@ -36,7 +40,7 @@ const CATEGORY_VISUALS = {
     bgClass: 'bg-[#E3F2FD]',
   },
   payment: {
-    icon: <Handshake size={24} className="text-primary" />,
+    icon: <Handshake size={24} className="text-positive" strokeWidth={2.5} />,
     bgClass: 'bg-[#B8DECA]',
   },
   other: {
@@ -56,6 +60,8 @@ export default function ExpenseItem({
   amount,
   currency = 'PKR',
   category = 'other',
+  categoryIcon,
+  categoryColor,
   amountColor = 'default',
   showChevron = true,
   rightSubtitle,
@@ -93,8 +99,24 @@ export default function ExpenseItem({
       <div className="flex items-center gap-3">
         {leftSlot ? (
           leftSlot
+        ) : categoryIcon ? (
+          <div
+            className="w-12 h-12 rounded-[13px] flex items-center justify-center shrink-0"
+            style={{ backgroundColor: categoryColor ? `${categoryColor}1A` : undefined }}
+          >
+            {createElement(iconForCategory(categoryIcon), {
+              size: 22,
+              style: categoryColor ? { color: categoryColor } : undefined,
+            })}
+          </div>
         ) : (
-          <div className={cn('w-12 h-12 rounded-[13px] flex items-center justify-center shrink-0', bgClass)}>
+          <div
+            className={cn(
+              'w-12 h-12 flex items-center justify-center shrink-0',
+              category === 'payment' ? 'rounded-full' : 'rounded-[13px]',
+              bgClass,
+            )}
+          >
             {icon}
           </div>
         )}

@@ -12,10 +12,12 @@ import ContactListItem from '@/components/shared/contact-list-item'
 import ExpenseList, { type ExpenseListData } from '@/components/shared/expense-list'
 import EmptyState from '@/components/shared/empty-state'
 import ExpenseListSkeleton from '@/components/shared/expense-list-skeleton'
+import InfiniteScrollSentinel from '@/components/shared/infinite-scroll-sentinel'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useGroupQuery } from '@/features/groups/api/use-group-query'
 import { useGroupBalanceQuery } from '@/features/groups/api/use-group-balance-query'
 import { useGroupTransactionsQuery } from '@/features/groups/api/use-group-transactions-query'
+import { useAuthStore } from '@/store/use-auth-store'
 
 /**
  * GroupDetailScreen — real ledger view for one group: per-member
@@ -29,6 +31,7 @@ export default function GroupDetailScreen() {
   const groupQuery = useGroupQuery(groupId)
   const balanceQuery = useGroupBalanceQuery(groupId)
   const transactionsQuery = useGroupTransactionsQuery(groupId)
+  const myId = useAuthStore((state) => state.userProfile?.id)
 
   const items: ExpenseListData[] = useMemo(() => {
     if (!transactionsQuery.data) return []
@@ -41,23 +44,38 @@ export default function GroupDetailScreen() {
           subtitle: payerNames ? `${payerNames} paid` : 'Paid',
           amount: Number(t.data.amount),
           currency: t.data.currency,
+          categoryIcon: t.data.category.icon,
+          categoryColor: t.data.category.color,
           rightSubtitle: new Date(t.data.date).toLocaleDateString(),
           showChevron: true,
           amountColor: 'default' as const,
+          kind: 'expense' as const,
         }
       }
+      const isConfirmed = t.data.status === 'confirmed'
+      const isPending = t.data.status === 'pending'
+      const payerName = t.data.payer.id === myId ? 'You' : t.data.payer.full_name
+      const payeeName = t.data.payee.id === myId ? 'you' : t.data.payee.full_name
+      const paymentSummary = `${payerName} paid ${payeeName}`
+
       return {
         id: t.data.id,
-        name: t.data.status === 'confirmed' ? 'Settlement' : 'Settlement (pending)',
-        subtitle: `${t.data.payer.full_name} paid ${t.data.payee.full_name}`,
+        name: isConfirmed ? 'Payment settled' : isPending ? 'Payment pending' : 'Payment disputed',
+        subtitle: isConfirmed ? `${paymentSummary}\nBalance adjusted` : paymentSummary,
         amount: Number(t.data.amount),
         currency: t.data.currency,
-        rightSubtitle: new Date(t.data.date).toLocaleDateString(),
-        showChevron: true,
-        amountColor: 'green' as const,
+        category: isConfirmed ? 'payment' as const : 'other' as const,
+        rightSubtitle: new Date(t.data.created_at).toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+        }),
+        showChevron: !isConfirmed,
+        amountColor: isConfirmed ? 'green' as const : isPending ? 'orange' as const : 'black' as const,
+        className: isConfirmed ? 'bg-[#DCEFE4] hover:bg-[#DCEFE4]/90' : undefined,
+        kind: 'settlement' as const,
       }
     })
-  }, [transactionsQuery.data])
+  }, [transactionsQuery.data, myId])
 
   if (groupQuery.isLoading) {
     return (
@@ -176,10 +194,21 @@ export default function GroupDetailScreen() {
             />
           )}
           {items.length > 0 && (
-            <ExpenseList
-              expenses={items}
-              onItemClick={(tid) => navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: tid.toString() } })}
-            />
+            <>
+              <ExpenseList
+                expenses={items}
+                onItemClick={(tid, kind) =>
+                  kind === 'settlement'
+                    ? navigate({ to: ROUTES.SETTLEMENT_DETAILS, params: { id: tid.toString() } })
+                    : navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: tid.toString() } })
+                }
+              />
+              <InfiniteScrollSentinel
+                onLoadMore={transactionsQuery.fetchNextPage}
+                hasMore={transactionsQuery.hasNextPage}
+                isLoading={transactionsQuery.isFetchingNextPage}
+              />
+            </>
           )}
         </div>
       </div>

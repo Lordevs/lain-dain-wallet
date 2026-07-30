@@ -26,6 +26,9 @@ export const ROUTES = {
   TRANSACTION_DETAILS: '/transactions/$id',
   TRANSACTION_EDIT: '/transactions/$id/edit',
 
+  // ── Settlements ───────────────────────────────────────────────────────────────
+  SETTLEMENT_DETAILS: '/settlements/$id',
+
   // ── Notifications ────────────────────────────────────────────────────────────
   NOTIFICATIONS: '/notifications',
   CONFIRM_PAYMENT: '/notifications/confirm/$id',

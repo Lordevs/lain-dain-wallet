@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import SettleUpPanel from '@/features/notifications/components/settle-up-panel'
+import SettleUpScreen from '@/features/settle-up/settle-up-screen'
 
 export interface SettleUpSearch {
   contactId?: string
@@ -13,5 +13,5 @@ export const Route = createFileRoute('/settle-up')({
     groupId: typeof search.groupId === 'string' ? search.groupId : undefined,
     notificationId: typeof search.notificationId === 'string' ? search.notificationId : undefined,
   }),
-  component: SettleUpPanel,
+  component: SettleUpScreen,
 })

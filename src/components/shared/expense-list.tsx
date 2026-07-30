@@ -8,11 +8,18 @@ export interface ExpenseListData {
   amount: number
   currency?: string
   category?: ExpenseCategory
+  categoryIcon?: string
+  categoryColor?: string
   rightSubtitle?: string
   showChevron?: boolean
   className?: string
   leftSlot?: React.ReactNode
   amountColor?: 'green' | 'orange' | 'black' | 'default'
+  /** Distinguishes a real Expense row from a Settlement row in a merged
+   * feed (contact/group transaction history) — callers use this to route
+   * to the right detail screen, since the two are different backend
+   * models with different detail endpoints. Defaults to 'expense'. */
+  kind?: 'expense' | 'settlement'
 }
 
 /** A transaction record adapted for date-grouped list rendering (contact/group detail screens). */
@@ -29,7 +36,7 @@ export interface TransactionListItem extends ExpenseListData {
 
 interface ExpenseListProps {
   expenses: ExpenseListData[]
-  onItemClick?: (id: string | number) => void
+  onItemClick?: (id: string | number, kind?: 'expense' | 'settlement') => void
   amountColor?: 'green' | 'orange' | 'black' | 'default'
   className?: string
 }
@@ -59,12 +66,14 @@ export default function ExpenseList({
           amount={expense.amount}
           currency={expense.currency}
           category={expense.category}
+          categoryIcon={expense.categoryIcon}
+          categoryColor={expense.categoryColor}
           amountColor={expense.amountColor ?? amountColor}
           rightSubtitle={expense.rightSubtitle}
           showChevron={expense.showChevron ?? true}
           className={expense.className}
           leftSlot={expense.leftSlot}
-          onClick={onItemClick ? () => onItemClick(expense.id) : undefined}
+          onClick={onItemClick ? () => onItemClick(expense.id, expense.kind) : undefined}
         />
       ))}
     </div>

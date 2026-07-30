@@ -1,6 +1,8 @@
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
 import { toApiError } from '@/lib/api/errors'
+
+const PAGE_SIZE = 20
 
 // `year`/`month` are real, functional query params (see apps/expenses/
 // views.py's _parse_year_month) that drf-spectacular doesn't document,
@@ -9,22 +11,41 @@ interface MyExpensesListQuery {
   year?: number
   month?: number
   page_size?: number
+  cursor?: string
+}
+
+function cursorFromUrl(url: string | null | undefined): string | undefined {
+  if (!url) return undefined
+  return new URL(url).searchParams.get('cursor') ?? undefined
 }
 
 /** The combined "My Expenses" feed for one period — personal expenses
- * plus any friendship/group expense the caller has a split in. Not
- * paginated client-side (matches the screen's own flat-list UI); a
- * single generous page covers everything a period reasonably holds. */
+ * plus any friendship/group expense the caller has a split in. */
 export function useMyExpensesListQuery(year?: number, month?: number) {
-  return useQuery({
-    queryKey: ['my-expenses-list', year, month],
-    queryFn: async () => {
-      const query: MyExpensesListQuery = { page_size: 100, ...(year && month ? { year, month } : {}) }
+  const query = useInfiniteQuery({
+    queryKey: ['my-expenses-list', year, month, 'infinite'],
+    queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
+      const requestQuery: MyExpensesListQuery = {
+        page_size: PAGE_SIZE,
+        ...(pageParam ? { cursor: pageParam } : {}),
+        ...(year && month ? { year, month } : {}),
+      }
       const { data, error } = await apiClient.GET('/api/expenses/my-expenses/', {
-        params: { query: query as Record<string, never> },
+        params: { query: requestQuery as Record<string, never> },
       })
       if (error) throw toApiError(error)
-      return data.results
+      return data
     },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => cursorFromUrl(lastPage.next),
   })
+
+  return {
+    ...query,
+    data: query.data?.pages.flatMap((page) => page.results),
+    hasNextPage: !!query.hasNextPage,
+    fetchNextPage: () => {
+      void query.fetchNextPage()
+    },
+  }
 }

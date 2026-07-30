@@ -11,6 +11,7 @@ import SearchBar from '@/components/shared/search-bar'
 import ContactListSkeleton from '@/components/shared/contact-list-skeleton'
 import { cn } from '@/lib/utils'
 import ContactAvatar from '@/components/shared/contact-avatar'
+import InfiniteScrollSentinel from '@/components/shared/infinite-scroll-sentinel'
 
 interface LedgerItem {
   id: string
@@ -63,16 +64,48 @@ export default function HideLedgersScreen() {
   return (
     <HideLedgersForm
       items={items}
-      initialSelectedIds={[...settingsQuery.data.hidden_friendship_ids, ...settingsQuery.data.hidden_group_ids]}
+      initialSelectedFriendshipIds={settingsQuery.data.hidden_friendship_ids}
+      initialSelectedGroupIds={settingsQuery.data.hidden_group_ids}
+      friendshipsPagination={{
+        onLoadMore: friendshipsQuery.fetchNextPage,
+        hasMore: friendshipsQuery.hasNextPage,
+        isLoading: friendshipsQuery.isFetchingNextPage,
+      }}
+      groupsPagination={{
+        onLoadMore: groupsQuery.fetchNextPage,
+        hasMore: groupsQuery.hasNextPage,
+        isLoading: groupsQuery.isFetchingNextPage,
+      }}
     />
   )
 }
 
-function HideLedgersForm({ items, initialSelectedIds }: { items: LedgerItem[]; initialSelectedIds: string[] }) {
+interface LedgerPagination {
+  onLoadMore: () => void
+  hasMore: boolean
+  isLoading: boolean
+}
+
+function HideLedgersForm({
+  items,
+  initialSelectedFriendshipIds,
+  initialSelectedGroupIds,
+  friendshipsPagination,
+  groupsPagination,
+}: {
+  items: LedgerItem[]
+  initialSelectedFriendshipIds: string[]
+  initialSelectedGroupIds: string[]
+  friendshipsPagination: LedgerPagination
+  groupsPagination: LedgerPagination
+}) {
   const updateSettings = useUpdatePersonalExpenseSettingsMutation()
 
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedIds, setSelectedIds] = useState<string[]>(initialSelectedIds)
+  const [selectedIds, setSelectedIds] = useState<string[]>([
+    ...initialSelectedFriendshipIds,
+    ...initialSelectedGroupIds,
+  ])
 
   const handleToggle = (id: string) => {
     setSelectedIds((prev) =>
@@ -81,8 +114,23 @@ function HideLedgersForm({ items, initialSelectedIds }: { items: LedgerItem[]; i
   }
 
   const handleSave = () => {
-    const selectedFriendshipIds = items.filter((i) => i.kind === 'friendship' && selectedIds.includes(i.id)).map((i) => i.id)
-    const selectedGroupIds = items.filter((i) => i.kind === 'group' && selectedIds.includes(i.id)).map((i) => i.id)
+    // A previously-hidden ledger might live on a page the user has not
+    // scrolled to in this session. Preserve those unknown ids; for loaded
+    // rows, the current checkbox state wins.
+    const selectedIdsForKind = (
+      kind: LedgerItem['kind'],
+      initiallySelected: string[],
+    ): string[] => {
+      const loadedItems = items.filter((item) => item.kind === kind)
+      const loadedIds = new Set(loadedItems.map((item) => item.id))
+      return [...new Set([
+        ...initiallySelected.filter((id) => !loadedIds.has(id) || selectedIds.includes(id)),
+        ...loadedItems.filter((item) => selectedIds.includes(item.id)).map((item) => item.id),
+      ])]
+    }
+
+    const selectedFriendshipIds = selectedIdsForKind('friendship', initialSelectedFriendshipIds)
+    const selectedGroupIds = selectedIdsForKind('group', initialSelectedGroupIds)
     updateSettings.mutate(
       { hidden_friendship_ids: selectedFriendshipIds, hidden_group_ids: selectedGroupIds },
       {
@@ -232,6 +280,8 @@ function HideLedgersForm({ items, initialSelectedIds }: { items: LedgerItem[]; i
               </div>
             )}
           </div>
+          <InfiniteScrollSentinel {...friendshipsPagination} />
+          <InfiniteScrollSentinel {...groupsPagination} />
         </div>
       </div>
     </div>

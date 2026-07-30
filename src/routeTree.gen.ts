@@ -21,6 +21,7 @@ import { Route as NotificationsIndexRouteImport } from './routes/notifications/i
 import { Route as ContactsIndexRouteImport } from './routes/contacts/index'
 import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as TransactionsIdRouteImport } from './routes/transactions/$id'
+import { Route as SettlementsIdRouteImport } from './routes/settlements/$id'
 import { Route as SettingsReportIssueRouteImport } from './routes/settings/report-issue'
 import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
 import { Route as SettingsPhotoRouteImport } from './routes/settings/photo'
@@ -118,6 +119,11 @@ const AuthIndexRoute = AuthIndexRouteImport.update({
 const TransactionsIdRoute = TransactionsIdRouteImport.update({
   id: '/transactions/$id',
   path: '/transactions/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettlementsIdRoute = SettlementsIdRouteImport.update({
+  id: '/settlements/$id',
+  path: '/settlements/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsReportIssueRoute = SettingsReportIssueRouteImport.update({
@@ -336,6 +342,7 @@ export interface FileRoutesByFullPath {
   '/settings/photo': typeof SettingsPhotoRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/settings/report-issue': typeof SettingsReportIssueRoute
+  '/settlements/$id': typeof SettlementsIdRoute
   '/transactions/$id': typeof TransactionsIdRouteWithChildren
   '/auth/': typeof AuthIndexRoute
   '/contacts/': typeof ContactsIndexRoute
@@ -384,6 +391,7 @@ export interface FileRoutesByTo {
   '/settings/photo': typeof SettingsPhotoRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/settings/report-issue': typeof SettingsReportIssueRoute
+  '/settlements/$id': typeof SettlementsIdRoute
   '/auth': typeof AuthIndexRoute
   '/contacts': typeof ContactsIndexRoute
   '/notifications': typeof NotificationsIndexRoute
@@ -434,6 +442,7 @@ export interface FileRoutesById {
   '/settings/photo': typeof SettingsPhotoRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/settings/report-issue': typeof SettingsReportIssueRoute
+  '/settlements/$id': typeof SettlementsIdRoute
   '/transactions/$id': typeof TransactionsIdRouteWithChildren
   '/auth/': typeof AuthIndexRoute
   '/contacts/': typeof ContactsIndexRoute
@@ -488,6 +497,7 @@ export interface FileRouteTypes {
     | '/settings/photo'
     | '/settings/profile'
     | '/settings/report-issue'
+    | '/settlements/$id'
     | '/transactions/$id'
     | '/auth/'
     | '/contacts/'
@@ -536,6 +546,7 @@ export interface FileRouteTypes {
     | '/settings/photo'
     | '/settings/profile'
     | '/settings/report-issue'
+    | '/settlements/$id'
     | '/auth'
     | '/contacts'
     | '/notifications'
@@ -585,6 +596,7 @@ export interface FileRouteTypes {
     | '/settings/photo'
     | '/settings/profile'
     | '/settings/report-issue'
+    | '/settlements/$id'
     | '/transactions/$id'
     | '/auth/'
     | '/contacts/'
@@ -631,6 +643,7 @@ export interface RootRouteChildren {
   SettingsPhotoRoute: typeof SettingsPhotoRoute
   SettingsProfileRoute: typeof SettingsProfileRoute
   SettingsReportIssueRoute: typeof SettingsReportIssueRoute
+  SettlementsIdRoute: typeof SettlementsIdRoute
   TransactionsIdRoute: typeof TransactionsIdRouteWithChildren
   AuthIndexRoute: typeof AuthIndexRoute
   ContactsIndexRoute: typeof ContactsIndexRoute
@@ -722,6 +735,13 @@ declare module '@tanstack/react-router' {
       path: '/transactions/$id'
       fullPath: '/transactions/$id'
       preLoaderRoute: typeof TransactionsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settlements/$id': {
+      id: '/settlements/$id'
+      path: '/settlements/$id'
+      fullPath: '/settlements/$id'
+      preLoaderRoute: typeof SettlementsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings/report-issue': {
@@ -1139,6 +1159,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsPhotoRoute: SettingsPhotoRoute,
   SettingsProfileRoute: SettingsProfileRoute,
   SettingsReportIssueRoute: SettingsReportIssueRoute,
+  SettlementsIdRoute: SettlementsIdRoute,
   TransactionsIdRoute: TransactionsIdRouteWithChildren,
   AuthIndexRoute: AuthIndexRoute,
   ContactsIndexRoute: ContactsIndexRoute,
