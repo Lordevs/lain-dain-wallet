@@ -13,7 +13,6 @@ import ExpenseListSkeleton from '@/components/shared/expense-list-skeleton'
 import MonthFilterDropdown from './components/month-filter-drawer'
 import FlowHeader from '@/components/shared/flow-header'
 import InfiniteScrollSentinel from '@/components/shared/infinite-scroll-sentinel'
-import { Skeleton } from '@/components/ui/skeleton'
 import { toExpenseSummary } from './lib/map-my-expenses-summary'
 import { toExpenseListItem } from './lib/map-my-expense-item'
 import { recentPeriods, periodKey, parsePeriodKey, periodLabel, type Period } from './lib/period'
@@ -62,16 +61,12 @@ export default function PersonalScreen() {
       />
 
       {/* Main Content Scroll Container */}
-      <div className="flex flex-col pb-44">
+      <div className="flex flex-col pb-20">
         {/* Card 1: Spent Stat Card */}
         {summaryQuery.data ? (
           <ExpenseSummaryCard summary={toExpenseSummary(summaryQuery.data)} />
         ) : (
-          <div className="bg-white rounded-[24px] border-[0.8px] border-[#EBEBEB] p-6 mx-6 mt-3 flex flex-col gap-3">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-9 w-40" />
-            <Skeleton className="h-6 w-48 rounded-full" />
-          </div>
+          <ExpenseSummaryCard.Skeleton />
         )}
 
         {/* Card 2: View Reports */}
@@ -110,11 +105,11 @@ export default function PersonalScreen() {
       </div>
 
       {/* Absolute Bottom Action Button */}
-      <div className="fixed bottom-3 left-3 right-3 z-10">
+      <div className="fixed bottom-18 left-3 right-3 z-10">
         <Button
           type="button"
           onClick={() => navigate({ to: ROUTES.PERSONAL_ADD_EXPENSE })}
-          className="w-full h-14 rounded-full bg-primary text-white font-bold text-base cursor-pointer transition-transform active:scale-[0.99]"
+          className="w-full h-14 rounded-full bg-primary text-white font-bold text-base cursor-pointer transition-transform active:scale-[0.99] shadow-lg"
         >
           Add Personal Expense
         </Button>

@@ -18,7 +18,7 @@ const HIDE_NAV_PREFIXES = [
   ROUTES.GROUPS,                               // '/groups' all child routes
   ROUTES.TRANSACTIONS,                         // '/transactions' all child routes
   ROUTES.SETTINGS,                             // '/settings' and all sub-screens
-  ROUTES.PERSONAL,                             // '/personal' and all subroutes
+  ROUTES.PERSONAL + '/',                       // '/personal' sub-screens e.g. /personal/reports
   ROUTES.SETTLE_UP,                            // '/settle-up' screen
   dynamicPrefix(ROUTES.CONFIRM_PAYMENT),       // '/notifications/confirm/$'
   dynamicPrefix(ROUTES.DISPUTE_PAYMENT),       // '/notifications/dispute/$'

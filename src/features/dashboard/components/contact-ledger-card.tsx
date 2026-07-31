@@ -15,7 +15,7 @@ interface ContactLedgerCardProps {
  * Used in both Receivables and Payables lists.
  */
 export default function ContactLedgerCard({ contact, onClick }: ContactLedgerCardProps) {
-  const { name, initials, avatarColor, ledgerCount, netAmount, currency, tags, isOnline, type } = contact
+  const { name, initials, avatarColor, avatar, ledgerCount, netAmount, currency, tags, isOnline, type } = contact
 
   const isReceivable = netAmount > 0
 
@@ -30,11 +30,13 @@ export default function ContactLedgerCard({ contact, onClick }: ContactLedgerCar
         {/* Avatar */}
         <div className="relative shrink-0">
           <div className={cn(
-            'w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold text-foreground',
+            'w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold text-foreground overflow-hidden',
             avatarColor
           )}>
-            {type === 'group'
-              ? <span className="text-xl">{initials}</span>
+            {avatar ? (
+              <img src={avatar} alt={name} className="w-full h-full object-cover" />
+            ) : type === 'group'
+              ? <span className="text-[13px] font-extrabold text-foreground">{initials}</span>
               : <span className="text-[13px] font-extrabold text-foreground/80">{initials}</span>
             }
           </div>
@@ -52,9 +54,11 @@ export default function ContactLedgerCard({ contact, onClick }: ContactLedgerCar
         {/* Name + ledger count */}
         <div className="flex-1 min-w-0">
           <p className="font-bold text-[14px] text-foreground leading-tight">{name}</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5 font-medium leading-tight">
-            Net across {ledgerCount} Balance{ledgerCount !== 1 ? 's' : ''}
-          </p>
+          {type !== 'group' && (
+            <p className="text-[11px] text-muted-foreground mt-0.5 font-medium leading-tight">
+              Net across {ledgerCount} Balance{ledgerCount !== 1 ? 's' : ''}
+            </p>
+          )}
         </div>
 
         {/* Amount + chevron */}
@@ -86,7 +90,7 @@ export default function ContactLedgerCard({ contact, onClick }: ContactLedgerCar
                 'font-bold',
                 tag.amount > 0 ? 'text-primary' : 'text-orange-payable'
               )}>
-                {tag.amount > 0 ? '+' : '-'}{formatCurrency(tag.amount, tag.currency ?? currency ?? 'PKR')}
+                {tag.amount > 0 ? '\u002B' : ''}{formatCurrency(tag.amount, tag.currency ?? currency ?? 'PKR')}
               </span>
             </span>
           ))}

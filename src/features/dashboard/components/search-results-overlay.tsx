@@ -44,11 +44,13 @@ function SearchResultRow({
       {/* Avatar */}
       <div className="relative shrink-0">
         <div className={cn(
-          'w-12 h-12 rounded-full flex items-center justify-center font-bold',
+          'w-12 h-12 rounded-full flex items-center justify-center font-bold overflow-hidden',
           contact.avatarColor
         )}>
-          {contact.type === 'group'
-            ? <span className="text-xl">{contact.initials}</span>
+          {contact.avatar ? (
+            <img src={contact.avatar} alt={contact.name} className="w-full h-full object-cover" />
+          ) : contact.type === 'group'
+            ? <span className="text-[13px] font-extrabold text-foreground">{contact.initials}</span>
             : <span className="text-[12px] font-extrabold text-foreground/80">{contact.initials}</span>
           }
         </div>

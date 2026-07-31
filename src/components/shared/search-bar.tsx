@@ -26,7 +26,7 @@ export default function SearchBar({
   onFocus,
   onBack,
   onClear,
-  placeholder = 'Search ledgers, people, or groups',
+  placeholder = 'Search people, or groups',
   className,
   id = 'search-bar',
   isActive = false,

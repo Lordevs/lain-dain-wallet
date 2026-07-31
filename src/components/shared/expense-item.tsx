@@ -127,9 +127,11 @@ export default function ExpenseItem({
           )}>
             {name}
           </p>
-          <div className="text-[13px] text-muted-foreground mt-1 font-normal leading-normal whitespace-pre-line">
-            {subtitle}
-          </div>
+          {subtitle && (
+            <div className="text-[13px] text-muted-foreground mt-1 font-normal leading-normal whitespace-pre-line">
+              {subtitle}
+            </div>
+          )}
         </div>
       </div>
 

@@ -175,6 +175,27 @@ export default function PersonalSettingsScreen() {
               </div>
             </div>
 
+            {/* Manage Categories */}
+            <div
+              onClick={() => navigate({ to: ROUTES.PERSONAL_CATEGORIES })}
+              className="p-5 flex items-center justify-between transition-colors hover:bg-muted/5 cursor-pointer"
+            >
+              <div className="flex items-center gap-4 min-w-0">
+                <div className="w-10 h-10 rounded-[12px] bg-[#ECF6F0] text-positive flex items-center justify-center shrink-0">
+                  <AlertCircle size={18} strokeWidth={2.5} />
+                </div>
+                <div className="flex flex-col text-left min-w-0">
+                  <span className="text-[15px] font-semibold text-[#1A1A1A] leading-tight">Manage Categories</span>
+                  <span className="text-[12px] font-normal text-[#6B6B6B] mt-1 leading-normal">
+                    {categoryBudgetsQuery.data ? `${categoryBudgetsQuery.data.categories.length} categories` : '...'}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0 select-none">
+                <ChevronRight size={14} className="text-[#6B6B6B]" strokeWidth={2.5} />
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -200,28 +221,6 @@ export default function PersonalSettingsScreen() {
                 <ChevronRight size={14} className="text-[#6B6B6B]" strokeWidth={2.5} />
               </div>
             </div>
-
-            {/* Manage Categories */}
-            <div
-              onClick={() => navigate({ to: ROUTES.PERSONAL_CATEGORIES })}
-              className="p-5 flex items-center justify-between transition-colors hover:bg-muted/5 cursor-pointer"
-            >
-              <div className="flex items-center gap-4 min-w-0">
-                <div className="w-10 h-10 rounded-[12px] bg-[#ECF6F0] text-positive flex items-center justify-center shrink-0">
-                  <AlertCircle size={18} strokeWidth={2.5} />
-                </div>
-                <div className="flex flex-col text-left min-w-0">
-                  <span className="text-[15px] font-semibold text-[#1A1A1A] leading-tight">Manage Categories</span>
-                  <span className="text-[12px] font-normal text-[#6B6B6B] mt-1 leading-normal">
-                    {categoryBudgetsQuery.data ? `${categoryBudgetsQuery.data.categories.length} categories` : '...'}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0 select-none">
-                <ChevronRight size={14} className="text-[#6B6B6B]" strokeWidth={2.5} />
-              </div>
-            </div>
-
           </div>
         </div>
 

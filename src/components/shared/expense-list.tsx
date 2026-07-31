@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 export interface ExpenseListData {
   id: string | number
   name: string
-  subtitle: React.ReactNode
+  subtitle?: React.ReactNode
   amount: number
   currency?: string
   category?: ExpenseCategory

@@ -358,12 +358,14 @@ function GroupSettleUpFormBody({
         </button>
       </div>
 
+      <div className="mt-5 text-[#6B6B6B] text-xs font-normal flex items-center justify-center gap-1.5 shrink-0">
+        <Lock size={12} className="text-[#6B6B6B]" />
+        <span>{mode === 'pay' ? 'They will be asked to confirm.' : 'This settles immediately.'}</span>
+      </div>
+
       {/* Sticky Bottom Actions */}
       <div className="fixed bottom-3 left-3 right-3 z-10 flex flex-col items-center justify-center gap-4">
-        <div className="mt-5 text-[#6B6B6B] text-xs font-normal flex items-center justify-center gap-1.5 shrink-0">
-          <Lock size={12} className="text-[#6B6B6B]" />
-          <span>{mode === 'pay' ? 'They will be asked to confirm.' : 'This settles immediately.'}</span>
-        </div>
+
         <button
           type="button"
           onClick={handleConfirm}

@@ -1,6 +1,8 @@
 import { TrendingUp, TrendingDown } from 'lucide-react'
 import { formatCurrency } from '@/lib/currency'
 import coinWalletSvg from '@/assets/coin-wallet.svg'
+import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
 import type { MonthlyExpenseSummary } from '../types'
 
 interface ExpenseSummaryCardProps {
@@ -8,41 +10,57 @@ interface ExpenseSummaryCardProps {
   /** Defaults to "You spent this month" — callers with a different period
    * label (e.g. a custom period range) can override it. */
   label?: string
+  className?: string
 }
 
 /**
  * ExpenseSummaryCard — Displays monthly expenses overall statistics.
  * Formats currency dynamically and renders inline spent badges with trend symbols.
  */
-export default function ExpenseSummaryCard({ summary, label = 'You spent this month' }: ExpenseSummaryCardProps) {
+export default function ExpenseSummaryCard({ summary, label = 'You spent this month', className }: ExpenseSummaryCardProps) {
   const { totalSpent, currency, comparison } = summary
 
   const format = (amount: number) => formatCurrency(amount, currency)
 
   return (
-    <div className="bg-white rounded-[24px] border-[0.8px] border-[#EBEBEB] shadow-[0px_2px_10px_0px_#0000000D] p-6 mx-6 mt-3 flex justify-between items-center">
+    <div className={cn("bg-white rounded-[20px] border-[0.8px] border-[#EBEBEB] shadow-[0px_2px_5px_0px_#0000000D] p-4 mx-6 mt-3 flex justify-between items-center", className)}>
       <div className="flex flex-col">
-        <span className="text-[#6B6B6B] text-sm font-medium">
+        <span className="text-[#6B6B6B] text-xs font-medium">
           {label}
         </span>
-        <span className="text-[38px] font-black text-[#1A1A1A] leading-none mt-2">
+        <span className="text-[32px] font-black text-[#1A1A1A] leading-none mt-2">
           {format(totalSpent)}
         </span>
         {comparison && (
-          <div className="flex items-center gap-1.5 px-3 py-1 bg-[#FFF9E6] rounded-full mt-3 w-fit">
+          <div className="flex items-center gap-1 px-2.5 py-0.5 bg-[#FFF9E6] rounded-full mt-3 w-fit">
             {comparison.direction === 'up' ? (
-              <TrendingUp size={14} className="text-tertiary" strokeWidth={2.5} />
+              <TrendingUp size={12} className="text-tertiary" strokeWidth={2.5} />
             ) : (
-              <TrendingDown size={14} className="text-positive" strokeWidth={2.5} />
+              <TrendingDown size={12} className="text-positive" strokeWidth={2.5} />
             )}
-            <span className="text-tertiary text-xs font-semibold">
+            <span className="text-tertiary text-[10px] font-semibold">
               {format(comparison.amount)} {comparison.direction === 'up' ? 'more' : 'less'} than{' '}
               {comparison.previousPeriodLabel}
             </span>
           </div>
         )}
       </div>
-      <img src={coinWalletSvg} alt="Wallet" className="w-20 h-[70px] shrink-0" />
+      <img src={coinWalletSvg} alt="Wallet" className="w-28 h-15 shrink-0" />
     </div>
   )
 }
+
+export function ExpenseSummaryCardSkeleton({ className }: { className?: string }) {
+  return (
+    <div className={cn("bg-white rounded-[20px] border-[0.8px] border-[#EBEBEB] shadow-[0px_2px_5px_0px_#0000000D] p-4 mx-6 mt-3 flex justify-between items-center", className)}>
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-3 w-28" />
+        <Skeleton className="h-8 w-36 mt-1" />
+        <Skeleton className="h-5 w-44 rounded-full mt-1" />
+      </div>
+      <Skeleton className="w-24 h-14 rounded-xl shrink-0" />
+    </div>
+  )
+}
+
+ExpenseSummaryCard.Skeleton = ExpenseSummaryCardSkeleton

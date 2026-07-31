@@ -42,20 +42,16 @@ export default function ReportsScreen() {
       <div className="flex flex-col flex-1 overflow-y-auto">
         {reportQuery.isLoading && (
           <>
-            <div className="bg-white rounded-[24px] border-[0.8px] border-[#EBEBEB] p-6 mx-6 mt-3 flex flex-col gap-3">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-9 w-40" />
-              <Skeleton className="h-6 w-48 rounded-full" />
-            </div>
+            <ExpenseSummaryCard.Skeleton />
             <div className="bg-white rounded-[24px] border-[0.8px] border-[#EBEBEB] p-6 mx-6 mt-4 flex items-center gap-4">
-              <Skeleton className="size-[150px] rounded-full shrink-0" />
+              <Skeleton className="size-37.5 rounded-full shrink-0" />
               <div className="flex-1 flex flex-col gap-3">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <Skeleton key={i} className="h-4 w-full" />
                 ))}
               </div>
             </div>
-            <Skeleton className="h-[220px] rounded-[24px] mx-4 mt-4 mb-24" />
+            <Skeleton className="h-55 rounded-[24px] mx-4 mt-4 mb-24" />
           </>
         )}
 
