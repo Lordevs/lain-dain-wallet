@@ -70,6 +70,8 @@ export interface Contact {
   isOnline?: boolean
   isOnLainDain?: boolean
   phone?: string
+  /** The matched Lain Dain user's permanent default currency. */
+  defaultCurrency?: string
   type: 'person' | 'group'
 }
 

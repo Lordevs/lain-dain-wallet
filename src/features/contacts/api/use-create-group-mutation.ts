@@ -10,6 +10,7 @@ interface CreateGroupVariables {
   category: string
   memberIds: string[]
   image: string | null
+  currencyRates: Record<string, string>
 }
 
 async function buildGroupFormData(vars: CreateGroupVariables): Promise<FormData> {
@@ -23,6 +24,9 @@ async function buildGroupFormData(vars: CreateGroupVariables): Promise<FormData>
   // unlike a JSON-object field (see GroupSerializer.currency_rate_inputs'
   // docstring for why THAT one has to be a JSON string instead).
   for (const id of vars.memberIds) formData.append('member_ids', id)
+  if (Object.keys(vars.currencyRates).length > 0) {
+    formData.append('currency_rate_inputs', JSON.stringify(vars.currencyRates))
+  }
   if (vars.image) {
     const blob = await fetch(vars.image).then((res) => res.blob())
     formData.append('image', blob, 'group.jpg')

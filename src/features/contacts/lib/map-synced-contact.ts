@@ -27,6 +27,7 @@ export function mapSyncedContact(c: components['schemas']['Contact']): Contact {
     tags: [],
     isOnLainDain: c.is_on_lain_dain,
     phone: c.phone_number,
+    defaultCurrency: c.lain_dain_user_currency ?? undefined,
     type: 'person',
   }
 }
@@ -38,5 +39,6 @@ export function mapSyncedContactToContactInfo(c: components['schemas']['Contact'
     name: c.display_name,
     initials: initialsForName(c.display_name),
     avatarColor: colorForName(c.display_name),
+    defaultCurrency: c.lain_dain_user_currency ?? undefined,
   }
 }

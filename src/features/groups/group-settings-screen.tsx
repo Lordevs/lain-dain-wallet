@@ -1,6 +1,6 @@
 
 import { useState } from 'react'
-import { MoreVertical, Camera, Pencil, Plus, LogOut, Trash2 } from 'lucide-react'
+import { MoreVertical, Camera, Pencil, Plus, LogOut, Trash2, Banknote, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
 import ContactListItem from '@/components/shared/contact-list-item'
@@ -8,11 +8,13 @@ import MemberOptionsDrawer from '@/components/shared/member-options-drawer'
 import OutstandingBalanceDrawer from '@/components/shared/outstanding-balance-drawer'
 import ConfirmActionDrawer from '@/components/shared/confirm-action-drawer'
 import AddGroupMemberDrawer from './components/add-group-member-drawer'
+import GroupCurrencyRatesDrawer from './components/group-currency-rates-drawer'
 import { ROUTES } from '@/constants/routes'
 import { useGroupSettings } from './hooks/use-group-settings'
 
 export default function GroupSettingsScreen() {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false)
+  const [isCurrencyRatesOpen, setIsCurrencyRatesOpen] = useState(false)
 
   const {
     group,
@@ -256,6 +258,35 @@ export default function GroupSettingsScreen() {
           </h3>
 
           <div className="flex flex-col gap-4">
+            {/* Group currency and exchange rates */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => setIsCurrencyRatesOpen(true)}
+              onKeyDown={(event) => event.key === 'Enter' && setIsCurrencyRatesOpen(true)}
+              className="bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-5 flex items-center gap-4 cursor-pointer hover:bg-muted/5 transition-colors outline-none"
+            >
+              <div className="size-12 rounded-[15px] bg-[#E8F4EF] text-positive flex items-center justify-center shrink-0">
+                <Banknote size={21} strokeWidth={2.2} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="font-bold text-[15px] text-[#1A1A1A]">
+                    Currency & exchange rates
+                  </p>
+                  <span className="rounded-full bg-[#E8F4EF] px-2.5 py-1 text-[10px] font-extrabold text-positive">
+                    {group.default_currency}
+                  </span>
+                </div>
+                <p className="text-[12px] text-[#6B6B6B] leading-relaxed mt-1">
+                  {group.currency_rates.length === 0
+                    ? 'No foreign currencies configured'
+                    : `${group.currency_rates.length} ${group.currency_rates.length === 1 ? 'foreign currency' : 'foreign currencies'} configured`}
+                </p>
+              </div>
+              <ChevronRight size={18} className="text-[#8E8A86] shrink-0" />
+            </div>
+
             {/* Smart Settle */}
             <div className="bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-5 flex items-start justify-between">
               <div className="flex-1 pr-4">
@@ -384,14 +415,21 @@ export default function GroupSettingsScreen() {
       />
 
       {/* Add Member Drawer */}
-      {group && (
-        <AddGroupMemberDrawer
-          isOpen={isAddMemberOpen}
-          onClose={() => setIsAddMemberOpen(false)}
-          groupId={group.id}
-          existingMemberUserIds={group.members.map((m) => m.id)}
-        />
-      )}
+      <AddGroupMemberDrawer
+        isOpen={isAddMemberOpen}
+        onClose={() => setIsAddMemberOpen(false)}
+        groupId={group.id}
+        groupCurrency={group.default_currency}
+        currencyRates={group.currency_rates}
+        existingMemberUserIds={group.members.map((m) => m.id)}
+      />
+
+      <GroupCurrencyRatesDrawer
+        isOpen={isCurrencyRatesOpen}
+        onClose={() => setIsCurrencyRatesOpen(false)}
+        group={group}
+        canManage={isAdmin}
+      />
     </div>
   )
 }

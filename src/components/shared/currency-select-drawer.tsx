@@ -29,6 +29,7 @@ interface CurrencySelectDrawerProps {
   onChange: (value: string) => void
   className?: string
   children?: React.ReactNode
+  excludeCurrencies?: string[]
 }
 
 interface CurrencyVisuals {
@@ -80,14 +81,18 @@ export default function CurrencySelectDrawer({
   onChange,
   className,
   children,
+  excludeCurrencies = [],
 }: CurrencySelectDrawerProps) {
   const [currencySearch, setCurrencySearch] = useState('')
   const [isCurrencyOpen, setIsCurrencyOpen] = useState(false)
 
   // Sort currencies alphabetically by name
   const sortedCurrencies = useMemo(() => {
-    return [...SUPPORTED_CURRENCIES].sort((a, b) => a.name.localeCompare(b.name))
-  }, [])
+    const excluded = new Set(excludeCurrencies.map((code) => code.toUpperCase()))
+    return [...SUPPORTED_CURRENCIES]
+      .filter((currency) => !excluded.has(currency.code.toUpperCase()))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }, [excludeCurrencies])
 
   // Filter sorted list by search query
   const filteredCurrencies = useMemo(() => {

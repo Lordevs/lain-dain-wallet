@@ -1502,6 +1502,7 @@ export interface components {
             readonly is_on_lain_dain: boolean;
             /** Format: uuid */
             readonly lain_dain_user_id: string | null;
+            readonly lain_dain_user_currency: string | null;
             /** Format: date-time */
             readonly created_at: string;
         };

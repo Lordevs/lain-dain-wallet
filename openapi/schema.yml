@@ -2807,6 +2807,10 @@ components:
           format: uuid
           readOnly: true
           nullable: true
+        lain_dain_user_currency:
+          type: string
+          readOnly: true
+          nullable: true
         created_at:
           type: string
           format: date-time
@@ -2816,6 +2820,7 @@ components:
       - display_name
       - id
       - is_on_lain_dain
+      - lain_dain_user_currency
       - lain_dain_user_id
       - phone_number
     ContactSyncItemRequest:

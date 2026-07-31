@@ -7,14 +7,18 @@ import ContactListItem from '@/components/shared/contact-list-item'
 import SelectedMembersStrip from '@/components/shared/selected-members-strip'
 import ContactListSkeleton from '@/components/shared/contact-list-skeleton'
 import FormError from '@/components/shared/form-error'
+import CurrencyRateFields from './currency-rate-fields'
 import { useContactsQuery } from '@/features/contacts/api/use-contacts-query'
 import { useInviteMembersMutation } from '@/features/groups/api/use-group-actions-mutations'
+import { useSetGroupCurrencyRateMutation } from '@/features/groups/api/use-group-currency-rate-mutations'
 import { mapSyncedContactToContactInfo } from '@/features/contacts/lib/map-synced-contact'
 
 interface AddGroupMemberDrawerProps {
   isOpen: boolean
   onClose: () => void
   groupId: string
+  groupCurrency: string
+  currencyRates: Array<{ currency: string; rate: string }>
   existingMemberUserIds: string[]
 }
 
@@ -22,13 +26,17 @@ export default function AddGroupMemberDrawer({
   isOpen,
   onClose,
   groupId,
+  groupCurrency,
+  currencyRates,
   existingMemberUserIds,
 }: AddGroupMemberDrawerProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
+  const [rateValues, setRateValues] = useState<Record<string, string>>({})
 
   const contactsQuery = useContactsQuery(true, searchQuery)
   const inviteMutation = useInviteMembersMutation(groupId)
+  const setRateMutation = useSetGroupCurrencyRateMutation(groupId)
 
   // Filter out users who are already in the group
   const availableContacts = useMemo(() => {
@@ -43,6 +51,32 @@ export default function AddGroupMemberDrawer({
       .map(mapSyncedContactToContactInfo)
   }, [availableContacts, selectedUserIds])
 
+  const missingCurrencies = useMemo(() => {
+    const configured = new Set(currencyRates.map((rate) => rate.currency.toUpperCase()))
+    const baseCurrency = groupCurrency.toUpperCase()
+    return [
+      ...new Set(
+        availableContacts
+          .filter(
+            (contact) =>
+              contact.lain_dain_user_id
+              && selectedUserIds.includes(contact.lain_dain_user_id),
+          )
+          .map((contact) => contact.lain_dain_user_currency?.toUpperCase())
+          .filter(
+            (currency): currency is string =>
+              !!currency
+              && currency !== baseCurrency
+              && !configured.has(currency),
+          ),
+      ),
+    ]
+  }, [availableContacts, currencyRates, groupCurrency, selectedUserIds])
+
+  const ratesAreValid = missingCurrencies.every(
+    (currency) => Number(rateValues[currency] ?? 0) > 0,
+  )
+
   const toggleContact = (userId: string) => {
     setSelectedUserIds((prev) =>
       prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
@@ -52,6 +86,12 @@ export default function AddGroupMemberDrawer({
   const handleSendInvites = async () => {
     if (selectedUserIds.length === 0) return
     try {
+      for (const currency of missingCurrencies) {
+        await setRateMutation.mutateAsync({
+          currency,
+          rate: rateValues[currency],
+        })
+      }
       await inviteMutation.mutateAsync(selectedUserIds)
       toast.success(
         selectedUserIds.length === 1
@@ -59,6 +99,7 @@ export default function AddGroupMemberDrawer({
           : `${selectedUserIds.length} invitations sent!`
       )
       setSelectedUserIds([])
+      setRateValues({})
       onClose()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to send invitations.')
@@ -101,6 +142,22 @@ export default function AddGroupMemberDrawer({
                 onRemove={(id) => toggleContact(id)}
                 className="shrink-0 mb-2"
               />
+            )}
+
+            {missingCurrencies.length > 0 && (
+              <div className="shrink-0 mb-4">
+                <h4 className="text-[11px] font-bold text-[#6B6B6B] uppercase tracking-[0.08em] mb-2">
+                  Rates required before invitation
+                </h4>
+                <CurrencyRateFields
+                  baseCurrency={groupCurrency}
+                  currencies={missingCurrencies}
+                  values={rateValues}
+                  onChange={(currency, rate) => {
+                    setRateValues((current) => ({ ...current, [currency]: rate }))
+                  }}
+                />
+              </div>
             )}
 
             {/* Contact list */}
@@ -146,14 +203,22 @@ export default function AddGroupMemberDrawer({
 
           {/* Bottom Action Bar */}
           <div className="px-6 py-5 shrink-0">
-            <FormError message={inviteMutation.error?.message} className="mb-3 justify-center" />
+            <FormError
+              message={setRateMutation.error?.message ?? inviteMutation.error?.message}
+              className="mb-3 justify-center"
+            />
             <button
               type="button"
               onClick={handleSendInvites}
-              disabled={selectedUserIds.length === 0 || inviteMutation.isPending}
+              disabled={
+                selectedUserIds.length === 0
+                || !ratesAreValid
+                || inviteMutation.isPending
+                || setRateMutation.isPending
+              }
               className="w-full h-14 rounded-full bg-positive text-white font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center outline-none border-0"
             >
-              {inviteMutation.isPending
+              {inviteMutation.isPending || setRateMutation.isPending
                 ? 'Sending Invitations…'
                 : selectedUserIds.length === 0
                   ? 'Select Members'

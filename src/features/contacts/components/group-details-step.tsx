@@ -9,6 +9,7 @@ import {
   Plane,
   DollarSign,
   AlertCircle,
+  type LucideIcon,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -16,6 +17,7 @@ import { Avatar, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import SelectedMembersStrip from '@/components/shared/selected-members-strip'
 import CurrencySelectDrawer from '@/components/shared/currency-select-drawer'
+import CurrencyRateFields from '@/features/groups/components/currency-rate-fields'
 import { MOCK_CATEGORIES } from '../data/mock-data'
 import FormError from '@/components/shared/form-error'
 import type { NewContactFlowState } from '../hooks/use-new-contact-flow'
@@ -38,7 +40,7 @@ interface GroupDetailsStepProps {
 
 // ─── Category Icon Map ─────────────────────────────────────────────────────────
 
-const CATEGORY_ICON_MAP: Record<string, React.ComponentType<any>> = {
+const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
   friends: User,
   family: Users,
   colleague: Briefcase,
@@ -56,6 +58,15 @@ const CATEGORY_ICON_MAP: Record<string, React.ComponentType<any>> = {
  * category. Members can still be added/removed via the strip.
  */
 export default function GroupDetailsStep({ flow }: GroupDetailsStepProps) {
+  const groupCurrency = flow.currency.toUpperCase()
+  const requiredCurrencies = [
+    ...new Set(
+      flow.selectedList
+        .map((contact) => contact.defaultCurrency?.toUpperCase())
+        .filter((code): code is string => !!code && code !== groupCurrency),
+    ),
+  ]
+
   return (
     <div className={cn(
       "flex-1 overflow-y-auto px-6 scrollbar-none relative",
@@ -167,6 +178,20 @@ export default function GroupDetailsStep({ flow }: GroupDetailsStepProps) {
         value={flow.currency}
         onChange={flow.setCurrency}
       />
+
+      {requiredCurrencies.length > 0 && (
+        <div className="mt-4">
+          <h2 className="text-xs font-bold text-[#6B6B6B] uppercase tracking-wider mb-2">
+            Member exchange rates
+          </h2>
+          <CurrencyRateFields
+            baseCurrency={groupCurrency}
+            currencies={requiredCurrencies}
+            values={flow.currencyRates}
+            onChange={flow.setCurrencyRate}
+          />
+        </div>
+      )}
 
       {/* Category list */}
       <h2 className="text-xs font-bold text-[#6B6B6B] uppercase tracking-wider pt-6 mb-2 shrink-0">

@@ -58,6 +58,8 @@ export interface NewContactFlowState {
   setDescription: (v: string) => void
   currency: string
   setCurrency: (v: string) => void
+  currencyRates: Record<string, string>
+  setCurrencyRate: (currency: string, rate: string) => void
   selectedCategory: string
   setSelectedCategory: (v: string) => void
   groupAvatar: string | null
@@ -96,6 +98,7 @@ export function useNewContactFlow(): NewContactFlowState {
   const [groupName, setGroupName] = useState('')
   const [description, setDescription] = useState('')
   const [currency, setCurrency] = useState('pkr')
+  const [currencyRates, setCurrencyRates] = useState<Record<string, string>>({})
   const [selectedCategory, setSelectedCategory] = useState(MOCK_CATEGORIES[0].id)
   const [groupAvatar, setGroupAvatar] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -186,6 +189,12 @@ export function useNewContactFlow(): NewContactFlowState {
   }
 
   const closeCurrencyMismatch = () => setCurrencyMismatch(null)
+  const setCurrencyRate = (currencyCode: string, rate: string) => {
+    setCurrencyRates((current) => ({
+      ...current,
+      [currencyCode.toUpperCase()]: rate,
+    }))
+  }
 
   const resolveCurrencyMismatch = (currency: string, exchangeRate: string) => {
     if (selectedContacts.length === 0) return
@@ -205,15 +214,33 @@ export function useNewContactFlow(): NewContactFlowState {
   const createGroup = () => {
     if (!groupName.trim()) return
     setSubmitError(null)
+    const groupCurrency = currency.toUpperCase()
+    const requiredCurrencies = [
+      ...new Set(
+        selectedList
+          .map((contact) => contact.defaultCurrency?.toUpperCase())
+          .filter((code): code is string => !!code && code !== groupCurrency),
+      ),
+    ]
+    const missingRate = requiredCurrencies.find(
+      (code) => Number(currencyRates[code] ?? 0) <= 0,
+    )
+    if (missingRate) {
+      setSubmitError(`Enter the ${missingRate} exchange rate before creating this group.`)
+      return
+    }
 
     createGroupMutation.mutate(
       {
         name: groupName.trim(),
         description: description.trim(),
-        defaultCurrency: currency.toUpperCase(),
+        defaultCurrency: groupCurrency,
         category: selectedCategory,
         memberIds: selectedContacts,
         image: groupAvatar,
+        currencyRates: Object.fromEntries(
+          requiredCurrencies.map((code) => [code, currencyRates[code]]),
+        ),
       },
       {
         onSuccess: () => setStep('success'),
@@ -254,6 +281,8 @@ export function useNewContactFlow(): NewContactFlowState {
     setDescription,
     currency,
     setCurrency,
+    currencyRates,
+    setCurrencyRate,
     selectedCategory,
     setSelectedCategory,
     groupAvatar,
