@@ -15,8 +15,12 @@ import { useAuthStore } from '@/store/use-auth-store'
 import { useGroupQuery } from '@/features/groups/api/use-group-query'
 import { useCategoriesQuery } from '@/features/expenses/api/use-categories-query'
 import { useGroupRecurringQuery, type RecurringExpenseRead } from '@/features/groups/api/use-group-recurring-query'
+import { useFriendshipDetailQuery } from '@/features/contacts/api/use-friendship-detail-query'
+import { useFriendshipRecurringQuery } from '@/features/contacts/api/use-friendship-recurring-query'
 import {
+  useCreateFriendshipRecurringMutation,
   useCreateGroupRecurringMutation,
+  useUpdateFriendshipRecurringMutation,
   useUpdateGroupRecurringMutation,
   type GroupRecurringFormValues,
 } from '@/features/groups/api/use-group-recurring-mutations'
@@ -25,12 +29,14 @@ import RecurringFormHeader from '@/features/groups/components/recurring-form-hea
 import FrequencyToggle, { type RecurringFrequency } from '@/features/groups/components/frequency-toggle'
 import RecurringAttachmentsStrip from '@/features/groups/components/recurring-attachments-strip'
 import type { components } from '@/lib/api/schema'
+import { ROUTES } from '@/constants/routes'
 
-type Group = components['schemas']['Group']
 type Category = components['schemas']['Category']
 
 interface AddRecurringScreenProps {
-  groupId: string
+  groupId?: string
+  friendshipId?: string
+  contactUserId?: string
   editPaymentId?: string
   onClose?: () => void
   onSuccess?: () => void
@@ -56,32 +62,43 @@ function parseDateToIso(dateStr: string): string {
 
 export default function AddRecurringScreen({
   groupId,
+  friendshipId,
+  contactUserId,
   editPaymentId,
   onClose = () => window.history.back(),
   onSuccess = () => window.history.back(),
 }: AddRecurringScreenProps) {
+  const userProfile = useAuthStore((state) => state.userProfile)
+  const isFriendship = !!friendshipId
   const groupQuery = useGroupQuery(groupId)
-  const recurringQuery = useGroupRecurringQuery(groupId)
+  const friendshipQuery = useFriendshipDetailQuery(friendshipId)
+  const groupRecurringQuery = useGroupRecurringQuery(groupId)
+  const friendshipRecurringQuery = useFriendshipRecurringQuery(friendshipId)
   const categoriesQuery = useCategoriesQuery()
+  const recurringPayments = isFriendship ? friendshipRecurringQuery.data : groupRecurringQuery.data
 
   const editingPayment = useMemo(() => {
     if (!editPaymentId) return null
-    return recurringQuery.data?.find((p) => p.id === editPaymentId) ?? null
-  }, [recurringQuery.data, editPaymentId])
+    return recurringPayments?.find((p) => p.id === editPaymentId) ?? null
+  }, [recurringPayments, editPaymentId])
 
   const isLoading =
-    groupQuery.isLoading || categoriesQuery.isLoading || (!!editPaymentId && recurringQuery.isLoading)
+    (isFriendship ? friendshipQuery.isLoading : groupQuery.isLoading)
+    || categoriesQuery.isLoading
+    || (!!editPaymentId && (isFriendship ? friendshipRecurringQuery.isLoading : groupRecurringQuery.isLoading))
 
   if (isLoading) {
     return <ExpenseFormSkeleton />
   }
 
-  if (!groupQuery.data || (editPaymentId && !editingPayment)) {
+  const friendship = friendshipQuery.data
+  const group = groupQuery.data
+  if ((!isFriendship && !group) || (isFriendship && !friendship) || (editPaymentId && !editingPayment)) {
     return (
       <div className="flex items-center justify-center p-6 bg-[#FEFAF1] h-[50vh]">
         <div className="text-center">
           <p className="text-lg font-bold text-[#1A1A1A]">
-            {editPaymentId ? 'Recurring payment not found' : 'Group not found'}
+            {editPaymentId ? 'Recurring payment not found' : 'Ledger not found'}
           </p>
           <button
             onClick={onClose}
@@ -94,14 +111,33 @@ export default function AddRecurringScreen({
     )
   }
 
+  const members = isFriendship && friendship
+    ? [
+        {
+          id: userProfile?.id ?? '',
+          full_name: userProfile?.name ?? 'You',
+          image: userProfile?.avatar ?? null,
+          status: 'active' as const,
+        },
+        {
+          id: friendship.friend.id,
+          full_name: friendship.friend.full_name,
+          image: friendship.friend.image,
+          status: 'active' as const,
+        },
+      ]
+    : (group?.members ?? [])
+
   // Mounted only once the group (and, when editing, the payment) is
   // loaded, so its own useState lazy initializers pick up the real
   // values on first render — no effect needed to resync.
   return (
     <AddRecurringForm
-      groupId={groupId}
+      ledgerId={(isFriendship ? friendshipId : groupId)!}
+      scope={isFriendship ? 'friendship' : 'group'}
+      contactUserId={contactUserId}
       editPaymentId={editPaymentId}
-      group={groupQuery.data}
+      members={members}
       editingPayment={editingPayment}
       categories={categoriesQuery.data ?? []}
       onClose={onClose}
@@ -111,17 +147,26 @@ export default function AddRecurringScreen({
 }
 
 function AddRecurringForm({
-  groupId,
+  ledgerId,
+  scope,
+  contactUserId,
   editPaymentId,
-  group,
+  members,
   editingPayment,
   categories,
   onClose,
   onSuccess,
 }: {
-  groupId: string
+  ledgerId: string
+  scope: 'group' | 'friendship'
+  contactUserId?: string
   editPaymentId?: string
-  group: Group
+  members: Array<{
+    id: string
+    full_name: string
+    image?: string | null
+    status: string
+  }>
   editingPayment: RecurringExpenseRead | null
   categories: Category[]
   onClose: () => void
@@ -131,8 +176,16 @@ function AddRecurringForm({
   const userProfile = useAuthStore((state) => state.userProfile)
   const myId = userProfile?.id ?? ''
 
-  const createMutation = useCreateGroupRecurringMutation(groupId)
-  const updateMutation = useUpdateGroupRecurringMutation(groupId, editPaymentId ?? '')
+  const createGroupMutation = useCreateGroupRecurringMutation(scope === 'group' ? ledgerId : '')
+  const createFriendshipMutation = useCreateFriendshipRecurringMutation(scope === 'friendship' ? ledgerId : '')
+  const updateGroupMutation = useUpdateGroupRecurringMutation(
+    scope === 'group' ? ledgerId : '',
+    editPaymentId ?? '',
+  )
+  const updateFriendshipMutation = useUpdateFriendshipRecurringMutation(
+    scope === 'friendship' ? ledgerId : '',
+    editPaymentId ?? '',
+  )
 
   const { amount, formattedAmount, handleAmountChange } = useFormattedAmountInput(
     editingPayment ? String(editingPayment.amount) : ''
@@ -173,7 +226,7 @@ function AddRecurringForm({
 
   // Build real member list for PaidByDrawer and SplitExpenseDrawer
   const drawerMembers = useMemo(() => {
-    return group.members
+    return members
       .filter((m) => m.status === 'active')
       .map((m) => {
         const isMe = m.id === myId
@@ -187,7 +240,7 @@ function AddRecurringForm({
           isOrganizer: isMe,
         }
       })
-  }, [group.members, myId])
+  }, [members, myId])
 
   const defaultSelectedMembers = useMemo(() => {
     return drawerMembers.map((m) => m.id)
@@ -196,11 +249,13 @@ function AddRecurringForm({
   // Resolve payer display name
   const payerName = useMemo(() => {
     if (paidBy === 'you' || paidBy === myId) return 'You'
-    const found = group.members.find((m) => m.id === paidBy)
+    const found = members.find((m) => m.id === paidBy)
     return found?.full_name ?? 'Member'
-  }, [paidBy, myId, group])
+  }, [paidBy, myId, members])
 
-  const activeMutation = editPaymentId ? updateMutation : createMutation
+  const activeMutation = scope === 'friendship'
+    ? (editPaymentId ? updateFriendshipMutation : createFriendshipMutation)
+    : (editPaymentId ? updateGroupMutation : createGroupMutation)
 
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
@@ -214,7 +269,7 @@ function AddRecurringForm({
     const payerUserId = paidBy === 'you' ? myId : paidBy
     const payers = [{ user_id: payerUserId, amount: String(parsedAmount) }]
 
-    const activeMembers = group.members.filter((m) => m.status === 'active')
+    const activeMembers = members.filter((m) => m.status === 'active')
     const membersInGroup = activeMembers.map((m) => m.id)
 
     let splits: GroupRecurringFormValues['splits']
@@ -262,7 +317,11 @@ function AddRecurringForm({
     if (window.history.length > 1) {
       onSuccess()
     } else {
-      navigate({ to: '/groups/$id/recurring', params: { id: groupId } })
+      if (scope === 'friendship' && contactUserId) {
+        navigate({ to: ROUTES.CONTACT_RECURRING, params: { id: contactUserId } })
+      } else {
+        navigate({ to: ROUTES.GROUP_RECURRING, params: { id: ledgerId } })
+      }
     }
   }
 

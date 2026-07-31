@@ -1901,6 +1901,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/Friendship'
           description: ''
+  /api/ledger/friendships/{friendship_id}/:
+    get:
+      operationId: ledger_friendships_retrieve
+      description: |-
+        GET /api/ledger/friendships/{id}/ — the settings/read model for one
+        direct ledger. Includes the other person's profile, ledger currency,
+        current exchange rate, blocking state, creation date, and total visible
+        history entries without requiring the client to scan the paginated list.
+      parameters:
+      - in: path
+        name: friendship_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ledger
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Friendship'
+          description: ''
   /api/ledger/friendships/{friendship_id}/block/:
     post:
       operationId: ledger_friendships_block_create
@@ -3740,6 +3766,16 @@ components:
           pattern: ^-?\d{0,6}(?:\.\d{0,6})?$
           nullable: true
           readOnly: true
+        your_currency:
+          type: string
+          readOnly: true
+        friend_currency:
+          type: string
+          readOnly: true
+        total_entries:
+          type: integer
+          minimum: 0
+          readOnly: true
       required:
       - blocked_by_me
       - created
@@ -3747,8 +3783,11 @@ components:
       - created_via
       - exchange_rate
       - friend
+      - friend_currency
       - id
       - is_blocked
+      - total_entries
+      - your_currency
     FriendshipSettlementCreate:
       type: object
       description: |-

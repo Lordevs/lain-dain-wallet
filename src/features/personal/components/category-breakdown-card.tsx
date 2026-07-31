@@ -33,7 +33,7 @@ export default function CategoryBreakdownCard({
   // Calculate coordinates for slices and labels — each slice's start is
   // the running total of every percentage before it.
   const slices = useMemo(() => {
-    const starts = categories.reduce<number[]>((acc, cat, idx) => {
+    const starts = categories.reduce<number[]>((acc, _category, idx) => {
       acc.push(idx === 0 ? 0 : acc[idx - 1] + categories[idx - 1].percentage / 100)
       return acc
     }, [])

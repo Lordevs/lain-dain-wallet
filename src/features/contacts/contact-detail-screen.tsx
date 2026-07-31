@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
-import { Bell } from 'lucide-react'
+import { Bell, MoreVertical } from 'lucide-react'
 import ContactAvatar from '@/components/shared/contact-avatar'
 import { ROUTES } from '@/constants/routes'
 import { formatCurrency } from '@/lib/currency'
@@ -25,6 +25,50 @@ function initialsForName(name: string): string {
   )
 }
 
+function getDateCategory(dateStr: string): 'Today' | 'Yesterday' | 'Earlier' {
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)
+
+  let d: Date
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    const [y, m, day] = dateStr.split('-').map(Number)
+    d = new Date(y, m - 1, day)
+  } else {
+    d = new Date(dateStr)
+  }
+
+  const txDate = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+
+  if (txDate.getTime() === today.getTime()) return 'Today'
+  if (txDate.getTime() === yesterday.getTime()) return 'Yesterday'
+  return 'Earlier'
+}
+
+function formatRightSubtitle(dateISO: string, category: 'Today' | 'Yesterday' | 'Earlier'): string {
+  const d = new Date(dateISO)
+  if (isNaN(d.getTime())) return dateISO
+
+  const timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+
+  if (category === 'Today' || category === 'Yesterday') {
+    return timeStr
+  }
+
+  const now = new Date()
+  const diffDays = (now.getTime() - d.getTime()) / (1000 * 3600 * 24)
+  if (diffDays < 7) {
+    const dayName = d.toLocaleDateString('en-US', { weekday: 'short' })
+    return `${dayName}, ${timeStr}`
+  }
+
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+interface ExpenseListItemWithDate extends ExpenseListData {
+  dateISO: string
+}
+
 /**
  * ContactDetailScreen — real 1:1 ledger view for one specific person,
  * keyed by their `User.id` (not a Contact address-book row, not a
@@ -39,9 +83,13 @@ export default function ContactDetailScreen() {
   const ledgers = useContactLedgers(userId)
   const transactions = useFriendshipTransactionsQuery(ledgers.friendshipId)
 
-  const items: ExpenseListData[] = useMemo(() => {
+  const items: ExpenseListItemWithDate[] = useMemo(() => {
     if (!transactions.data) return []
     return transactions.data.map((t) => {
+      const rawDateStr = t.kind === 'expense' ? (t.data.created_at || t.data.date) : (t.data.created_at || t.data.date)
+      const dateCat = getDateCategory(t.data.date)
+      const rightSub = formatRightSubtitle(rawDateStr, dateCat)
+
       if (t.kind === 'expense') {
         // A 1:1 friendship expense only ever has these two participants —
         // if the other person isn't among the payers, the current user paid.
@@ -56,10 +104,11 @@ export default function ContactDetailScreen() {
           currency: t.data.currency,
           categoryIcon: t.data.category.icon,
           categoryColor: t.data.category.color,
-          rightSubtitle: new Date(t.data.date).toLocaleDateString(),
+          rightSubtitle: rightSub,
           showChevron: true,
           amountColor: 'default' as const,
           kind: 'expense' as const,
+          dateISO: t.data.date,
         }
       }
       const isConfirmed = t.data.status === 'confirmed'
@@ -76,17 +125,35 @@ export default function ContactDetailScreen() {
         amount: Number(t.data.amount),
         currency: t.data.currency,
         category: isConfirmed ? 'payment' as const : 'other' as const,
-        rightSubtitle: new Date(t.data.created_at).toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: '2-digit',
-        }),
+        rightSubtitle: rightSub,
         showChevron: !isConfirmed,
         amountColor: isConfirmed ? 'green' as const : isPending ? 'orange' as const : 'black' as const,
         className: isConfirmed ? 'bg-[#DCEFE4] hover:bg-[#DCEFE4]/90' : undefined,
         kind: 'settlement' as const,
+        dateISO: t.data.date,
       }
     })
   }, [transactions.data, ledgers.data])
+
+  const groupedItems = useMemo(() => {
+    const groups: Record<'Today' | 'Yesterday' | 'Earlier', ExpenseListItemWithDate[]> = {
+      Today: [],
+      Yesterday: [],
+      Earlier: [],
+    }
+
+    items.forEach((item) => {
+      const cat = getDateCategory(item.dateISO)
+      groups[cat].push(item)
+    })
+
+    const list: { category: 'Today' | 'Yesterday' | 'Earlier'; expenses: ExpenseListItemWithDate[] }[] = []
+    if (groups.Today.length > 0) list.push({ category: 'Today', expenses: groups.Today })
+    if (groups.Yesterday.length > 0) list.push({ category: 'Yesterday', expenses: groups.Yesterday })
+    if (groups.Earlier.length > 0) list.push({ category: 'Earlier', expenses: groups.Earlier })
+
+    return list
+  }, [items])
 
   if (ledgers.isLoading) {
     return (
@@ -135,9 +202,11 @@ export default function ContactDetailScreen() {
   const currency = primaryBalance?.currency ?? 'PKR'
   const formattedVal = formatCurrency(amount, currency)
 
-  const statusLabel = isPositive ? 'You will receive' : isNegative ? 'You owe' : 'Settle up'
+  const statusLabel = isPositive ? 'You will receive' : isNegative ? 'You owe' : 'Settled up'
   const amountColorClass = isPositive ? 'text-positive' : isNegative ? 'text-[#C96A1B]' : 'text-[#1A1A1A]'
   const initials = initialsForName(otherUser.full_name)
+
+  const showRemindButton = isPositive || (amount > 0 && !isNegative)
 
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24 relative select-none">
@@ -156,7 +225,15 @@ export default function ContactDetailScreen() {
             />
           </div>
         }
-        rightSlot={undefined}
+        rightSlot={
+          <button
+                      type="button"
+                      onClick={() => navigate({ to: ROUTES.CONTACT_SETTINGS, params: { id: userId } })}
+                      className="text-[#6B6B6B] cursor-pointer border-0 bg-transparent flex items-center justify-center p-2"
+                    >
+                      <MoreVertical size={20} />
+                    </button>
+        }
       />
 
       {/* Direct 1-to-1 Balance Stat Card */}
@@ -168,7 +245,7 @@ export default function ContactDetailScreen() {
               {formattedVal}
             </span>
           </div>
-          {isPositive && (
+          {showRemindButton && (
             <button
               type="button"
               onClick={() => navigate({ to: ROUTES.CONTACT_REMINDER, params: { id: userId } })}
@@ -181,8 +258,8 @@ export default function ContactDetailScreen() {
         </div>
       </div>
 
-      {/* Transaction history */}
-      <div className="flex flex-col gap-5 px-6 pb-12 overflow-y-auto">
+      {/* Transaction history grouped by Today, Yesterday, Earlier */}
+      <div className="flex flex-col gap-6 px-6 pb-12 overflow-y-auto">
         {transactions.isLoading && <ExpenseListSkeleton />}
         {!transactions.isLoading && items.length === 0 && (
           <EmptyState
@@ -195,14 +272,21 @@ export default function ContactDetailScreen() {
         )}
         {items.length > 0 && (
           <>
-            <ExpenseList
-              expenses={items}
-              onItemClick={(tid, kind) =>
-                kind === 'settlement'
-                  ? navigate({ to: ROUTES.SETTLEMENT_DETAILS, params: { id: tid.toString() } })
-                  : navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: tid.toString() } })
-              }
-            />
+            {groupedItems.map((group) => (
+              <div key={group.category} className="flex flex-col gap-2">
+                <h4 className="text-[13px] font-semibold text-[#6B6B6B] px-1">
+                  {group.category}
+                </h4>
+                <ExpenseList
+                  expenses={group.expenses}
+                  onItemClick={(tid, kind) =>
+                    kind === 'settlement'
+                      ? navigate({ to: ROUTES.SETTLEMENT_DETAILS, params: { id: tid.toString() } })
+                      : navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: tid.toString() } })
+                  }
+                />
+              </div>
+            ))}
             <InfiniteScrollSentinel
               onLoadMore={transactions.fetchNextPage}
               hasMore={transactions.hasNextPage}

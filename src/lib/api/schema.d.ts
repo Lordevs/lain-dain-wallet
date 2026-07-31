@@ -981,6 +981,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ledger/friendships/{friendship_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description GET /api/ledger/friendships/{id}/ — the settings/read model for one
+         *     direct ledger. Includes the other person's profile, ledger currency,
+         *     current exchange rate, blocking state, creation date, and total visible
+         *     history entries without requiring the client to scan the paginated list.
+         */
+        get: operations["ledger_friendships_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ledger/friendships/{friendship_id}/block/": {
         parameters: {
             query?: never;
@@ -1950,6 +1972,9 @@ export interface components {
             currency?: string | null;
             /** Format: decimal */
             readonly exchange_rate: string | null;
+            readonly your_currency: string;
+            readonly friend_currency: string;
+            readonly total_entries: number;
         };
         /**
          * @description For a 1:1 settlement — there's only ever one possible counterparty
@@ -4446,6 +4471,27 @@ export interface operations {
                 };
             };
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Friendship"];
+                };
+            };
+        };
+    };
+    ledger_friendships_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                friendship_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

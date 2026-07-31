@@ -24,7 +24,7 @@ export function useWalletListQuery(tab: 'receivables' | 'payables') {
       // the generated query type doesn't include them; the cast below is
       // deliberate, not a typo.
       const { data, error } = await apiClient.GET('/api/expenses/wallet/', {
-        params: { query: { tab } as unknown as Record<string, string> },
+        params: { query: { tab } } as never,
       })
       if (error) throw toApiError(error)
       return data

@@ -19,7 +19,7 @@ export function useMyExpensesReportQuery(year?: number, month?: number) {
     queryFn: async () => {
       const query: YearMonthQuery = year && month ? { year, month } : {}
       const { data, error } = await apiClient.GET('/api/expenses/my-expenses/reports/', {
-        params: { query: query as Record<string, never> },
+        params: { query } as never,
       })
       if (error) throw toApiError(error)
       return data

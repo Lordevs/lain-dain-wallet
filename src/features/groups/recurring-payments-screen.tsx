@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { Home, Music, Pencil, Trash2, Plus, Video } from 'lucide-react'
+import { Pencil, Trash2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import FlowHeader from '@/components/shared/flow-header'
 import ContactAvatar from '@/components/shared/contact-avatar'
@@ -9,28 +9,49 @@ import { useAuthStore } from '@/store/use-auth-store'
 import { useGroupQuery } from '@/features/groups/api/use-group-query'
 import { useGroupRecurringQuery } from '@/features/groups/api/use-group-recurring-query'
 import { useDeleteGroupRecurringMutation } from '@/features/groups/api/use-group-recurring-mutations'
+import { useFriendshipDetailQuery } from '@/features/contacts/api/use-friendship-detail-query'
+import { useFriendshipRecurringQuery } from '@/features/contacts/api/use-friendship-recurring-query'
+import { useDeleteFriendshipRecurringMutation } from '@/features/groups/api/use-group-recurring-mutations'
 import { getGroupPermissions } from '@/features/groups/lib/group-roles'
+import { iconForCategory } from '@/features/expenses/lib/category-icons'
 import { initialsForName, colorForName } from '@/lib/avatar-visuals'
 import { formatCurrency } from '@/lib/currency'
-import { cn } from '@/lib/utils'
 import { ROUTES } from '@/constants/routes'
 
 interface RecurringPaymentsScreenProps {
-  groupId: string
+  groupId?: string
+  friendshipId?: string
+  contactUserId?: string
   onClose: () => void
 }
 
-export default function RecurringPaymentsScreen({ groupId, onClose }: RecurringPaymentsScreenProps) {
+export default function RecurringPaymentsScreen({
+  groupId,
+  friendshipId,
+  contactUserId,
+  onClose,
+}: RecurringPaymentsScreenProps) {
   const navigate = useNavigate()
+  const isFriendship = !!friendshipId
 
   const userProfile = useAuthStore((state) => state.userProfile)
   const myId = userProfile?.id ?? ''
 
   const { data: group } = useGroupQuery(groupId)
-  const { data: payments = [], isLoading } = useGroupRecurringQuery(groupId)
-  const deleteMutation = useDeleteGroupRecurringMutation(groupId)
+  const groupRecurring = useGroupRecurringQuery(groupId)
+  const { data: friendship } = useFriendshipDetailQuery(friendshipId)
+  const friendshipRecurring = useFriendshipRecurringQuery(friendshipId)
+  const payments = useMemo(
+    () => isFriendship ? (friendshipRecurring.data ?? []) : (groupRecurring.data ?? []),
+    [friendshipRecurring.data, groupRecurring.data, isFriendship],
+  )
+  const isLoading = isFriendship ? friendshipRecurring.isLoading : groupRecurring.isLoading
+  const groupDeleteMutation = useDeleteGroupRecurringMutation(groupId ?? '')
+  const friendshipDeleteMutation = useDeleteFriendshipRecurringMutation(friendshipId ?? '')
+  const deleteMutation = isFriendship ? friendshipDeleteMutation : groupDeleteMutation
 
-  const { isAdmin } = getGroupPermissions(group, myId)
+  const { isAdmin: isGroupAdmin } = getGroupPermissions(group, myId)
+  const canManage = isFriendship || isGroupAdmin
 
   // Calculate Monthly total dynamically from API items
   const monthlyTotal = useMemo(() => {
@@ -44,6 +65,12 @@ export default function RecurringPaymentsScreen({ groupId, onClose }: RecurringP
   }, [payments])
 
   const activeCount = payments.length
+  const currency =
+    payments[0]?.currency
+    ?? group?.default_currency
+    ?? friendship?.currency
+    ?? friendship?.your_currency
+    ?? 'PKR'
 
   const handleDelete = async (paymentId: string) => {
     try {
@@ -55,21 +82,17 @@ export default function RecurringPaymentsScreen({ groupId, onClose }: RecurringP
   }
 
   const handleEdit = (paymentId: string) => {
-    navigate({
-      to: ROUTES.GROUP_EDIT_RECURRING,
-      params: { id: groupId, paymentId },
-    })
-  }
-
-  const getCategoryVisuals = (categoryName?: string, paymentName?: string) => {
-    const nameStr = (paymentName || categoryName || '').toLowerCase()
-    if (nameStr.includes('spotify') || nameStr.includes('music')) {
-      return { Icon: Music, iconColor: '#27AE60', bgColor: 'bg-[#E8F5E9]' }
+    if (isFriendship && contactUserId) {
+      navigate({
+        to: ROUTES.CONTACT_EDIT_RECURRING,
+        params: { id: contactUserId, paymentId },
+      })
+    } else if (groupId) {
+      navigate({
+        to: ROUTES.GROUP_EDIT_RECURRING,
+        params: { id: groupId, paymentId },
+      })
     }
-    if (nameStr.includes('netflix') || nameStr.includes('video') || nameStr.includes('movie')) {
-      return { Icon: Video, iconColor: '#EB5757', bgColor: 'bg-[#FFF0F0]' }
-    }
-    return { Icon: Home, iconColor: '#2F80ED', bgColor: 'bg-[#E3F2FD]' }
   }
 
   return (
@@ -90,7 +113,7 @@ export default function RecurringPaymentsScreen({ groupId, onClose }: RecurringP
               Monthly total
             </span>
             <span className="text-[22px] font-extrabold text-positive mt-1.5 leading-none">
-              Rs. {Math.round(monthlyTotal).toLocaleString('en-US')}
+              {formatCurrency(Math.round(monthlyTotal), currency)}
             </span>
           </div>
 
@@ -125,9 +148,10 @@ export default function RecurringPaymentsScreen({ groupId, onClose }: RecurringP
           ) : (
             <div className="bg-white border border-[#EBEBEB] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] divide-y divide-[#EBEBEB] overflow-hidden">
               {payments.map((p) => {
-                const { Icon, iconColor, bgColor } = getCategoryVisuals(p.category?.name, p.description)
+                const Icon = iconForCategory(p.category?.icon)
+                const iconColor = p.category?.color ?? '#0B683A'
                 const mainPayer = p.payers?.[0]
-                const payerName = mainPayer ? (mainPayer.id === myId ? 'You' : mainPayer.full_name) : 'Group'
+                const payerName = mainPayer ? (mainPayer.id === myId ? 'You' : mainPayer.full_name) : 'Ledger'
                 const payerInitials = initialsForName(payerName)
                 const payerColor = colorForName(payerName)
                 const amountNum = Number(p.amount) || 0
@@ -136,7 +160,10 @@ export default function RecurringPaymentsScreen({ groupId, onClose }: RecurringP
                   <div key={p.id} className="flex items-center justify-between p-5 hover:bg-muted/5 transition-colors">
                     {/* Left details */}
                     <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                      <div className={cn("w-14 h-14 rounded-[18px] flex items-center justify-center shrink-0 border border-black/5 shadow-sm", bgColor)}>
+                      <div
+                        className="w-14 h-14 rounded-[18px] flex items-center justify-center shrink-0 border border-black/5 shadow-sm"
+                        style={{ backgroundColor: `${iconColor}18` }}
+                      >
                         <Icon size={22} style={{ color: iconColor }} strokeWidth={2} />
                       </div>
 
@@ -171,7 +198,7 @@ export default function RecurringPaymentsScreen({ groupId, onClose }: RecurringP
                     </div>
 
                     {/* Right Edit & Delete Actions (for Admin/Owner) */}
-                    {isAdmin && (
+                    {canManage && (
                       <div className="flex items-center gap-2 shrink-0 ml-4">
                         <button
                           type="button"
@@ -201,11 +228,17 @@ export default function RecurringPaymentsScreen({ groupId, onClose }: RecurringP
       </div>
 
       {/* Absolute Bottom Actions Bar (Admin/Owner only) */}
-      {isAdmin && (
+      {canManage && (
         <div className="fixed bottom-3 left-3 right-3 z-10">
           <button
             type="button"
-            onClick={() => navigate({ to: ROUTES.GROUP_ADD_RECURRING, params: { id: groupId } })}
+            onClick={() => {
+              if (isFriendship && contactUserId) {
+                navigate({ to: ROUTES.CONTACT_ADD_RECURRING, params: { id: contactUserId } })
+              } else if (groupId) {
+                navigate({ to: ROUTES.GROUP_ADD_RECURRING, params: { id: groupId } })
+              }
+            }}
             className="w-full h-14 bg-positive text-white rounded-full font-bold text-base active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer border-0 pointer-events-auto shadow-lg"
           >
             <Plus size={18} strokeWidth={3} />

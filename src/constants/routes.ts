@@ -17,9 +17,13 @@ export const ROUTES = {
   CONTACTS: '/contacts',
   NEW_CONTACT: '/contacts/new',
   CONTACT_DETAILS: '/contacts/$id',
+  CONTACT_SETTINGS: '/contacts/$id/settings',
   CONTACT_BREAKDOWN: '/contacts/$id/breakdown',
   CONTACT_REMINDER: '/contacts/$id/reminder',
   CONTACT_ADD_EXPENSE: '/contacts/$id/add-expense',
+  CONTACT_RECURRING: '/contacts/$id/recurring',
+  CONTACT_ADD_RECURRING: '/contacts/$id/recurring/new',
+  CONTACT_EDIT_RECURRING: '/contacts/$id/recurring/$paymentId/edit',
 
   // ── Transactions ─────────────────────────────────────────────────────────────
   TRANSACTIONS: '/transactions',

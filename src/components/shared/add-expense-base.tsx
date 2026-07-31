@@ -120,6 +120,18 @@ export default function AddExpenseBase({
   const userProfile = useAuthStore((state) => state.userProfile)
   const youInitials = getInitials(userProfile?.name || 'You')
 
+  const allMembers: PaidByMember[] = members ?? [
+    { id: 'you', name: 'You', initials: youInitials, avatarColor: 'bg-positive' },
+    { id: 'contact', name: contact?.name ?? '', initials: contact?.initials ?? '', avatarColor: contact?.avatarColor || 'bg-[#2F80ED]' },
+  ]
+
+  const activePayerMembers = multiplePayerAmounts
+    ? allMembers.filter((m) => (multiplePayerAmounts[m.id] ?? 0) > 0)
+    : allMembers
+
+  const displayPayerMembers = activePayerMembers.length > 0 ? activePayerMembers : allMembers
+  const multiplePayerCount = displayPayerMembers.length
+
   // Each drawer gets a back-button-aware close handler.
   // When the mobile back button is pressed while a drawer is open,
   // it closes the drawer instead of navigating to the previous page.
@@ -282,10 +294,7 @@ export default function AddExpenseBase({
                   {/* Avatars */}
                   {paidBy === 'multiple' ? (
                     <div className="flex -space-x-2 shrink-0">
-                      {(members ?? [
-                        { id: 'you', name: 'You', initials: youInitials, avatarColor: 'bg-positive' },
-                        { id: 'contact', name: contact?.name ?? '', initials: contact?.initials ?? '', avatarColor: contact?.avatarColor || 'bg-[#2F80ED]' },
-                      ]).slice(0, 3).map((m) => (
+                      {displayPayerMembers.slice(0, 3).map((m) => (
                         <div key={m.id} className={cn("size-6 rounded-full border border-white text-white flex items-center justify-center font-extrabold text-[8px] select-none shadow-sm", m.avatarColor)}>
                           {m.initials}
                         </div>
@@ -310,7 +319,7 @@ export default function AddExpenseBase({
                       "text-[14px] font-black mt-1.5 leading-none",
                       paidBy === 'multiple' ? "text-positive" : "text-foreground"
                     )}>
-                      {paidBy === 'multiple' ? `${members?.length ?? 3} people` : payerName}
+                      {paidBy === 'multiple' ? `${multiplePayerCount} ${multiplePayerCount === 1 ? 'person' : 'people'}` : payerName}
                     </span>
                   </div>
                 </div>
