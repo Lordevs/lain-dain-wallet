@@ -66,6 +66,28 @@ export function useUpdateFriendshipExchangeRateMutation(friendshipId: string) {
   })
 }
 
+/** `null` resets to inheriting the caller's global
+ * PersonalExpenseSettings.auto_reminder_enabled default. */
+export function useUpdateFriendshipAutoRemindMutation(friendshipId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation<Friendship, ApiError, boolean | null>({
+    mutationFn: async (autoRemindOverride) => {
+      const { data, error } = await apiClient.PATCH('/api/ledger/friendships/{friendship_id}/auto-remind/', {
+        params: { path: { friendship_id: friendshipId } },
+        body: { auto_remind_override: autoRemindOverride },
+      })
+      if (error) throw toApiError(error)
+      return data
+    },
+    onSuccess: (friendship) => {
+      queryClient.setQueryData(['friendship', friendshipId], friendship)
+      toast.success('Reminder preference updated')
+    },
+    onError: (error) => toast.error(error.message),
+  })
+}
+
 export function useClearFriendshipHistoryMutation(friendshipId: string) {
   const queryClient = useQueryClient()
 

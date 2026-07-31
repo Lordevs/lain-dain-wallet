@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useParams } from '@tanstack/react-router'
+import { toast } from 'sonner'
 import { useContactStore } from '@/store/use-contact-store'
 import { useContactLedgers } from '@/features/contacts/hooks/use-contact-ledgers'
+import { useRequestSettlementMutation } from '@/features/notifications/api/use-notification-mutations'
 import { formatCurrency } from '@/lib/currency'
 import FlowHeader from '@/components/shared/flow-header'
 import SuccessCheck from '@/components/shared/success-check'
@@ -19,6 +21,7 @@ export default function SendReminderScreen() {
   const ledgers = useContactLedgers(contactId)
   const contacts = useContactStore((state) => state.contacts)
   const localContact = contacts.find((c) => c.id === contactId)
+  const requestSettlement = useRequestSettlementMutation()
 
   if (ledgers.isLoading && !localContact) {
     return (
@@ -59,7 +62,14 @@ export default function SendReminderScreen() {
   }
 
   const handleSendReminder = () => {
-    setShowSuccess(true)
+    if (!contactId || !ledgers.friendshipId) return
+    requestSettlement.mutate(
+      { other_user_id: contactId, friendship_id: ledgers.friendshipId },
+      {
+        onSuccess: () => setShowSuccess(true),
+        onError: (err) => toast.error(err.message),
+      },
+    )
   }
 
   const handleSuccessComplete = () => {
@@ -121,10 +131,11 @@ export default function SendReminderScreen() {
       <div className="fixed bottom-3 left-3 right-3 z-10">
         <button
           type="button"
+          disabled={!ledgers.friendshipId || requestSettlement.isPending}
           onClick={handleSendReminder}
-          className="w-full h-14 rounded-full bg-[#FDB105] text-[#1A1A1A] font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0 shadow-md"
+          className="w-full h-14 rounded-full bg-[#FDB105] text-[#1A1A1A] font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0 shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          Send Reminder
+          {requestSettlement.isPending ? 'Sending...' : 'Send Reminder'}
         </button>
       </div>
     </div>

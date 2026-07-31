@@ -91,8 +91,8 @@ export function getNotificationCardContent(notification: Notification): Notifica
     case 'budget_alert': {
       const p = payloadOf(notification as Notification & { type: 'budget_alert' })
       return {
-        tag: 'Budget alert',
-        title: 'You have reached your budget limit',
+        tag: p.category_name ? `${p.category_name} budget alert` : 'Budget alert',
+        title: p.category_name ? `You've reached your ${p.category_name} budget` : 'You have reached your budget limit',
         subtitle: `${formatCurrency(Number(p.spent), p.currency)} of ${formatCurrency(Number(p.limit), p.currency)} spent (${p.used_percentage.toFixed(0)}%)`,
         theme: 'orange',
       }

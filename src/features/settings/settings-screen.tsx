@@ -17,6 +17,8 @@ import FlowHeader from '@/components/shared/flow-header'
 import { Switch } from '@/components/ui/switch'
 import CurrencySelectDrawer from '@/components/shared/currency-select-drawer'
 import { getCurrency } from '@/lib/currency'
+import { usePersonalExpenseSettingsQuery } from '@/features/expenses/api/use-personal-expense-settings-query'
+import { useUpdatePersonalExpenseSettingsMutation } from '@/features/expenses/api/use-update-personal-expense-settings-mutation'
 
 // ─── Main Screen Component ─────────────────────────────────────────────────────
 export default function SettingsScreen() {
@@ -26,8 +28,11 @@ export default function SettingsScreen() {
   // Local state for interactive settings mockup
   const [currency, setCurrency] = useState('pkr')
   const [pushNotifications, setPushNotifications] = useState(true)
-  const [autoReminders, setAutoReminders] = useState(true)
-  const [reminderInterval, setReminderInterval] = useState<'week' | 'two_weeks'>('week')
+
+  const personalSettings = usePersonalExpenseSettingsQuery()
+  const updateSettings = useUpdatePersonalExpenseSettingsMutation()
+  const autoReminders = personalSettings.data?.auto_reminder_enabled ?? true
+  const reminderInterval = personalSettings.data?.auto_reminder_interval_days === 14 ? 'two_weeks' : 'week'
 
   // Derive display values from store with mockup fallbacks
   const displayName = userProfile?.name || 'Muhammad Huzaifa'
@@ -120,7 +125,11 @@ export default function SettingsScreen() {
                     <h4 className="text-[15px] font-semibold text-[#1A1A1A] leading-tight">Auto Personal Reminders</h4>
                     <p className="text-[12px] text-[#6B6B6B]">Automatically remind people who owe you</p>
                   </div>
-                  <Switch checked={autoReminders} onCheckedChange={setAutoReminders} size="lg" />
+                  <Switch
+                    checked={autoReminders}
+                    onCheckedChange={(checked) => updateSettings.mutate({ auto_reminder_enabled: checked })}
+                    size="lg"
+                  />
                 </div>
 
                 {/* Collapsible auto reminder frequency sub-options */}
@@ -141,7 +150,7 @@ export default function SettingsScreen() {
                         {/* Every week option */}
                         <button
                           type="button"
-                          onClick={() => setReminderInterval('week')}
+                          onClick={() => updateSettings.mutate({ auto_reminder_interval_days: 7 })}
                           className="w-full flex items-center justify-between px-4 py-3.5 text-left transition-colors cursor-pointer outline-none"
                         >
                           <div className="flex items-center gap-3">
@@ -165,7 +174,7 @@ export default function SettingsScreen() {
                         {/* Every 2 weeks option */}
                         <button
                           type="button"
-                          onClick={() => setReminderInterval('two_weeks')}
+                          onClick={() => updateSettings.mutate({ auto_reminder_interval_days: 14 })}
                           className="w-full flex items-center justify-between px-4 py-3.5 text-left transition-colors cursor-pointer outline-none"
                         >
                           <div className="flex items-center gap-3">

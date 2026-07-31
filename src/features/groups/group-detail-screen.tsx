@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
-import { MoreVertical } from 'lucide-react'
+import { Bell, MoreVertical } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import { formatCurrency } from '@/lib/currency'
 import { cn } from '@/lib/utils'
@@ -150,7 +150,19 @@ export default function GroupDetailScreen() {
         {/* Balances Section */}
         {balances.length > 0 && (
           <div className="flex flex-col text-left">
-            <h3 className="text-sm font-bold text-[#1A1A1A] mb-3 mt-1">Balances</h3>
+            <div className="flex items-center justify-between mb-3 mt-1">
+              <h3 className="text-sm font-bold text-[#1A1A1A]">Balances</h3>
+              {balances.some((b) => b.direction === 'owed_to_you') && (
+                <button
+                  type="button"
+                  onClick={() => navigate({ to: ROUTES.GROUP_REMINDER, params: { id: groupId } })}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-[#0B683A4D] bg-[#E4F2EB] text-positive text-xs font-bold transition-all hover:bg-[#E4F2EB]/80 shrink-0 cursor-pointer outline-none"
+                >
+                  <Bell size={13} className="text-positive" strokeWidth={2.5} />
+                  Remind
+                </button>
+              )}
+            </div>
             <ContactList>
               {balances.map((b) => {
                 const isReceivable = b.direction === 'owed_to_you'

@@ -2012,6 +2012,44 @@ paths:
               schema:
                 $ref: '#/components/schemas/Friendship'
           description: ''
+  /api/ledger/friendships/{friendship_id}/auto-remind/:
+    patch:
+      operationId: ledger_friendships_auto_remind_partial_update
+      description: |-
+        PATCH /api/ledger/friendships/{id}/auto-remind/ — either party sets
+        only their own side of the override (see FriendshipSerializer's
+        my_auto_remind_override / services.set_friendship_auto_remind);
+        `auto_remind_override: null` resets to inheriting that user's global
+        PersonalExpenseSettings.auto_reminder_enabled default.
+      parameters:
+      - in: path
+        name: friendship_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ledger
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedFriendshipAutoRemindUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedFriendshipAutoRemindUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedFriendshipAutoRemindUpdateRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Friendship'
+          description: ''
   /api/ledger/friendships/{friendship_id}/block/:
     post:
       operationId: ledger_friendships_block_create
@@ -2990,6 +3028,14 @@ components:
           maxLength: 3
       required:
       - currency
+    AutoReminderIntervalDaysEnum:
+      enum:
+      - 7
+      - 14
+      type: integer
+      description: |-
+        * `7` - 7
+        * `14` - 14
     BlankEnum:
       enum:
       - ''
@@ -4230,6 +4276,10 @@ components:
           type: integer
           minimum: 0
           readOnly: true
+        my_auto_remind_override:
+          type: boolean
+          nullable: true
+          readOnly: true
       required:
       - blocked_by_me
       - created
@@ -4240,6 +4290,7 @@ components:
       - friend_currency
       - id
       - is_blocked
+      - my_auto_remind_override
       - total_entries
       - your_currency
     FriendshipSettlementCreate:
@@ -5454,6 +5505,12 @@ components:
           description: Inactive devices will not be sent notifications
         type:
           $ref: '#/components/schemas/FCMDeviceTypeEnum'
+    PatchedFriendshipAutoRemindUpdateRequest:
+      type: object
+      properties:
+        auto_remind_override:
+          type: boolean
+          nullable: true
     PatchedFriendshipExchangeRateUpdateRequest:
       type: object
       properties:
@@ -5535,6 +5592,10 @@ components:
           type: integer
           maximum: 100
           minimum: 1
+        auto_reminder_enabled:
+          type: boolean
+        auto_reminder_interval_days:
+          $ref: '#/components/schemas/AutoReminderIntervalDaysEnum'
     PatchedRecurringExpenseUpdateRequest:
       type: object
       description: |-
@@ -5749,7 +5810,13 @@ components:
           type: boolean
         budget_alert_threshold_percent:
           type: integer
+        auto_reminder_enabled:
+          type: boolean
+        auto_reminder_interval_days:
+          type: integer
       required:
+      - auto_reminder_enabled
+      - auto_reminder_interval_days
       - budget_alert_enabled
       - budget_alert_threshold_percent
       - hidden_friendship_ids

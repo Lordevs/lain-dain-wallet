@@ -51,6 +51,10 @@ export interface BudgetAlertPayload {
   limit: string
   currency: string
   used_percentage: number
+  /** Only set for a per-category alert — absent for the overall monthly
+   * one (see apps/notifications/services.py's notify_budget_alert). */
+  category_id?: string
+  category_name?: string
 }
 
 export interface SettlementRequestPayload {

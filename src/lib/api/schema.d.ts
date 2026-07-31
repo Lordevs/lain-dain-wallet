@@ -1049,6 +1049,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ledger/friendships/{friendship_id}/auto-remind/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * @description PATCH /api/ledger/friendships/{id}/auto-remind/ — either party sets
+         *     only their own side of the override (see FriendshipSerializer's
+         *     my_auto_remind_override / services.set_friendship_auto_remind);
+         *     `auto_remind_override: null` resets to inheriting that user's global
+         *     PersonalExpenseSettings.auto_reminder_enabled default.
+         */
+        patch: operations["ledger_friendships_auto_remind_partial_update"];
+        trace?: never;
+    };
     "/api/ledger/friendships/{friendship_id}/block/": {
         parameters: {
             query?: never;
@@ -1642,6 +1665,12 @@ export interface components {
         ApplyLedgerAdjustmentRequestRequest: {
             currency: string;
         };
+        /**
+         * @description * `7` - 7
+         *     * `14` - 14
+         * @enum {integer}
+         */
+        AutoReminderIntervalDaysEnum: 7 | 14;
         /** @enum {unknown} */
         BlankEnum: "";
         Category: {
@@ -2236,6 +2265,7 @@ export interface components {
             readonly your_currency: string;
             readonly friend_currency: string;
             readonly total_entries: number;
+            readonly my_auto_remind_override: boolean | null;
         };
         /**
          * @description For a 1:1 settlement — there's only ever one possible counterparty
@@ -2883,6 +2913,9 @@ export interface components {
             active: boolean;
             type?: components["schemas"]["FCMDeviceTypeEnum"];
         };
+        PatchedFriendshipAutoRemindUpdateRequest: {
+            auto_remind_override?: boolean | null;
+        };
         PatchedFriendshipExchangeRateUpdateRequest: {
             /** Format: decimal */
             exchange_rate?: string;
@@ -2931,6 +2964,8 @@ export interface components {
             monthly_budget_limit?: string | null;
             budget_alert_enabled?: boolean;
             budget_alert_threshold_percent?: number;
+            auto_reminder_enabled?: boolean;
+            auto_reminder_interval_days?: components["schemas"]["AutoReminderIntervalDaysEnum"];
         };
         /**
          * @description All fields optional (PATCH semantics). amount/split_type/payers/splits
@@ -3050,6 +3085,8 @@ export interface components {
             monthly_budget_limit: string | null;
             budget_alert_enabled: boolean;
             budget_alert_threshold_percent: number;
+            auto_reminder_enabled: boolean;
+            auto_reminder_interval_days: number;
         };
         /**
          * @description * `signup` - Signup
@@ -4890,6 +4927,33 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Friendship"];
+                };
+            };
+        };
+    };
+    ledger_friendships_auto_remind_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                friendship_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedFriendshipAutoRemindUpdateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedFriendshipAutoRemindUpdateRequest"];
+                "multipart/form-data": components["schemas"]["PatchedFriendshipAutoRemindUpdateRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
