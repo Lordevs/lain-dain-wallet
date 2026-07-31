@@ -37,6 +37,7 @@ interface SettingsRowProps {
   action?: ReactNode
   onClick?: () => void
   danger?: boolean
+  disabled?: boolean
 }
 
 function SettingsRow({
@@ -46,16 +47,19 @@ function SettingsRow({
   action,
   onClick,
   danger = false,
+  disabled = false,
 }: SettingsRowProps) {
+  const isInteractive = !!onClick && !disabled
   return (
     <Item
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      onClick={onClick}
-      onKeyDown={onClick ? (event) => event.key === 'Enter' && onClick() : undefined}
+      role={isInteractive ? 'button' : undefined}
+      tabIndex={isInteractive ? 0 : undefined}
+      onClick={isInteractive ? onClick : undefined}
+      onKeyDown={isInteractive ? (event) => event.key === 'Enter' && onClick() : undefined}
       className={cn(
         'rounded-none border-0 flex-nowrap gap-4 px-5 py-[18px] bg-white',
-        onClick && 'cursor-pointer hover:bg-[#FEFAF1]/70',
+        isInteractive && 'cursor-pointer hover:bg-[#FEFAF1]/70',
+        disabled && 'opacity-45 cursor-not-allowed',
       )}
     >
       {icon && (
@@ -170,6 +174,7 @@ export default function ContactSettingsScreen() {
       ? `You owe ${friend.full_name.split(' ')[0]}`
       : 'You are settled'
   const isBlocked = friendship.is_blocked
+  const canUnblock = isBlocked && friendship.blocked_by_me
   const isActionPending = blockMutation.isPending || unblockMutation.isPending
   const createdDate = new Intl.DateTimeFormat('en-GB', {
     day: 'numeric',
@@ -222,7 +227,10 @@ export default function ContactSettingsScreen() {
             }
             description={`Set a monthly or weekly split with ${friend.full_name.split(' ')[0]}`}
             action={<ChevronRight size={18} className="text-[#73706D]" />}
-            onClick={() => navigate({ to: ROUTES.CONTACT_RECURRING, params: { id: userId } })}
+            disabled={isBlocked}
+            onClick={isBlocked
+              ? undefined
+              : () => navigate({ to: ROUTES.CONTACT_RECURRING, params: { id: userId } })}
           />
         </Section>
 
@@ -289,11 +297,26 @@ export default function ContactSettingsScreen() {
         <Section title="Danger zone">
           <SettingsRow
             icon={<Ban size={22} strokeWidth={2} />}
-            title={isBlocked ? `Unblock ${friend.full_name}` : `Block ${friend.full_name}`}
-            description={isBlocked ? 'Allow new activity with this person' : 'Stop all new activity with this person'}
-            action={<ChevronRight size={18} className="text-[#D7D4CF]" />}
+            title={canUnblock
+              ? `Unblock ${friend.full_name}`
+              : isBlocked
+                ? `Blocked by ${friend.full_name}`
+                : `Block ${friend.full_name}`}
+            description={canUnblock
+              ? 'Allow new activity with this person'
+              : isBlocked
+                ? 'Only the person who blocked this ledger can unblock it'
+                : 'Stop all new activity with this person'}
+            action={!isBlocked || canUnblock
+              ? <ChevronRight size={18} className="text-[#D7D4CF]" />
+              : undefined}
             danger
-            onClick={() => isBlocked ? unblockMutation.mutate() : setShowBlockConfirm(true)}
+            disabled={isBlocked && !canUnblock}
+            onClick={canUnblock
+              ? () => unblockMutation.mutate()
+              : isBlocked
+                ? undefined
+                : () => setShowBlockConfirm(true)}
           />
           <SettingsRow
             icon={<Trash2 size={22} strokeWidth={2} />}

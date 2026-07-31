@@ -13,6 +13,7 @@ import InfiniteScrollSentinel from '@/components/shared/infinite-scroll-sentinel
 import { Skeleton } from '@/components/ui/skeleton'
 import { useContactLedgers } from '@/features/contacts/hooks/use-contact-ledgers'
 import { useFriendshipTransactionsQuery } from '@/features/contacts/api/use-friendship-transactions-query'
+import { useFriendshipDetailQuery } from '@/features/contacts/api/use-friendship-detail-query'
 
 function initialsForName(name: string): string {
   return (
@@ -82,6 +83,7 @@ export default function ContactDetailScreen() {
 
   const ledgers = useContactLedgers(userId)
   const transactions = useFriendshipTransactionsQuery(ledgers.friendshipId)
+  const friendshipQuery = useFriendshipDetailQuery(ledgers.friendshipId)
 
   const items: ExpenseListItemWithDate[] = useMemo(() => {
     if (!transactions.data) return []
@@ -207,6 +209,7 @@ export default function ContactDetailScreen() {
   const initials = initialsForName(otherUser.full_name)
 
   const showRemindButton = isPositive || (amount > 0 && !isNegative)
+  const isBlocked = friendshipQuery.data?.is_blocked ?? false
 
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24 relative select-none">
@@ -248,8 +251,10 @@ export default function ContactDetailScreen() {
           {showRemindButton && (
             <button
               type="button"
+              disabled={isBlocked}
               onClick={() => navigate({ to: ROUTES.CONTACT_REMINDER, params: { id: userId } })}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-[#0B683A4D] bg-[#E4F2EB] text-positive text-xs font-bold transition-all hover:bg-[#E4F2EB]/80 shrink-0 cursor-pointer outline-none"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-[#0B683A4D] bg-[#E4F2EB] text-positive text-xs font-bold transition-all hover:bg-[#E4F2EB]/80 shrink-0 cursor-pointer outline-none disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-[#E4F2EB]"
+              title={isBlocked ? 'Unblock this ledger to send reminders' : undefined}
             >
               <Bell size={13} className="text-positive" strokeWidth={2.5} />
               Remind
@@ -264,9 +269,13 @@ export default function ContactDetailScreen() {
         {!transactions.isLoading && items.length === 0 && (
           <EmptyState
             title="No transactions yet"
-            description="Add an expense to start tracking transactions with this contact."
-            actionLabel="Add Expense"
-            onAction={() => navigate({ to: ROUTES.CONTACT_ADD_EXPENSE, params: { id: userId } })}
+            description={isBlocked
+              ? 'This ledger is blocked. Existing history remains visible, but new activity is disabled.'
+              : 'Add an expense to start tracking transactions with this contact.'}
+            actionLabel={isBlocked ? undefined : 'Add Expense'}
+            onAction={isBlocked
+              ? undefined
+              : () => navigate({ to: ROUTES.CONTACT_ADD_EXPENSE, params: { id: userId } })}
             className="py-6"
           />
         )}
@@ -300,15 +309,19 @@ export default function ContactDetailScreen() {
       <div className="fixed bottom-3 left-3 right-3 z-10 flex items-center gap-4">
         <button
           type="button"
+          disabled={isBlocked}
           onClick={() => navigate({ to: ROUTES.CONTACT_ADD_EXPENSE, params: { id: userId } })}
-          className="flex-1 h-12 rounded-full bg-positive text-white font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
+          className="flex-1 h-12 rounded-full bg-positive text-white font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0 disabled:bg-[#C9CEC9] disabled:text-white/90 disabled:cursor-not-allowed disabled:hover:opacity-100 disabled:active:scale-100"
+          title={isBlocked ? 'Unblock this ledger to add expenses' : undefined}
         >
           Add Expense
         </button>
         <button
           type="button"
+          disabled={isBlocked}
           onClick={() => navigate({ to: ROUTES.SETTLE_UP, search: { contactId: userId } })}
-          className="flex-1 h-12 rounded-full bg-[#FDB105] text-[#1A1A1A] font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0"
+          className="flex-1 h-12 rounded-full bg-[#FDB105] text-[#1A1A1A] font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0 disabled:bg-[#DEDAD0] disabled:text-[#8D8A84] disabled:cursor-not-allowed disabled:hover:opacity-100 disabled:active:scale-100"
+          title={isBlocked ? 'Unblock this ledger to settle up' : undefined}
         >
           Settle Up
         </button>
