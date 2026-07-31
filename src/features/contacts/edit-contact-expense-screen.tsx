@@ -152,6 +152,15 @@ export default function EditContactExpenseScreen() {
             adjustmentAmounts: { you: 0, contact: 0 },
           }
 
+  const isOwesMeExpense =
+    expense.split_type === 'unequal' &&
+    expense.payers.length === 1 &&
+    expense.payers[0]?.id === myId &&
+    expense.splits.length === 2 &&
+    expense.splits.some((s) => s.id === myId && Number(s.amount_owed) === 0)
+
+  const initialExpenseMode = isOwesMeExpense ? 'owes_me' : 'split'
+
   const initialData: InitialExpenseData = {
     amount: expense.amount,
     description: expense.description,
@@ -169,6 +178,7 @@ export default function EditContactExpenseScreen() {
     paidBy,
     multiplePayerAmounts,
     splitData,
+    expenseMode: initialExpenseMode,
   }
 
   const handleConfirm = async (data: ConfirmExpenseData) => {
@@ -189,6 +199,19 @@ export default function EditContactExpenseScreen() {
     const receiptChanged = data.receiptTouched && data.receiptFile?.dataUrl !== expense.receipt
     const receiptCleared = data.receiptTouched && !data.receiptFile
 
+    const isOwesMe = data.expenseMode === 'owes_me'
+    const splitType = isOwesMe ? 'unequal' : (data.splitData?.type ?? 'equal')
+    const payers: FriendshipExpensePayer[] = isOwesMe
+      ? [{ user_id: myId, amount: data.amount.toFixed(2) }]
+      : buildPayers(paidByValue, data.amount, myId, otherParticipant.id, data.multiplePayerAmounts)
+
+    const splits: FriendshipExpenseSplit[] = isOwesMe
+      ? [
+          { user_id: myId, amount_owed: '0.00' },
+          { user_id: otherParticipant.id, amount_owed: data.amount.toFixed(2) },
+        ]
+      : buildSplits(data, myId, otherParticipant.id)
+
     try {
       await updateExpense.mutateAsync({
         id: expense.id,
@@ -200,9 +223,9 @@ export default function EditContactExpenseScreen() {
           note: data.noteText,
           receipt: receiptChanged && !receiptCleared ? data.receiptFile?.dataUrl : undefined,
           removeReceipt: receiptCleared,
-          splitType: data.splitData?.type ?? 'equal',
-          payers: buildPayers(paidByValue, data.amount, myId, otherParticipant.id, data.multiplePayerAmounts),
-          splits: buildSplits(data, myId, otherParticipant.id),
+          splitType,
+          payers,
+          splits,
         },
       })
     } catch (err) {

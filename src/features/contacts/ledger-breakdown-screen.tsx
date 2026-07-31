@@ -7,6 +7,8 @@ import ExpenseList, { type ExpenseListData } from '@/components/shared/expense-l
 import ContactAvatar from '@/components/shared/contact-avatar'
 import FlowHeader from '@/components/shared/flow-header'
 import { useContactLedgers } from '@/features/contacts/hooks/use-contact-ledgers'
+import { useLedgerAdjustmentQuery } from '@/features/contacts/api/use-ledger-adjustment-query'
+import AdjustBalancesCard from '@/features/contacts/components/adjust-balances-card'
 import ExpenseListSkeleton from '@/components/shared/expense-list-skeleton'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -31,6 +33,7 @@ export default function LedgerBreakdownScreen() {
   const navigate = useNavigate()
 
   const ledgers = useContactLedgers(userId)
+  const adjustmentQuery = useLedgerAdjustmentQuery(userId)
 
   if (ledgers.isLoading) {
     return (
@@ -68,6 +71,7 @@ export default function LedgerBreakdownScreen() {
   }
 
   const { other_user: otherUser, overall, ledgers: ledgerItems } = ledgers.data
+  const adjustment = adjustmentQuery.data?.find((a) => Number(a.adjustable_amount) > 0)
   const primaryBalance = overall[0]
   const overallAmount = primaryBalance ? Number(primaryBalance.net_amount) : 0
   const isPositive = primaryBalance?.direction === 'owed_to_you'
@@ -162,15 +166,25 @@ export default function LedgerBreakdownScreen() {
       </div>
 
       {/* Breakdown Section */}
-      <div className="px-6 flex flex-col text-left">
-        <h3 className="text-[17px] font-bold text-[#1A1A1A] mb-3">Breakdown by ledger</h3>
-        {listItems.length === 0 ? (
-          <p className="text-muted-foreground text-sm text-center py-8">No shared ledgers yet.</p>
-        ) : (
-          <ExpenseList
-            expenses={listItems}
-            onItemClick={handleItemClick}
-            className="border-[#EFE7DD] divide-[#EFE7DD]"
+      <div className="px-6 flex flex-col gap-5 text-left">
+        <div className="flex flex-col text-left">
+          <h3 className="text-[17px] font-bold text-[#1A1A1A] mb-3">Breakdown by ledger</h3>
+          {listItems.length === 0 ? (
+            <p className="text-muted-foreground text-sm text-center py-8">No shared ledgers yet.</p>
+          ) : (
+            <ExpenseList
+              expenses={listItems}
+              onItemClick={handleItemClick}
+              className="border-[#EFE7DD] divide-[#EFE7DD]"
+            />
+          )}
+        </div>
+
+        {adjustment && (
+          <AdjustBalancesCard
+            adjustableAmount={Number(adjustment.adjustable_amount)}
+            currency={adjustment.currency}
+            onAdjustClick={() => navigate({ to: ROUTES.CONTACT_ADJUST_BALANCES, params: { id: userId } })}
           />
         )}
       </div>

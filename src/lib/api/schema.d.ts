@@ -937,6 +937,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/expenses/with/{user_id}/adjustment/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description GET /api/expenses/with/{user_id}/adjustment/ — preview: for each
+         *     currency shared with this person, how much of what's owed in each
+         *     direction (across the direct friendship + every shared group) can be
+         *     netted off without money changing hands — see
+         *     services.compute_ledger_adjustment. Usually at most one currency in
+         *     practice, but a list either way since two people COULD share ledgers
+         *     in more than one.
+         *
+         *     POST applies it for one specific currency (from the preview) —
+         *     creates one immediately-confirmed Settlement per affected ledger,
+         *     same auto-confirmed "either party can still dispute afterward"
+         *     pattern as a normal Receive-mode settlement — see
+         *     services.apply_ledger_adjustment.
+         */
+        get: operations["expenses_with_adjustment_list"];
+        put?: never;
+        /**
+         * @description GET /api/expenses/with/{user_id}/adjustment/ — preview: for each
+         *     currency shared with this person, how much of what's owed in each
+         *     direction (across the direct friendship + every shared group) can be
+         *     netted off without money changing hands — see
+         *     services.compute_ledger_adjustment. Usually at most one currency in
+         *     practice, but a list either way since two people COULD share ledgers
+         *     in more than one.
+         *
+         *     POST applies it for one specific currency (from the preview) —
+         *     creates one immediately-confirmed Settlement per affected ledger,
+         *     same auto-confirmed "either party can still dispute afterward"
+         *     pattern as a normal Receive-mode settlement — see
+         *     services.apply_ledger_adjustment.
+         */
+        post: operations["expenses_with_adjustment_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ledger/friendships/": {
         parameters: {
             query?: never;
@@ -1060,8 +1106,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * @description POST /api/ledger/friendships/{id}/unblock/ — either party, not just
-         *     whoever blocked it. See services.unblock_friendship.
+         * @description POST /api/ledger/friendships/{id}/unblock/ — only the party that
+         *     blocked the friendship may unblock it. See services.unblock_friendship.
          */
         post: operations["ledger_friendships_unblock_create"];
         delete?: never;
@@ -1423,6 +1469,13 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * @description POST body for LedgerAdjustmentView — which currency's adjustment
+         *     (from the GET preview) to actually apply.
+         */
+        ApplyLedgerAdjustmentRequestRequest: {
+            currency: string;
+        };
         /** @enum {unknown} */
         BlankEnum: "";
         Category: {
@@ -2279,6 +2332,22 @@ export interface components {
          * @enum {string}
          */
         IssueReportStatusEnum: "open" | "in_progress" | "resolved" | "closed";
+        /**
+         * @description One currency's worth of cross-ledger adjustment potential between
+         *     the caller and one other person — consumes a plain dict from
+         *     services.compute_ledger_adjustment (`{"currency": str,
+         *     "adjustable_amount"/"you_owe_total"/"owed_to_you_total": Decimal,
+         *     "ledgers": [...]}`). `ledgers` reuses UserLedgerItemSerializer's
+         *     exact shape — the same per-ledger breakdown UserLedgersView already
+         *     returns, just filtered to this one currency.
+         */
+        LedgerAdjustment: {
+            currency: string;
+            readonly adjustable_amount: string;
+            readonly you_owe_total: string;
+            readonly owed_to_you_total: string;
+            ledgers: components["schemas"]["UserLedgerItem"][];
+        };
         LogoutRequest: {
             refresh: string;
         };
@@ -2288,9 +2357,10 @@ export interface components {
          *     * `easypaisa` - Easypaisa
          *     * `jazzcash` - JazzCash
          *     * `other` - Other
+         *     * `adjustment` - Adjustment
          * @enum {string}
          */
-        MethodEnum: "cash" | "bank_transfer" | "easypaisa" | "jazzcash" | "other";
+        MethodEnum: "cash" | "bank_transfer" | "easypaisa" | "jazzcash" | "other" | "adjustment";
         /**
          * @description * `pay` - Pay
          *     * `receive` - Receive
@@ -4420,6 +4490,54 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserLedgersResponse"];
+                };
+            };
+        };
+    };
+    expenses_with_adjustment_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerAdjustment"][];
+                };
+            };
+        };
+    };
+    expenses_with_adjustment_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplyLedgerAdjustmentRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ApplyLedgerAdjustmentRequestRequest"];
+                "multipart/form-data": components["schemas"]["ApplyLedgerAdjustmentRequestRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettlementRead"][];
                 };
             };
         };

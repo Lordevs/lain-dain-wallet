@@ -33,6 +33,7 @@ export interface ConfirmExpenseData {
   /** Populated only when paidBy === 'multiple' — id -> amount contributed */
   multiplePayerAmounts?: Record<string, number>
   splitData?: SplitData
+  expenseMode?: 'split' | 'owes_me'
 }
 
 export interface InitialExpenseData {
@@ -49,6 +50,7 @@ export interface InitialExpenseData {
    * of the expense's real original amounts. */
   multiplePayerAmounts?: Record<string, number>
   splitData?: SplitData
+  expenseMode?: 'split' | 'owes_me'
 }
 
 interface AddExpenseBaseProps {
@@ -103,6 +105,7 @@ export default function AddExpenseBase({
   const [showDateDrawer, setShowDateDrawer] = useState(false)
 
   // Shared Expense Specific State
+  const [expenseMode, setExpenseMode] = useState<'split' | 'owes_me'>(initialData?.expenseMode || 'split')
   const defaultPayerId = members?.[0]?.id ?? 'you'
   const [paidBy, setPaidBy] = useState<string>(initialData?.paidBy || defaultPayerId)
   const [multiplePayerAmounts, setMultiplePayerAmounts] = useState<Record<string, number> | undefined>(
@@ -187,6 +190,7 @@ export default function AddExpenseBase({
         paidBy: showPaidByAndSplit ? paidBy : undefined,
         multiplePayerAmounts: showPaidByAndSplit && paidBy === 'multiple' ? multiplePayerAmounts : undefined,
         splitData: showPaidByAndSplit ? splitData : undefined,
+        expenseMode: showPaidByAndSplit && contact && !members ? expenseMode : undefined,
       })
       setShowSuccess(true)
     } catch {
@@ -276,8 +280,38 @@ export default function AddExpenseBase({
             </div>
           </div>
 
-          {/* Paid by & Split row (Only in Shared Mode) */}
-          {showPaidByAndSplit && (contact || members) && (
+          {/* Mode Switcher Tabs (Only for 1:1 Contact Mode) */}
+          {showPaidByAndSplit && contact && !members && (
+            <div className="flex bg-[#F2ECE1]/60 rounded-full p-1 mt-6 border border-divider/40 select-none">
+              <button
+                type="button"
+                onClick={() => setExpenseMode('split')}
+                className={cn(
+                  "flex-1 py-2.5 rounded-full text-sm font-extrabold transition-all cursor-pointer outline-none border-0",
+                  expenseMode === 'split'
+                    ? "bg-positive text-white shadow-sm"
+                    : "text-muted-foreground hover:text-foreground bg-transparent"
+                )}
+              >
+                Split
+              </button>
+              <button
+                type="button"
+                onClick={() => setExpenseMode('owes_me')}
+                className={cn(
+                  "flex-1 py-2.5 rounded-full text-sm font-extrabold transition-all cursor-pointer outline-none border-0",
+                  expenseMode === 'owes_me'
+                    ? "bg-positive text-white shadow-sm"
+                    : "text-muted-foreground hover:text-foreground bg-transparent"
+                )}
+              >
+                Owes me
+              </button>
+            </div>
+          )}
+
+          {/* Paid by & Split row (Only in Shared Split Mode) */}
+          {showPaidByAndSplit && (contact || members) && (expenseMode === 'split' || members) && (
             <div className="flex gap-4 mt-6">
               {/* Paid by */}
               <button

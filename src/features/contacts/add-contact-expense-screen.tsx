@@ -107,6 +107,19 @@ export default function AddContactExpenseScreen() {
       throw new Error(message)
     }
 
+    const isOwesMe = data.expenseMode === 'owes_me'
+    const splitType = isOwesMe ? 'unequal' : (data.splitData?.type ?? 'equal')
+    const payers: FriendshipExpensePayer[] = isOwesMe
+      ? [{ user_id: myId, amount: data.amount.toFixed(2) }]
+      : buildPayers(paidBy, data.amount, myId, otherUser.id, data.multiplePayerAmounts)
+
+    const splits: FriendshipExpenseSplit[] = isOwesMe
+      ? [
+          { user_id: myId, amount_owed: '0.00' },
+          { user_id: otherUser.id, amount_owed: data.amount.toFixed(2) },
+        ]
+      : buildSplits(data, myId, otherUser.id)
+
     try {
       await createExpense.mutateAsync({
         friendshipId,
@@ -117,9 +130,9 @@ export default function AddContactExpenseScreen() {
           categoryId: category.id,
           note: data.noteText,
           receipt: data.receiptFile?.dataUrl,
-          splitType: data.splitData?.type ?? 'equal',
-          payers: buildPayers(paidBy, data.amount, myId, otherUser.id, data.multiplePayerAmounts),
-          splits: buildSplits(data, myId, otherUser.id),
+          splitType,
+          payers,
+          splits,
         },
       })
     } catch (err) {

@@ -19,6 +19,7 @@ export const ROUTES = {
   CONTACT_DETAILS: '/contacts/$id',
   CONTACT_SETTINGS: '/contacts/$id/settings',
   CONTACT_BREAKDOWN: '/contacts/$id/breakdown',
+  CONTACT_ADJUST_BALANCES: '/contacts/$id/adjust',
   CONTACT_REMINDER: '/contacts/$id/reminder',
   CONTACT_ADD_EXPENSE: '/contacts/$id/add-expense',
   CONTACT_RECURRING: '/contacts/$id/recurring',
