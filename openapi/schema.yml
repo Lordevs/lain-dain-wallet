@@ -2637,6 +2637,286 @@ paths:
               schema:
                 $ref: '#/components/schemas/GroupInvitation'
           description: ''
+  /api/notifications/:
+    get:
+      operationId: notifications_list
+      description: |-
+        GET /api/notifications/ — the caller's own notifications, newest
+        first. Powers the in-app notification list; the same rows also back
+        the push banner and the foreground toast (see
+        apps/notifications/services.py's create_notification docstring).
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedNotificationList'
+          description: ''
+  /api/notifications/{id}/read/:
+    post:
+      operationId: notifications_read_create
+      description: |-
+        POST /api/notifications/{id}/read/ — idempotent; re-marking an
+        already-read notification is a no-op, not an error.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+          description: ''
+  /api/notifications/devices/:
+    get:
+      operationId: notifications_devices_list
+      description: |-
+        POST/PATCH/DELETE /api/notifications/devices/ — reuses fcm-django's
+        own DRF viewset as-is: scopes to request.user automatically, upserts
+        by registration_id (a re-registered token from the same device
+        updates the existing row instead of duplicating it).
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FCMDevice'
+          description: ''
+    post:
+      operationId: notifications_devices_create
+      description: |-
+        POST/PATCH/DELETE /api/notifications/devices/ — reuses fcm-django's
+        own DRF viewset as-is: scopes to request.user automatically, upserts
+        by registration_id (a re-registered token from the same device
+        updates the existing row instead of duplicating it).
+      tags:
+      - notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FCMDeviceRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FCMDeviceRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FCMDeviceRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FCMDevice'
+          description: ''
+  /api/notifications/devices/{registration_id}/:
+    get:
+      operationId: notifications_devices_retrieve
+      description: |-
+        POST/PATCH/DELETE /api/notifications/devices/ — reuses fcm-django's
+        own DRF viewset as-is: scopes to request.user automatically, upserts
+        by registration_id (a re-registered token from the same device
+        updates the existing row instead of duplicating it).
+      parameters:
+      - in: path
+        name: registration_id
+        schema:
+          type: string
+          title: Registration token
+        required: true
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FCMDevice'
+          description: ''
+    put:
+      operationId: notifications_devices_update
+      description: |-
+        POST/PATCH/DELETE /api/notifications/devices/ — reuses fcm-django's
+        own DRF viewset as-is: scopes to request.user automatically, upserts
+        by registration_id (a re-registered token from the same device
+        updates the existing row instead of duplicating it).
+      parameters:
+      - in: path
+        name: registration_id
+        schema:
+          type: string
+          title: Registration token
+        required: true
+      tags:
+      - notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FCMDeviceRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FCMDeviceRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FCMDeviceRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FCMDevice'
+          description: ''
+    patch:
+      operationId: notifications_devices_partial_update
+      description: |-
+        POST/PATCH/DELETE /api/notifications/devices/ — reuses fcm-django's
+        own DRF viewset as-is: scopes to request.user automatically, upserts
+        by registration_id (a re-registered token from the same device
+        updates the existing row instead of duplicating it).
+      parameters:
+      - in: path
+        name: registration_id
+        schema:
+          type: string
+          title: Registration token
+        required: true
+      tags:
+      - notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedFCMDeviceRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedFCMDeviceRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedFCMDeviceRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FCMDevice'
+          description: ''
+    delete:
+      operationId: notifications_devices_destroy
+      description: |-
+        POST/PATCH/DELETE /api/notifications/devices/ — reuses fcm-django's
+        own DRF viewset as-is: scopes to request.user automatically, upserts
+        by registration_id (a re-registered token from the same device
+        updates the existing row instead of duplicating it).
+      parameters:
+      - in: path
+        name: registration_id
+        schema:
+          type: string
+          title: Registration token
+        required: true
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/notifications/mark-all-read/:
+    post:
+      operationId: notifications_mark_all_read_create
+      description: POST /api/notifications/mark-all-read/
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/notifications/remind/:
+    post:
+      operationId: notifications_remind_create
+      description: |-
+        POST /api/notifications/remind/ — the 'Remind' nudge behind the
+        settlement_request notification type. Exactly one of friendship_id/
+        group_id must be given, matching every other friendship-or-group
+        scoped endpoint in this codebase.
+      tags:
+      - notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestSettlementRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RequestSettlementRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RequestSettlementRequestRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/notifications/unread-count/:
+    get:
+      operationId: notifications_unread_count_retrieve
+      description: GET /api/notifications/unread-count/ — for the bell-icon badge.
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationUnreadCount'
+          description: ''
   /api/support/issues/:
     get:
       operationId: support_issues_list
@@ -3805,6 +4085,78 @@ components:
           description: JSON-encoded string, shape depends on split_type — see ExpenseCreateSerializer.splits
             for the exact per-split_type shape. Required together with amount/split_type/payers
             if changing any of them.
+    FCMDevice:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          nullable: true
+          maxLength: 255
+        registration_id:
+          type: string
+          title: Registration token
+        device_id:
+          type: string
+          nullable: true
+          description: Unique device identifier
+          maxLength: 255
+        active:
+          type: boolean
+          default: true
+          title: Is active
+          description: Inactive devices will not be sent notifications
+        date_created:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          title: Creation date
+        type:
+          $ref: '#/components/schemas/FCMDeviceTypeEnum'
+      required:
+      - date_created
+      - id
+      - registration_id
+      - type
+    FCMDeviceRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+          maxLength: 255
+        registration_id:
+          type: string
+          minLength: 1
+          title: Registration token
+        device_id:
+          type: string
+          nullable: true
+          description: Unique device identifier
+          maxLength: 255
+        active:
+          type: boolean
+          default: true
+          title: Is active
+          description: Inactive devices will not be sent notifications
+        type:
+          $ref: '#/components/schemas/FCMDeviceTypeEnum'
+      required:
+      - registration_id
+      - type
+    FCMDeviceTypeEnum:
+      enum:
+      - ios
+      - android
+      - web
+      type: string
+      description: |-
+        * `ios` - ios
+        * `android` - android
+        * `web` - web
     FrequencyEnum:
       enum:
       - weekly
@@ -4759,6 +5111,66 @@ components:
       - previous_spent
       - resets_on
       - spent
+    Notification:
+      type: object
+      description: |-
+        Read-only — every field here is server-derived; there's no create/
+        update surface for a Notification from the client at all, only the
+        read-list and the read_at/mark-read actions (see views.py).
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        type:
+          allOf:
+          - $ref: '#/components/schemas/NotificationTypeEnum'
+          readOnly: true
+        payload:
+          readOnly: true
+        read_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - payload
+      - read_at
+      - type
+    NotificationTypeEnum:
+      enum:
+      - payment_settled
+      - budget_alert
+      - settlement_request
+      - payment_confirmation
+      - late_payment_reminder
+      - payment_dispute
+      - expense_edited
+      type: string
+      description: |-
+        * `payment_settled` - Payment settled
+        * `budget_alert` - Budget alert
+        * `settlement_request` - Settlement request
+        * `payment_confirmation` - Payment confirmation
+        * `late_payment_reminder` - Late payment reminder
+        * `payment_dispute` - Payment dispute
+        * `expense_edited` - Expense edited
+    NotificationUnreadCount:
+      type: object
+      description: |-
+        Response shape for NotificationUnreadCountView — schema-only, never
+        instantiated with a model instance.
+      properties:
+        count:
+          type: integer
+      required:
+      - count
     OTPRequested:
       type: object
       properties:
@@ -4918,6 +5330,25 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MyExpenseItem'
+    PaginatedNotificationList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
     PaginatedRecurringExpenseReadList:
       type: object
       required:
@@ -5000,6 +5431,29 @@ components:
           description: JSON-encoded string, shape depends on split_type — see ExpenseCreateSerializer.splits
             for the exact per-split_type shape. Required together with amount/split_type/payers
             if changing any of them.
+    PatchedFCMDeviceRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+          maxLength: 255
+        registration_id:
+          type: string
+          minLength: 1
+          title: Registration token
+        device_id:
+          type: string
+          nullable: true
+          description: Unique device identifier
+          maxLength: 255
+        active:
+          type: boolean
+          default: true
+          title: Is active
+          description: Inactive devices will not be sent notifications
+        type:
+          $ref: '#/components/schemas/FCMDeviceTypeEnum'
     PatchedFriendshipExchangeRateUpdateRequest:
       type: object
       properties:
@@ -5661,6 +6115,27 @@ components:
           minLength: 1
       required:
       - phone_number
+    RequestSettlementRequestRequest:
+      type: object
+      description: |-
+        POST body for RequestSettlementView — exactly one of friendship_id/
+        group_id must be given (checked in the view, not here, since 'exactly
+        one of two optional fields' isn't expressible as a single field
+        validator).
+      properties:
+        other_user_id:
+          type: string
+          format: uuid
+        friendship_id:
+          type: string
+          format: uuid
+          nullable: true
+        group_id:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - other_user_id
     ScopeContextEnum:
       enum:
       - friendship

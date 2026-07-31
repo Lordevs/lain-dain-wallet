@@ -43,8 +43,6 @@ import { Route as GroupsIdIndexRouteImport } from './routes/groups/$id.index'
 import { Route as ContactsIdIndexRouteImport } from './routes/contacts/$id.index'
 import { Route as TransactionsIdEditRouteImport } from './routes/transactions/$id.edit'
 import { Route as PersonalCategoryBudgetsCatIdRouteImport } from './routes/personal/category-budgets.$catId'
-import { Route as NotificationsDisputeIdRouteImport } from './routes/notifications/dispute.$id'
-import { Route as NotificationsConfirmIdRouteImport } from './routes/notifications/confirm.$id'
 import { Route as GroupsIdSettingsRouteImport } from './routes/groups/$id.settings'
 import { Route as GroupsIdReminderRouteImport } from './routes/groups/$id.reminder'
 import { Route as GroupsIdRecurringRouteImport } from './routes/groups/$id.recurring'
@@ -239,16 +237,6 @@ const PersonalCategoryBudgetsCatIdRoute =
     path: '/category-budgets/$catId',
     getParentRoute: () => PersonalRoute,
   } as any)
-const NotificationsDisputeIdRoute = NotificationsDisputeIdRouteImport.update({
-  id: '/dispute/$id',
-  path: '/dispute/$id',
-  getParentRoute: () => NotificationsRoute,
-} as any)
-const NotificationsConfirmIdRoute = NotificationsConfirmIdRouteImport.update({
-  id: '/confirm/$id',
-  path: '/confirm/$id',
-  getParentRoute: () => NotificationsRoute,
-} as any)
 const GroupsIdSettingsRoute = GroupsIdSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -398,8 +386,6 @@ export interface FileRoutesByFullPath {
   '/groups/$id/recurring': typeof GroupsIdRecurringRouteWithChildren
   '/groups/$id/reminder': typeof GroupsIdReminderRoute
   '/groups/$id/settings': typeof GroupsIdSettingsRouteWithChildren
-  '/notifications/confirm/$id': typeof NotificationsConfirmIdRoute
-  '/notifications/dispute/$id': typeof NotificationsDisputeIdRoute
   '/personal/category-budgets/$catId': typeof PersonalCategoryBudgetsCatIdRoute
   '/transactions/$id/edit': typeof TransactionsIdEditRoute
   '/contacts/$id/': typeof ContactsIdIndexRoute
@@ -449,8 +435,6 @@ export interface FileRoutesByTo {
   '/contacts/$id/settings': typeof ContactsIdSettingsRoute
   '/groups/$id/add-expense': typeof GroupsIdAddExpenseRoute
   '/groups/$id/reminder': typeof GroupsIdReminderRoute
-  '/notifications/confirm/$id': typeof NotificationsConfirmIdRoute
-  '/notifications/dispute/$id': typeof NotificationsDisputeIdRoute
   '/personal/category-budgets/$catId': typeof PersonalCategoryBudgetsCatIdRoute
   '/transactions/$id/edit': typeof TransactionsIdEditRoute
   '/contacts/$id': typeof ContactsIdIndexRoute
@@ -509,8 +493,6 @@ export interface FileRoutesById {
   '/groups/$id/recurring': typeof GroupsIdRecurringRouteWithChildren
   '/groups/$id/reminder': typeof GroupsIdReminderRoute
   '/groups/$id/settings': typeof GroupsIdSettingsRouteWithChildren
-  '/notifications/confirm/$id': typeof NotificationsConfirmIdRoute
-  '/notifications/dispute/$id': typeof NotificationsDisputeIdRoute
   '/personal/category-budgets/$catId': typeof PersonalCategoryBudgetsCatIdRoute
   '/transactions/$id/edit': typeof TransactionsIdEditRoute
   '/contacts/$id/': typeof ContactsIdIndexRoute
@@ -570,8 +552,6 @@ export interface FileRouteTypes {
     | '/groups/$id/recurring'
     | '/groups/$id/reminder'
     | '/groups/$id/settings'
-    | '/notifications/confirm/$id'
-    | '/notifications/dispute/$id'
     | '/personal/category-budgets/$catId'
     | '/transactions/$id/edit'
     | '/contacts/$id/'
@@ -621,8 +601,6 @@ export interface FileRouteTypes {
     | '/contacts/$id/settings'
     | '/groups/$id/add-expense'
     | '/groups/$id/reminder'
-    | '/notifications/confirm/$id'
-    | '/notifications/dispute/$id'
     | '/personal/category-budgets/$catId'
     | '/transactions/$id/edit'
     | '/contacts/$id'
@@ -680,8 +658,6 @@ export interface FileRouteTypes {
     | '/groups/$id/recurring'
     | '/groups/$id/reminder'
     | '/groups/$id/settings'
-    | '/notifications/confirm/$id'
-    | '/notifications/dispute/$id'
     | '/personal/category-budgets/$catId'
     | '/transactions/$id/edit'
     | '/contacts/$id/'
@@ -963,20 +939,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PersonalCategoryBudgetsCatIdRouteImport
       parentRoute: typeof PersonalRoute
     }
-    '/notifications/dispute/$id': {
-      id: '/notifications/dispute/$id'
-      path: '/dispute/$id'
-      fullPath: '/notifications/dispute/$id'
-      preLoaderRoute: typeof NotificationsDisputeIdRouteImport
-      parentRoute: typeof NotificationsRoute
-    }
-    '/notifications/confirm/$id': {
-      id: '/notifications/confirm/$id'
-      path: '/confirm/$id'
-      fullPath: '/notifications/confirm/$id'
-      preLoaderRoute: typeof NotificationsConfirmIdRouteImport
-      parentRoute: typeof NotificationsRoute
-    }
     '/groups/$id/settings': {
       id: '/groups/$id/settings'
       path: '/settings'
@@ -1129,14 +1091,10 @@ declare module '@tanstack/react-router' {
 
 interface NotificationsRouteChildren {
   NotificationsIndexRoute: typeof NotificationsIndexRoute
-  NotificationsConfirmIdRoute: typeof NotificationsConfirmIdRoute
-  NotificationsDisputeIdRoute: typeof NotificationsDisputeIdRoute
 }
 
 const NotificationsRouteChildren: NotificationsRouteChildren = {
   NotificationsIndexRoute: NotificationsIndexRoute,
-  NotificationsConfirmIdRoute: NotificationsConfirmIdRoute,
-  NotificationsDisputeIdRoute: NotificationsDisputeIdRoute,
 }
 
 const NotificationsRouteWithChildren = NotificationsRoute._addFileChildren(

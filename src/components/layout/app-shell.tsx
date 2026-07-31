@@ -5,10 +5,6 @@ import { ROUTES } from '@/constants/routes'
 import BottomNav from './bottom-nav'
 
 
-// Helper: derive the dynamic-segment prefix pattern from a route constant.
-// e.g. '/notifications/confirm/$id' → '/notifications/confirm/$' (used to match any child path)
-const dynamicPrefix = (route: string) => route.split('$')[0] + '$'
-
 // Exact paths or path prefixes where the bottom nav should be hidden.
 // These are full-screen flows and detail views that have their own navigation.
 const HIDE_NAV_PREFIXES = [
@@ -20,19 +16,10 @@ const HIDE_NAV_PREFIXES = [
   ROUTES.SETTINGS,                             // '/settings' and all sub-screens
   ROUTES.PERSONAL + '/',                       // '/personal' sub-screens e.g. /personal/reports
   ROUTES.SETTLE_UP,                            // '/settle-up' screen
-  dynamicPrefix(ROUTES.CONFIRM_PAYMENT),       // '/notifications/confirm/$'
-  dynamicPrefix(ROUTES.DISPUTE_PAYMENT),       // '/notifications/dispute/$'
 ]
 
 function shouldShowNav(pathname: string): boolean {
-  return !HIDE_NAV_PREFIXES.some((prefix) => {
-    // Dynamic segment pattern e.g. "/contacts/$" → match "/contacts/<anything>"
-    if (prefix.endsWith('/$')) {
-      const base = prefix.slice(0, -1) // "/contacts/"
-      return pathname.startsWith(base) && pathname !== base.slice(0, -1)
-    }
-    return pathname === prefix || pathname.startsWith(prefix + '/')
-  })
+  return !HIDE_NAV_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix + '/'))
 }
 
 interface AppShellProps {

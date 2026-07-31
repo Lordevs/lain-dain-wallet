@@ -36,8 +36,6 @@ export const ROUTES = {
 
   // ── Notifications ────────────────────────────────────────────────────────────
   NOTIFICATIONS: '/notifications',
-  CONFIRM_PAYMENT: '/notifications/confirm/$id',
-  DISPUTE_PAYMENT: '/notifications/dispute/$id',
 
   // ── Personal ─────────────────────────────────────────────────────────────────
   PERSONAL: '/personal',

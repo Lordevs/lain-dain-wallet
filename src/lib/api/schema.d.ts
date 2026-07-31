@@ -1433,6 +1433,172 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/notifications/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description GET /api/notifications/ — the caller's own notifications, newest
+         *     first. Powers the in-app notification list; the same rows also back
+         *     the push banner and the foreground toast (see
+         *     apps/notifications/services.py's create_notification docstring).
+         */
+        get: operations["notifications_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/{id}/read/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description POST /api/notifications/{id}/read/ — idempotent; re-marking an
+         *     already-read notification is a no-op, not an error.
+         */
+        post: operations["notifications_read_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/devices/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description POST/PATCH/DELETE /api/notifications/devices/ — reuses fcm-django's
+         *     own DRF viewset as-is: scopes to request.user automatically, upserts
+         *     by registration_id (a re-registered token from the same device
+         *     updates the existing row instead of duplicating it).
+         */
+        get: operations["notifications_devices_list"];
+        put?: never;
+        /**
+         * @description POST/PATCH/DELETE /api/notifications/devices/ — reuses fcm-django's
+         *     own DRF viewset as-is: scopes to request.user automatically, upserts
+         *     by registration_id (a re-registered token from the same device
+         *     updates the existing row instead of duplicating it).
+         */
+        post: operations["notifications_devices_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/devices/{registration_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description POST/PATCH/DELETE /api/notifications/devices/ — reuses fcm-django's
+         *     own DRF viewset as-is: scopes to request.user automatically, upserts
+         *     by registration_id (a re-registered token from the same device
+         *     updates the existing row instead of duplicating it).
+         */
+        get: operations["notifications_devices_retrieve"];
+        /**
+         * @description POST/PATCH/DELETE /api/notifications/devices/ — reuses fcm-django's
+         *     own DRF viewset as-is: scopes to request.user automatically, upserts
+         *     by registration_id (a re-registered token from the same device
+         *     updates the existing row instead of duplicating it).
+         */
+        put: operations["notifications_devices_update"];
+        post?: never;
+        /**
+         * @description POST/PATCH/DELETE /api/notifications/devices/ — reuses fcm-django's
+         *     own DRF viewset as-is: scopes to request.user automatically, upserts
+         *     by registration_id (a re-registered token from the same device
+         *     updates the existing row instead of duplicating it).
+         */
+        delete: operations["notifications_devices_destroy"];
+        options?: never;
+        head?: never;
+        /**
+         * @description POST/PATCH/DELETE /api/notifications/devices/ — reuses fcm-django's
+         *     own DRF viewset as-is: scopes to request.user automatically, upserts
+         *     by registration_id (a re-registered token from the same device
+         *     updates the existing row instead of duplicating it).
+         */
+        patch: operations["notifications_devices_partial_update"];
+        trace?: never;
+    };
+    "/api/notifications/mark-all-read/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description POST /api/notifications/mark-all-read/ */
+        post: operations["notifications_mark_all_read_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/remind/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description POST /api/notifications/remind/ — the 'Remind' nudge behind the
+         *     settlement_request notification type. Exactly one of friendship_id/
+         *     group_id must be given, matching every other friendship-or-group
+         *     scoped endpoint in this codebase.
+         */
+        post: operations["notifications_remind_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/unread-count/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description GET /api/notifications/unread-count/ — for the bell-icon badge. */
+        get: operations["notifications_unread_count_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/support/issues/": {
         parameters: {
             query?: never;
@@ -2000,6 +2166,47 @@ export interface components {
             /** @description JSON-encoded string, shape depends on split_type — see ExpenseCreateSerializer.splits for the exact per-split_type shape. Required together with amount/split_type/payers if changing any of them. */
             splits?: unknown;
         };
+        FCMDevice: {
+            readonly id: number;
+            name?: string | null;
+            /** Registration token */
+            registration_id: string;
+            /** @description Unique device identifier */
+            device_id?: string | null;
+            /**
+             * Is active
+             * @description Inactive devices will not be sent notifications
+             * @default true
+             */
+            active: boolean;
+            /**
+             * Creation date
+             * Format: date-time
+             */
+            readonly date_created: string | null;
+            type: components["schemas"]["FCMDeviceTypeEnum"];
+        };
+        FCMDeviceRequest: {
+            name?: string | null;
+            /** Registration token */
+            registration_id: string;
+            /** @description Unique device identifier */
+            device_id?: string | null;
+            /**
+             * Is active
+             * @description Inactive devices will not be sent notifications
+             * @default true
+             */
+            active: boolean;
+            type: components["schemas"]["FCMDeviceTypeEnum"];
+        };
+        /**
+         * @description * `ios` - ios
+         *     * `android` - android
+         *     * `web` - web
+         * @enum {string}
+         */
+        FCMDeviceTypeEnum: "ios" | "android" | "web";
         /**
          * @description * `weekly` - Weekly
          *     * `monthly` - Monthly
@@ -2461,6 +2668,39 @@ export interface components {
             budget_used_percentage: number | null;
             is_over_budget: boolean;
         };
+        /**
+         * @description Read-only — every field here is server-derived; there's no create/
+         *     update surface for a Notification from the client at all, only the
+         *     read-list and the read_at/mark-read actions (see views.py).
+         */
+        Notification: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly type: components["schemas"]["NotificationTypeEnum"];
+            readonly payload: unknown;
+            /** Format: date-time */
+            readonly read_at: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        /**
+         * @description * `payment_settled` - Payment settled
+         *     * `budget_alert` - Budget alert
+         *     * `settlement_request` - Settlement request
+         *     * `payment_confirmation` - Payment confirmation
+         *     * `late_payment_reminder` - Late payment reminder
+         *     * `payment_dispute` - Payment dispute
+         *     * `expense_edited` - Expense edited
+         * @enum {string}
+         */
+        NotificationTypeEnum: "payment_settled" | "budget_alert" | "settlement_request" | "payment_confirmation" | "late_payment_reminder" | "payment_dispute" | "expense_edited";
+        /**
+         * @description Response shape for NotificationUnreadCountView — schema-only, never
+         *     instantiated with a model instance.
+         */
+        NotificationUnreadCount: {
+            count: number;
+        };
         OTPRequested: {
             phone_number: string;
             purpose: components["schemas"]["PurposeEnum"];
@@ -2562,6 +2802,19 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["MyExpenseItem"][];
         };
+        PaginatedNotificationList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["Notification"][];
+        };
         PaginatedRecurringExpenseReadList: {
             /**
              * Format: uri
@@ -2615,6 +2868,20 @@ export interface components {
             payers?: unknown;
             /** @description JSON-encoded string, shape depends on split_type — see ExpenseCreateSerializer.splits for the exact per-split_type shape. Required together with amount/split_type/payers if changing any of them. */
             splits?: unknown;
+        };
+        PatchedFCMDeviceRequest: {
+            name?: string | null;
+            /** Registration token */
+            registration_id?: string;
+            /** @description Unique device identifier */
+            device_id?: string | null;
+            /**
+             * Is active
+             * @description Inactive devices will not be sent notifications
+             * @default true
+             */
+            active: boolean;
+            type?: components["schemas"]["FCMDeviceTypeEnum"];
         };
         PatchedFriendshipExchangeRateUpdateRequest: {
             /** Format: decimal */
@@ -2984,6 +3251,20 @@ export interface components {
         };
         RequestOTPRequest: {
             phone_number: string;
+        };
+        /**
+         * @description POST body for RequestSettlementView — exactly one of friendship_id/
+         *     group_id must be given (checked in the view, not here, since 'exactly
+         *     one of two optional fields' isn't expressible as a single field
+         *     validator).
+         */
+        RequestSettlementRequestRequest: {
+            /** Format: uuid */
+            other_user_id: string;
+            /** Format: uuid */
+            friendship_id?: string | null;
+            /** Format: uuid */
+            group_id?: string | null;
         };
         /**
          * @description * `friendship` - Friendship
@@ -5098,6 +5379,251 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GroupInvitation"];
+                };
+            };
+        };
+    };
+    notifications_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedNotificationList"];
+                };
+            };
+        };
+    };
+    notifications_read_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Notification"];
+                };
+            };
+        };
+    };
+    notifications_devices_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FCMDevice"][];
+                };
+            };
+        };
+    };
+    notifications_devices_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FCMDeviceRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["FCMDeviceRequest"];
+                "multipart/form-data": components["schemas"]["FCMDeviceRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FCMDevice"];
+                };
+            };
+        };
+    };
+    notifications_devices_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                registration_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FCMDevice"];
+                };
+            };
+        };
+    };
+    notifications_devices_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                registration_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FCMDeviceRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["FCMDeviceRequest"];
+                "multipart/form-data": components["schemas"]["FCMDeviceRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FCMDevice"];
+                };
+            };
+        };
+    };
+    notifications_devices_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                registration_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    notifications_devices_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                registration_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedFCMDeviceRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedFCMDeviceRequest"];
+                "multipart/form-data": components["schemas"]["PatchedFCMDeviceRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FCMDevice"];
+                };
+            };
+        };
+    };
+    notifications_mark_all_read_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    notifications_remind_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestSettlementRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["RequestSettlementRequestRequest"];
+                "multipart/form-data": components["schemas"]["RequestSettlementRequestRequest"];
+            };
+        };
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    notifications_unread_count_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationUnreadCount"];
                 };
             };
         };

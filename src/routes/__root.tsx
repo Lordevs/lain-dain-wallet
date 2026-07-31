@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/use-auth-store'
 import { ROUTES } from '@/constants/routes'
 import AppShell from '@/components/layout/app-shell'
 import { useCapacitorSetup } from '@/hooks/use-capacitor-setup'
+import { usePushNotifications } from '@/features/notifications/hooks/use-push-notifications'
 import { Toaster } from '@/components/ui/sonner'
 import coinAnimation from '@/assets/coin.webp'
 
@@ -14,6 +15,7 @@ function RootComponent() {
 
   // Initialise all Capacitor native platform features (keyboard, back button, lifecycle)
   useCapacitorSetup()
+  usePushNotifications()
 
   useEffect(() => {
     // Hide native splash screen immediately when JS bundle loads

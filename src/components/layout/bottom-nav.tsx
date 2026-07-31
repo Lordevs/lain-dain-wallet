@@ -4,6 +4,7 @@ import { Link, useRouterState } from '@tanstack/react-router'
 import { Separator } from '@/components/ui/separator'
 import { ROUTES } from '@/constants/routes'
 import { cn } from '@/lib/utils'
+import { useUnreadNotificationCountQuery } from '@/features/notifications/api/use-unread-count-query'
 
 // ─── Nav Items ────────────────────────────────────────────────────────────────
 
@@ -33,6 +34,7 @@ function isNavItemActive(to: string, pathname: string): boolean {
  */
 export default function BottomNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const { data: unread } = useUnreadNotificationCountQuery()
 
   return (
     <nav
@@ -58,7 +60,7 @@ export default function BottomNav() {
             >
               <div
                 className={cn(
-                  'w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200',
+                  'relative w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200',
                   isActive ? 'bg-[#DCEFE4]' : 'bg-transparent',
                 )}
               >
@@ -67,6 +69,11 @@ export default function BottomNav() {
                   className={isActive ? 'text-primary' : 'text-[#6B6B6B]'}
                   strokeWidth={isActive ? 2.2 : 1.8}
                 />
+                {to === ROUTES.NOTIFICATIONS && !!unread?.count && (
+                  <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[#C96A1B] text-white text-[9px] font-bold flex items-center justify-center leading-none">
+                    {unread.count > 9 ? '9+' : unread.count}
+                  </span>
+                )}
               </div>
             </Link>
           </React.Fragment>
