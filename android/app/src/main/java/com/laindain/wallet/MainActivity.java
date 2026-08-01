@@ -1,4 +1,4 @@
-package com.laindein.wallet;
+package com.laindain.wallet;
 
 import android.os.Bundle;
 import android.webkit.WebSettings;
