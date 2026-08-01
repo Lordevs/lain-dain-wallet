@@ -1,3 +1,4 @@
+import { memo, useCallback, useMemo } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { Check, Wallet, CheckCircle2, Clock, AlertTriangle } from 'lucide-react'
@@ -70,23 +71,33 @@ function NotificationListSkeleton() {
   )
 }
 
-export default function NotificationsScreen() {
-  const navigate = useNavigate({ from: '/notifications/' })
+type NavigateFn = ReturnType<typeof useNavigate>
 
-  const { data: notifications, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } = useNotificationsQuery()
-  const markRead = useMarkNotificationReadMutation()
-  const markAllRead = useMarkAllNotificationsReadMutation()
-  const requestSettlement = useRequestSettlementMutation()
-
-  const handleIgnore = (id: string) => {
+/** Rendering + action logic for one card, split out so it can be
+ * React.memo'd — markRead.mutate/requestSettlement.mutate/navigate are all
+ * stable references (TanStack Query/Router memoize them internally), so
+ * this only re-renders when its own `notification` object actually
+ * changes, not on every list re-render or unrelated item's mutation. */
+const NotificationListItem = memo(function NotificationListItem({
+  notification,
+  navigate,
+  markRead,
+  requestSettlement,
+}: {
+  notification: Notification
+  navigate: NavigateFn
+  markRead: ReturnType<typeof useMarkNotificationReadMutation>['mutate']
+  requestSettlement: ReturnType<typeof useRequestSettlementMutation>['mutate']
+}) {
+  const handleIgnore = useCallback((id: string) => {
     haptic.light()
-    markRead.mutate(id)
-  }
+    markRead(id)
+  }, [markRead])
 
-  const handleRemind = (notification: Notification & { type: 'late_payment_reminder' }) => {
+  const handleRemind = useCallback((n: Notification & { type: 'late_payment_reminder' }) => {
     haptic.light()
-    const p = payloadOf(notification)
-    requestSettlement.mutate(
+    const p = payloadOf(n)
+    requestSettlement(
       {
         other_user_id: p.other_user.id,
         friendship_id: p.target_type === 'friendship' ? p.target_id : undefined,
@@ -94,20 +105,20 @@ export default function NotificationsScreen() {
       },
       {
         onSuccess: () => {
-          markRead.mutate(notification.id)
+          markRead(n.id)
           toast.success('Reminder sent successfully!')
         },
         onError: (err) => toast.error(err.message),
       },
     )
-  }
+  }, [markRead, requestSettlement])
 
-  const goToSettlement = (id: string) => (e: React.MouseEvent) => {
+  const goToSettlement = useCallback((id: string) => (e: React.MouseEvent) => {
     e.stopPropagation()
-    markRead.mutate(id)
-  }
+    markRead(id)
+  }, [markRead])
 
-  const getCardActions = (notification: Notification): NotificationAction[] | undefined => {
+  const actions = useMemo((): NotificationAction[] | undefined => {
     switch (notification.type) {
       case 'payment_settled':
         return undefined
@@ -118,7 +129,7 @@ export default function NotificationsScreen() {
             variant: 'green',
             onClick: (e) => {
               e.stopPropagation()
-              markRead.mutate(notification.id)
+              markRead(notification.id)
               navigate({ to: ROUTES.PERSONAL })
             },
           },
@@ -132,7 +143,7 @@ export default function NotificationsScreen() {
             variant: 'green',
             onClick: (e) => {
               e.stopPropagation()
-              markRead.mutate(notification.id)
+              markRead(notification.id)
               if (p.target_type === 'friendship') {
                 navigate({ to: ROUTES.SETTLE_UP, search: { contactId: p.requested_by.id } })
               } else {
@@ -198,7 +209,7 @@ export default function NotificationsScreen() {
             variant: 'green',
             onClick: (e) => {
               e.stopPropagation()
-              markRead.mutate(notification.id)
+              markRead(notification.id)
               navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: p.expense_id } })
             },
           },
@@ -206,21 +217,52 @@ export default function NotificationsScreen() {
         ]
       }
     }
-  }
+  }, [notification, navigate, markRead, handleIgnore, handleRemind, goToSettlement])
 
-  const handleCardClick = (notification: Notification) => {
+  const handleCardClick = useCallback(() => {
     if (notification.type === 'payment_settled') {
       const p = payloadOf(notification as Notification & { type: 'payment_settled' })
       navigate({ to: ROUTES.SETTLEMENT_DETAILS, params: { id: p.settlement_id } })
     }
-  }
+  }, [notification, navigate])
+
+  const content = getNotificationCardContent(notification)
+
+  return (
+    <NotificationCard
+      id={notification.id}
+      tag={content.tag}
+      title={content.title}
+      subtitle={content.subtitle}
+      time={formatTimeAgo(notification.created_at)}
+      theme={content.theme}
+      icon={getNotificationIcon(notification.type)}
+      actions={actions}
+      onCardClick={handleCardClick}
+    />
+  )
+})
+
+export default function NotificationsScreen() {
+  const navigate = useNavigate({ from: '/notifications/' })
+
+  const { data: notifications, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } = useNotificationsQuery()
+  const markRead = useMarkNotificationReadMutation()
+  const markAllRead = useMarkAllNotificationsReadMutation()
+  const requestSettlement = useRequestSettlementMutation()
 
   // Action Needed only ever holds *unread* actionable notifications —
   // once read (via its own action, Ignore, or mark-all-read), it drops
   // down to Recent with no action buttons, instead of sitting in Action
   // Needed forever regardless of read_at.
-  const recentList = (notifications ?? []).filter((n) => n.type === 'payment_settled' || n.read_at)
-  const actionList = (notifications ?? []).filter((n) => n.type !== 'payment_settled' && !n.read_at)
+  const recentList = useMemo(
+    () => (notifications ?? []).filter((n) => n.type === 'payment_settled' || n.read_at),
+    [notifications],
+  )
+  const actionList = useMemo(
+    () => (notifications ?? []).filter((n) => n.type !== 'payment_settled' && !n.read_at),
+    [notifications],
+  )
 
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24 relative select-none">
@@ -253,23 +295,15 @@ export default function NotificationsScreen() {
               Action Needed
             </h3>
             <div className="px-6 flex flex-col gap-3.5">
-              {actionList.map((item) => {
-                const content = getNotificationCardContent(item)
-                return (
-                  <NotificationCard
-                    key={item.id}
-                    id={item.id}
-                    tag={content.tag}
-                    title={content.title}
-                    subtitle={content.subtitle}
-                    time={formatTimeAgo(item.created_at)}
-                    theme={content.theme}
-                    icon={getNotificationIcon(item.type)}
-                    actions={getCardActions(item)}
-                    onCardClick={() => handleCardClick(item)}
-                  />
-                )
-              })}
+              {actionList.map((item) => (
+                <NotificationListItem
+                  key={item.id}
+                  notification={item}
+                  navigate={navigate}
+                  markRead={markRead.mutate}
+                  requestSettlement={requestSettlement.mutate}
+                />
+              ))}
             </div>
           </div>
         )}
@@ -280,22 +314,15 @@ export default function NotificationsScreen() {
               Recent
             </h3>
             <div className="px-6 flex flex-col gap-3.5">
-              {recentList.map((item) => {
-                const content = getNotificationCardContent(item)
-                return (
-                  <NotificationCard
-                    key={item.id}
-                    id={item.id}
-                    tag={content.tag}
-                    title={content.title}
-                    subtitle={content.subtitle}
-                    time={formatTimeAgo(item.created_at)}
-                    theme={content.theme}
-                    icon={getNotificationIcon(item.type)}
-                    onCardClick={() => handleCardClick(item)}
-                  />
-                )
-              })}
+              {recentList.map((item) => (
+                <NotificationListItem
+                  key={item.id}
+                  notification={item}
+                  navigate={navigate}
+                  markRead={markRead.mutate}
+                  requestSettlement={requestSettlement.mutate}
+                />
+              ))}
             </div>
           </div>
         )}

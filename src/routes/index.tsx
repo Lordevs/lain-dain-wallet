@@ -1,12 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router'
 import App from '@/App'
-import { z } from 'zod'
 
-const dashboardSearchSchema = z.object({
-  search: z.string().optional(),
-})
+type DashboardSearch = { search?: string }
+
+// A single optional string field doesn't need zod's ~56KB — this mirrors
+// exactly what `z.object({ search: z.string().optional() })` validated.
+function validateDashboardSearch(search: Record<string, unknown>): DashboardSearch {
+  return typeof search.search === 'string' ? { search: search.search } : {}
+}
 
 export const Route = createFileRoute('/')({
-  validateSearch: dashboardSearchSchema,
+  validateSearch: validateDashboardSearch,
   component: App,
 })

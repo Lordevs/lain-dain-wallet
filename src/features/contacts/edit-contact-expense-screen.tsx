@@ -215,6 +215,7 @@ export default function EditContactExpenseScreen() {
     try {
       await updateExpense.mutateAsync({
         id: expense.id,
+        friendshipId: expense.friendship ?? undefined,
         values: {
           description: data.description,
           amount: data.amount.toFixed(2),

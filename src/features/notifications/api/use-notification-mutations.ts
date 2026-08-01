@@ -1,10 +1,14 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
 import { ApiError, toApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
 
 type Notification = components['schemas']['Notification']
+type PaginatedNotificationList = components['schemas']['PaginatedNotificationList']
 type RequestSettlementBody = components['schemas']['RequestSettlementRequestRequest']
+
+const NOTIFICATIONS_LIST_KEY = ['notifications', 'list', 'infinite']
+const UNREAD_COUNT_KEY = ['notifications', 'unread-count']
 
 /** POST /api/notifications/{id}/read/ — idempotent; re-marking an
  * already-read notification is a no-op server-side. */
@@ -18,8 +22,23 @@ export function useMarkNotificationReadMutation() {
       if (error) throw toApiError(error)
       return data
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+    // The full feed refetch this used to trigger (bare ['notifications']
+    // invalidation, matching both the list and the unread-count queries)
+    // was overkill for flipping one row's read state — patch the cached
+    // page in place with the server's own response instead, and only
+    // invalidate the one query that actually needs new data.
+    onSuccess: (updated) => {
+      queryClient.setQueryData<InfiniteData<PaginatedNotificationList>>(NOTIFICATIONS_LIST_KEY, (old) => {
+        if (!old) return old
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            results: page.results.map((n) => (n.id === updated.id ? updated : n)),
+          })),
+        }
+      })
+      queryClient.invalidateQueries({ queryKey: UNREAD_COUNT_KEY })
     },
   })
 }
@@ -33,7 +52,18 @@ export function useMarkAllNotificationsReadMutation() {
       if (error) throw toApiError(error)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      const now = new Date().toISOString()
+      queryClient.setQueryData<InfiniteData<PaginatedNotificationList>>(NOTIFICATIONS_LIST_KEY, (old) => {
+        if (!old) return old
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            results: page.results.map((n) => (n.read_at ? n : { ...n, read_at: now })),
+          })),
+        }
+      })
+      queryClient.invalidateQueries({ queryKey: UNREAD_COUNT_KEY })
     },
   })
 }

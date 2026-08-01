@@ -3,12 +3,13 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react"
 import type { ComponentProps } from "react"
 import * as BasePhoneInput from "react-phone-number-input"
-import flags from "react-phone-number-input/flags"
+import type FlagsModule from "react-phone-number-input/flags"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -207,8 +208,38 @@ function CountrySelect({
   )
 }
 
+type FlagsMap = typeof FlagsModule
+
+// ~240 flag SVG components (226KB) — only actually needed once someone
+// opens the country picker, not just to render the phone input itself.
+// Cached at module scope so every FlagComponent instance shares one
+// fetch instead of each triggering its own.
+let flagsModule: FlagsMap | null = null
+let flagsPromise: Promise<void> | null = null
+
+function useFlagsModule(): FlagsMap | null {
+  const [, forceRender] = useState(0)
+
+  useEffect(() => {
+    if (flagsModule) return
+    flagsPromise ??= import("react-phone-number-input/flags").then((mod) => {
+      flagsModule = mod.default
+    })
+    let cancelled = false
+    flagsPromise.then(() => {
+      if (!cancelled) forceRender((n) => n + 1)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  return flagsModule
+}
+
 function FlagComponent({ country, countryName }: BasePhoneInput.FlagProps) {
-  const Flag = flags[country]
+  const flags = useFlagsModule()
+  const Flag = flags?.[country]
 
   return (
     <span className="flex h-4 w-4 items-center justify-center [&_svg:not([class*='size-'])]:size-full! [&_svg:not([class*='size-'])]:rounded-[5px]">

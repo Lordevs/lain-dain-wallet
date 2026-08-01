@@ -7,6 +7,14 @@ import { buildExpenseUpdateFormData, type ExpenseUpdateFormValues } from '../lib
 interface UpdateExpenseVariables {
   id: string
   values: ExpenseUpdateFormValues
+  // The expense's own context — callers already have this from the
+  // ExpenseRead they loaded to build the edit form (expense.friendship /
+  // expense.group), so passing it through costs nothing and lets
+  // invalidation target only the one friendship/group actually affected,
+  // matching the ['friendship-transactions', id] / ['group-transactions',
+  // id] scoping every other mutation in the app already uses.
+  friendshipId?: string
+  groupId?: string
 }
 
 export function useUpdateExpenseMutation() {
@@ -22,9 +30,13 @@ export function useUpdateExpenseMutation() {
       if (error) throw toApiError(error)
       return data
     },
-    onSuccess: (_data, { id }) => {
+    onSuccess: (_data, { id, friendshipId, groupId }) => {
       queryClient.invalidateQueries({ queryKey: ['expense', id] })
-      queryClient.invalidateQueries({ queryKey: ['friendship-transactions'] })
+      if (friendshipId) queryClient.invalidateQueries({ queryKey: ['friendship-transactions', friendshipId] })
+      if (groupId) {
+        queryClient.invalidateQueries({ queryKey: ['group-transactions', groupId] })
+        queryClient.invalidateQueries({ queryKey: ['group-balance', groupId] })
+      }
       queryClient.invalidateQueries({ queryKey: ['user-ledgers'] })
       queryClient.invalidateQueries({ queryKey: ['wallet'] })
       // The "My Expenses" feed includes friendship/group expenses the

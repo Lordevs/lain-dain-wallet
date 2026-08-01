@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Contact } from '@/types'
@@ -6,7 +7,11 @@ import { formatCurrency } from '@/lib/currency'
 
 interface ContactLedgerCardProps {
   contact: Contact
-  onClick?: () => void
+  // Takes the contact rather than being pre-bound per row, so callers can
+  // pass one stable useCallback-wrapped function instead of a fresh
+  // closure per render — required for memo() below to actually skip
+  // re-rendering rows whose contact didn't change.
+  onSelect?: (contact: Contact) => void
 }
 
 /**
@@ -14,7 +19,7 @@ interface ContactLedgerCardProps {
  * and a row of ledger name chips at the bottom.
  * Used in both Receivables and Payables lists.
  */
-export default function ContactLedgerCard({ contact, onClick }: ContactLedgerCardProps) {
+function ContactLedgerCard({ contact, onSelect }: ContactLedgerCardProps) {
   const { name, initials, avatarColor, avatar, ledgerCount, netAmount, currency, tags, isOnline, type } = contact
 
   const isReceivable = netAmount > 0
@@ -22,7 +27,7 @@ export default function ContactLedgerCard({ contact, onClick }: ContactLedgerCar
   return (
     <button
       id={`contact-card-${contact.id}`}
-      onClick={onClick}
+      onClick={() => onSelect?.(contact)}
       className="w-full bg-[linear-gradient(160deg,#FFFDF5_8.49%,#FFFFFF_58.3%)] rounded-lg border-[1.08px] border-border-card text-left overflow-hidden hover:shadow-md active:scale-[0.99] transition-all"
     >
       {/* Top Row */}
@@ -99,3 +104,5 @@ export default function ContactLedgerCard({ contact, onClick }: ContactLedgerCar
     </button>
   )
 }
+
+export default memo(ContactLedgerCard)

@@ -101,12 +101,15 @@ export default function TransactionDetailScreen() {
   })
 
   const handleDelete = () => {
-    deleteExpense.mutate(expense.id, {
-      onSuccess: () => {
-        navigate(backTarget as never)
+    deleteExpense.mutate(
+      { id: expense.id, friendshipId: expense.friendship ?? undefined, groupId: expense.group ?? undefined },
+      {
+        onSuccess: () => {
+          navigate(backTarget as never)
+        },
+        onError: (err) => setToast({ message: err.message }),
       },
-      onError: (err) => setToast({ message: err.message }),
-    })
+    )
   }
 
   return (

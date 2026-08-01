@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { ROUTES } from '@/constants/routes'
+import type { Contact } from '@/types'
 import AppHeader from '@/components/layout/app-header'
 import SearchBar from '@/components/shared/search-bar'
 import BalanceSummaryCard from './components/balance-summary-card'
@@ -22,7 +23,7 @@ import { mapWalletRow } from './lib/map-wallet-row'
  */
 export default function DashboardScreen() {
   const navigate = useNavigate({ from: '/' })
-  const searchParams = useSearch({ from: '/' }) as any
+  const searchParams = useSearch({ from: '/' })
   const isSearchActive = searchParams.search === 'active'
 
   const [activeTab, setActiveTab] = useState<LedgerTab>('receivables')
@@ -77,38 +78,50 @@ export default function DashboardScreen() {
 
   const contacts = activeTab === 'receivables' ? receivables : payables
 
-  // Filter based on selected content type (person/group)
-  const typedContacts = contacts.filter((c) => {
-    if (filterType === 'people') return c.type === 'person'
-    if (filterType === 'groups') return c.type === 'group'
-    return true
-  })
+  // Filter -> sort -> filter chain re-runs only when one of its actual
+  // inputs changes, instead of on every render (e.g. every keystroke
+  // into the search box before search.trim() even blocks it, or any
+  // unrelated parent re-render).
+  const filteredContacts = useMemo(() => {
+    // Filter based on selected content type (person/group)
+    const typedContacts = contacts.filter((c) => {
+      if (filterType === 'people') return c.type === 'person'
+      if (filterType === 'groups') return c.type === 'group'
+      return true
+    })
 
-  // Sort contacts based on selected sort order — latestActivity (a real
-  // timestamp from the backend) drives newest/oldest now; falls back to
-  // the id-based comparison only for any contact missing it.
-  const sortedContacts = [...typedContacts].sort((a, b) => {
-    if (sortBy === 'newest' || sortBy === 'oldest') {
-      if (a.latestActivity && b.latestActivity) {
-        const diff = new Date(a.latestActivity).getTime() - new Date(b.latestActivity).getTime()
-        return sortBy === 'newest' ? -diff : diff
+    // Sort contacts based on selected sort order — latestActivity (a real
+    // timestamp from the backend) drives newest/oldest now; falls back to
+    // the id-based comparison only for any contact missing it.
+    const sortedContacts = [...typedContacts].sort((a, b) => {
+      if (sortBy === 'newest' || sortBy === 'oldest') {
+        if (a.latestActivity && b.latestActivity) {
+          const diff = new Date(a.latestActivity).getTime() - new Date(b.latestActivity).getTime()
+          return sortBy === 'newest' ? -diff : diff
+        }
+        const idA = isNaN(Number(a.id)) ? a.id : Number(a.id)
+        const idB = isNaN(Number(b.id)) ? b.id : Number(b.id)
+        const cmp =
+          typeof idA === 'number' && typeof idB === 'number' ? idA - idB : String(idA).localeCompare(String(idB))
+        return sortBy === 'newest' ? -cmp : cmp
       }
-      const idA = isNaN(Number(a.id)) ? a.id : Number(a.id)
-      const idB = isNaN(Number(b.id)) ? b.id : Number(b.id)
-      const cmp =
-        typeof idA === 'number' && typeof idB === 'number' ? idA - idB : String(idA).localeCompare(String(idB))
-      return sortBy === 'newest' ? -cmp : cmp
-    }
-    if (sortBy === 'highest') return Math.abs(b.netAmount) - Math.abs(a.netAmount)
-    if (sortBy === 'lowest') return Math.abs(a.netAmount) - Math.abs(b.netAmount)
-    return 0
-  })
+      if (sortBy === 'highest') return Math.abs(b.netAmount) - Math.abs(a.netAmount)
+      if (sortBy === 'lowest') return Math.abs(a.netAmount) - Math.abs(b.netAmount)
+      return 0
+    })
 
-  const filteredContacts = search.trim()
-    ? sortedContacts.filter((c) =>
-      c.name.toLowerCase().includes(search.toLowerCase())
-    )
-    : sortedContacts
+    return search.trim()
+      ? sortedContacts.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
+      : sortedContacts
+  }, [contacts, filterType, sortBy, search])
+
+  const handleContactSelect = useCallback((contact: Contact) => {
+    if (contact.type === 'person') {
+      navigate({ to: ROUTES.CONTACT_BREAKDOWN, params: { id: contact.id } })
+    } else {
+      navigate({ to: ROUTES.GROUP_DETAILS, params: { id: contact.id } })
+    }
+  }, [navigate])
 
   // Title changes based on the active filter type and sort order
   const sectionTitle = (() => {
@@ -218,19 +231,7 @@ export default function DashboardScreen() {
                 <ContactLedgerCard
                   key={contact.id}
                   contact={contact}
-                  onClick={() => {
-                    if (contact.type === 'person') {
-                      navigate({
-                        to: ROUTES.CONTACT_BREAKDOWN,
-                        params: { id: contact.id },
-                      })
-                    } else {
-                      navigate({
-                        to: ROUTES.GROUP_DETAILS,
-                        params: { id: contact.id },
-                      })
-                    }
-                  }}
+                  onSelect={handleContactSelect}
                 />
               ))
             ) : allContacts.length === 0 ? (

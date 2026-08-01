@@ -29,5 +29,8 @@ export function useWalletListQuery(tab: 'receivables' | 'payables') {
       if (error) throw toApiError(error)
       return data
     },
+    // Balances shift on every expense/settlement write — hold nothing
+    // stale here, unlike the global 30s default.
+    staleTime: 0,
   })
 }

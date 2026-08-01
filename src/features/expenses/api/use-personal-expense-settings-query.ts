@@ -12,5 +12,9 @@ export function usePersonalExpenseSettingsQuery() {
       if (error) throw toApiError(error)
       return data
     },
+    // Rarely changes except through this same settings screen, which
+    // already invalidates it on save — safe to hold well past the
+    // global 30s default.
+    staleTime: 5 * 60_000,
   })
 }

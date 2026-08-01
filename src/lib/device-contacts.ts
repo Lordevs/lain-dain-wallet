@@ -1,6 +1,6 @@
 import { Capacitor } from '@capacitor/core'
 import { Contacts } from '@capacitor-community/contacts'
-import { parsePhoneNumber, type Country } from 'react-phone-number-input'
+import type { Country } from 'react-phone-number-input'
 
 /**
  * Reads the device address book (native only) and normalizes each phone
@@ -62,15 +62,20 @@ export async function getDeviceContacts(defaultCountry: Country = 'PK'): Promise
 
     for (const phone of contact.phones ?? []) {
       if (!phone.number) continue
-      const e164 = toE164(phone.number, defaultCountry)
+      const e164 = await toE164(phone.number, defaultCountry)
       if (e164) results.push({ displayName, phoneNumber: e164 })
     }
   }
   return results
 }
 
-function toE164(rawNumber: string, defaultCountry: Country): string | null {
+// libphonenumber (197KB via react-phone-number-input) is only needed once
+// a real device-contacts sync runs — dynamic-importing it here keeps it
+// out of the new-contact route's own bundle, which otherwise paid for it
+// on every visit regardless of whether the user ever taps "sync contacts."
+async function toE164(rawNumber: string, defaultCountry: Country): Promise<string | null> {
   try {
+    const { parsePhoneNumber } = await import('react-phone-number-input')
     const parsed = parsePhoneNumber(rawNumber, defaultCountry)
     return parsed?.isValid() ? parsed.number : null
   } catch {

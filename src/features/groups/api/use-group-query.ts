@@ -15,5 +15,8 @@ export function useGroupQuery(groupId: string | undefined) {
       return data
     },
     enabled: !!groupId,
+    // Membership/settings change occasionally, not per-render — worth
+    // holding past the global 30s default.
+    staleTime: 60_000,
   })
 }

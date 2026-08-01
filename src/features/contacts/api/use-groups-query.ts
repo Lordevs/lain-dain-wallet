@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
 import { toApiError } from '@/lib/api/errors'
 
@@ -28,6 +28,10 @@ export function useGroupsQuery(search?: string) {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => cursorFromUrl(lastPage.next),
     enabled: search === undefined || search.trim().length > 0,
+    // Each keystroke in the search overlay changes `search` and so the
+    // whole query key — keep last search's results on screen instead of
+    // flashing empty while the new ones load.
+    placeholderData: keepPreviousData,
   })
 
   return {

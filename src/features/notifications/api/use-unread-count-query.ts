@@ -11,5 +11,8 @@ export function useUnreadNotificationCountQuery() {
       if (error) throw toApiError(error)
       return data
     },
+    // The badge should never show stale unread state — overrides the
+    // global 30s default.
+    staleTime: 0,
   })
 }

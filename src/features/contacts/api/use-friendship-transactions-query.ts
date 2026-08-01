@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
 import { toApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
@@ -169,6 +169,12 @@ export function useFriendshipTransactionsQuery(friendshipId: string | undefined)
     initialPageParam: INITIAL_PAGE_PARAM,
     getNextPageParam: (lastPage) => lastPage.nextPageParam,
     enabled: !!friendshipId,
+    // Navigating between two different contacts' transaction screens
+    // reuses this same route/component — friendshipId changes but the
+    // component doesn't remount, so without this it would flash empty
+    // instead of keeping the previous contact's timeline up while the
+    // new one's first page loads.
+    placeholderData: keepPreviousData,
   })
 
   const data = useMemo(

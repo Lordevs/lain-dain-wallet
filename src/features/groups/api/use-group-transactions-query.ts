@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
 import { toApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
@@ -208,6 +208,11 @@ export function useGroupTransactionsQuery(
     initialPageParam: initialPageParam(filter),
     getNextPageParam: (lastPage) => lastPage.nextPageParam,
     enabled: !!groupId,
+    // sort/filter changes restart pagination from scratch via the query
+    // key (by design — see the comment above) — keep the previous
+    // results on screen while the new sort/filter's first page loads
+    // instead of flashing empty.
+    placeholderData: keepPreviousData,
   })
 
   const data = useMemo(

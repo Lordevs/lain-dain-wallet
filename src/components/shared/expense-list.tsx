@@ -61,6 +61,8 @@ export default function ExpenseList({
       {expenses.map((expense) => (
         <ExpenseItem
           key={expense.id}
+          id={expense.id}
+          kind={expense.kind}
           name={expense.name}
           subtitle={expense.subtitle}
           amount={expense.amount}
@@ -73,7 +75,7 @@ export default function ExpenseList({
           showChevron={expense.showChevron ?? true}
           className={expense.className}
           leftSlot={expense.leftSlot}
-          onClick={onItemClick ? () => onItemClick(expense.id, expense.kind) : undefined}
+          onClick={onItemClick}
         />
       ))}
     </div>

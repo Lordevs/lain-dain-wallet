@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
 import { toApiError } from '@/lib/api/errors'
 
@@ -38,6 +38,10 @@ export function useMyExpensesListQuery(year?: number, month?: number) {
     },
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => cursorFromUrl(lastPage.next),
+    // Switching month/year changes the query key entirely — without this,
+    // that swap flashes a full loading skeleton instead of keeping last
+    // period's rows on screen until the new period's first page lands.
+    placeholderData: keepPreviousData,
   })
 
   return {

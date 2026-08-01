@@ -18,5 +18,9 @@ export function useCategoriesQuery() {
       if (error) throw toApiError(error)
       return data.results
     },
+    // System + user categories barely ever change within a session —
+    // overriding the global 30s default well upward avoids refetching
+    // this on every screen that reads it.
+    staleTime: 5 * 60_000,
   })
 }

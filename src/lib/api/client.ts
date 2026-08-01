@@ -64,11 +64,20 @@ export async function refreshAccessToken(): Promise<string | null> {
   }
 }
 
+// openapi-fetch's own fetch() call consumes a request's body stream, so by
+// the time onResponse sees a 401, `new Request(request, {...})` throws for
+// any POST/PATCH/PUT/DELETE-with-body call ("body stream already read") —
+// GET requests only survived by accident, having no body to consume. Stash
+// an unused clone in onRequest, while the body is still readable, so the
+// retry has a fresh stream to send.
+const pendingBodyClones = new WeakMap<Request, Request>()
+
 apiClient.use({
   onRequest({ request }) {
     if (request.url.includes(REFRESH_PATH)) return request
     const token = useAuthStore.getState().accessToken
     if (token) request.headers.set('Authorization', `Bearer ${token}`)
+    if (request.body) pendingBodyClones.set(request, request.clone())
     return request
   },
 
@@ -87,7 +96,9 @@ apiClient.use({
       return response
     }
 
-    const retryRequest = new Request(request, {
+    const bodySource = pendingBodyClones.get(request) ?? request
+    pendingBodyClones.delete(request)
+    const retryRequest = new Request(bodySource, {
       headers: { ...Object.fromEntries(request.headers), Authorization: `Bearer ${newAccessToken}` },
     })
     return fetch(retryRequest)

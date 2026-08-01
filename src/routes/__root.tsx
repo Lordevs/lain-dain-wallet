@@ -21,9 +21,13 @@ function RootComponent() {
     // Hide native splash screen immediately when JS bundle loads
     SplashScreen.hide().catch(() => { })
 
+    // Purely a branding beat, not tied to any actual load — the native
+    // splash above already covers real startup work. 2800ms read as the
+    // app hanging on every single launch; this is long enough to register
+    // the animation without feeling stuck.
     const timer = setTimeout(() => {
       setShowSplash(false)
-    }, 2800)
+    }, 1200)
 
     return () => {
       clearTimeout(timer)

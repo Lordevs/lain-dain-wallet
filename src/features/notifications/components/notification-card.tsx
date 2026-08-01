@@ -1,4 +1,4 @@
-import React, { type ReactNode } from 'react'
+import React, { memo, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
 export interface NotificationAction {
@@ -24,7 +24,7 @@ export interface NotificationCardProps {
  * Features a colored tag indicator, custom colored border theme, icon badge, title/subtitle,
  * time ago badge, dynamic right chevron link, and optional primary/secondary action buttons.
  */
-export default function NotificationCard({
+function NotificationCard({
   tag,
   title,
   subtitle,
@@ -107,3 +107,5 @@ export default function NotificationCard({
     </div>
   )
 }
+
+export default memo(NotificationCard)

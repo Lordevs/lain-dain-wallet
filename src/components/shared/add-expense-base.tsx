@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { FileText, ChevronRight, ChevronDown, Users, Check } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { useAuthStore } from '@/store/use-auth-store'
@@ -7,13 +7,20 @@ import { Button } from '@/components/ui/button'
 import FlowHeader from '@/components/shared/flow-header'
 import CategoryPicker, { CATEGORIES } from '@/components/shared/category-picker'
 import AttachmentTabs from '@/features/personal/components/attachment-tabs'
-import AddReceiptFlow from '@/components/shared/add-receipt-flow'
-import AddNoteFlow from '@/components/shared/add-note-flow'
 import SuccessCheck from '@/components/shared/success-check'
-import PaidByDrawer, { type PaidByMember } from '@/components/shared/paid-by-drawer'
-import SplitExpenseDrawer, { type SplitData } from '@/components/shared/split-expense-drawer'
-import SelectDateDrawer from '@/components/shared/select-date-drawer'
+import type { PaidByMember } from '@/components/shared/paid-by-drawer'
+import type { SplitData } from '@/components/shared/split-expense-drawer'
 import { useDrawerBackHandler } from '@/hooks/use-drawer-back-handler'
+
+// All five are closed on every mount (isOpen only flips true once the user
+// taps to open one) — lazy-loading keeps their combined weight (receipt/note
+// flows, the two drawers, the 77KB date picker) out of the chunk every
+// expense-creation screen has to load just to show the form itself.
+const AddReceiptFlow = lazy(() => import('@/components/shared/add-receipt-flow'))
+const AddNoteFlow = lazy(() => import('@/components/shared/add-note-flow'))
+const PaidByDrawer = lazy(() => import('@/components/shared/paid-by-drawer'))
+const SplitExpenseDrawer = lazy(() => import('@/components/shared/split-expense-drawer'))
+const SelectDateDrawer = lazy(() => import('@/components/shared/select-date-drawer'))
 
 export interface ConfirmExpenseData {
   amount: number
@@ -415,93 +422,95 @@ export default function AddExpenseBase({
         </div>
       </div>
 
-      {/* Add Receipt Screen Flow Overlay */}
-      <AddReceiptFlow
-        isOpen={showReceiptOverlay}
-        amount={Number(amount) || 0}
-        description={description}
-        category={selectedCategory}
-        onClose={closeReceiptOverlay}
-        onSave={(file) => {
-          setReceiptFile(file)
-          setReceiptTouched(true)
-          closeReceiptOverlay()
-        }}
-        initialFile={receiptFile}
-      />
-
-      {/* Add Note Screen Flow Overlay */}
-      <AddNoteFlow
-        isOpen={showNoteOverlay}
-        amount={Number(amount) || 0}
-        description={description}
-        category={selectedCategory}
-        initialNote={noteText}
-        onClose={closeNoteOverlay}
-        onSave={(text) => {
-          setNoteText(text)
-          closeNoteOverlay()
-        }}
-      />
-
-      {/* Paid By Selection Drawer */}
-      {showPaidByAndSplit && (contact || members) && (
-        <PaidByDrawer
-          isOpen={showPaidBy}
-          onClose={closePaidBy}
-          selectedValue={paidBy}
-          onSelect={(value, payerAmounts) => {
-            setPaidBy(value)
-            setMultiplePayerAmounts(payerAmounts)
-          }}
-          contactName={contact?.name}
-          contactInitials={contact?.initials}
-          contactAvatarColor={contact?.avatarColor}
-          members={members}
-          amount={Number(amount) || 0}
-          initialPayerAmounts={multiplePayerAmounts}
-        />
-      )}
-
-      {/* Split Expense Drawer */}
-      {showPaidByAndSplit && (contact || members) && (
-        <SplitExpenseDrawer
-          isOpen={showSplit}
+      <Suspense fallback={null}>
+        {/* Add Receipt Screen Flow Overlay */}
+        <AddReceiptFlow
+          isOpen={showReceiptOverlay}
           amount={Number(amount) || 0}
           description={description}
-          categoryLabel={CATEGORIES.find((cat) => cat.id === selectedCategory)?.label || 'Other'}
-          categoryColor={CATEGORIES.find((cat) => cat.id === selectedCategory)?.color || '#7F8C8D'}
-          CategoryIcon={CATEGORIES.find((cat) => cat.id === selectedCategory)?.icon || CATEGORIES[7].icon}
-          onClose={closeSplit}
-          onSave={(data) => {
-            setSplitData(data)
-            closeSplit()
+          category={selectedCategory}
+          onClose={closeReceiptOverlay}
+          onSave={(file) => {
+            setReceiptFile(file)
+            setReceiptTouched(true)
+            closeReceiptOverlay()
           }}
-          initialSplitData={splitData}
-          contactName={contact?.name}
-          contactInitials={contact?.initials}
-          contactAvatarColor={contact?.avatarColor}
-          members={members?.map((m) => ({ ...m, isOrganizer: m.id === defaultPayerId }))}
-          multiplePayerAmounts={paidBy === 'multiple' ? multiplePayerAmounts : undefined}
+          initialFile={receiptFile}
         />
-      )}
 
-      {/* Select Date Drawer */}
-      <SelectDateDrawer
-        isOpen={showDateDrawer}
-        onClose={closeDateDrawer}
-        selectedValue={dateValue.toLowerCase()}
-        onSelect={(val) => {
-          if (val === 'today') {
-            setDateValue('Today')
-          } else if (val === 'yesterday') {
-            setDateValue('Yesterday')
-          } else {
-            setDateValue(val)
-          }
-        }}
-        onSelectISODate={setDateISO}
-      />
+        {/* Add Note Screen Flow Overlay */}
+        <AddNoteFlow
+          isOpen={showNoteOverlay}
+          amount={Number(amount) || 0}
+          description={description}
+          category={selectedCategory}
+          initialNote={noteText}
+          onClose={closeNoteOverlay}
+          onSave={(text) => {
+            setNoteText(text)
+            closeNoteOverlay()
+          }}
+        />
+
+        {/* Paid By Selection Drawer */}
+        {showPaidByAndSplit && (contact || members) && (
+          <PaidByDrawer
+            isOpen={showPaidBy}
+            onClose={closePaidBy}
+            selectedValue={paidBy}
+            onSelect={(value, payerAmounts) => {
+              setPaidBy(value)
+              setMultiplePayerAmounts(payerAmounts)
+            }}
+            contactName={contact?.name}
+            contactInitials={contact?.initials}
+            contactAvatarColor={contact?.avatarColor}
+            members={members}
+            amount={Number(amount) || 0}
+            initialPayerAmounts={multiplePayerAmounts}
+          />
+        )}
+
+        {/* Split Expense Drawer */}
+        {showPaidByAndSplit && (contact || members) && (
+          <SplitExpenseDrawer
+            isOpen={showSplit}
+            amount={Number(amount) || 0}
+            description={description}
+            categoryLabel={CATEGORIES.find((cat) => cat.id === selectedCategory)?.label || 'Other'}
+            categoryColor={CATEGORIES.find((cat) => cat.id === selectedCategory)?.color || '#7F8C8D'}
+            CategoryIcon={CATEGORIES.find((cat) => cat.id === selectedCategory)?.icon || CATEGORIES[7].icon}
+            onClose={closeSplit}
+            onSave={(data) => {
+              setSplitData(data)
+              closeSplit()
+            }}
+            initialSplitData={splitData}
+            contactName={contact?.name}
+            contactInitials={contact?.initials}
+            contactAvatarColor={contact?.avatarColor}
+            members={members?.map((m) => ({ ...m, isOrganizer: m.id === defaultPayerId }))}
+            multiplePayerAmounts={paidBy === 'multiple' ? multiplePayerAmounts : undefined}
+          />
+        )}
+
+        {/* Select Date Drawer */}
+        <SelectDateDrawer
+          isOpen={showDateDrawer}
+          onClose={closeDateDrawer}
+          selectedValue={dateValue.toLowerCase()}
+          onSelect={(val) => {
+            if (val === 'today') {
+              setDateValue('Today')
+            } else if (val === 'yesterday') {
+              setDateValue('Yesterday')
+            } else {
+              setDateValue(val)
+            }
+          }}
+          onSelectISODate={setDateISO}
+        />
+      </Suspense>
     </form>
   )
 }

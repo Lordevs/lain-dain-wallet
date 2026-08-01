@@ -150,6 +150,7 @@ export default function EditGroupExpenseScreen() {
     try {
       await updateExpense.mutateAsync({
         id: expense.id,
+        groupId: expense.group ?? undefined,
         values: {
           description: data.description,
           amount: data.amount.toFixed(2),

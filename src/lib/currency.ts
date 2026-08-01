@@ -1,5 +1,18 @@
 import { SUPPORTED_CURRENCIES, type Currency } from '@/types'
 
+// Keyed by code for O(1) lookup — formatCurrency/getCurrency run on every
+// amount rendered on-screen, so a linear .find() over the full currency
+// list adds up fast on list-heavy screens (wallet, expense lists).
+const CURRENCIES_BY_CODE = new Map<string, Currency>(SUPPORTED_CURRENCIES.map((c) => [c.code, c]))
+
+// These options never actually vary by currency code, so one shared
+// formatter instance covers every call — constructing a fresh
+// Intl.NumberFormat per call/render was pure waste.
+const AMOUNT_FORMATTER = new Intl.NumberFormat('en-US', {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
+})
+
 /**
  * Format an amount with the given currency code.
  * e.g. formatCurrency(1500, 'PKR') → "Rs. 1,500"
@@ -7,10 +20,7 @@ import { SUPPORTED_CURRENCIES, type Currency } from '@/types'
 export function formatCurrency(amount: number, currencyCode: string): string {
   const currency = getCurrency(currencyCode)
   const isNegative = amount < 0
-  const formatted = new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(Math.abs(amount))
+  const formatted = AMOUNT_FORMATTER.format(Math.abs(amount))
   // PKR symbol already ends with a period; no space needed (e.g. "Rs.1,500" not "Rs. 1,500")
   const separator = currencyCode.toUpperCase() === 'PKR' ? '' : ' '
   const sign = isNegative ? '\u2011' : ''
@@ -26,7 +36,7 @@ export function formatPKR(amount: number): string {
  * Get Currency object by code, falls back to PKR if not found.
  */
 export function getCurrency(code: string): Currency {
-  return SUPPORTED_CURRENCIES.find((c) => c.code === code) ?? SUPPORTED_CURRENCIES[0]
+  return CURRENCIES_BY_CODE.get(code) ?? SUPPORTED_CURRENCIES[0]
 }
 
 /**

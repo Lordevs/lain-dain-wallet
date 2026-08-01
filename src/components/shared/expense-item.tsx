@@ -1,4 +1,4 @@
-import { createElement } from 'react'
+import { createElement, memo } from 'react'
 import { Coffee, Fuel, ShoppingCart, Truck, Handshake, Layers, ChevronRight } from 'lucide-react'
 import { formatCurrency } from '@/lib/currency'
 import { cn } from '@/lib/utils'
@@ -7,6 +7,11 @@ import { iconForCategory } from '@/features/expenses/lib/category-icons'
 export type ExpenseCategory = 'food' | 'fuel' | 'shopping' | 'transport' | 'payment' | 'other'
 
 export interface ExpenseItemProps {
+  // Threaded through so onClick can stay one stable function identity from
+  // the list owner (see ExpenseList) — required for memo() below to
+  // actually skip re-rendering rows whose data didn't change.
+  id: string | number
+  kind?: 'expense' | 'settlement'
   name: string
   subtitle: React.ReactNode
   amount: number
@@ -17,7 +22,7 @@ export interface ExpenseItemProps {
   amountColor?: 'green' | 'orange' | 'black' | 'default'
   showChevron?: boolean
   rightSubtitle?: string
-  onClick?: () => void
+  onClick?: (id: string | number, kind?: 'expense' | 'settlement') => void
   className?: string
   leftSlot?: React.ReactNode
 }
@@ -54,7 +59,9 @@ const CATEGORY_VISUALS = {
  * Supports dynamic icon categories, custom text color overrides, positive/negative sign layouts,
  * and handles interactive chevron toggles.
  */
-export default function ExpenseItem({
+function ExpenseItem({
+  id,
+  kind,
   name,
   subtitle,
   amount,
@@ -88,7 +95,7 @@ export default function ExpenseItem({
 
   return (
     <div
-      onClick={onClick}
+      onClick={onClick ? () => onClick(id, kind) : undefined}
       className={cn(
         'flex items-center justify-between p-4 bg-white hover:bg-muted/5 transition-all',
         onClick && 'cursor-pointer',
@@ -152,3 +159,5 @@ export default function ExpenseItem({
     </div>
   )
 }
+
+export default memo(ExpenseItem)

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
 import { ChevronDown, ChevronUp, ListFilter, MoreVertical } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
@@ -23,9 +23,14 @@ import {
   type GroupTransactionFilter,
 } from '@/features/groups/api/use-group-transactions-query'
 import { useAuthStore } from '@/store/use-auth-store'
-import GroupBalanceCarousel from './components/group-balance-carousel'
 import GroupCategoryFilterPills from './components/group-category-filter-pills'
 import GroupExpensesFilterDrawer from './components/group-expenses-filter-drawer'
+
+// Only mounted once the group actually has balances (see balances.length
+// check below) — lazy-loading keeps framer-motion's chunk (unused
+// anywhere else on this screen) out of the initial fetch entirely for a
+// fully-settled group, and off the critical path otherwise.
+const GroupBalanceCarousel = lazy(() => import('./components/group-balance-carousel'))
 
 const MAX_VISIBLE_BALANCES = 3
 
@@ -172,13 +177,15 @@ export default function GroupDetailScreen() {
       />
 
       {balances.length > 0 && (
-        <GroupBalanceCarousel
-          isReceivable={netAmount >= 0}
-          formattedNetAmount={formatCurrency(Math.abs(netAmount), group.default_currency)}
-          formattedReceivable={formatCurrency(totalReceivable, group.default_currency)}
-          formattedPayable={formatCurrency(totalPayable, group.default_currency)}
-          onRemind={() => navigate({ to: ROUTES.GROUP_REMINDER, params: { id: groupId } })}
-        />
+        <Suspense fallback={null}>
+          <GroupBalanceCarousel
+            isReceivable={netAmount >= 0}
+            formattedNetAmount={formatCurrency(Math.abs(netAmount), group.default_currency)}
+            formattedReceivable={formatCurrency(totalReceivable, group.default_currency)}
+            formattedPayable={formatCurrency(totalPayable, group.default_currency)}
+            onRemind={() => navigate({ to: ROUTES.GROUP_REMINDER, params: { id: groupId } })}
+          />
+        </Suspense>
       )}
 
       <div className="flex-1 overflow-y-auto px-6 pb-12 flex flex-col gap-6">

@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
 import { toApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
@@ -66,6 +66,10 @@ export function useContactsQuery(onLainDain: boolean, search?: string) {
       fetchContactsPage(pageParam, search, onLainDain),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => cursorFromUrl(lastPage.next),
+    // Each keystroke changes `search` and so the whole query key — without
+    // this, every keystroke would flash the list empty instead of keeping
+    // the previous results visible until the new ones land.
+    placeholderData: keepPreviousData,
   })
 
   const contacts: Contact[] = query.data?.pages.flatMap((page) => page.results) ?? []
