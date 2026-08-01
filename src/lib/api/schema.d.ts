@@ -4867,6 +4867,8 @@ export interface operations {
                 cursor?: string;
                 /** @description Number of results to return per page. */
                 page_size?: number;
+                /** @description Filter to friendships whose other party's name matches (case-insensitive, partial). */
+                search?: string;
             };
             header?: never;
             path?: never;
@@ -5041,6 +5043,8 @@ export interface operations {
                 cursor?: string;
                 /** @description Number of results to return per page. */
                 page_size?: number;
+                /** @description Filter to groups whose name matches (case-insensitive, partial). */
+                search?: string;
             };
             header?: never;
             path?: never;

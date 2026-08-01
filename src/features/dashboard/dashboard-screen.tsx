@@ -32,10 +32,10 @@ export default function DashboardScreen() {
 
   const summaryQuery = useWalletSummaryQuery()
   // Both tabs are fetched unconditionally (not just the active one) so
-  // search can look across receivables + payables at once, same as the
-  // old mock's combined `allContacts` — the list is small/bounded either
-  // way (see useWalletListQuery's docstring), so this is two lightweight
-  // calls, not real over-fetching.
+  // switching tabs is instant — the list is small/bounded either way (see
+  // useWalletListQuery's docstring), so this is two lightweight calls,
+  // not real over-fetching. (Search has its own real backend queries —
+  // see SearchResultsOverlay — this pair is unrelated to it.)
   const receivablesQuery = useWalletListQuery('receivables')
   const payablesQuery = useWalletListQuery('payables')
 
@@ -158,7 +158,6 @@ export default function DashboardScreen() {
       {isSearchActive ? (
         <SearchResultsOverlay
           query={search}
-          contacts={allContacts}
           onPersonClick={(id) => {
             handleSearchClose()
             navigate({

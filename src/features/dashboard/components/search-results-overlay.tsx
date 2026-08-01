@@ -1,13 +1,16 @@
 import { useNavigate } from '@tanstack/react-router'
 import { Search, Users, User } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import type { Contact } from '@/types'
 import { ROUTES } from '@/constants/routes'
-import { formatCurrency } from '@/lib/currency'
+import { colorForName, initialsForName } from '@/lib/avatar-visuals'
+import ContactAvatar from '@/components/shared/contact-avatar'
+import InfiniteScrollSentinel from '@/components/shared/infinite-scroll-sentinel'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { useFriendshipsQuery } from '@/features/contacts/api/use-friendships-query'
+import { useGroupsQuery } from '@/features/contacts/api/use-groups-query'
 
 interface SearchResultsOverlayProps {
   query: string
-  contacts: Contact[]
   onPersonClick: (contactId: string) => void
   onClose: () => void
 }
@@ -25,88 +28,83 @@ function highlightMatch(text: string, query: string) {
   )
 }
 
-function SearchResultRow({
-  contact,
+function ResultRow({
+  name,
+  image,
   query,
   onClick,
 }: {
-  contact: Contact
+  name: string
+  image: string | null | undefined
   query: string
   onClick: () => void
 }) {
-  const isReceivable = contact.netAmount >= 0
-
   return (
     <button
       onClick={onClick}
       className="w-full flex items-center gap-4 px-6 py-3.5 hover:bg-[#F2EFEA]/60 active:bg-[#EDEAE5]/60 transition-colors text-left cursor-pointer border-0 bg-transparent outline-none"
     >
-      {/* Avatar */}
-      <div className="relative shrink-0">
-        <div className={cn(
-          'w-12 h-12 rounded-full flex items-center justify-center font-bold overflow-hidden',
-          contact.avatarColor
-        )}>
-          {contact.avatar ? (
-            <img src={contact.avatar} alt={contact.name} className="w-full h-full object-cover" />
-          ) : contact.type === 'group'
-            ? <span className="text-[13px] font-extrabold text-foreground">{contact.initials}</span>
-            : <span className="text-[12px] font-extrabold text-foreground/80">{contact.initials}</span>
-          }
-        </div>
-        {contact.isOnline && (
-          <span className="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-[#FEFAF1]" />
-        )}
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <p className="text-[15px] font-semibold text-[#1A1A1A] truncate leading-tight">
-          {highlightMatch(contact.name, query)}
-        </p>
-        <p className="text-[12px] text-[#9A9590] font-normal mt-0.5 truncate">
-          {contact.type === 'group'
-            ? `${contact.ledgerCount} shared expense${contact.ledgerCount !== 1 ? 's' : ''}`
-            : `${contact.ledgerCount} ledger${contact.ledgerCount !== 1 ? 's' : ''}`
-          }
-        </p>
-      </div>
-
-      {/* Amount */}
-      {contact.netAmount !== 0 && (
-        <span className={cn(
-          'text-[13px] font-bold shrink-0',
-          isReceivable ? 'text-positive' : 'text-[#C96A1B]'
-        )}>
-          {isReceivable ? '+' : '-'} {formatCurrency(contact.netAmount, contact.currency ?? 'PKR')}
-        </span>
-      )}
+      <ContactAvatar
+        initials={initialsForName(name)}
+        avatarColor={colorForName(name)}
+        src={image ?? undefined}
+        size="md"
+        className="size-12 shrink-0"
+      />
+      <p className="flex-1 min-w-0 text-[15px] font-semibold text-[#1A1A1A] truncate leading-tight">
+        {highlightMatch(name, query)}
+      </p>
     </button>
+  )
+}
+
+function SectionHeader({ icon: Icon, label }: { icon: typeof User; label: string }) {
+  return (
+    <div className="flex items-center gap-2 px-6 pt-2 pb-1.5">
+      <Icon size={12} className="text-[#9A9590] shrink-0" />
+      <span className="text-[11px] font-bold text-[#9A9590] tracking-[0.8px] uppercase">{label}</span>
+    </div>
+  )
+}
+
+function ResultsSkeleton() {
+  return (
+    <div className="flex flex-col gap-4 px-6 pt-5">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-4">
+          <Skeleton className="size-12 rounded-full shrink-0" />
+          <Skeleton className="h-4 w-40" />
+        </div>
+      ))}
+    </div>
   )
 }
 
 /**
  * SearchResultsOverlay — WhatsApp-style search results panel.
  * Placed as a flex sibling below the search bar so it doesn't cover it.
+ * Queries the backend directly (friendships + groups, each independently
+ * cursor-paginated — see use-friendships-query.ts/use-groups-query.ts'
+ * `search` param) rather than filtering an already-fetched, balance-only
+ * list, so every friend/group the caller has is searchable, not just the
+ * ones with a nonzero balance.
  */
 export default function SearchResultsOverlay({
   query,
-  contacts,
   onPersonClick,
   onClose,
 }: SearchResultsOverlayProps) {
   const navigate = useNavigate()
-  const q = query.trim().toLowerCase()
+  const debouncedQuery = useDebouncedValue(query.trim(), 300)
 
-  const matchingPeople = contacts.filter(
-    (c) => c.type === 'person' && c.name.toLowerCase().includes(q)
-  )
-  const matchingGroups = contacts.filter(
-    (c) => c.type === 'group' && c.name.toLowerCase().includes(q)
-  )
+  const friendshipsQuery = useFriendshipsQuery(debouncedQuery)
+  const groupsQuery = useGroupsQuery(debouncedQuery)
 
-  const totalResults = matchingPeople.length + matchingGroups.length
-  const isEmptyQuery = !query.trim()
+  const isEmptyQuery = !debouncedQuery
+  const isLoading = !isEmptyQuery && (friendshipsQuery.isLoading || groupsQuery.isLoading)
+  const people = friendshipsQuery.data ?? []
+  const groups = groupsQuery.data ?? []
+  const totalResults = people.length + groups.length
 
   return (
     <div className="flex-1 overflow-y-auto bg-[#FEFAF1]">
@@ -118,6 +116,8 @@ export default function SearchResultsOverlay({
           </div>
           <p className="text-[14px] font-semibold text-[#6B6B6B]">Search people or groups</p>
         </div>
+      ) : isLoading ? (
+        <ResultsSkeleton />
       ) : totalResults === 0 ? (
         /* No match state */
         <div className="flex flex-col items-center justify-center pt-20 gap-3 text-center px-8">
@@ -132,52 +132,51 @@ export default function SearchResultsOverlay({
       ) : (
         <>
           {/* People Section */}
-          {matchingPeople.length > 0 && (
+          {people.length > 0 && (
             <div className="mt-3">
-              <div className="flex items-center gap-2 px-6 pt-2 pb-1.5">
-                <User size={12} className="text-[#9A9590] shrink-0" />
-                <span className="text-[11px] font-bold text-[#9A9590] tracking-[0.8px] uppercase">
-                  People
-                </span>
-              </div>
+              <SectionHeader icon={User} label="People" />
               <div className="divide-y divide-[#F2EFEA]">
-                {matchingPeople.map((contact) => (
-                  <SearchResultRow
-                    key={contact.id}
-                    contact={contact}
-                    query={query}
-                    onClick={() => onPersonClick(contact.id)}
+                {people.map((friendship) => (
+                  <ResultRow
+                    key={friendship.id}
+                    name={friendship.friend.full_name}
+                    image={friendship.friend.image}
+                    query={debouncedQuery}
+                    onClick={() => onPersonClick(friendship.friend.id)}
                   />
                 ))}
               </div>
+              <InfiniteScrollSentinel
+                onLoadMore={friendshipsQuery.fetchNextPage}
+                hasMore={friendshipsQuery.hasNextPage}
+                isLoading={friendshipsQuery.isFetchingNextPage}
+              />
             </div>
           )}
 
           {/* Groups Section */}
-          {matchingGroups.length > 0 && (
-            <div className={matchingPeople.length > 0 ? 'mt-2' : 'mt-3'}>
-              <div className="flex items-center gap-2 px-6 pt-2 pb-1.5">
-                <Users size={12} className="text-[#9A9590] shrink-0" />
-                <span className="text-[11px] font-bold text-[#9A9590] tracking-[0.8px] uppercase">
-                  Groups
-                </span>
-              </div>
+          {groups.length > 0 && (
+            <div className={people.length > 0 ? 'mt-2' : 'mt-3'}>
+              <SectionHeader icon={Users} label="Groups" />
               <div className="divide-y divide-[#F2EFEA]">
-                {matchingGroups.map((contact) => (
-                  <SearchResultRow
-                    key={contact.id}
-                    contact={contact}
-                    query={query}
+                {groups.map((group) => (
+                  <ResultRow
+                    key={group.id}
+                    name={group.name}
+                    image={group.image}
+                    query={debouncedQuery}
                     onClick={() => {
-                      onClose();
-                      (navigate as any)({
-                        to: ROUTES.GROUP_DETAILS,
-                        params: { id: contact.id },
-                      })
+                      onClose()
+                      navigate({ to: ROUTES.GROUP_DETAILS, params: { id: group.id } })
                     }}
                   />
                 ))}
               </div>
+              <InfiniteScrollSentinel
+                onLoadMore={groupsQuery.fetchNextPage}
+                hasMore={groupsQuery.hasNextPage}
+                isLoading={groupsQuery.isFetchingNextPage}
+              />
             </div>
           )}
 

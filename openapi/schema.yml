@@ -1931,6 +1931,12 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Filter to friendships whose other party's name matches (case-insensitive,
+          partial).
       tags:
       - ledger
       security:
@@ -2156,6 +2162,11 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Filter to groups whose name matches (case-insensitive, partial).
       tags:
       - ledger
       security:
