@@ -1,15 +1,23 @@
 import { useState, useRef, useEffect } from 'react'
 import { Bell, ArrowUp, ArrowDown } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion, type PanInfo } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
 interface GroupBalanceCarouselProps {
   isReceivable: boolean
   formattedNetAmount: string
+  formattedReceivable: string
+  formattedPayable: string
   onRemind: () => void
 }
 
-export default function GroupBalanceCarousel({ isReceivable, formattedNetAmount, onRemind }: GroupBalanceCarouselProps) {
+export default function GroupBalanceCarousel({
+  isReceivable,
+  formattedNetAmount,
+  formattedReceivable,
+  formattedPayable,
+  onRemind,
+}: GroupBalanceCarouselProps) {
   const [activeCardIndex, setActiveCardIndex] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -26,7 +34,7 @@ export default function GroupBalanceCarousel({ isReceivable, formattedNetAmount,
     }
   }, [])
 
-  const handleDragEnd = (_: any, info: any) => {
+  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     const swipeThreshold = 50
     const offset = info.offset.x
     const velocity = info.velocity.x
@@ -129,7 +137,7 @@ export default function GroupBalanceCarousel({ isReceivable, formattedNetAmount,
                 You will receive
               </span>
               <span className="text-xl font-extrabold text-positive mt-2.5 leading-none tracking-tight">
-                Rs. 13,800
+                {formattedReceivable}
               </span>
               <div className="mt-3.5 flex items-center justify-start">
                 <div className="w-8 h-8 rounded-full bg-[#E4F2EB] flex items-center justify-center text-positive">
@@ -144,7 +152,7 @@ export default function GroupBalanceCarousel({ isReceivable, formattedNetAmount,
                 You will pay
               </span>
               <span className="text-xl font-extrabold text-[#C96A1B] mt-2.5 leading-none tracking-tight">
-                Rs. 2,230
+                {formattedPayable}
               </span>
               <div className="mt-3.5 flex items-center justify-start">
                 <div className="w-8 h-8 rounded-full bg-[#FFF8E1] flex items-center justify-center text-[#C96A1B]">

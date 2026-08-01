@@ -3928,6 +3928,8 @@ export interface operations {
                 cursor?: string;
                 /** @description Number of results to return per page. */
                 page_size?: number;
+                /** @description One of newest (default) | oldest | highest | lowest. */
+                sort?: string;
             };
             header?: never;
             path: {
@@ -4073,6 +4075,8 @@ export interface operations {
                 cursor?: string;
                 /** @description Number of results to return per page. */
                 page_size?: number;
+                /** @description One of newest (default) | oldest | highest | lowest. */
+                sort?: string;
             };
             header?: never;
             path: {
@@ -4121,10 +4125,14 @@ export interface operations {
     expenses_groups_list: {
         parameters: {
             query?: {
+                /** @description Filter to expenses in this category only. */
+                category_id?: string;
                 /** @description The pagination cursor value. */
                 cursor?: string;
                 /** @description Number of results to return per page. */
                 page_size?: number;
+                /** @description One of newest (default) | oldest | highest | lowest. */
+                sort?: string;
             };
             header?: never;
             path: {
@@ -4270,6 +4278,8 @@ export interface operations {
                 cursor?: string;
                 /** @description Number of results to return per page. */
                 page_size?: number;
+                /** @description One of newest (default) | oldest | highest | lowest. */
+                sort?: string;
             };
             header?: never;
             path: {
@@ -4494,6 +4504,8 @@ export interface operations {
                 cursor?: string;
                 /** @description Number of results to return per page. */
                 page_size?: number;
+                /** @description One of newest (default) | oldest | highest | lowest. */
+                sort?: string;
             };
             header?: never;
             path?: never;

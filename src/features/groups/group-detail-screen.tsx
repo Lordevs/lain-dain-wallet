@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
-import { Bell, MoreVertical } from 'lucide-react'
+import { ChevronDown, ChevronUp, ListFilter, MoreVertical } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import { formatCurrency } from '@/lib/currency'
 import { cn } from '@/lib/utils'
@@ -13,11 +13,21 @@ import ExpenseList, { type ExpenseListData } from '@/components/shared/expense-l
 import EmptyState from '@/components/shared/empty-state'
 import ExpenseListSkeleton from '@/components/shared/expense-list-skeleton'
 import InfiniteScrollSentinel from '@/components/shared/infinite-scroll-sentinel'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useGroupQuery } from '@/features/groups/api/use-group-query'
 import { useGroupBalanceQuery } from '@/features/groups/api/use-group-balance-query'
-import { useGroupTransactionsQuery } from '@/features/groups/api/use-group-transactions-query'
+import {
+  useGroupTransactionsQuery,
+  type GroupSortBy,
+  type GroupTransactionFilter,
+} from '@/features/groups/api/use-group-transactions-query'
 import { useAuthStore } from '@/store/use-auth-store'
+import GroupBalanceCarousel from './components/group-balance-carousel'
+import GroupCategoryFilterPills from './components/group-category-filter-pills'
+import GroupExpensesFilterDrawer from './components/group-expenses-filter-drawer'
+
+const MAX_VISIBLE_BALANCES = 3
 
 /**
  * GroupDetailScreen — real ledger view for one group: per-member
@@ -27,10 +37,13 @@ import { useAuthStore } from '@/store/use-auth-store'
 export default function GroupDetailScreen() {
   const { id: groupId } = useParams({ from: '/groups/$id/' })
   const navigate = useNavigate({ from: '/groups/$id/' })
+  const [showAllBalances, setShowAllBalances] = useState(false)
+  const [sortBy, setSortBy] = useState<GroupSortBy>('newest')
+  const [categoryFilter, setCategoryFilter] = useState<GroupTransactionFilter>('all')
 
   const groupQuery = useGroupQuery(groupId)
   const balanceQuery = useGroupBalanceQuery(groupId)
-  const transactionsQuery = useGroupTransactionsQuery(groupId)
+  const transactionsQuery = useGroupTransactionsQuery(groupId, sortBy, categoryFilter)
   const myId = useAuthStore((state) => state.userProfile?.id)
 
   const items: ExpenseListData[] = useMemo(() => {
@@ -119,6 +132,18 @@ export default function GroupDetailScreen() {
   const groupAvatarColor = colorForName(group.name)
   const activeMembers = group.members.filter((m) => m.status === 'active')
   const balances = balanceQuery.data ?? []
+  const visibleBalances = showAllBalances ? balances : balances.slice(0, MAX_VISIBLE_BALANCES)
+
+  // Single-currency assumption, matching every other amount already shown
+  // on this screen (per-member rows format with their own b.currency, but
+  // nothing on this screen sums across currencies elsewhere either).
+  const totalReceivable = balances
+    .filter((b) => b.direction === 'owed_to_you')
+    .reduce((sum, b) => sum + Number(b.net_amount), 0)
+  const totalPayable = balances
+    .filter((b) => b.direction === 'you_owe')
+    .reduce((sum, b) => sum + Number(b.net_amount), 0)
+  const netAmount = totalReceivable - totalPayable
 
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24 relative select-none">
@@ -146,25 +171,35 @@ export default function GroupDetailScreen() {
         }
       />
 
+      {balances.length > 0 && (
+        <GroupBalanceCarousel
+          isReceivable={netAmount >= 0}
+          formattedNetAmount={formatCurrency(Math.abs(netAmount), group.default_currency)}
+          formattedReceivable={formatCurrency(totalReceivable, group.default_currency)}
+          formattedPayable={formatCurrency(totalPayable, group.default_currency)}
+          onRemind={() => navigate({ to: ROUTES.GROUP_REMINDER, params: { id: groupId } })}
+        />
+      )}
+
       <div className="flex-1 overflow-y-auto px-6 pb-12 flex flex-col gap-6">
         {/* Balances Section */}
         {balances.length > 0 && (
           <div className="flex flex-col text-left">
             <div className="flex items-center justify-between mb-3 mt-1">
               <h3 className="text-sm font-bold text-[#1A1A1A]">Balances</h3>
-              {balances.some((b) => b.direction === 'owed_to_you') && (
+              {balances.length > MAX_VISIBLE_BALANCES && (
                 <button
                   type="button"
-                  onClick={() => navigate({ to: ROUTES.GROUP_REMINDER, params: { id: groupId } })}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-[#0B683A4D] bg-[#E4F2EB] text-positive text-xs font-bold transition-all hover:bg-[#E4F2EB]/80 shrink-0 cursor-pointer outline-none"
+                  onClick={() => setShowAllBalances((prev) => !prev)}
+                  className="flex items-center gap-1 text-xs font-bold text-positive bg-transparent border-0 cursor-pointer"
                 >
-                  <Bell size={13} className="text-positive" strokeWidth={2.5} />
-                  Remind
+                  {showAllBalances ? 'View less' : 'View all'}
+                  {showAllBalances ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                 </button>
               )}
             </div>
             <ContactList>
-              {balances.map((b) => {
+              {visibleBalances.map((b) => {
                 const isReceivable = b.direction === 'owed_to_you'
                 const initials = initialsForName(b.other_user.full_name)
                 const avatarColor = colorForName(b.other_user.full_name)
@@ -192,9 +227,24 @@ export default function GroupDetailScreen() {
 
         {/* Transaction history */}
         <div className="flex flex-col gap-3 text-left">
-          <h3 className="text-sm font-bold text-[#1A1A1A]">
-            Expenses <span className="text-[#6B6B6B] font-medium">({items.length} items)</span>
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-[#1A1A1A]">
+              Expenses <span className="text-[#6B6B6B] font-medium">({items.length} items)</span>
+            </h3>
+            <GroupExpensesFilterDrawer sortBy={sortBy} onSortByChange={setSortBy}>
+              <Button
+                variant="outline"
+                className={cn(
+                  'w-9 h-9 rounded-full bg-white! border-[1.08px] border-border-card flex items-center justify-center text-muted-faint hover:text-foreground hover:bg-white transition-colors shadow-[0px_2px_8px_0px_#0000000A] p-0 shrink-0 cursor-pointer',
+                  sortBy !== 'newest' && 'border-primary text-primary bg-primary/5 hover:bg-primary/5',
+                )}
+                aria-label="Sort"
+              >
+                <ListFilter size={16} strokeWidth={2} />
+              </Button>
+            </GroupExpensesFilterDrawer>
+          </div>
+          <GroupCategoryFilterPills value={categoryFilter} onChange={setCategoryFilter} />
           {transactionsQuery.isLoading && <ExpenseListSkeleton />}
           {!transactionsQuery.isLoading && items.length === 0 && (
             <EmptyState

@@ -624,6 +624,11 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: sort
+        schema:
+          type: string
+        description: One of newest (default) | oldest | highest | lowest.
       tags:
       - expenses
       security:
@@ -860,6 +865,11 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: sort
+        schema:
+          type: string
+        description: One of newest (default) | oldest | highest | lowest.
       tags:
       - expenses
       security:
@@ -904,6 +914,11 @@ paths:
     get:
       operationId: expenses_groups_list
       parameters:
+      - in: query
+        name: category_id
+        schema:
+          type: string
+        description: Filter to expenses in this category only.
       - name: cursor
         required: false
         in: query
@@ -922,6 +937,11 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: sort
+        schema:
+          type: string
+        description: One of newest (default) | oldest | highest | lowest.
       tags:
       - expenses
       security:
@@ -1164,6 +1184,11 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: sort
+        schema:
+          type: string
+        description: One of newest (default) | oldest | highest | lowest.
       tags:
       - expenses
       security:
@@ -1415,6 +1440,11 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: sort
+        schema:
+          type: string
+        description: One of newest (default) | oldest | highest | lowest.
       tags:
       - expenses
       security:
