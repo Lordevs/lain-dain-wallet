@@ -11,7 +11,7 @@ public class MainActivity extends BridgeActivity {
         // Lock WebView text zoom at 100% so Android's system font-size preference
         // doesn't scale the app UI. Without this, phones set to "Large" font show
         // everything ~130% bigger than designed.
-        new android.os.Handler().postDelayed(() -> {
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
             if (getBridge() != null && getBridge().getWebView() != null) {
                 WebSettings settings = getBridge().getWebView().getSettings();
                 settings.setTextZoom(100);
