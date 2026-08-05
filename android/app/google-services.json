@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "398478620628",
-    "project_id": "laindain-25cb3",
-    "storage_bucket": "laindain-25cb3.firebasestorage.app"
+    "project_number": "370868605082",
+    "project_id": "laindain-9d22e",
+    "storage_bucket": "laindain-9d22e.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:398478620628:android:34fdedc8c240e71f038841",
+        "mobilesdk_app_id": "1:370868605082:android:1304f82de79c861e54cf23",
         "android_client_info": {
           "package_name": "com.laindain.wallet"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyB3wafKIK0BXzw-6Id_Lv13OdgOVLbOYbA"
+          "current_key": "AIzaSyDTVoK7yqFHKgENDDPgMbFTeocqO6EvJcs"
         }
       ],
       "services": {
