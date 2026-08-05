@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug-only (android/app/src/debug — a separate Gradle source set,
+     never merged into release builds) so local testing against a plain
+     http:// LAN backend doesn't require standing up TLS, while release
+     builds keep Android's default cleartext-blocked, HTTPS-only policy. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>
