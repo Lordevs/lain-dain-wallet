@@ -1,20 +1,25 @@
-import { memo, useCallback, useMemo } from 'react'
+import { memo, useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
-import { Check, Wallet, CheckCircle2, Clock, AlertTriangle } from 'lucide-react'
+import { Check, Wallet, CheckCircle2, Clock, AlertTriangle, MoreVertical } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import { Skeleton } from '@/components/ui/skeleton'
 import EmptyState from '@/components/shared/empty-state'
 import InfiniteScrollSentinel from '@/components/shared/infinite-scroll-sentinel'
+import ConfirmActionDrawer from '@/components/shared/confirm-action-drawer'
 import { haptic } from '@/lib/haptics'
 import { useNotificationsQuery } from './api/use-notifications-query'
 import {
+  useClearAllNotificationsMutation,
+  useDeleteNotificationMutation,
   useMarkAllNotificationsReadMutation,
   useMarkNotificationReadMutation,
   useRequestSettlementMutation,
 } from './api/use-notification-mutations'
 import { getNotificationCardContent, formatTimeAgo } from './lib/format'
 import NotificationCard, { type NotificationAction } from './components/notification-card'
+import SwipeableNotificationRow from './components/swipeable-notification-row'
+import NotificationOptionsDrawer from './components/notification-options-drawer'
 import { payloadOf, type Notification } from './types'
 
 function getNotificationIcon(type: Notification['type']) {
@@ -83,16 +88,18 @@ const NotificationListItem = memo(function NotificationListItem({
   navigate,
   markRead,
   requestSettlement,
+  onDelete,
 }: {
   notification: Notification
   navigate: NavigateFn
   markRead: ReturnType<typeof useMarkNotificationReadMutation>['mutate']
   requestSettlement: ReturnType<typeof useRequestSettlementMutation>['mutate']
+  onDelete: (id: string, message?: string) => void
 }) {
   const handleIgnore = useCallback((id: string) => {
-    haptic.light()
-    markRead(id)
-  }, [markRead])
+    haptic.heavy()
+    onDelete(id, 'Notification ignored')
+  }, [onDelete])
 
   const handleRemind = useCallback((n: Notification & { type: 'late_payment_reminder' }) => {
     haptic.light()
@@ -229,17 +236,19 @@ const NotificationListItem = memo(function NotificationListItem({
   const content = getNotificationCardContent(notification)
 
   return (
-    <NotificationCard
-      id={notification.id}
-      tag={content.tag}
-      title={content.title}
-      subtitle={content.subtitle}
-      time={formatTimeAgo(notification.created_at)}
-      theme={content.theme}
-      icon={getNotificationIcon(notification.type)}
-      actions={actions}
-      onCardClick={handleCardClick}
-    />
+    <SwipeableNotificationRow notificationId={notification.id} theme={content.theme} onDelete={onDelete}>
+      <NotificationCard
+        id={notification.id}
+        tag={content.tag}
+        title={content.title}
+        subtitle={content.subtitle}
+        time={formatTimeAgo(notification.created_at)}
+        theme={content.theme}
+        icon={getNotificationIcon(notification.type)}
+        actions={actions}
+        onCardClick={handleCardClick}
+      />
+    </SwipeableNotificationRow>
   )
 })
 
@@ -250,37 +259,89 @@ export default function NotificationsScreen() {
   const markRead = useMarkNotificationReadMutation()
   const markAllRead = useMarkAllNotificationsReadMutation()
   const requestSettlement = useRequestSettlementMutation()
+  const deleteNotification = useDeleteNotificationMutation()
+  const clearAllNotifications = useClearAllNotificationsMutation()
+
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<string>>(new Set())
+  const [optionsOpen, setOptionsOpen] = useState(false)
+  const [clearAllOpen, setClearAllOpen] = useState(false)
+  const undoneIdsRef = useRef<Set<string>>(new Set())
+
+  const removePendingDelete = useCallback((id: string) => {
+    setPendingDeleteIds((prev) => {
+      if (!prev.has(id)) return prev
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
+  }, [])
+
+  // Swipe-delete removes the row immediately (optimistic, no network call
+  // yet) and shows an undo toast; the real DELETE only fires once the
+  // toast expires/dismisses without being undone. undoneIdsRef guards
+  // against sonner's onAutoClose/onDismiss both firing after Undo is
+  // tapped — commit becomes a no-op either way once an id is marked undone.
+  const handleDelete = useCallback((id: string, message = 'Notification deleted') => {
+    setPendingDeleteIds((prev) => new Set(prev).add(id))
+
+    const commit = () => {
+      if (undoneIdsRef.current.has(id)) {
+        undoneIdsRef.current.delete(id)
+        return
+      }
+      deleteNotification.mutate(id, {
+        onError: (err) => {
+          toast.error(err.message)
+          removePendingDelete(id)
+        },
+      })
+    }
+
+    toast(message, {
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          undoneIdsRef.current.add(id)
+          removePendingDelete(id)
+        },
+      },
+      duration: 4000,
+      onAutoClose: commit,
+      onDismiss: commit,
+    })
+  }, [deleteNotification, removePendingDelete])
 
   // Action Needed only ever holds *unread* actionable notifications —
   // once read (via its own action, Ignore, or mark-all-read), it drops
   // down to Recent with no action buttons, instead of sitting in Action
   // Needed forever regardless of read_at.
   const recentList = useMemo(
-    () => (notifications ?? []).filter((n) => n.type === 'payment_settled' || n.read_at),
-    [notifications],
+    () => (notifications ?? []).filter((n) => !pendingDeleteIds.has(n.id) && (n.type === 'payment_settled' || n.read_at)),
+    [notifications, pendingDeleteIds],
   )
   const actionList = useMemo(
-    () => (notifications ?? []).filter((n) => n.type !== 'payment_settled' && !n.read_at),
-    [notifications],
+    () => (notifications ?? []).filter((n) => !pendingDeleteIds.has(n.id) && n.type !== 'payment_settled' && !n.read_at),
+    [notifications, pendingDeleteIds],
   )
 
   return (
-    <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24 relative select-none">
+    <div className="flex flex-col flex-1 bg-[#FEFAF1] overflow-hidden relative select-none">
       {/* Screen Title Header */}
       <div className="px-6 pt-7 pb-4 flex items-center justify-between">
         <h1 className="text-[26px] font-extrabold text-[#1A1A1A] leading-tight tracking-tight text-left">
           Notifications
         </h1>
-        {(notifications?.some((n) => !n.read_at) ?? false) && (
+        {(recentList.length > 0 || actionList.length > 0) && (
           <button
             type="button"
             onClick={() => {
               haptic.light()
-              markAllRead.mutate()
+              setOptionsOpen(true)
             }}
-            className="text-xs font-bold text-positive bg-transparent border-0 cursor-pointer"
+            className="text-[#C8C4BD] p-1.5 cursor-pointer bg-transparent border-0 hover:text-[#1A1A1A] transition-colors shrink-0 flex items-center justify-center"
+            aria-label="Notification options"
           >
-            Mark all read
+            <MoreVertical size={20} />
           </button>
         )}
       </div>
@@ -302,6 +363,7 @@ export default function NotificationsScreen() {
                   navigate={navigate}
                   markRead={markRead.mutate}
                   requestSettlement={requestSettlement.mutate}
+                  onDelete={handleDelete}
                 />
               ))}
             </div>
@@ -321,6 +383,7 @@ export default function NotificationsScreen() {
                   navigate={navigate}
                   markRead={markRead.mutate}
                   requestSettlement={requestSettlement.mutate}
+                  onDelete={handleDelete}
                 />
               ))}
             </div>
@@ -343,6 +406,34 @@ export default function NotificationsScreen() {
           </div>
         )}
       </div>
+
+      <NotificationOptionsDrawer
+        isOpen={optionsOpen}
+        onClose={() => setOptionsOpen(false)}
+        hasUnread={notifications?.some((n) => !n.read_at) ?? false}
+        onMarkAllReadClick={() => {
+          haptic.light()
+          markAllRead.mutate()
+        }}
+        onClearAllClick={() => setClearAllOpen(true)}
+      />
+
+      <ConfirmActionDrawer
+        isOpen={clearAllOpen}
+        onClose={() => setClearAllOpen(false)}
+        title="Clear all notifications?"
+        confirmTitle="This can't be undone"
+        confirmDescription="All notifications, read and unread, will be permanently removed from your inbox. Your balances and expense history are not affected."
+        buttonText="Clear all"
+        variant="danger"
+        onConfirm={() => {
+          haptic.heavy()
+          clearAllNotifications.mutate(undefined, {
+            onSuccess: () => toast.success('Notifications cleared'),
+            onError: (err) => toast.error(err.message),
+          })
+        }}
+      />
     </div>
   )
 }

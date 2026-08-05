@@ -68,6 +68,58 @@ export function useMarkAllNotificationsReadMutation() {
   })
 }
 
+/** DELETE /api/notifications/{id}/ — soft-delete. The row is actually gone
+ * server-side by the time this resolves; the "undo" window is handled
+ * entirely client-side by the caller delaying this call until an undo
+ * toast expires (see notifications-screen.tsx), so there's no restore
+ * endpoint to call back into. */
+export function useDeleteNotificationMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<void, ApiError, string>({
+    mutationFn: async (id: string) => {
+      const { error } = await apiClient.DELETE('/api/notifications/{id}/', {
+        params: { path: { id } },
+      })
+      if (error) throw toApiError(error)
+    },
+    onSuccess: (_data, id) => {
+      queryClient.setQueryData<InfiniteData<PaginatedNotificationList>>(NOTIFICATIONS_LIST_KEY, (old) => {
+        if (!old) return old
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            results: page.results.filter((n) => n.id !== id),
+          })),
+        }
+      })
+      queryClient.invalidateQueries({ queryKey: UNREAD_COUNT_KEY })
+    },
+  })
+}
+
+/** POST /api/notifications/clear-all/ — soft-deletes every notification
+ * (read and unread) for the caller. */
+export function useClearAllNotificationsMutation() {
+  const queryClient = useQueryClient()
+  return useMutation<void, ApiError, void>({
+    mutationFn: async () => {
+      const { error } = await apiClient.POST('/api/notifications/clear-all/')
+      if (error) throw toApiError(error)
+    },
+    onSuccess: () => {
+      queryClient.setQueryData<InfiniteData<PaginatedNotificationList>>(NOTIFICATIONS_LIST_KEY, (old) => {
+        if (!old) return old
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({ ...page, results: [] })),
+        }
+      })
+      queryClient.invalidateQueries({ queryKey: UNREAD_COUNT_KEY })
+    },
+  })
+}
+
 /** POST /api/notifications/remind/ — the 'Remind' nudge behind the
  * late_payment_reminder card and the settlement_request flow. Exactly one
  * of friendship_id/group_id must be given; the amount is always

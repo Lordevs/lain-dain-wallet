@@ -1478,6 +1478,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/notifications/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * @description DELETE /api/notifications/{id}/ — soft-delete, recipient-scoped (404,
+         *     not 403, for another user's notification, matching
+         *     NotificationMarkReadView's get_object_or_404 convention).
+         */
+        delete: operations["notifications_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/notifications/{id}/read/": {
         parameters: {
             query?: never;
@@ -1492,6 +1513,27 @@ export interface paths {
          *     already-read notification is a no-op, not an error.
          */
         post: operations["notifications_read_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/clear-all/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description POST /api/notifications/clear-all/ — soft-deletes every notification
+         *     (read and unread) belonging to the caller. POST, not DELETE-with-no-body,
+         *     matching mark-all-read/'s verb convention for bulk mutations here.
+         */
+        post: operations["notifications_clear_all_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2701,7 +2743,9 @@ export interface components {
         /**
          * @description Read-only — every field here is server-derived; there's no create/
          *     update surface for a Notification from the client at all, only the
-         *     read-list and the read_at/mark-read actions (see views.py).
+         *     read-list, the read_at/mark-read actions, and delete/clear-all
+         *     (see views.py) — the latter two return 204 with no body, so they
+         *     never touch this serializer.
          */
         Notification: {
             /** Format: uuid */
@@ -5487,6 +5531,26 @@ export interface operations {
             };
         };
     };
+    notifications_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     notifications_read_create: {
         parameters: {
             query?: never;
@@ -5505,6 +5569,24 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Notification"];
                 };
+            };
+        };
+    };
+    notifications_clear_all_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

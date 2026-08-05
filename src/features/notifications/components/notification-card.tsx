@@ -34,15 +34,13 @@ function NotificationCard({
   actions,
   onCardClick,
 }: NotificationCardProps) {
-  const borderClass = theme === 'green' ? 'border-primary' : 'border-tertiary'
   const tagColorClass = theme === 'green' ? 'text-positive' : 'text-[#C96A1B]'
 
   return (
     <div
       onClick={onCardClick}
       className={cn(
-        "bg-white rounded-[18px] border-[0.8px] p-5 shadow-[0px_2px_10px_0px_#0000000D] transition-all flex flex-col text-left select-none",
-        borderClass,
+        "bg-white p-5 shadow-[0px_2px_10px_0px_#0000000D] transition-all flex flex-col text-left select-none",
         onCardClick ? "cursor-pointer active:scale-[0.995]" : ""
       )}
     >

@@ -2748,6 +2748,27 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedNotificationList'
           description: ''
+  /api/notifications/{id}/:
+    delete:
+      operationId: notifications_destroy
+      description: |-
+        DELETE /api/notifications/{id}/ — soft-delete, recipient-scoped (404,
+        not 403, for another user's notification, matching
+        NotificationMarkReadView's get_object_or_404 convention).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/notifications/{id}/read/:
     post:
       operationId: notifications_read_create
@@ -2772,6 +2793,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/Notification'
           description: ''
+  /api/notifications/clear-all/:
+    post:
+      operationId: notifications_clear_all_create
+      description: |-
+        POST /api/notifications/clear-all/ — soft-deletes every notification
+        (read and unread) belonging to the caller. POST, not DELETE-with-no-body,
+        matching mark-all-read/'s verb convention for bulk mutations here.
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/notifications/devices/:
     get:
       operationId: notifications_devices_list
@@ -5208,7 +5243,9 @@ components:
       description: |-
         Read-only — every field here is server-derived; there's no create/
         update surface for a Notification from the client at all, only the
-        read-list and the read_at/mark-read actions (see views.py).
+        read-list, the read_at/mark-read actions, and delete/clear-all
+        (see views.py) — the latter two return 204 with no body, so they
+        never touch this serializer.
       properties:
         id:
           type: string
