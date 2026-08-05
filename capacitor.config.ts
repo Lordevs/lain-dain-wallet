@@ -26,6 +26,19 @@ const config: CapacitorConfig = {
   appId: 'com.laindain.wallet',
   appName: 'Lain Dain Wallet',
   webDir: 'dist',
+  server: {
+    // Capacitor 7+ defaults this to 'https', which serves the app's own
+    // WebView at https://localhost — Chromium's Mixed Content policy then
+    // blocks any plain-http:// API call outright (before CORS or the
+    // debug network-security-config's cleartext allowance even apply).
+    // 'http://localhost' is still treated as a secure context by Chromium
+    // (the platform specifically trusts the literal 'localhost' hostname
+    // regardless of scheme), so this doesn't lose anything — and it's
+    // safe for a real https:// production backend too, since Mixed
+    // Content only ever blocks https-page-fetches-http, never the
+    // reverse.
+    androidScheme: 'http',
+  },
   plugins: {
     StatusBar: {
       style: 'LIGHT',
@@ -57,6 +70,7 @@ const config: CapacitorConfig = {
 // Gate the committed LAN dev-server URL for development live reload only
 if (process.env.CAPACITOR_LIVE_RELOAD === 'true') {
   config.server = {
+    ...config.server,                // keep androidScheme set above
     url: process.env.CAPACITOR_DEV_SERVER_URL, // Point to your active Vite dev server
     cleartext: true                  // Enables loading http pages in native wrappers
   };
