@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
 import { ChevronDown, ChevronUp, ListFilter, MoreVertical } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
@@ -94,6 +94,16 @@ export default function GroupDetailScreen() {
       }
     })
   }, [transactionsQuery.data, myId])
+
+  // Stable identity required for ExpenseItem's memo() to actually skip
+  // re-rendering rows on unrelated state changes — see expense-item.tsx.
+  const handleItemClick = useCallback((tid: string | number, kind?: 'expense' | 'settlement') => {
+    if (kind === 'settlement') {
+      navigate({ to: ROUTES.SETTLEMENT_DETAILS, params: { id: tid.toString() } })
+    } else {
+      navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: tid.toString() } })
+    }
+  }, [navigate])
 
   if (groupQuery.isLoading) {
     return (
@@ -266,11 +276,7 @@ export default function GroupDetailScreen() {
             <>
               <ExpenseList
                 expenses={items}
-                onItemClick={(tid, kind) =>
-                  kind === 'settlement'
-                    ? navigate({ to: ROUTES.SETTLEMENT_DETAILS, params: { id: tid.toString() } })
-                    : navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: tid.toString() } })
-                }
+                onItemClick={handleItemClick}
               />
               <InfiniteScrollSentinel
                 onLoadMore={transactionsQuery.fetchNextPage}

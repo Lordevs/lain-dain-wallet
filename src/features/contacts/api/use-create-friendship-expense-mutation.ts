@@ -27,7 +27,12 @@ export function useCreateFriendshipExpenseMutation() {
       // and the dashboard's wallet totals — all of which this new
       // expense just changed.
       queryClient.invalidateQueries({ queryKey: ['friendship-transactions', friendshipId] })
-      queryClient.invalidateQueries({ queryKey: ['user-ledgers'] })
+      // Scoped to the one contact affected, not every cached combined
+      // ledger view — the friendship's `friend` is virtually always
+      // already cached (you can't be here without having loaded it),
+      // but fall back to the old broad invalidation if it isn't.
+      const friendship = queryClient.getQueryData<components['schemas']['Friendship']>(['friendship', friendshipId])
+      queryClient.invalidateQueries({ queryKey: friendship ? ['user-ledgers', friendship.friend.id] : ['user-ledgers'] })
       queryClient.invalidateQueries({ queryKey: ['wallet'] })
     },
   })

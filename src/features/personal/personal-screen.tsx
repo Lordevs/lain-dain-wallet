@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { MoreVertical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -44,6 +44,12 @@ export default function PersonalScreen() {
     () => (listQuery.data ?? []).map((item) => toExpenseListItem(item, myId)),
     [listQuery.data, myId],
   )
+
+  // Stable identity required for ExpenseItem's memo() to actually skip
+  // re-rendering rows on unrelated state changes — see expense-item.tsx.
+  const handleItemClick = useCallback((id: string | number) => {
+    navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: String(id) } })
+  }, [navigate])
 
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen">
@@ -92,7 +98,7 @@ export default function PersonalScreen() {
             <>
               <ExpenseList
                 expenses={items}
-                onItemClick={(id) => navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: String(id) } })}
+                onItemClick={handleItemClick}
               />
               <InfiniteScrollSentinel
                 onLoadMore={listQuery.fetchNextPage}

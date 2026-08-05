@@ -99,10 +99,14 @@ export function useClearFriendshipHistoryMutation(friendshipId: string) {
       if (error) throw toApiError(error)
     },
     onSuccess: () => {
+      // Read before the ['friendship', friendshipId] invalidation below so
+      // the still-fresh cached value is available to scope the ledgers
+      // invalidation — invalidate doesn't clear the cache synchronously.
+      const friendship = queryClient.getQueryData<Friendship>(['friendship', friendshipId])
       queryClient.invalidateQueries({ queryKey: ['friendship', friendshipId] })
       queryClient.invalidateQueries({ queryKey: ['friendship-balance', friendshipId] })
       queryClient.invalidateQueries({ queryKey: ['friendship-transactions', friendshipId] })
-      queryClient.invalidateQueries({ queryKey: ['user-ledgers'] })
+      queryClient.invalidateQueries({ queryKey: friendship ? ['user-ledgers', friendship.friend.id] : ['user-ledgers'] })
       queryClient.invalidateQueries({ queryKey: ['friendship-recurring', friendshipId] })
       toast.success('Ledger history cleared')
     },

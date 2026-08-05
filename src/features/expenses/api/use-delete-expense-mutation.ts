@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
 import { ApiError, toApiError } from '@/lib/api/errors'
+import type { components } from '@/lib/api/schema'
 
 interface DeleteExpenseVariables {
   id: string
@@ -28,7 +29,17 @@ export function useDeleteExpenseMutation() {
         queryClient.invalidateQueries({ queryKey: ['group-transactions', groupId] })
         queryClient.invalidateQueries({ queryKey: ['group-balance', groupId] })
       }
-      queryClient.invalidateQueries({ queryKey: ['user-ledgers'] })
+      if (friendshipId) {
+        // 1:1 — exactly one other user; scope to them instead of every
+        // cached combined ledger view.
+        const friendship = queryClient.getQueryData<components['schemas']['Friendship']>(['friendship', friendshipId])
+        queryClient.invalidateQueries({ queryKey: friendship ? ['user-ledgers', friendship.friend.id] : ['user-ledgers'] })
+      } else {
+        // Group expense — could touch several other members at once, and
+        // a delete carries no participant list to scope by; broad
+        // invalidation is correct here, just not maximally scoped.
+        queryClient.invalidateQueries({ queryKey: ['user-ledgers'] })
+      }
       queryClient.invalidateQueries({ queryKey: ['wallet'] })
       // The "My Expenses" feed includes personal expenses plus any
       // friendship/group expense the caller has a split in, so a delete

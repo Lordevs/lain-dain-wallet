@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
 import { Bell, MoreVertical } from 'lucide-react'
 import ContactAvatar from '@/components/shared/contact-avatar'
@@ -157,6 +157,16 @@ export default function ContactDetailScreen() {
     return list
   }, [items])
 
+  // Stable identity required for ExpenseItem's memo() to actually skip
+  // re-rendering rows on unrelated state changes — see expense-item.tsx.
+  const handleItemClick = useCallback((tid: string | number, kind?: 'expense' | 'settlement') => {
+    if (kind === 'settlement') {
+      navigate({ to: ROUTES.SETTLEMENT_DETAILS, params: { id: tid.toString() } })
+    } else {
+      navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: tid.toString() } })
+    }
+  }, [navigate])
+
   if (ledgers.isLoading) {
     return (
       <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24">
@@ -288,11 +298,7 @@ export default function ContactDetailScreen() {
                 </h4>
                 <ExpenseList
                   expenses={group.expenses}
-                  onItemClick={(tid, kind) =>
-                    kind === 'settlement'
-                      ? navigate({ to: ROUTES.SETTLEMENT_DETAILS, params: { id: tid.toString() } })
-                      : navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: tid.toString() } })
-                  }
+                  onItemClick={handleItemClick}
                 />
               </div>
             ))}

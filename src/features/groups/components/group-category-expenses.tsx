@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
 import { useContactStore } from '@/store/use-contact-store'
 import { useGroupLedger, getCategoryDetails } from '@/features/groups/hooks/use-group-ledger'
@@ -17,6 +18,13 @@ export default function GroupCategoryExpenses() {
 
   const { groupExpensesData } = useGroupLedger(id || '')
 
+  // Stable identity required for ExpenseItem's memo() to actually skip
+  // re-rendering rows on unrelated state changes — see expense-item.tsx.
+  // Declared before the early return below to respect the Rules of Hooks.
+  const onExpenseClick = useCallback((expenseId: string | number) => {
+    navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: expenseId.toString() } })
+  }, [navigate])
+
   if (!contact) return null
 
   const catDetails = getCategoryDetails(catId)
@@ -29,9 +37,6 @@ export default function GroupCategoryExpenses() {
   const Icon = catDetails.icon
   const expenses = filteredExpenses
   const onBack = () => window.history.back()
-  const onExpenseClick = (expenseId: string | number) => {
-    navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: expenseId.toString() } })
-  }
 
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24 relative select-none">

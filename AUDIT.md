@@ -1,334 +1,120 @@
-# Lain Dain — Frontend Architecture Audit (v2)
+# Performance audit: cache reuse, N+1 queries, and index hygiene
 
-**Scope:** `src/`, config, native shells. Excludes backend/auth/business logic (none exists yet).
-**Stack:** React 19 · TanStack Router/Query · Zustand · Tailwind v4 · Capacitor 8
-**Reviewed:** 158 `.tsx`/`.ts` files, 19,186 lines (up from 129 files / 18,808 lines at the last audit — growth from the fixes below, not scope creep).
-**This is a re-audit.** The original audit (2026-07-03) produced a 15-item backlog; most of it has since been implemented. Every claim below was re-verified against the current code — `tsc`, `eslint`, a production build, and a live click-through — not carried over from memory.
+## Context
 
----
+The user reported the app feeling slow — slow to show data, unwanted repeat API calls, cache not being reused, cache not updating when it should. Ran a full audit across frontend (TanStack Query caching/re-renders), backend (Django view/serializer query patterns), and DB (index coverage) via three parallel research passes, then verified every finding against the actual code before proposing fixes.
 
-## What changed since the last audit
+**Headline result: the codebase is unusually disciplined already.** Global QueryClient config, query-key hygiene, most mutation cache-patching, and nearly every backend list view's `select_related`/`prefetch_related` usage are already correct — verified and ruled out as non-issues (see "Confirmed non-issues" at the end). The real, verified problems are narrower and more mechanical than "slow app" usually implies:
 
-| # | Item | Status |
-|---|---|---|
-| 1 | Fix Rules-of-Hooks bug in `group-detail-screen.tsx` | ✅ Done, verified (reproduced the crash on the old code via git stash, confirmed gone) |
-| 2 | Replace 13MB splash GIF | ✅ Done — 1.2MB, same 700×700/100 frames, pixel-equivalent |
-| 3 | Gate LAN dev-server URL | ⚠️ **Half-done — regressed, see Critical #1 below** |
-| 4 | Unify contact/transaction data layer | ✅ Done (by a parallel effort) — real Zustand stores now canonical |
-| 5 | App-level error boundary | ✅ Done — `defaultErrorComponent` wired, verified live with a real crash |
-| 6 | Fix 2 setState-in-effect + hardcoded identity | ✅ Done — but **4-5 more instances of the same pattern found**, see High #2 |
-| 7 | Code-split routes | ✅ Done — 1.5MB single bundle → 418KB eager + 84 lazy chunks |
-| 8 | Consolidate domain types | ✅ Done — canonical `Contact`/`TransactionRecord`/`BalanceSummary` in `@/types`; found and fixed a second Rules-of-Hooks bug along the way |
-| 9 | Migrate hex colors to tokens | 🟡 **~25% done** — `components/shared/*` migrated (6 new tokens, 412 replacements); `features/*/components/*` still has 588 raw hex values |
-| 10 | Split `group-detail-screen.tsx` + `add-recurring-screen.tsx` | ✅ Done — 743→329 and 462→355 lines, each into 3-4 focused pieces |
-| — | Dashboard infinite-loop crash (found during #4 verification) | ✅ Fixed — `useShallow` on the three derived selectors |
-| 15 | Delete orphaned stub files | ✅ Done — 5 dead files + 1 dead constant removed |
+1. **Frontend**: a list-item memoization contract is broken by every caller, so transaction lists re-render every row on unrelated state changes.
+2. **Frontend**: several mutations invalidate the entire `user-ledgers` cache (every contact ever viewed) instead of just the one contact affected.
+3. **Backend**: one real N+1 query bug in the recurring-expenses list (100 extra queries per page of 50).
+4. **DB**: the two highest-write-volume tables (`LedgerEntry`, `PairwiseBalance`) carry duplicate indexes — Django auto-indexes every FK, and explicit `models.Index` declarations re-declare the same columns, doubling index-maintenance cost on every insert.
+5. **DB**: a few real query patterns (cross-currency wallet reads, friendship list default ordering, amount-sort) have no supporting index, forcing heap scans or filesorts.
 
-**Net result:** ESLint went from 69 errors/11 warnings to **44 errors/3 warnings** (scoped correctly to `src/`, see Critical #2). Every previously-Critical item is resolved except one, which regressed after being fixed once — flagged below.
+One more finding is real and probably the single biggest contributor to "slow to load data" for some users, but it's an architectural trade-off, not a mechanical fix — flagged at the end as a follow-up, not included in this round's changes.
+
+Fix order: frontend memoization (safe, isolated) → frontend cache-invalidation scoping (safe, isolated) → backend N+1 (safe, isolated) → DB index migration (safe, additive/subtractive only, no query-shape changes). Each phase is independently testable.
 
 ---
 
-## 1. Project Architecture
+## Phase 1 — Frontend: fix broken list-item memoization
 
-The verdict from the last audit holds and is now on firmer ground: feature-folder organization, file-based routing with a single centralized auth guard, and drawers-over-URL-search-params for modal flows are all still the right calls at this scale, and nothing since has needed to move away from that shape. The real change is the data layer — it graduated from "mock arrays mutated in place" to actual Zustand stores with a canonical, centrally-defined domain model (`Contact`, `TransactionRecord`, `BalanceSummary` in `@/types`). That was the single structural weakness of the whole app, and it's fixed.
+`src/components/shared/expense-item.tsx` is `memo()`'d and its own doc comment (lines 10-12) says explicitly: the `onClick` prop must be a *stable* function identity from the caller for the memoization to do anything — an inline arrow function defeats it every render. `dashboard-screen.tsx` (lines 118-124) does this correctly with `useCallback`. Every other consumer passes an inline arrow instead, silently defeating the memo on the app's busiest transaction-list screens:
 
-The new weak spot is narrower and more mechanical: two files never got the same attention as their siblings (`group-settings-screen.tsx` at 650 lines, `split-expense-drawer.tsx` at 574 lines — see §3), and the "reset local state when a drawer opens via an effect" anti-pattern that was fixed twice is still sitting in 6 other files that just never came up (§5). Neither is a design problem — they're finishing the same cleanup that's already 60% done elsewhere.
+- `src/features/groups/group-detail-screen.tsx:269`
+- `src/features/contacts/contact-detail-screen.tsx:291`
+- `src/features/personal/personal-screen.tsx:95`
+- `src/features/contacts/ledger-breakdown-screen.tsx:122` and `:177`
+- `src/features/groups/components/group-category-expenses.tsx:32` and `:78`
 
-**Verdict: sound architecture, mop-up work remaining, not redesign work.**
+**Fix**: in each file, wrap the handler passed as `onClick` to `<ExpenseItem>` in `useCallback` (import `useCallback` from `react` if not already imported), matching `dashboard-screen.tsx`'s existing pattern exactly. No behavior change — purely restores the memoization that's already supposed to be working.
 
----
+## Phase 2 — Frontend: scope `user-ledgers` cache invalidation
 
-## 2. Folder Structure
+`src/features/contacts/api/use-user-ledgers-query.ts:14` keys this query as `['user-ledgers', userId]` — one cache entry per contact ever viewed via the combined cross-scope ledger view. `invalidateQueries` treats a partial key as a prefix match, so calling it with just `['user-ledgers']` (no `userId`) invalidates *every* cached contact's combined view at once, not just the one that changed. `src/features/contacts/api/use-apply-ledger-adjustment-mutation.ts:34` already does this correctly (`['user-ledgers', userId]`) — every other site doesn't:
 
-- `store/` is now the real, unambiguous home for domain state — `use-contact-store.ts`, `use-transaction-store.ts`, `use-recurring-store.ts`, `use-auth-store.ts`. This resolved the split-brain problem from the last audit cleanly.
-- `features/groups/` gained `components/` and `hooks/` subfolders (`use-group-ledger.tsx`, `group-balance-carousel.tsx`, `group-category-expenses.tsx`, plus 3 more for the recurring form) — bringing it in line with every other feature, which already had this shape.
-- `features/transactions/` no longer has empty stub files pretending to be unimplemented scaffolding — it now honestly contains exactly what's real: `transaction-detail-screen.tsx` and `components/receipt-preview-flow.tsx`.
-- `src/hooks/` now has one real, shared hook (`use-formatted-amount-input.ts`) instead of two empty native-integration placeholders.
-- **Still open:** `features/groups/data/group-members.ts`'s `GroupMember` and the *different*, larger `GroupMember` defined locally in `group-settings-screen.tsx` still share a name with two different shapes. I deliberately left this during the type-consolidation pass (they're genuinely different view-models for different screens, not the same concept twice) — still true, still worth a rename for clarity (e.g. `GroupSettingsMember`) as a trivial follow-up, not urgent.
+- `src/features/expenses/api/use-delete-expense-mutation.ts:31`
+- `src/features/expenses/api/use-update-expense-mutation.ts:40`
+- `src/features/contacts/api/use-create-friendship-expense-mutation.ts:30`
+- `src/features/contacts/api/use-friendship-settings-mutations.ts:105`
+- `src/features/groups/api/use-create-group-expense-mutation.ts:34`
+- `src/features/groups/api/use-group-actions-mutations.ts:79,100`
+- `src/features/settle-up/api/use-settlement-action-mutations.ts:17,75`
+- `src/features/settle-up/api/use-create-group-settlement-mutation.ts:41`
+- `src/features/settle-up/api/use-create-friendship-settlement-mutation.ts:33`
 
----
+**Fix, split by how unambiguous the "other user" is:**
+- **Friendship-context mutations** (`use-create-friendship-expense-mutation.ts`, `use-friendship-settings-mutations.ts`, `use-create-friendship-settlement-mutation.ts`) — exactly one counterparty; scope directly to that user's id (already available as a mutation argument or in the friendship object).
+- **All settlement mutations** (`use-settlement-action-mutations.ts`, `use-create-group-settlement-mutation.ts`) — a `Settlement` always has exactly one `payer`/`payee` pair regardless of friendship-vs-group context, so the "other user" is always unambiguous: whichever of `payer`/`payee` isn't the current viewer (get current user id from `useAuthStore`). Scope to that id.
+- **Group-expense mutations** (`use-delete-expense-mutation.ts`/`use-update-expense-mutation.ts` when the expense is group-scoped, `use-create-group-expense-mutation.ts`, `use-group-actions-mutations.ts`) — a group expense can touch several other members at once, and their identities aren't necessarily all available client-side at the mutation call site. **Leave these as broad invalidation** (correct, just not maximally scoped) — narrowing these properly would need the full member list threaded through, which is a bigger change not worth rushing into this pass. Add a one-line comment explaining why these stay broad, so it doesn't read as an oversight later.
 
-## 3. Component Architecture
+## Phase 3 — Backend: fix RecurringExpense list N+1
 
-**`group-settings-screen.tsx` (650 lines) is now the single largest file in the app** — larger than `group-detail-screen.tsx` was before it got split, and it was never touched by any of the recent work. It owns member-list state, three destructive-action drawers, and a confirmation-sequencing ref pattern, in one file. This is the natural next candidate for exactly the same treatment `group-detail-screen.tsx` just got: extract the member-list data/actions into a hook, extract the confirmation-sequencing into its own hook (it's a genuinely tricky, self-contained piece of logic worth isolating), leave the JSX orchestration in the main file.
+`apps/expenses/serializers.py:756-836`. `RecurringExpense.payers`/`splits` are `JSONField`s (not real relations, per `apps/expenses/models.py:606-607`), so there's nothing for `prefetch_related` to hook into — but the current code doesn't batch the workaround either. `_resolve_template_users()` (line 756) runs a real `User.objects.filter(id__in=ids)` query, and both `get_payers` (813) and `get_splits` (821) call it independently — 2 queries per row, 100 for a page of 50 (`_RecurringExpensePagination`, page_size up to 200, used by `FriendshipRecurringExpenseListCreateView`/`GroupRecurringExpenseListCreateView`, `apps/expenses/views.py:866-897`).
 
-**`split-expense-drawer.tsx` (574 lines)** — still the second-largest file, still doing three split modes (equal/unequal/adjustment) as inline branches, still never split. It's also one of the six files with the `set-state-in-effect` pattern (§5) — a single pass here would fix both the size and the effect-anti-pattern at once, likely the best-value single file to tackle next.
+**Fix**: give `RecurringExpenseReadSerializer` a custom `list_serializer_class` that resolves every row's user ids in one batched query up front (in `to_representation`, before iterating rows) and stashes the result on the child serializer instance; `get_payers`/`get_splits` read from that stash if present, falling back to the current per-object query only when not list-serialized (detail view, single object — `many=True` never applies there, so the stash is never set, and the existing per-object behavior is correct and cheap for one row):
 
-**Well-judged, confirmed still correct:** the newly-extracted `group-balance-carousel.tsx`, `group-category-expenses.tsx`, `use-group-ledger.tsx`, and the recurring-form pieces are all right-sized (73-355 lines each), single-responsibility, and independently reviewable — exactly the outcome the split was for.
+```python
+class RecurringExpenseListSerializer(serializers.ListSerializer):
+    def to_representation(self, data):
+        objects = list(data)
+        ids = set()
+        for obj in objects:
+            ids |= {str(p["user_id"]) for p in obj.payers} | {str(s["user_id"]) for s in obj.splits}
+        self.child.prefetched_users = {str(u.id): u for u in User.objects.filter(id__in=ids)}
+        return super().to_representation(objects)
 
-**New, well-judged reuse:** `useFormattedAmountInput` is now shared between `AddExpenseBase` and `AddRecurringScreen` — real logic dedup without forcing two genuinely different-looking forms into one component. Good precedent to repeat rather than force a bigger merge.
 
----
-
-## 4. Code Quality
-
-Rerunning lint scoped correctly to `src/**/*.{ts,tsx}` (see Critical #2 for why "correctly" matters) gives **44 errors, 3 warnings** — down from 69/11. What's left, categorized:
-
-| Category | Count | Notes |
-|---|---|---|
-| `@typescript-eslint/no-explicit-any` | 28 | Same long tail as before, spread thin across the app; not one fixable in isolation |
-| `react-hooks/set-state-in-effect` | 6 | **All in `components/shared/*`** — `add-category-flow.tsx`, `add-note-flow.tsx`, `add-receipt-flow.tsx`, `paid-by-drawer.tsx`, `payment-method-drawer.tsx`, `select-date-drawer.tsx`, `split-expense-drawer.tsx`. Two established fix patterns already proven twice this cycle (key-based remount; lazy-init where the parent already remounts). This is now a known, mechanical, low-risk cleanup, not exploratory work. |
-| `react-refresh/only-export-components` | 6 | 4 of these (`badge.tsx`, `button.tsx`, `combobox.tsx`, `tabs.tsx`) are shadcn primitives exporting a `cva` variants helper alongside the component — this is the **standard, universal shadcn convention** across the whole ecosystem. Fixing it would mean diverging from upstream shadcn's own file shape, making future `shadcn add` updates harder to reconcile. Recommend leaving these 4 alone; the other 2 (`category-picker.tsx`, `__root.tsx`) are still worth the 2-minute fix, as originally noted. |
-| `react-hooks/immutability` | 1 | `personal/components/category-breakdown-card.tsx:43` — reassigns a variable during render to compute pie-slice angles. Never touched by any backlog item since nothing in `personal/` was in scope. Still a real, if minor, correctness smell. |
-| `react-hooks/exhaustive-deps` | 2 | Both intentional (deliberately narrower deps than the linter wants, to avoid recomputing on irrelevant reference changes) — leave as-is. |
-| `no-unused-vars` | 1 | `components/kibo-ui/status/index.tsx` — vendored third-party-sourced component, not house code. |
-
-**4 stray `console.log` calls remain** (`personal/settings-screen.tsx`, `personal-screen.tsx`, `contact-detail-screen.tsx`, `group-detail-screen.tsx`) — all in placeholder action handlers ("Settle Up Confirmed"), same as before, harmless but worth sweeping in the same pass as the lint cleanup.
-
----
-
-## 5. React Best Practices
-
-**Two real Rules-of-Hooks bugs got fixed this cycle** (`group-detail-screen.tsx` from the original audit, and `contact-detail-screen.tsx`, found only because I was touching the file for an unrelated reason). Both used the identical shape: an early return between hook calls, both fixed with the identical pattern (move hooks above the guard). **No new instances found in this pass** — I checked.
-
-**The `set-state-in-effect` anti-pattern is now the single most repeated issue in the codebase** — 6 confirmed instances, all in `components/shared/*`, all the same shape ("copy a prop into local temp state when a drawer opens"). This is worth calling out clearly: it's not 6 separate problems, it's one pattern that was fixed twice and should now just be applied everywhere else it appears, mechanically. Difficulty should be re-rated from "Medium" (first-time, exploratory) to "Low" (proven, repeatable) now that both fix shapes exist as working examples in the same codebase.
-
-**The dashboard's selector-reference-instability bug is fixed** (`useShallow` on `selectReceivables`/`selectPayables`/`selectBalanceSummary`) — this was the most severe finding from the last audit's review of the parallel data-layer work (a genuine, 100%-reproducible crash on every single login), and it's now confirmed gone via a live before/after test.
-
----
-
-## 6. TypeScript
-
-`tsc -b --noEmit` is clean. The canonical-types work (§8 of the last audit) is the single biggest improvement here: `Contact`, `LedgerTag`, `TransactionRecord`, `BalanceSummary` now live in one file (`@/types/index.ts`), with the stores re-exporting them for backward compatibility rather than each store owning a competing definition. The dead duplicates (`dashboard/types.ts`, `dashboard/data/mock-data.ts`, `groups/data/recurring-store.ts`, the unused half of `contacts/types.ts`) are deleted, not just deprecated.
-
-**Still open:** 28 `any` usages, unchanged in character from before — no single fix, just steady attrition as files get touched.
-
----
-
-## 7. Styling
-
-The token system gained 6 new tokens this cycle (`--positive`, `--positive-soft-bg`, `--divider`, `--muted-faint`, `--border-card`, `--hover-bg`) to cover colors that were used 60-116 times each with no matching token at all. `components/shared/*` (22 files, 412 individual replacements) is fully migrated and verified pixel-identical via before/after screenshot diffing.
-
-**This is genuinely ~25% done, not fully done** — `features/*/components/*` still has **588 raw hex color occurrences**. This was explicitly scoped as a follow-up increment in the original work (the task itself said "do incrementally per-feature"), so this isn't a regression, it's the plan working as designed. The next natural slice is whichever feature you touch most often, or simply the highest-frequency remaining colors project-wide (same methodology as before: frequency-survey first, add only the tokens that are missing, leave one-off decorative colors alone).
-
----
-
-## 8. Capacitor & Mobile Best Practices
-
-### 🔴 Critical, regressed — the release-build safety net is disabled again
-
-`capacitor.config.ts` itself is still correctly gated (`server.url` only added when `CAPACITOR_LIVE_RELOAD=true`). But `scripts/check-capacitor.js` — the prebuild script that's supposed to **fail the build** if that env var is left on — has both of its actual checks commented out:
-
-```js
-// 1. Check if CAPACITOR_LIVE_RELOAD is set to true in the build environment
-// if (process.env.CAPACITOR_LIVE_RELOAD === 'true') { ... process.exit(1) }
-// 2. Extra safety: Parse the file to ensure the server URL is not gated...
-// if (content.includes('url:') && !content.includes('process.env.CAPACITOR_LIVE_RELOAD')) { ... }
-
-console.log('✅ capacitor.config.ts check passed')
+def _resolve_template_users(serializer, *, payers, splits):
+    prefetched = getattr(serializer, "prefetched_users", None)
+    if prefetched is not None:
+        return prefetched
+    ids = {str(p["user_id"]) for p in payers} | {str(s["user_id"]) for s in splits}
+    return {str(u.id): u for u in User.objects.filter(id__in=ids)}
 ```
+And update `RecurringExpenseReadSerializer.Meta` to set `list_serializer_class = RecurringExpenseListSerializer`, and the two call sites (`get_payers`/`get_splits`) to pass `self` as the first argument to `_resolve_template_users`. Result: 100 queries → 1 query per page.
 
-It unconditionally prints "passed" regardless of anything. I flagged this exact thing as disabled during a previous check; it has **not** been re-enabled since — someone disabled it again (or it was never actually turned back on), and `.env` locally still has `CAPACITOR_LIVE_RELOAD=true`. Re-enabling this is a 2-line uncomment; there's no reason for it to still be off.
+## Phase 4 — DB: remove redundant duplicate indexes
 
-### New, minor finding: ESLint scans native build artifacts
+Django creates a database index for every `ForeignKey` automatically (no model here sets `db_index=False`). These models *also* declare an explicit single-column `models.Index` for the same FK fields — a fully redundant second index, doubling write-time index-maintenance cost on the two highest-insert-volume tables in the schema:
 
-`eslint .` (no path scoping) picks up `ios/DerivedData/**/*.js` — vendored Capacitor Swift-package-manager JS bridge files that get generated locally by Xcode builds. This folder is correctly gitignored (`ios/.gitignore`), so it's not a repo hygiene problem and won't affect CI or a fresh clone — but it does inflate the local lint count for anyone who's built for iOS on their machine, and it's the reason "69 errors" vs "44 errors" depends entirely on which lint command you run. Two-line fix: add `'ios'`, `'android'` to `eslint.config.js`'s `globalIgnores`.
+- `apps/expenses/models.py:427-433` — `LedgerEntry.Meta.indexes`: `expense`, `settlement`, `group`, `friendship`, `debtor`, `creditor` are all redundant (keep the composite `["group", "-created_at"]` at line ~440 — not redundant).
+- `apps/expenses/models.py:502-506` — `PairwiseBalance.Meta.indexes`: `user_a`, `user_b`, `group`, `friendship` are all redundant.
+- `apps/expenses/models.py:346-351` — `Settlement.Meta.indexes`: `payer`, `payee` are redundant (keep `["friendship", "-date"]`/`["group", "-date"]`).
 
-### Otherwise unchanged and still correct
+**Fix**: remove these 12 redundant `models.Index` entries. Zero behavior/query-plan change (the FK auto-index still exists) — pure write-latency reduction on `bulk_create` calls in `apps/expenses/services.py` (lines 573-574, 650-651, 686-687, 1122, 1348) and every `PairwiseBalance.objects.create(...)`.
 
-Android `MainActivity.java`'s WebView text-zoom lock, the dual native/JS splash coordination, safe-area handling — all confirmed still in place, nothing regressed.
+## Phase 5 — DB: add missing composite indexes for real query patterns
 
----
+- **`LedgerEntry`**: add `(debtor, currency)` and `(creditor, currency)`. Backs the cross-currency wallet fallback in `apps/expenses/services.py:992-994` (`Q(debtor=user)|Q(creditor=user)).exclude(currency=...)`) — lets Postgres resolve `currency` from the index instead of a heap fetch per candidate row.
+- **`PairwiseBalance`**: add `(user_a, currency)` and `(user_b, currency)`. Backs the `Q(user_a=user)|Q(user_b=user), currency=viewer_currency` pattern used in `_combined_balance_rows` (`services.py:982-984`) and `scoped_balances` (`services.py:742-744`).
+- **`Friendship`** (`apps/ledger/models.py:101-104`): add `(user_a, -created_at)` and `(user_b, -created_at)`. `FriendshipListView`'s default ordering (`apps/ledger/views.py:420-428`) is `-created_at` with no index to ride today.
+- **`Expense`** (`apps/expenses/models.py`, near existing `(scope, -date)` indexes): add `(added_by, amount)`, `(friendship, amount)`, `(group, amount)`. Backs `sort=highest|lowest` (`apps/expenses/views.py:180-193`), which currently falls back to an in-memory filesort after the scope filter.
+- **`Settlement`**: add `(friendship, amount)`, `(group, amount)` — same `sort=highest|lowest` feature, confirmed to exist on settlements too (`apps/expenses/views.py:670-684`, `_SettlementPagination.get_ordering`).
 
-## 9. Scalability
+Not adding a `(user_a, user_b)` composite on `PairwiseBalance` for `ledgers_with()`'s exact-pair lookup (`services.py:1053-1055`) — already adequately served by the existing partial `UniqueConstraint`s on `(user_a, user_b, group, currency)`/`(user_a, user_b, friendship, currency)`, which are themselves indexes covering that column prefix.
 
-The one blocker from the last audit — the mutable mock-data pattern that would cause real merge conflicts and silent runtime conflicts between developers — is resolved by the data-layer migration. What's left to hold up at "100 screens, 20 developers" is now genuinely mechanical, not structural: finish the color-token migration, finish the `set-state-in-effect` cleanup, split the two remaining oversized files. None of that requires a different shape than what's already in place.
-
----
-
-## 10. Performance
-
-Code-splitting confirmed still working in a fresh build: **418KB eager** (the shell + first route) instead of the original 1.54MB monolith, split into 85 chunks total, each route's chunk fetched only on first visit and cached thereafter (verified via network-request tracing across 8 different route transitions in the last cycle). No regressions found this pass.
-
----
-
-## 11. Accessibility
-
-Unchanged from the last audit — still no `eslint-plugin-jsx-a11y`, still no systematic sweep of interactive `<div onClick>` rows. Nothing regressed; nothing was in scope to improve this cycle either. Still the same 5-minute install + mechanical fix it was rated at before.
+**Fix**: one migration in `apps/expenses` (Phases 4 + 5's Expense/LedgerEntry/PairwiseBalance/Settlement changes together, since they're the same app) and one migration in `apps/ledger` (Friendship). Pure additive/subtractive index changes — no data migration, no query-shape change, safe to apply to the live Docker DB directly.
 
 ---
 
-## 12. Developer Experience
+## Not included in this round — flagged for a follow-up decision
 
-Still no CI wiring (`.github/` is empty), still no test files anywhere. Both were rated Low priority last time specifically because nothing was actively broken by their absence — that's still true, but it's worth noting that **the CI gap is the reason the capacitor guard regression above wasn't caught automatically.** A `tsc && eslint` GitHub Action would have failed loudly the moment `check-capacitor.js` got its checks commented out. This is the strongest concrete argument yet for wiring it up — not hypothetical anymore, it's the direct explanation for how a real fix silently un-happened.
+**Cross-currency wallet balance fallback recomputes from scratch on every request** (`apps/expenses/services.py:992-1027`, used by `wallet_summary`/`wallet_people`/`wallet_list`/`combined_balances` — every wallet-home load). For same-currency scopes this correctly reads the O(1) `PairwiseBalance` cache; for any scope whose currency differs from the viewer's own `default_currency`, it instead fetches and Python-sums *every* matching `LedgerEntry` the user has ever been party to, unbounded, on every request — the exact "always read PairwiseBalance, never raw-sum LedgerEntry" invariant the model's own docstring warns against, done anyway here for historically-accurate point-in-time currency conversion. The code comments call this "a rare fallback," but it's not rare for any user whose `default_currency` differs from every group/friendship they're in — for them it's 100% of their scopes, every time. The composite index in Phase 5 helps the query itself, but doesn't fix the "unbounded, uncached, grows with total history" shape. A real fix means either bounding/caching this specific computation or extending `PairwiseBalance`-style caching to cover cross-currency conversions — a genuine architecture decision (how to cache a per-currency-pair, point-in-time-sensitive value), not a mechanical fix, so I'm not folding it into this round. Worth a dedicated follow-up if cross-currency users are a meaningful share of your user base.
 
----
-
-## 13. Production Readiness
-
-| Item | Status | Note |
-|---|---|---|
-| Error boundaries | ✅ Present | `defaultErrorComponent` wired at the router level, verified against a real crash live in-browser |
-| Crash logging | ✅ Present | `src/lib/log-error.ts`, console-based today with a clear seam for a real service later |
-| Loading/empty states | Unchanged | Still no shared `EmptyState`, still not urgent (no async data yet) |
-| Testing | Unchanged | Zero tests; `lib/split.ts` is still the best ROI target and still untested |
-| Release-build safety | 🔴 Regressed | See Critical #1 |
+**Dashboard wallet queries' `staleTime: 0`** (`use-wallet-summary-query.ts:17`, `use-wallet-list-query.ts:34`) — `DashboardScreen` fully unmounts/remounts on bottom-nav navigation (`app-shell.tsx`'s `<Outlet>` behavior), so returning to Home always fires fresh requests, not just after real writes. This looks deliberate (existing code comments say so) — likely a "wallet balance must always be current, in case a push notification silently changed it elsewhere" choice. Not touching this without your input: bumping it to a small `staleTime` (e.g. 10-15s) would cut redundant refetches on quick tab-switching without materially hurting freshness (real writes already invalidate these queries explicitly), but it does relax a deliberate choice a previous developer made on purpose. Let me know if you want this changed too.
 
 ---
 
-## 14. Future Backend Integration
+## Files touched
 
-Meaningfully improved: the canonical types now living in `@/types` are exactly the shape §14 of the last audit asked for ("one `src/types/domain.ts` with the nouns every feature currently redefines"). TanStack Query is still installed, still wired, still unused — still the right bet to leave alone until there's a real endpoint to call.
+**Frontend**: `expense-item.tsx` consumers (5 files, Phase 1), `user-ledgers`-invalidating mutation hooks (7 files, Phase 2, group-expense ones left as-is with an explanatory comment).
 
----
+**Backend**: `apps/expenses/serializers.py` (Phase 3), `apps/expenses/models.py` + new migration (Phases 4-5), `apps/ledger/models.py` + new migration (Phase 5).
 
-## 15. File-by-File Review (files that changed materially since the last audit)
+## Verification
 
-| File | What changed | Current state |
-|---|---|---|
-| `src/types/index.ts` | Gained `Contact`, `LedgerTag`, `TransactionRecord`, `BalanceSummary` | Canonical, single source of truth, re-exported by stores |
-| `src/store/use-contact-store.ts` / `use-transaction-store.ts` | Now import types from `@/types` instead of defining them locally | Clean |
-| `src/features/dashboard/dashboard-screen.tsx` | `useShallow` added to 3 selectors | Fixed the infinite-loop crash; confirmed clean live |
-| `src/features/groups/group-detail-screen.tsx` | 743→329 lines | Split into hook + 2 components, all verified |
-| `src/features/groups/add-recurring-screen.tsx` | 462→355 lines | Split into 3 components + shared amount-input hook |
-| `src/features/groups/hooks/use-group-ledger.tsx` | New | Clean extraction, 1 pre-existing `any` unchanged from original |
-| `src/components/shared/add-expense-base.tsx` | Now uses `useFormattedAmountInput`, tokens | Clean |
-| `scripts/check-capacitor.js` | Checks commented out | **Needs re-enabling — see Critical #1** |
-| `eslint.config.js` | Unchanged | Should gain `ios`/`android` ignores — see §8 |
-| `src/features/transactions/*` | 3 empty stub files + 2 empty dirs deleted | Now honestly reflects what's actually implemented |
-| `src/hooks/*` | 2 empty stubs deleted, 1 real hook added | Clean |
-| `src/constants/routes.ts` | Dead `PROFILE` entry removed | Clean |
-
----
-
-## 16. Engineering Scorecard
-
-| Dimension | Score | Change | Why |
-|---|---|---|---|
-| Architecture | 8/10 | +1 | Data layer no longer the weak point |
-| Folder structure | 8/10 | +1 | groups/ now matches every other feature's shape |
-| Code quality | 7/10 | +1 | 69→44 errors; the remaining ones are a known, repeatable pattern, not scattered chaos |
-| Maintainability | 7/10 | +1 | Two oversized files fixed; two more identified with a clear, proven playbook |
-| Scalability | 7/10 | +1 | The one structural blocker (mutable data) is gone |
-| Readability | 8/10 | — | Already strong, unchanged |
-| Simplicity | 8/10 | — | Still no premature abstraction found anywhere in the new code either |
-| TypeScript quality | 8/10 | +1 | Canonical types now real, not aspirational |
-| React practices | 7/10 | +1 | Both hooks-order bugs fixed; effect-anti-pattern now well-understood and mechanical to finish |
-| Mobile readiness | 6/10 | -1 | The capacitor guard regression is a real, concrete release risk that wasn't there conceptually before — it existed, got fixed, and un-fixed |
-| Production readiness | 5/10 | +1 | Error boundary + crash logging now real; still no tests/CI |
-
-**Read this as:** every score that depends on decisions already made (architecture, types, structure) went up, because that work is done and verified. The one score that went *down* is mobile readiness, specifically because a fix that existed got silently reverted — which is exactly the kind of regression a two-line CI check would catch automatically going forward.
-
----
-
-## 17. Refactoring Roadmap
-
-### Critical
-
-**Re-enable the capacitor release-build guard**
-- Problem: `scripts/check-capacitor.js` unconditionally passes; both real checks are commented out.
-- Why it matters: `.env` currently has `CAPACITOR_LIVE_RELOAD=true` locally — nothing stops a release build from shipping with a LAN dev URL baked in.
-- Files: `scripts/check-capacitor.js`
-- Benefit: Restores the exact protection this file was built for
-- Difficulty: Trivial (uncomment 2 blocks)
-- Worth it: **Yes, do this first — it's a live regression of already-completed work**
-
-**Scope ESLint away from native build directories**
-- Problem: `eslint .` picks up vendored `ios/DerivedData/**` files, inflating error counts and confusing anyone who runs it after an Xcode build.
-- Why it matters: Makes "how many lint errors do we have" an unreliable question depending on local build state.
-- Files: `eslint.config.js`
-- Benefit: Accurate, reproducible lint counts for everyone
-- Difficulty: Trivial (2-line `globalIgnores` addition)
-- Worth it: **Yes**
-
-### High Priority
-
-**Finish the `set-state-in-effect` cleanup across `components/shared/*`**
-- Problem: 6 confirmed instances (`add-category-flow.tsx`, `add-note-flow.tsx`, `add-receipt-flow.tsx`, `paid-by-drawer.tsx`, `payment-method-drawer.tsx`, `select-date-drawer.tsx`, `split-expense-drawer.tsx`) of the same "sync temp state from props via effect" anti-pattern already fixed twice elsewhere.
-- Why it matters: Same extra-render/stale-state risk as the original finding, now proven mechanical to fix (two working patterns already exist in this exact codebase).
-- Files: the 6-7 listed above
-- Benefit: Removes the single most-repeated remaining lint category
-- Difficulty: Low (re-apply an already-proven pattern per file)
-- Worth it: **Yes**
-
-**Split `group-settings-screen.tsx` (now the largest file at 650 lines)**
-- Problem: Same shape as the already-fixed `group-detail-screen.tsx` — member-list state, three destructive-action drawers, and a confirmation-sequencing ref pattern all in one file.
-- Why it matters: It's now the single largest file in the app and was never part of the original split work.
-- Files: `features/groups/group-settings-screen.tsx`
-- Benefit: Same as the already-completed split — smaller, independently testable units
-- Difficulty: Medium
-- Worth it: **Yes**
-
-**Wire lint + typecheck into CI**
-- Problem: Nothing currently stops a regression like the capacitor-guard one from merging silently.
-- Why it matters: This is no longer hypothetical — it's the literal explanation for how a completed fix got undone without anyone noticing.
-- Files: new `.github/workflows/ci.yml`
-- Benefit: Automatic regression prevention, demonstrated to be necessary by this exact audit
-- Difficulty: Low (~10 min)
-- Worth it: **Yes, this argument is now stronger than it was last audit**
-
-### Medium Priority
-
-**Split `split-expense-drawer.tsx` (574 lines, second-largest file)**
-- Problem: Three split modes (equal/unequal/adjustment) as inline branches; also carries one of the `set-state-in-effect` instances.
-- Why it matters: Doing this alongside the effect fix (High priority item above) is the same file, same visit — bundle them.
-- Files: `components/shared/split-expense-drawer.tsx`
-- Benefit: Smaller file, fixes 2 findings in one pass
-- Difficulty: Medium
-- Worth it: **Yes**
-
-**Continue the color-token migration into `features/*/components/*`**
-- Problem: 588 raw hex occurrences remain outside `components/shared/*`.
-- Why it matters: Same "one-file rebrand" story as before — currently still needs ~80 files touched.
-- Files: `features/*/components/*`
-- Benefit: Completes what was explicitly scoped as an incremental, multi-pass effort
-- Difficulty: Medium (mechanical, same proven methodology: survey frequency, add missing tokens, replace exact matches only)
-- Worth it: **Yes, continue incrementally as already planned — don't do it all in one PR**
-
-**Unit-test `lib/split.ts`**
-- Problem: Still the single best test-ROI target in the app, still untested.
-- Why it matters: Unchanged reasoning from the last audit — it's pure, financially load-bearing logic.
-- Files: `src/lib/split.ts`
-- Benefit: Regression safety on the one calculation users would actually notice being wrong
-- Difficulty: Low
-- Worth it: **Yes**
-
-### Low Priority
-
-**Add `eslint-plugin-jsx-a11y`**
-- Unchanged from the last audit. Still a 5-minute install, still worth doing, still not urgent.
-
-**Rename the colliding `GroupMember` in `group-settings-screen.tsx`**
-- Problem: Two different shapes share one name across two files (`groups/data/group-members.ts` vs. the local one in `group-settings-screen.tsx`).
-- Why it matters: Minor clarity issue, not a bug — confirmed deliberately different view-models, not a duplicate.
-- Files: `features/groups/group-settings-screen.tsx`
-- Benefit: Removes a naming collision that could confuse a future reader
-- Difficulty: Trivial
-- Worth it: **Yes, but genuinely low priority**
-
-**Fix `personal/components/category-breakdown-card.tsx`'s render-time reassignment**
-- Problem: `accumulatedPercent` reassigned during render to compute pie-slice angles.
-- Why it matters: Same class of bug the Zustand migration fixed elsewhere; this one was never in scope.
-- Files: `features/personal/components/category-breakdown-card.tsx`
-- Benefit: Removes the last remaining `react-hooks/immutability` error
-- Difficulty: Low
-- Worth it: **Yes**
-
-**Clean up 4 stray `console.log` calls**
-- Unchanged in character from the last audit. Bundle with whichever lint-cleanup pass happens first.
-
-> **Explicitly still rejected, unchanged reasoning:** a generated API client, a repository-class hierarchy, a generic form-builder over `AddExpenseBase`, `React.memo`/`useCallback` with no measured problem, forcing `AddRecurringScreen` through `AddExpenseBase` (confirmed, by direct comparison, to be genuinely different designs — not the same form twice), and collapsing the 4 shadcn `only-export-components` warnings (that's the correct upstream convention, not a bug).
-
----
-
-## Summarized Backlog & Recommended Order
-
-| # | Priority | Item | Files |
-|---|---|---|---|
-| 1 | 🔴 Critical | Re-enable the capacitor release-build guard | `scripts/check-capacitor.js` |
-| 2 | 🔴 Critical | Scope ESLint away from `ios`/`android` | `eslint.config.js` |
-| 3 | 🟠 High | Finish `set-state-in-effect` cleanup (6-7 files) | `components/shared/*` |
-| 4 | 🟠 High | Split `group-settings-screen.tsx` | `features/groups/group-settings-screen.tsx` |
-| 5 | 🟠 High | Wire lint + typecheck into CI | new `.github/workflows/` |
-| 6 | 🟡 Medium | Split `split-expense-drawer.tsx` (bundle with #3's fix for this file) | `components/shared/split-expense-drawer.tsx` |
-| 7 | 🟡 Medium | Continue color-token migration into `features/*/components/*` | ~80 files, incremental |
-| 8 | 🟡 Medium | Unit test `lib/split.ts` | `src/lib/split.ts` |
-| 9 | ⚪ Low | Add `eslint-plugin-jsx-a11y` | `eslint.config.js` |
-| 10 | ⚪ Low | Rename colliding `GroupMember` | `group-settings-screen.tsx` |
-| 11 | ⚪ Low | Fix `category-breakdown-card.tsx` render-time reassignment | `features/personal/components/category-breakdown-card.tsx` |
-| 12 | ⚪ Low | Clean up stray `console.log` calls | 4 files |
-
-Ready to work through these one at a time — say which number to start with, or "start from the top." Given #1 is a live regression of a fix that already existed once, I'd suggest starting there.
-
----
-*Prepared 2026-07-03 (re-audit) — scope: frontend only, no backend criticism.*
+1. Frontend: `npx tsc --noEmit -p tsconfig.app.json` and `npx eslint` on every touched file (established pattern from prior work in this session). On-device: open a group/contact/personal expense list, confirm rows don't visibly flash/re-render on unrelated actions (e.g. opening a filter drawer); trigger a settlement/expense mutation and confirm the *relevant* contact's combined ledger view updates while an unrelated contact's cached view isn't silently refetched (can spot-check via React Query Devtools if available, or by observing network calls).
+2. Backend: `uv run python manage.py makemigrations --check`, `uv run python manage.py check`, apply migrations to the running Docker backend (`docker compose exec web uv run python manage.py migrate`), confirm no errors. For the N+1 fix specifically: hit the recurring-expenses list endpoint with Django's query logging or a quick `django.db.connection.queries` count check (e.g. via `manage.py shell`) before/after to confirm the query count drops from ~100 to ~1 for a page of recurring expenses.
+3. DB: after migrating, confirm the redundant indexes are actually gone and the new composite ones exist (`\di` in `psql`, or `django_migrations`/`information_schema.indexes` query) — cheap sanity check that the migration did what it says.

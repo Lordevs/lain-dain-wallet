@@ -76,6 +76,11 @@ export function useLeaveGroupMutation(groupId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['groups', 'list'] })
+      // Leaving can change every other member's combined ledger view with
+      // you, and the member list isn't available here (nor safely
+      // fetchable — you're no longer a member the moment this succeeds) —
+      // broad invalidation is the correct behavior, just not maximally
+      // scoped.
       queryClient.invalidateQueries({ queryKey: ['user-ledgers'] })
       queryClient.invalidateQueries({ queryKey: ['wallet'] })
     },
@@ -97,6 +102,9 @@ export function useDeleteGroupMutation(groupId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['groups', 'list'] })
+      // Same reasoning as useLeaveGroupMutation above — deleting can
+      // change every other member's combined ledger view, member list
+      // isn't available here, broad invalidation is correct as-is.
       queryClient.invalidateQueries({ queryKey: ['user-ledgers'] })
       queryClient.invalidateQueries({ queryKey: ['wallet'] })
     },

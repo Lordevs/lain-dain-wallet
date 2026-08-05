@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
 import { Users, Smile } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
@@ -34,6 +35,19 @@ export default function LedgerBreakdownScreen() {
 
   const ledgers = useContactLedgers(userId)
   const adjustmentQuery = useLedgerAdjustmentQuery(userId)
+
+  // Stable identity required for ExpenseItem's memo() to actually skip
+  // re-rendering rows on unrelated state changes — see expense-item.tsx.
+  // Declared before the early returns below to respect the Rules of Hooks.
+  const handleItemClick = useCallback((itemId: string | number) => {
+    const idStr = String(itemId)
+    if (idStr.startsWith('group-')) {
+      const groupId = idStr.slice('group-'.length)
+      navigate({ to: ROUTES.GROUP_DETAILS, params: { id: groupId } })
+    } else {
+      navigate({ to: ROUTES.CONTACT_DETAILS, params: { id: userId } })
+    }
+  }, [navigate, userId])
 
   if (ledgers.isLoading) {
     return (
@@ -118,16 +132,6 @@ export default function LedgerBreakdownScreen() {
       ),
     }
   })
-
-  const handleItemClick = (itemId: string | number) => {
-    const idStr = String(itemId)
-    if (idStr.startsWith('group-')) {
-      const groupId = idStr.slice('group-'.length)
-      navigate({ to: ROUTES.GROUP_DETAILS, params: { id: groupId } })
-    } else {
-      navigate({ to: ROUTES.CONTACT_DETAILS, params: { id: userId } })
-    }
-  }
 
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-10 relative select-none text-[#1A1A1A]">

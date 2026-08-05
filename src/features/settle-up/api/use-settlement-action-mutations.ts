@@ -2,8 +2,16 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
 import { ApiError, toApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
+import { useAuthStore } from '@/store/use-auth-store'
 
 type SettlementRead = components['schemas']['SettlementRead']
+
+// A Settlement always has exactly one payer/payee pair regardless of
+// friendship-vs-group context, so "the other user" is always unambiguous.
+function otherUserId(settlement: Pick<SettlementRead, 'payer' | 'payee'>): string | undefined {
+  const myId = useAuthStore.getState().userProfile?.id
+  return myId === settlement.payer.id ? settlement.payee.id : settlement.payer.id
+}
 
 function invalidateForSettlement(queryClient: ReturnType<typeof useQueryClient>, settlement: SettlementRead) {
   queryClient.invalidateQueries({ queryKey: ['settlement', settlement.id] })
@@ -14,7 +22,7 @@ function invalidateForSettlement(queryClient: ReturnType<typeof useQueryClient>,
     queryClient.invalidateQueries({ queryKey: ['group-transactions', settlement.group] })
     queryClient.invalidateQueries({ queryKey: ['group-balance', settlement.group] })
   }
-  queryClient.invalidateQueries({ queryKey: ['user-ledgers'] })
+  queryClient.invalidateQueries({ queryKey: ['user-ledgers', otherUserId(settlement)] })
   queryClient.invalidateQueries({ queryKey: ['wallet'] })
 }
 
@@ -66,13 +74,18 @@ export function useCancelSettlementMutation() {
       if (error) throw toApiError(error)
     },
     onSuccess: (_data, { id, friendshipId, groupId }) => {
+      // Cancel is a 204 (no body), so payer/payee aren't in the response —
+      // read from whatever's already cached from viewing the settlement
+      // detail screen (reliably present in practice), falling back to
+      // broad invalidation if it genuinely isn't cached.
+      const cached = queryClient.getQueryData<SettlementRead>(['settlement', id])
       queryClient.invalidateQueries({ queryKey: ['settlement', id] })
       if (friendshipId) queryClient.invalidateQueries({ queryKey: ['friendship-transactions', friendshipId] })
       if (groupId) {
         queryClient.invalidateQueries({ queryKey: ['group-transactions', groupId] })
         queryClient.invalidateQueries({ queryKey: ['group-balance', groupId] })
       }
-      queryClient.invalidateQueries({ queryKey: ['user-ledgers'] })
+      queryClient.invalidateQueries({ queryKey: cached ? ['user-ledgers', otherUserId(cached)] : ['user-ledgers'] })
       queryClient.invalidateQueries({ queryKey: ['wallet'] })
     },
   })
