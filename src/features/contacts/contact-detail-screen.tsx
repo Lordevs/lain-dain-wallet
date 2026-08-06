@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useContactLedgers } from '@/features/contacts/hooks/use-contact-ledgers'
 import { useFriendshipTransactionsQuery } from '@/features/contacts/api/use-friendship-transactions-query'
 import { useFriendshipDetailQuery } from '@/features/contacts/api/use-friendship-detail-query'
+import { useToggleReactionMutation } from '@/features/groups/api/use-reaction-mutation'
 
 function initialsForName(name: string): string {
   return (
@@ -111,6 +112,7 @@ export default function ContactDetailScreen() {
           amountColor: 'default' as const,
           kind: 'expense' as const,
           dateISO: t.data.date,
+          reactions: t.data.reactions ?? [],
         }
       }
       const isConfirmed = t.data.status === 'confirmed'
@@ -133,6 +135,7 @@ export default function ContactDetailScreen() {
         className: isConfirmed ? 'bg-[#DCEFE4] hover:bg-[#DCEFE4]/90' : undefined,
         kind: 'settlement' as const,
         dateISO: t.data.date,
+        reactions: t.data.reactions ?? [],
       }
     })
   }, [transactions.data, ledgers.data])
@@ -166,6 +169,11 @@ export default function ContactDetailScreen() {
       navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: tid.toString() } })
     }
   }, [navigate])
+
+  const toggleReaction = useToggleReactionMutation()
+  const handleReact = useCallback((tid: string | number, kind: 'expense' | 'settlement' | undefined, emoji: string) => {
+    toggleReaction.mutate({ id: tid.toString(), kind: kind ?? 'expense', emoji, friendshipId: ledgers.friendshipId })
+  }, [toggleReaction, ledgers.friendshipId])
 
   if (ledgers.isLoading) {
     return (
@@ -299,6 +307,7 @@ export default function ContactDetailScreen() {
                 <ExpenseList
                   expenses={group.expenses}
                   onItemClick={handleItemClick}
+                  onItemReact={handleReact}
                 />
               </div>
             ))}

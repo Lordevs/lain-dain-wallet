@@ -249,6 +249,30 @@ export interface paths {
         patch: operations["expenses_partial_update"];
         trace?: never;
     };
+    "/api/expenses/{id}/react/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description POST /api/expenses/{id}/react/ — idempotent toggle: same emoji
+         *     again removes it, a different emoji replaces it. Returns the entry's
+         *     full updated reaction list so the client can patch its cache from the
+         *     server's own response, same convention as this app's other action
+         *     endpoints (e.g. SettlementConfirmView returning the updated
+         *     SettlementReadSerializer).
+         */
+        post: operations["expenses_react_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/expenses/categories/": {
         parameters: {
             query?: never;
@@ -836,6 +860,29 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["expenses_settlements_dispute_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/expenses/settlements/{id}/react/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description POST /api/expenses/settlements/{id}/react/ — mirrors
+         *     ExpenseReactionView exactly; see that docstring. Uses the broader
+         *     services._settlement_reaction_participant_ids scope, not
+         *     _get_settlement_or_404's payer/payee-only scope — see that helper's
+         *     docstring for why.
+         */
+        post: operations["expenses_settlements_react_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2072,6 +2119,16 @@ export interface components {
          * @enum {string}
          */
         DirectionEnum: "owed_to_you" | "you_owe" | "settled";
+        /**
+         * @description * `👍` - 👍
+         *     * `✅` - ✅
+         *     * `🙏` - 🙏
+         *     * `😅` - 😅
+         *     * `❤️` - ❤️
+         *     * `😬` - 😬
+         * @enum {string}
+         */
+        EmojiEnum: "👍" | "✅" | "🙏" | "😅" | "❤️" | "😬";
         ErrorDetail: {
             detail: string;
         };
@@ -2165,6 +2222,7 @@ export interface components {
             split_type: components["schemas"]["SplitTypeEnum"];
             readonly payers: components["schemas"]["ExpensePayerRead"][];
             readonly splits: components["schemas"]["ExpenseSplitRead"][];
+            readonly reactions: components["schemas"]["ReactionRead"][];
             /** Format: date-time */
             edited_at?: string | null;
             /** Format: uuid */
@@ -3139,6 +3197,31 @@ export interface components {
          */
         PurposeEnum: "signup" | "login";
         /**
+         * @description Schema-only (see ExpenseReactionView/SettlementReactionView) —
+         *     both endpoints hand-build this exact {"reactions": [...]} shape
+         *     directly in the view rather than instantiating this serializer, same
+         *     convention as NotificationUnreadCountSerializer.
+         */
+        ReactionListResponse: {
+            reactions: components["schemas"]["ReactionRead"][];
+        };
+        ReactionRead: {
+            /** Format: uuid */
+            id: string;
+            full_name: string;
+            phone_number: string;
+            image: string | null;
+            emoji: string;
+        };
+        /**
+         * @description Emoji set is enforced here too (not just the frontend's fixed
+         *     quick-bar), keeping a stray value out of the DB even if a client
+         *     bypasses the UI.
+         */
+        ReactionRequestRequest: {
+            emoji: components["schemas"]["EmojiEnum"];
+        };
+        /**
          * @description Shared by both friendship and group recurring expenses — same
          *     pattern as ExpenseCreateSerializer: `context`/`friendship`/`group`
          *     aren't fields, they come from the URL, supplied by the view via
@@ -3384,6 +3467,7 @@ export interface components {
             readonly needs_your_confirmation: boolean;
             readonly can_dispute: boolean;
             readonly can_cancel: boolean;
+            readonly reactions: components["schemas"]["ReactionRead"][];
             /** Format: date-time */
             readonly created_at: string;
         };
@@ -3867,6 +3951,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ExpenseUpdate"];
+                };
+            };
+        };
+    };
+    expenses_react_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReactionRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ReactionRequestRequest"];
+                "multipart/form-data": components["schemas"]["ReactionRequestRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReactionListResponse"];
                 };
             };
         };
@@ -4781,6 +4892,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SettlementRead"];
+                };
+            };
+        };
+    };
+    expenses_settlements_react_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReactionRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ReactionRequestRequest"];
+                "multipart/form-data": components["schemas"]["ReactionRequestRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReactionListResponse"];
                 };
             };
         };

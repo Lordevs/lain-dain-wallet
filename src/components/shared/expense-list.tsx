@@ -1,4 +1,4 @@
-import ExpenseItem, { type ExpenseCategory } from './expense-item'
+import ExpenseItem, { type ExpenseCategory, type ReactionEntry } from './expense-item'
 import { cn } from '@/lib/utils'
 
 export interface ExpenseListData {
@@ -20,6 +20,7 @@ export interface ExpenseListData {
    * to the right detail screen, since the two are different backend
    * models with different detail endpoints. Defaults to 'expense'. */
   kind?: 'expense' | 'settlement'
+  reactions?: ReactionEntry[]
 }
 
 /** A transaction record adapted for date-grouped list rendering (contact/group detail screens). */
@@ -37,6 +38,7 @@ export interface TransactionListItem extends ExpenseListData {
 interface ExpenseListProps {
   expenses: ExpenseListData[]
   onItemClick?: (id: string | number, kind?: 'expense' | 'settlement') => void
+  onItemReact?: (id: string | number, kind: 'expense' | 'settlement' | undefined, emoji: string) => void
   amountColor?: 'green' | 'orange' | 'black' | 'default'
   className?: string
 }
@@ -48,6 +50,7 @@ interface ExpenseListProps {
 export default function ExpenseList({
   expenses,
   onItemClick,
+  onItemReact,
   amountColor = 'default',
   className,
 }: ExpenseListProps) {
@@ -75,7 +78,9 @@ export default function ExpenseList({
           showChevron={expense.showChevron ?? true}
           className={expense.className}
           leftSlot={expense.leftSlot}
+          reactions={expense.reactions}
           onClick={onItemClick}
+          onReact={onItemReact}
         />
       ))}
     </div>

@@ -22,6 +22,7 @@ import {
   type GroupSortBy,
   type GroupTransactionFilter,
 } from '@/features/groups/api/use-group-transactions-query'
+import { useToggleReactionMutation } from '@/features/groups/api/use-reaction-mutation'
 import { useAuthStore } from '@/store/use-auth-store'
 import GroupCategoryFilterPills from './components/group-category-filter-pills'
 import GroupExpensesFilterDrawer from './components/group-expenses-filter-drawer'
@@ -68,6 +69,7 @@ export default function GroupDetailScreen() {
           showChevron: true,
           amountColor: 'default' as const,
           kind: 'expense' as const,
+          reactions: t.data.reactions ?? [],
         }
       }
       const isConfirmed = t.data.status === 'confirmed'
@@ -91,6 +93,7 @@ export default function GroupDetailScreen() {
         amountColor: isConfirmed ? 'green' as const : isPending ? 'orange' as const : 'black' as const,
         className: isConfirmed ? 'bg-[#DCEFE4] hover:bg-[#DCEFE4]/90' : undefined,
         kind: 'settlement' as const,
+        reactions: t.data.reactions ?? [],
       }
     })
   }, [transactionsQuery.data, myId])
@@ -104,6 +107,11 @@ export default function GroupDetailScreen() {
       navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: tid.toString() } })
     }
   }, [navigate])
+
+  const toggleReaction = useToggleReactionMutation()
+  const handleReact = useCallback((tid: string | number, kind: 'expense' | 'settlement' | undefined, emoji: string) => {
+    toggleReaction.mutate({ id: tid.toString(), kind: kind ?? 'expense', emoji, groupId })
+  }, [toggleReaction, groupId])
 
   if (groupQuery.isLoading) {
     return (
@@ -277,6 +285,7 @@ export default function GroupDetailScreen() {
               <ExpenseList
                 expenses={items}
                 onItemClick={handleItemClick}
+                onItemReact={handleReact}
               />
               <InfiniteScrollSentinel
                 onLoadMore={transactionsQuery.fetchNextPage}

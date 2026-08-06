@@ -1,10 +1,22 @@
-import { createElement, memo } from 'react'
+import { createElement, memo, useState } from 'react'
 import { Coffee, Fuel, ShoppingCart, Truck, Handshake, Layers, ChevronRight } from 'lucide-react'
 import { formatCurrency } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import { iconForCategory } from '@/features/expenses/lib/category-icons'
+import { useLongPress } from '@/hooks/use-long-press'
+import { useAuthStore } from '@/store/use-auth-store'
+import { haptic } from '@/lib/haptics'
+import ReactionPicker from './reaction-picker'
+import ReactionBadge from './reaction-badge'
 
 export type ExpenseCategory = 'food' | 'fuel' | 'shopping' | 'transport' | 'payment' | 'other'
+
+export interface ReactionEntry {
+  id: string
+  emoji: string
+  full_name: string
+  image: string | null
+}
 
 export interface ExpenseItemProps {
   // Threaded through so onClick can stay one stable function identity from
@@ -23,6 +35,11 @@ export interface ExpenseItemProps {
   showChevron?: boolean
   rightSubtitle?: string
   onClick?: (id: string | number, kind?: 'expense' | 'settlement') => void
+  // Stable identity required, same discipline as onClick — the picker's
+  // own open/close state stays internal to this component below, only
+  // the selection callback needs to flow up to the list owner.
+  onReact?: (id: string | number, kind: 'expense' | 'settlement' | undefined, emoji: string) => void
+  reactions?: ReactionEntry[]
   className?: string
   leftSlot?: React.ReactNode
 }
@@ -73,10 +90,24 @@ function ExpenseItem({
   showChevron = true,
   rightSubtitle,
   onClick,
+  onReact,
+  reactions,
   className,
   leftSlot,
 }: ExpenseItemProps) {
   const { icon, bgClass } = CATEGORY_VISUALS[category] || CATEGORY_VISUALS.other
+
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const myId = useAuthStore((s) => s.userProfile?.id)
+  const myReaction = reactions?.find((r) => r.id === myId)?.emoji ?? null
+
+  const longPress = useLongPress({
+    disabled: !onReact,
+    onLongPress: () => {
+      haptic.heavy()
+      setPickerOpen(true)
+    },
+  })
 
   // Resolve text color for the amount
   const colorClass = category === 'payment'
@@ -94,10 +125,24 @@ function ExpenseItem({
   const displayAmount = `${amount < 0 ? '-' : ''}${formattedAmount}`
 
   return (
+    <ReactionPicker
+      open={pickerOpen}
+      onOpenChange={setPickerOpen}
+      activeEmoji={myReaction}
+      onSelect={(emoji) => onReact?.(id, kind, emoji)}
+    >
     <div
       onClick={onClick ? () => onClick(id, kind) : undefined}
+      onPointerDown={longPress.onPointerDown}
+      onPointerMove={longPress.onPointerMove}
+      onPointerUp={longPress.onPointerUp}
+      onPointerLeave={longPress.onPointerLeave}
+      onClickCapture={longPress.onClickCapture}
       className={cn(
-        'flex items-center justify-between p-4 bg-white hover:bg-muted/5 transition-all',
+        'relative flex items-center justify-between p-4 bg-white hover:bg-muted/5 transition-all',
+        // Extra bottom room so the reaction badge sits inside this row's
+        // own box instead of spilling into the next row below it.
+        reactions && reactions.length > 0 && 'pb-7',
         onClick && 'cursor-pointer',
         className
       )}
@@ -156,7 +201,10 @@ function ExpenseItem({
         </div>
         {showChevron && <ChevronRight size={16} className="text-divider" />}
       </div>
+
+      {reactions && reactions.length > 0 && <ReactionBadge reactions={reactions} />}
     </div>
+    </ReactionPicker>
   )
 }
 

@@ -500,6 +500,46 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/expenses/{id}/react/:
+    post:
+      operationId: expenses_react_create
+      description: |-
+        POST /api/expenses/{id}/react/ — idempotent toggle: same emoji
+        again removes it, a different emoji replaces it. Returns the entry's
+        full updated reaction list so the client can patch its cache from the
+        server's own response, same convention as this app's other action
+        endpoints (e.g. SettlementConfirmView returning the updated
+        SettlementReadSerializer).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReactionRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReactionRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReactionRequestRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReactionListResponse'
+          description: ''
   /api/expenses/categories/:
     get:
       operationId: expenses_categories_list
@@ -1741,6 +1781,45 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SettlementRead'
+          description: ''
+  /api/expenses/settlements/{id}/react/:
+    post:
+      operationId: expenses_settlements_react_create
+      description: |-
+        POST /api/expenses/settlements/{id}/react/ — mirrors
+        ExpenseReactionView exactly; see that docstring. Uses the broader
+        services._settlement_reaction_participant_ids scope, not
+        _get_settlement_or_404's payer/payee-only scope — see that helper's
+        docstring for why.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReactionRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReactionRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReactionRequestRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReactionListResponse'
           description: ''
   /api/expenses/settlements/pending/:
     get:
@@ -3871,6 +3950,17 @@ components:
         * `owed_to_you` - owed_to_you
         * `you_owe` - you_owe
         * `settled` - settled
+    EmojiEnum:
+      enum:
+      - "\U0001F44D"
+      - ✅
+      - "\U0001F64F"
+      - "\U0001F605"
+      - ❤️
+      - "\U0001F62C"
+      type: string
+      description: "* `\U0001F44D` - \U0001F44D\n* `✅` - ✅\n* `\U0001F64F` - \U0001F64F\n*
+        `\U0001F605` - \U0001F605\n* `❤️` - ❤️\n* `\U0001F62C` - \U0001F62C"
     ErrorDetail:
       type: object
       properties:
@@ -4071,6 +4161,11 @@ components:
           items:
             $ref: '#/components/schemas/ExpenseSplitRead'
           readOnly: true
+        reactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReactionRead'
+          readOnly: true
         edited_at:
           type: string
           format: date-time
@@ -4094,6 +4189,7 @@ components:
       - description
       - id
       - payers
+      - reactions
       - split_type
       - splits
     ExpenseSplitRead:
@@ -5910,6 +6006,52 @@ components:
       description: |-
         * `signup` - Signup
         * `login` - Login
+    ReactionListResponse:
+      type: object
+      description: |-
+        Schema-only (see ExpenseReactionView/SettlementReactionView) —
+        both endpoints hand-build this exact {"reactions": [...]} shape
+        directly in the view rather than instantiating this serializer, same
+        convention as NotificationUnreadCountSerializer.
+      properties:
+        reactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReactionRead'
+      required:
+      - reactions
+    ReactionRead:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        full_name:
+          type: string
+        phone_number:
+          type: string
+        image:
+          type: string
+          nullable: true
+        emoji:
+          type: string
+      required:
+      - emoji
+      - full_name
+      - id
+      - image
+      - phone_number
+    ReactionRequestRequest:
+      type: object
+      description: |-
+        Emoji set is enforced here too (not just the frontend's fixed
+        quick-bar), keeping a stray value out of the DB even if a client
+        bypasses the UI.
+      properties:
+        emoji:
+          $ref: '#/components/schemas/EmojiEnum'
+      required:
+      - emoji
     RecurringExpenseCreate:
       type: object
       description: |-
@@ -6358,6 +6500,11 @@ components:
         can_cancel:
           type: boolean
           readOnly: true
+        reactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReactionRead'
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -6374,6 +6521,7 @@ components:
       - needs_your_confirmation
       - payee
       - payer
+      - reactions
       - recorded_by
     SettlementReadStatusEnum:
       enum:
