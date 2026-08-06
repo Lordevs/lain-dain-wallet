@@ -199,7 +199,12 @@ function ExpenseItem({
             </span>
           )}
         </div>
-        {showChevron && <ChevronRight size={16} className="text-divider" />}
+        {/* Always reserve the chevron's slot (visibility, not
+            conditional render) so the amount column lines up on the same
+            right edge across rows regardless of showChevron — settlement
+            rows without a chevron would otherwise sit ~24px further
+            right than expense rows next to them in the same card. */}
+        <ChevronRight size={16} className={cn('text-divider', !showChevron && 'invisible')} />
       </div>
 
       {reactions && reactions.length > 0 && <ReactionBadge reactions={reactions} />}
