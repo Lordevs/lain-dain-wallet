@@ -7,6 +7,7 @@ import ConfirmActionDrawer from '@/components/shared/confirm-action-drawer'
 import { useAuthStore } from '@/store/use-auth-store'
 import { clearRefreshToken } from '@/lib/secure-storage'
 import { useDeleteAccountMutation } from '@/features/auth/api/use-auth-mutations'
+import { queryClient } from '@/lib/query-client'
 import { ROUTES } from '@/constants/routes'
 
 interface DeleteAccountPanelProps {
@@ -34,7 +35,15 @@ export default function DeleteAccountPanel({
     (() => {
       deleteAccount.mutate(undefined, {
         onSuccess: async () => {
+          // Whoever signs in next on this same device — including this
+          // exact phone number, re-registered as a brand new account —
+          // would otherwise inherit this account's cached data: most
+          // query keys in this app don't include a user id, so without
+          // clearing the cache here, screens like the contacts picker
+          // could show stale results (or a stale empty result) instead
+          // of the new account's own.
           await clearRefreshToken()
+          queryClient.clear()
           logout()
           navigate({ to: ROUTES.AUTH })
         },

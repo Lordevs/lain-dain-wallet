@@ -3,6 +3,7 @@ import type { paths } from './schema'
 import { env } from '../env'
 import { clearRefreshToken, getRefreshToken, setRefreshToken } from '../secure-storage'
 import { useAuthStore } from '@/store/use-auth-store'
+import { queryClient } from '@/lib/query-client'
 
 /**
  * The one typed HTTP client for the whole app — every screen's data layer
@@ -91,7 +92,12 @@ apiClient.use({
       // The refresh token itself is gone, expired, or blacklisted —
       // nothing left to do but sign out. The original 401 response is
       // returned as-is; the caller sees an auth failure either way.
+      // queryClient.clear(): most query keys in this app don't include a
+      // user id, so without this, whoever signs in next on this same
+      // device (a different account) would see this account's cached
+      // data until each query's own gcTime/staleTime happened to expire.
       await clearRefreshToken()
+      queryClient.clear()
       useAuthStore.getState().logout()
       return response
     }

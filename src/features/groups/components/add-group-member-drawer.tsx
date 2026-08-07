@@ -9,6 +9,7 @@ import ContactListSkeleton from '@/components/shared/contact-list-skeleton'
 import FormError from '@/components/shared/form-error'
 import CurrencyRateFields from './currency-rate-fields'
 import { useContactsQuery } from '@/features/contacts/api/use-contacts-query'
+import { useDeviceContactsSync } from '@/features/contacts/hooks/use-device-contacts-sync'
 import { useInviteMembersMutation } from '@/features/groups/api/use-group-actions-mutations'
 import { useSetGroupCurrencyRateMutation } from '@/features/groups/api/use-group-currency-rate-mutations'
 import { mapSyncedContactToContactInfo } from '@/features/contacts/lib/map-synced-contact'
@@ -34,6 +35,14 @@ export default function AddGroupMemberDrawer({
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
   const [rateValues, setRateValues] = useState<Record<string, string>>({})
 
+  // Unlike the New Contact/Group flow (useNewContactFlow), this drawer used
+  // to only ever read whatever Contact rows already existed — never
+  // syncing itself. That's invisible for an account that's already synced
+  // via that other flow at some point, but shows an empty list for one
+  // that hasn't (a freshly (re)created account being the common case) —
+  // same "re-check OS permission, silently re-sync if granted" behavior
+  // as every other contact-picker screen.
+  useDeviceContactsSync()
   const contactsQuery = useContactsQuery(true, searchQuery)
   const inviteMutation = useInviteMembersMutation(groupId)
   const setRateMutation = useSetGroupCurrencyRateMutation(groupId)

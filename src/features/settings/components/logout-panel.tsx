@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuthStore } from '@/store/use-auth-store'
 import { getRefreshToken, clearRefreshToken } from '@/lib/secure-storage'
 import { useLogoutMutation } from '@/features/auth/api/use-auth-mutations'
+import { queryClient } from '@/lib/query-client'
 import { ROUTES } from '@/constants/routes'
 
 interface LogoutPanelProps {
@@ -30,10 +31,15 @@ export default function LogoutPanel({
       // one thing we can always clear.
       await logoutMutation.mutateAsync(refreshToken).catch(() => {})
     }
-    // logout() only clears in-memory state — the refresh token sitting in
-    // secure storage has to be cleared explicitly, or a "logged out" app
-    // could still silently re-authenticate with it on next launch.
+    // logout() only clears in-memory auth state — the refresh token sitting
+    // in secure storage has to be cleared explicitly, or a "logged out" app
+    // could still silently re-authenticate with it on next launch. Same
+    // reasoning for the query cache: most query keys here don't include a
+    // user id, so whoever signs in next on this device (a different
+    // account) would otherwise see this account's cached data until it
+    // happened to expire on its own.
     await clearRefreshToken()
+    queryClient.clear()
     logout()
     navigate({ to: ROUTES.AUTH })
   })
