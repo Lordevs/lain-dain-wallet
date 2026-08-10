@@ -4,7 +4,7 @@ import receiptMockup from '@/assets/receipt_mockup.png'
 interface ReceiptPreviewFlowProps {
   isOpen: boolean
   onClose: () => void
-  tx: any
+  tx: { name?: string }
   onDownload: () => void
 }
 
@@ -16,7 +16,7 @@ export default function ReceiptPreviewFlow({
   return (
     <div className="flex flex-col h-full select-none overflow-y-auto pb-8">
       {/* Header */}
-      <div className="flex items-center px-6 pt-5 pb-3 relative shrink-0">
+      <div className="sticky top-0 z-30 flex shrink-0 items-center bg-background px-6 pb-3 pt-5">
         <button
           onClick={onClose}
           className="size-10 rounded-full bg-white border border-[#EBEBEB] flex items-center justify-center cursor-pointer shadow-[0px_2px_8px_rgba(0,0,0,0.04)] outline-none"

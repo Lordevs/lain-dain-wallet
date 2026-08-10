@@ -96,7 +96,7 @@ export default function RecurringPaymentsScreen({
   }
 
   return (
-    <div className="fixed inset-0 z-60 flex flex-col bg-[#FEFAF1] pb-24 select-none text-left">
+    <div className="app-fullscreen z-60 flex min-h-0 flex-col bg-[#FEFAF1] pb-6 select-none text-left">
       {/* Page Header */}
       <FlowHeader
         title="Recurring Payments"

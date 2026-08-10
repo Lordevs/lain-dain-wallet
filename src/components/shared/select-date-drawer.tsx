@@ -63,20 +63,18 @@ export default function SelectDateDrawer({
   selectedDateValue,
   type = 'expense',
 }: SelectDateDrawerProps) {
-  // Bumped whenever isOpen transitions to true, forcing SelectDateDrawerContent to remount
-  // with fresh initial state - the idiomatic replacement for a "resync on open" effect.
-  const [prevIsOpen, setPrevIsOpen] = useState(isOpen)
-  const [openKey, setOpenKey] = useState(0)
-  if (isOpen !== prevIsOpen) {
-    setPrevIsOpen(isOpen)
-    if (isOpen) setOpenKey((k) => k + 1)
-  }
+  // Changing from closed -> open changes this key and gives the drawer fresh
+  // selection state without calling setState during render (which caused an
+  // extra render and visible hitch each time the calendar opened).
+  const contentKey = isOpen
+    ? `open-${type}-${selectedDateValue?.getTime() ?? selectedValue}`
+    : 'closed'
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
-      <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-foreground">
+      <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-foreground data-[vaul-drawer-direction=bottom]:h-[min(90dvh,760px)] data-[vaul-drawer-direction=bottom]:max-h-[calc(100dvh-var(--safe-top))]">
         <SelectDateDrawerContent
-          key={openKey}
+          key={contentKey}
           onClose={onClose}
           onSelect={onSelect}
           onSelectDate={onSelectDate}
@@ -111,6 +109,19 @@ function SelectDateDrawerContent({
   const [selectedDate, setSelectedDate] = useState<Date>(initialDate)
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date(initialDate.getFullYear(), initialDate.getMonth(), 1))
   const [activePill, setActivePill] = useState<DatePill>(initialPill)
+  const earliestMonth = isDob ? new Date(1920, 0, 1) : new Date(2000, 0, 1)
+  const latestMonth = new Date(TODAY_DATE.getFullYear(), TODAY_DATE.getMonth(), 1)
+  const canGoPrevious = currentMonth > earliestMonth
+  const canGoNext = currentMonth < latestMonth
+
+  const changeMonth = (direction: -1 | 1) => {
+    setCurrentMonth((month) => {
+      const next = new Date(month.getFullYear(), month.getMonth() + direction, 1)
+      if (next < earliestMonth) return earliestMonth
+      if (next > latestMonth) return latestMonth
+      return next
+    })
+  }
 
   // Handle pill quick select clicks
   const handlePillClick = (type: 'today' | 'yesterday' | 'custom') => {
@@ -174,7 +185,25 @@ function SelectDateDrawerContent({
       {/* Content Area */}
       <div className="flex-1 px-6 py-2 flex flex-col items-center overflow-y-auto">
         {/* Calendar Picker Block */}
-        <div className="w-full py-1">
+        <div className="relative w-full py-1">
+          <button
+            type="button"
+            onClick={() => changeMonth(-1)}
+            disabled={!canGoPrevious}
+            aria-label="Previous month"
+            className="absolute left-0 top-1 z-20 flex size-10 cursor-pointer items-center justify-center rounded-full text-foreground transition-colors hover:bg-hover-bg disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            <ChevronLeft className="size-5 stroke-[2.5px]" />
+          </button>
+          <button
+            type="button"
+            onClick={() => changeMonth(1)}
+            disabled={!canGoNext}
+            aria-label="Next month"
+            className="absolute right-0 top-1 z-20 flex size-10 cursor-pointer items-center justify-center rounded-full text-foreground transition-colors hover:bg-hover-bg disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            <ChevronRight className="size-5 stroke-[2.5px]" />
+          </button>
           <Calendar
             mode="single"
             selected={selectedDate}
@@ -194,10 +223,10 @@ function SelectDateDrawerContent({
             }}
             month={currentMonth}
             onMonthChange={setCurrentMonth}
-            disabled={(date) => date > new Date()}
-            captionLayout={isDob ? 'dropdown' : 'label'}
-            startMonth={isDob ? new Date(1920, 0) : undefined}
-            endMonth={isDob ? new Date() : undefined}
+            disabled={{ after: TODAY_DATE }}
+            captionLayout="dropdown"
+            startMonth={earliestMonth}
+            endMonth={TODAY_DATE}
             showOutsideDays={false}
             classNames={{
               root: 'w-full',
@@ -206,24 +235,17 @@ function SelectDateDrawerContent({
               week: 'w-full flex',
               day: 'flex-1 flex items-center justify-center',
             }}
-            components={{
-              Chevron: ({ orientation }) => {
-                if (orientation === 'left') {
-                  return <ChevronLeft className="size-5 text-foreground stroke-[2.5px]" />
-                }
-                return <ChevronRight className="size-5 text-foreground stroke-[2.5px]" />
-              }
-            }}
             formatters={{
               formatWeekdayName: (date) => date.toLocaleString('en-US', { weekday: 'narrow' })
             }}
             className="bg-white p-0 border-0 w-full
               [&_.rdp-month]:gap-2
               [&_.rdp-month_caption]:h-10! [&_.rdp-month_caption]:flex [&_.rdp-month_caption]:items-center [&_.rdp-month_caption]:justify-center [&_.rdp-month_caption]:font-bold! [&_.rdp-month_caption]:text-[18px]! [&_.rdp-month_caption]:text-foreground
-              [&_.rdp-caption_label]:font-bold! [&_.rdp-caption_label]:text-[18px]! [&_.rdp-caption_label]:text-foreground
-              [&_.rdp-nav]:absolute [&_.rdp-nav]:inset-x-0 [&_.rdp-nav]:top-0 [&_.rdp-nav]:h-10 [&_.rdp-nav]:flex [&_.rdp-nav]:items-center [&_.rdp-nav]:justify-between [&_.rdp-nav]:w-full [&_.rdp-nav]:pointer-events-none
-              [&_.rdp-button_previous]:pointer-events-auto [&_.rdp-button_previous]:w-9 [&_.rdp-button_previous]:h-9 [&_.rdp-button_previous]:flex [&_.rdp-button_previous]:items-center [&_.rdp-button_previous]:justify-center [&_.rdp-button_previous]:text-foreground [&_.rdp-button_previous]:rounded-full [&_.rdp-button_previous]:transition-colors [&_.rdp-button_previous]:outline-none
-              [&_.rdp-button_next]:pointer-events-auto [&_.rdp-button_next]:w-9 [&_.rdp-button_next]:h-9 [&_.rdp-button_next]:flex [&_.rdp-button_next]:items-center [&_.rdp-button_next]:justify-center [&_.rdp-button_next]:text-foreground [&_.rdp-button_next]:rounded-full [&_.rdp-button_next]:transition-colors [&_.rdp-button_next]:outline-none
+              [&_.rdp-caption_label]:font-bold! [&_.rdp-caption_label]:text-[16px]! [&_.rdp-caption_label]:text-foreground
+              [&_.rdp-dropdowns]:relative [&_.rdp-dropdowns]:z-10 [&_.rdp-dropdowns]:gap-2
+              [&_.rdp-dropdown_root]:rounded-full [&_.rdp-dropdown_root]:bg-hover-bg [&_.rdp-dropdown_root]:px-2.5 [&_.rdp-dropdown_root]:py-1
+              [&_.rdp-dropdown]:cursor-pointer
+              [&_.rdp-nav]:hidden!
               [&_.rdp-weekday]:text-muted-faint [&_.rdp-weekday]:font-semibold [&_.rdp-weekday]:text-xs [&_.rdp-weekday]:h-6 [&_.rdp-weekday]:flex [&_.rdp-weekday]:items-center [&_.rdp-weekday]:justify-center
               [&_.rdp-week]:mt-0.5!
               [&_button[data-day]]:w-10 [&_button[data-day]]:h-10 [&_button[data-day]]:flex [&_button[data-day]]:items-center [&_button[data-day]]:justify-center [&_button[data-day]]:font-medium! [&_button[data-day]]:text-[13px]! [&_button[data-day]]:text-foreground [&_button[data-day]]:rounded-full [&_button[data-day]]:mx-auto
@@ -234,7 +256,7 @@ function SelectDateDrawerContent({
 
         {/* Quick Filter Select Pills */}
         {!isDob && (
-          <div className="flex items-center gap-2 mt-4 w-full shrink-0">
+          <div className="relative z-10 flex w-full shrink-0 items-center gap-2 bg-white pt-3">
             <button
               type="button"
               onClick={() => handlePillClick('today')}

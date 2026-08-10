@@ -38,47 +38,54 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t-[1.08px] border-[#EFE7DD] h-14 flex items-center justify-between px-6 shadow-[0px_4.03px_18.83px_0px_#00000012] select-none"
+      className="fixed bottom-0 left-0 right-0 z-50 box-border h-[calc(3.75rem+var(--safe-bottom))] bg-white border-t-[1.08px] border-[#EFE7DD] pb-[var(--safe-bottom)] pl-[max(0.75rem,var(--safe-left))] pr-[max(0.75rem,var(--safe-right))] shadow-[0px_-3px_14px_0px_#0000000D] select-none"
       aria-label="Main navigation"
     >
-      {NAV_ITEMS.map(({ label, icon: Icon, to }, idx) => {
-        const isActive = isNavItemActive(to, pathname)
+      <div className="mx-auto flex h-15 w-full max-w-2xl items-stretch justify-between">
+        {NAV_ITEMS.map(({ label, icon: Icon, to }, idx) => {
+          const isActive = isNavItemActive(to, pathname)
 
-        return (
-          <React.Fragment key={to}>
-            {idx > 0 && (
-              <Separator
-                orientation="vertical"
-                className="self-stretch my-1.5 h-auto w-px bg-[#EEEDED]"
-              />
-            )}
-            <Link
-              to={to as any}
-              aria-label={label}
-              aria-current={isActive ? 'page' : undefined}
-              className="flex flex-col items-center justify-center gap-1 flex-1 py-1 cursor-pointer"
-            >
-              <div
-                className={cn(
-                  'relative w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200',
-                  isActive ? 'bg-[#DCEFE4]' : 'bg-transparent',
-                )}
-              >
-                <Icon
-                  size={24}
-                  className={isActive ? 'text-primary' : 'text-[#6B6B6B]'}
-                  strokeWidth={isActive ? 2.2 : 1.8}
+          return (
+            <React.Fragment key={to}>
+              {idx > 0 && (
+                <Separator
+                  orientation="vertical"
+                  className="my-2.5 h-auto w-px self-stretch bg-[#EEEDED]"
                 />
-                {to === ROUTES.NOTIFICATIONS && !!unread?.count && (
-                  <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[#C96A1B] text-white text-[9px] font-bold flex items-center justify-center leading-none">
-                    {unread.count > 9 ? '9+' : unread.count}
-                  </span>
-                )}
-              </div>
-            </Link>
-          </React.Fragment>
-        )
-      })}
+              )}
+              <Link
+                to={to}
+                aria-label={label}
+                aria-current={isActive ? 'page' : undefined}
+                className="flex min-w-0 flex-1 cursor-pointer flex-col items-center justify-center px-2"
+              >
+                <div
+                  className={cn(
+                    'relative flex size-8 items-center justify-center rounded-full transition-all duration-200 sm:size-9',
+                    isActive ? 'bg-[#DCEFE4]' : 'bg-transparent',
+                  )}
+                >
+                  <Icon
+                    className={cn('size-5 sm:size-5.5', isActive ? 'text-primary' : 'text-[#6B6B6B]')}
+                    strokeWidth={isActive ? 2.2 : 1.8}
+                  />
+                  {to === ROUTES.NOTIFICATIONS && !!unread?.count && (
+                    <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#C96A1B] px-1 text-[9px] font-bold leading-none text-white">
+                      {unread.count > 9 ? '9+' : unread.count}
+                    </span>
+                  )}
+                </div>
+                <span className={cn(
+                  'max-w-full truncate text-[clamp(9px,2.5vw,11px)] font-semibold leading-tight',
+                  isActive ? 'text-primary' : 'text-[#6B6B6B]',
+                )}>
+                  {label}
+                </span>
+              </Link>
+            </React.Fragment>
+          )
+        })}
+      </div>
     </nav>
   )
 }

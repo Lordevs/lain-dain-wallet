@@ -8,7 +8,7 @@ interface RecurringFormHeaderProps {
 /** Custom centered header for the add/edit recurring payment form (back chevron + title + submit checkmark). */
 export default function RecurringFormHeader({ title, onBack }: RecurringFormHeaderProps) {
   return (
-    <header className="flex items-center justify-between px-5 pt-5 pb-2 shrink-0 relative h-14 bg-background">
+    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between bg-background px-5 pb-2 pt-5">
       <button
         type="button"
         onClick={onBack}

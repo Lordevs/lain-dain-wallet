@@ -24,11 +24,11 @@ export default function TransactionDetailScreen() {
 
   if (expenseQuery.isLoading) {
     return (
-      <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24">
+      <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-[#FEFAF1]">
         <div className="flex items-center px-6 pt-5 pb-3">
           <Skeleton className="size-10 rounded-full" />
         </div>
-        <div className="px-6 flex flex-col gap-6">
+        <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-6 pb-6">
           <div className="bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] p-6 flex flex-col gap-6">
             <div className="flex items-center gap-4">
               <Skeleton className="w-14 h-14 rounded-[18px] shrink-0" />
@@ -55,7 +55,7 @@ export default function TransactionDetailScreen() {
   const expense = expenseQuery.data
   if (expenseQuery.isError || !expense) {
     return (
-      <div className="flex flex-col items-center justify-center p-6 bg-[#FEFAF1] select-none text-[#1A1A1A] h-[50vh]">
+      <div className="flex h-full min-h-0 flex-1 flex-col items-center justify-center bg-[#FEFAF1] p-6 text-[#1A1A1A] select-none">
         <p className="text-muted-foreground text-sm mb-4">Transaction not found</p>
         <button
           onClick={() => {
@@ -113,7 +113,7 @@ export default function TransactionDetailScreen() {
   }
 
   return (
-    <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24 relative select-none text-[#1A1A1A]">
+    <div className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-[#FEFAF1] text-[#1A1A1A] select-none">
       {/* Toast Alert overlay */}
       <AnimatePresence>
         {toast && (
@@ -122,7 +122,7 @@ export default function TransactionDetailScreen() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
             onAnimationComplete={() => setTimeout(() => setToast(null), 3000)}
-            className="fixed top-6 left-6 right-6 z-120 mx-auto max-w-[380px] bg-white/90 backdrop-blur-md border border-[#EFE7DD] shadow-[0px_10px_30px_rgba(0,0,0,0.08)] rounded-2xl p-4 flex items-center gap-3"
+            className="fixed top-[calc(var(--safe-top)+1.5rem)] left-6 right-6 z-120 mx-auto max-w-[380px] bg-white/90 backdrop-blur-md border border-[#EFE7DD] shadow-[0px_10px_30px_rgba(0,0,0,0.08)] rounded-2xl p-4 flex items-center gap-3"
           >
             <div className="w-8 h-8 rounded-full bg-[#E4F2EB] flex items-center justify-center text-positive shrink-0">
               <Check size={16} strokeWidth={3} />
@@ -145,7 +145,7 @@ export default function TransactionDetailScreen() {
         </h3>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 pb-6 flex flex-col gap-6">
+      <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-6 pb-6">
         {/* Main Info Card */}
         <div className="bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-6 flex flex-col text-left">
           <div className="flex items-center gap-4">
@@ -280,8 +280,8 @@ export default function TransactionDetailScreen() {
           </div>
         </div>
 
-        {/* Absolute Bottom Actions */}
-        <div className="fixed bottom-3 left-3 right-3 z-10 flex items-center gap-4">
+        {/* Actions belong to the detail flow and appear after all content. */}
+        <div className="flex w-full shrink-0 items-center gap-3 pb-2">
           <button
             type="button"
             onClick={() => navigate({ to: `/transactions/${expense.id}/edit` as never })}

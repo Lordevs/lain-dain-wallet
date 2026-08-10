@@ -62,6 +62,7 @@ export default function DashboardScreen() {
     return Array.from(map.values())
   }, [receivables, payables])
   const isLoading = receivablesQuery.isLoading || payablesQuery.isLoading
+  const isWalletEmpty = !isLoading && allContacts.length === 0
 
   const handleSearchFocus = () => {
     navigate({
@@ -182,7 +183,7 @@ export default function DashboardScreen() {
         />
       ) : (
         /* Main Content */
-        <>
+        <div className="flex min-h-0 flex-1 flex-col">
           {/* Balance Summary Card */}
           {summaryQuery.isLoading ? (
             <div className="bg-white rounded-lg border-[1.08px] border-border-card shadow-[0px_2.69px_10.76px_0px_#0000000D] mx-6 mt-3 flex divide-x divide-border-card">
@@ -211,7 +212,10 @@ export default function DashboardScreen() {
           />
 
           {/* Contact/Group Ledger Cards */}
-          <div className="flex flex-col gap-1.5 px-6 pb-6">
+          <div className={isWalletEmpty
+            ? 'flex min-h-0 flex-1 items-center justify-center overflow-hidden px-6 pb-4'
+            : 'flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto px-6 pb-6'
+          }>
             {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <div
@@ -240,6 +244,7 @@ export default function DashboardScreen() {
                 description="Add your first expense to begin."
                 actionLabel="Add First Expense"
                 onAction={() => navigate({ to: ROUTES.NEW_CONTACT })}
+                className="w-full max-w-md py-4"
               />
             ) : (
               <EmptyState
@@ -250,8 +255,8 @@ export default function DashboardScreen() {
           </div>
 
           {/* Floating Action Button */}
-          <Fab onClick={() => navigate({ to: ROUTES.NEW_CONTACT })} />
-        </>
+          {!isWalletEmpty && <Fab onClick={() => navigate({ to: ROUTES.NEW_CONTACT })} />}
+        </div>
       )}
     </div>
   )

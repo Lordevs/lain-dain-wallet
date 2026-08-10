@@ -64,7 +64,7 @@ function AddNoteFlowContent({
   }
 
   return (
-    <div className="fixed inset-0 z-70 bg-background flex flex-col select-none overflow-y-auto">
+    <div className="app-fullscreen z-70 flex min-h-0 flex-col overflow-hidden bg-background select-none">
       {/* Header */}
       <FlowHeader
         title="Add Note"
@@ -81,7 +81,7 @@ function AddNoteFlowContent({
         }
       />
 
-      <div className="flex-1 px-6 flex flex-col justify-between pb-8 mt-2">
+      <div className="flex min-h-0 flex-1 flex-col justify-between overflow-y-auto px-6 pb-5 pt-2">
         {/* Upper/Content Section */}
         <div className="flex flex-col">
           {/* Transaction Summary Card */}
@@ -113,7 +113,7 @@ function AddNoteFlowContent({
               value={noteText}
               onChange={handleTextChange}
               placeholder="Enter your note here..."
-              className="w-full h-36 px-4 py-3 bg-white border-[0.8px] border-[#D9D9D9] rounded-lg text-[15px] outline-none text-foreground resize-none font-medium placeholder:text-muted-faint shadow-[0px_1px_4px_0px_#0000000A] focus:border-positive/45 transition-colors"
+              className="w-full h-[clamp(112px,21vh,144px)] px-4 py-3 bg-white border-[0.8px] border-[#D9D9D9] rounded-lg text-[15px] outline-none text-foreground resize-none font-medium placeholder:text-muted-faint shadow-[0px_1px_4px_0px_#0000000A] focus:border-positive/45 transition-colors"
             />
             {/* Character count remaining */}
             <span className="text-xs text-muted-foreground mt-3 font-normal">
@@ -122,7 +122,7 @@ function AddNoteFlowContent({
           </div>
 
           {/* Quick Notes Section */}
-          <div className="flex flex-col text-left mt-6">
+          <div className="flex flex-col text-left mt-[clamp(16px,3vh,24px)]">
             <span className="text-xs font-bold text-muted-foreground tracking-wider mb-3 select-none uppercase">
               QUICK NOTES
             </span>
@@ -147,11 +147,11 @@ function AddNoteFlowContent({
         </div>
 
         {/* Save Note primary action button */}
-        <div className="mt-8">
+        <div className="mt-5 pt-2">
           <button
             type="button"
             onClick={handleSave}
-            className="w-full h-14 rounded-[18px] bg-positive text-white font-extrabold text-base cursor-pointer shadow-[0px_6.29px_20.13px_0px_#0B683A4D] hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none"
+            className="w-full h-12 rounded-[18px] bg-positive text-white font-extrabold text-base cursor-pointer shadow-[0px_6.29px_20.13px_0px_#0B683A4D] hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none"
           >
             Save Note
           </button>

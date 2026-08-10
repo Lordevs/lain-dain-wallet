@@ -44,27 +44,27 @@ export default function EmptyState({
 
   return (
     <div
-      className={`flex flex-col items-center justify-center text-center select-none py-10 px-6 ${className}`}
+      className={`flex flex-col items-center justify-center text-center select-none py-4 px-4 ${className}`}
     >
       {/* Icon Circle */}
       <div
-        className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 border ${iconBgClass} ${iconColorClass}`}
+        className={`size-[clamp(64px,18vw,80px)] rounded-full flex items-center justify-center mb-4 border ${iconBgClass} ${iconColorClass}`}
       >
         {iconElement ? (
           iconElement
         ) : (
-          <Icon size={38} strokeWidth={1.8} className="shrink-0" />
+          <Icon className="size-[clamp(28px,8vw,34px)] shrink-0" strokeWidth={1.8} />
         )}
       </div>
 
       {/* Title */}
-      <h3 className="text-[22px] sm:text-[24px] font-extrabold text-[#0B683A] text-center leading-tight tracking-tight max-w-70 sm:max-w-xs mb-2">
+      <h3 className="text-[clamp(17px,4.8vw,21px)] font-extrabold text-[#0B683A] text-center leading-tight tracking-tight max-w-70 sm:max-w-xs mb-1.5">
         {title}
       </h3>
 
       {/* Description */}
       {description && (
-        <p className="text-[14px] font-medium text-muted-foreground text-center max-w-65 sm:max-w-xs leading-relaxed">
+        <p className="text-[clamp(12px,3.4vw,14px)] font-medium text-muted-foreground text-center max-w-65 sm:max-w-xs leading-snug">
           {description}
         </p>
       )}
@@ -74,7 +74,7 @@ export default function EmptyState({
         <button
           type="button"
           onClick={handleAction}
-          className="mt-7 w-full h-13 bg-[#0B683A] hover:bg-[#09542f] text-white rounded-full font-bold text-[15px] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer border-0 outline-none"
+          className="mt-4 w-full h-11 bg-[#0B683A] hover:bg-[#09542f] text-white rounded-full font-bold text-[clamp(13px,3.7vw,15px)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer border-0 outline-none"
         >
           {ActionIcon && <ActionIcon size={18} strokeWidth={2.5} />}
           <span>{actionLabel}</span>

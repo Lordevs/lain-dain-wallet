@@ -14,11 +14,17 @@ const HIDE_NAV_PREFIXES = [
   ROUTES.GROUPS,                               // '/groups' all child routes
   ROUTES.TRANSACTIONS,                         // '/transactions' all child routes
   ROUTES.SETTINGS,                             // '/settings' and all sub-screens
-  ROUTES.PERSONAL + '/',                       // '/personal' sub-screens e.g. /personal/reports
   ROUTES.SETTLE_UP,                            // '/settle-up' screen
 ]
 
 function shouldShowNav(pathname: string): boolean {
+  // The Personal landing page owns a tab-bar item, but every nested Personal
+  // flow is full-screen. The old '/personal/' prefix was later suffixed with
+  // another '/', producing '/personal//' and accidentally showing the nav on
+  // Add Entry and other sub-screens.
+  if (pathname.startsWith(`${ROUTES.PERSONAL}/`) && pathname !== `${ROUTES.PERSONAL}/`) {
+    return false
+  }
   return !HIDE_NAV_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix + '/'))
 }
 
@@ -30,15 +36,19 @@ export default function AppShell({ children }: AppShellProps) {
   const { isAuthenticated } = useAuthStore()
   const state = useRouterState()
   const pathname = state.location.pathname
-  const search = state.location.search as any
+  const search = state.location.search as { search?: string }
 
   const isSearchActive = search?.search === 'active'
   const showNav = isAuthenticated && shouldShowNav(pathname) && !isSearchActive
+  const usesFixedViewport = pathname === ROUTES.DASHBOARD
+    || pathname === ROUTES.PERSONAL
+    || pathname === `${ROUTES.PERSONAL}/`
+    || pathname === ROUTES.USER_PROFILE
 
   return (
-    <div className="flex flex-col min-h-dvh w-full bg-[#FEFAF1] relative">
+    <div className="relative flex min-h-0 w-full flex-1 flex-col bg-[#FEFAF1]">
       {/* Scrollable content area */}
-      <main className={`flex-1 flex flex-col overflow-y-auto ${showNav ? 'pb-[76px]' : ''}`}>
+      <main className={`flex-1 min-h-0 flex flex-col ${usesFixedViewport ? 'overflow-hidden' : 'overflow-y-auto'} ${showNav ? 'pb-15' : 'pb-[var(--safe-bottom)]'}`}>
         {children}
       </main>
 

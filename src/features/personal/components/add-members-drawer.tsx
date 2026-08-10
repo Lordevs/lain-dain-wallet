@@ -27,7 +27,7 @@ export default function AddMembersDrawer({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#FEFAF1] flex flex-col overflow-hidden">
+    <div className="app-fullscreen z-50 flex min-h-0 flex-col overflow-hidden bg-[#FEFAF1]">
       <FlowHeader
         title="Add members"
         onBack={onClose}

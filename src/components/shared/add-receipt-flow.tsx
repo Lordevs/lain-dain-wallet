@@ -124,7 +124,7 @@ function AddReceiptFlowContent({
   }
 
   return (
-    <div className="fixed inset-0 z-70 bg-background flex flex-col select-none overflow-y-auto">
+    <div className="app-fullscreen z-70 flex min-h-0 flex-col overflow-hidden bg-background select-none">
 
       {/* Header */}
       <FlowHeader
@@ -144,7 +144,7 @@ function AddReceiptFlowContent({
         }
       />
 
-      <div className="flex-1 px-6 flex flex-col justify-between pb-8 mt-2">
+      <div className="flex min-h-0 flex-1 flex-col justify-between overflow-y-auto px-6 pb-5 pt-2">
         {/* Top/Middle Section */}
         <div className="flex flex-col gap-6">
           {fileError && (
@@ -180,7 +180,7 @@ function AddReceiptFlowContent({
             <button
               type="button"
               onClick={handleGallery}
-              className="w-full h-72 rounded-[24px] border-[1.5px] border-dashed border-[#C0BCAE] bg-white flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-white/70 outline-none"
+              className="w-full h-[clamp(190px,36vh,288px)] rounded-[24px] border-[1.5px] border-dashed border-[#C0BCAE] bg-white flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-white/70 outline-none"
             >
               <div className="w-16 h-16 rounded-[18px] bg-positive-soft-bg flex items-center justify-center">
                 <Camera size={26} className="text-positive" strokeWidth={1.5} />
@@ -192,7 +192,7 @@ function AddReceiptFlowContent({
             </button>
           ) : (
             /* Uploaded State Box */
-            <div className="w-full h-72 rounded-[24px] overflow-hidden bg-[#F2F9F6] border-[0.8px] border-[#E2EBE7] flex flex-col items-center justify-center relative shadow-[0px_4px_16px_rgba(11,104,58,0.03)] select-none">
+            <div className="w-full h-[clamp(190px,36vh,288px)] rounded-[24px] overflow-hidden bg-[#F2F9F6] border-[0.8px] border-[#E2EBE7] flex flex-col items-center justify-center relative shadow-[0px_4px_16px_rgba(11,104,58,0.03)] select-none">
               {/* Remove button */}
               <button
                 type="button"
@@ -235,7 +235,7 @@ function AddReceiptFlowContent({
                 <button
                   type="button"
                   onClick={handleCamera}
-                  className="flex-1 bg-white rounded-2xl border-[0.8px] border-divider py-5 flex flex-col items-center justify-center cursor-pointer hover:bg-hover-bg transition-colors outline-none"
+                  className="flex-1 bg-white rounded-2xl border-[0.8px] border-divider py-[clamp(12px,2.5vh,20px)] flex flex-col items-center justify-center cursor-pointer hover:bg-hover-bg transition-colors outline-none"
                 >
                   <Camera size={22} className="text-positive" strokeWidth={1.5} />
                   <span className="text-[13px] font-extrabold text-foreground mt-2">Camera</span>
@@ -245,7 +245,7 @@ function AddReceiptFlowContent({
                 <button
                   type="button"
                   onClick={handleGallery}
-                  className="flex-1 bg-white rounded-2xl border-[0.8px] border-divider py-5 flex flex-col items-center justify-center cursor-pointer hover:bg-hover-bg transition-colors outline-none"
+                  className="flex-1 bg-white rounded-2xl border-[0.8px] border-divider py-[clamp(12px,2.5vh,20px)] flex flex-col items-center justify-center cursor-pointer hover:bg-hover-bg transition-colors outline-none"
                 >
                   <ImageIcon size={22} className="text-positive" strokeWidth={1.5} />
                   <span className="text-[13px] font-extrabold text-foreground mt-2">Gallery</span>
@@ -255,7 +255,7 @@ function AddReceiptFlowContent({
                 <button
                   type="button"
                   onClick={handleFiles}
-                  className="flex-1 bg-white rounded-2xl border-[0.8px] border-divider py-5 flex flex-col items-center justify-center cursor-pointer hover:bg-hover-bg transition-colors outline-none"
+                  className="flex-1 bg-white rounded-2xl border-[0.8px] border-divider py-[clamp(12px,2.5vh,20px)] flex flex-col items-center justify-center cursor-pointer hover:bg-hover-bg transition-colors outline-none"
                 >
                   <FileText size={22} className="text-positive" strokeWidth={1.5} />
                   <span className="text-[13px] font-extrabold text-foreground mt-2">Files</span>

@@ -50,7 +50,7 @@ export default function FlowHeader({
   const isSelectedSubtitle = subtitle?.toLowerCase().includes('selected')
 
   return (
-    <header className="flex items-center justify-between px-6 pt-5 pb-3 shrink-0">
+    <header className="sticky top-0 z-30 flex shrink-0 items-center justify-between bg-background px-6 pb-3 pt-5">
       {/* Left side actions and details */}
       <div className="flex items-center gap-3">
         {/* Back Button */}
@@ -98,4 +98,3 @@ export default function FlowHeader({
     </header>
   )
 }
-

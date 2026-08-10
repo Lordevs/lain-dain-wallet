@@ -52,7 +52,7 @@ export default function PersonalScreen() {
   }, [navigate])
 
   return (
-    <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#FEFAF1]">
       {/* Top Header */}
       <FlowHeader
         title="My Expenses"
@@ -66,8 +66,8 @@ export default function PersonalScreen() {
         }
       />
 
-      {/* Main Content Scroll Container */}
-      <div className="flex flex-col pb-20">
+      {/* Fixed summary and controls */}
+      <div className="flex shrink-0 flex-col">
         {/* Card 1: Spent Stat Card */}
         {summaryQuery.data ? (
           <ExpenseSummaryCard summary={toExpenseSummary(summaryQuery.data)} />
@@ -88,34 +88,37 @@ export default function PersonalScreen() {
           />
         </div>
 
-        {/* Expenses List */}
-        <div className="px-6">
-          {listQuery.isLoading ? (
-            <ExpenseListSkeleton />
-          ) : items.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">No expenses this period.</p>
-          ) : (
-            <>
-              <ExpenseList
-                expenses={items}
-                onItemClick={handleItemClick}
-              />
-              <InfiniteScrollSentinel
-                onLoadMore={listQuery.fetchNextPage}
-                hasMore={listQuery.hasNextPage}
-                isLoading={listQuery.isFetchingNextPage}
-              />
-            </>
-          )}
-        </div>
       </div>
 
-      {/* Absolute Bottom Action Button */}
-      <div className="fixed bottom-18 left-3 right-3 z-10">
+      {/* Only this region scrolls when expense rows exist. */}
+      <div className={items.length === 0 && !listQuery.isLoading
+        ? 'flex min-h-0 flex-1 items-center justify-center overflow-hidden px-6'
+        : 'min-h-0 flex-1 overflow-y-auto px-6'
+      }>
+        {listQuery.isLoading ? (
+          <ExpenseListSkeleton />
+        ) : items.length === 0 ? (
+          <p className="pb-4 text-center text-[clamp(13px,3.6vw,15px)] text-muted-foreground">
+            No expenses this period.
+          </p>
+        ) : (
+          <>
+            <ExpenseList expenses={items} onItemClick={handleItemClick} />
+            <InfiniteScrollSentinel
+              onLoadMore={listQuery.fetchNextPage}
+              hasMore={listQuery.hasNextPage}
+              isLoading={listQuery.isFetchingNextPage}
+            />
+          </>
+        )}
+      </div>
+
+      {/* Fixed action inside the usable viewport, above the tab bar. */}
+      <div className="shrink-0 px-2 pb-5 pt-4">
         <Button
           type="button"
           onClick={() => navigate({ to: ROUTES.PERSONAL_ADD_EXPENSE })}
-          className="w-full h-14 rounded-full bg-primary text-white font-bold text-base cursor-pointer transition-transform active:scale-[0.99] shadow-lg"
+          className="h-12 w-full rounded-full bg-primary text-[clamp(14px,4vw,16px)] font-bold text-white shadow-lg transition-transform active:scale-[0.99] cursor-pointer"
         >
           Add Personal Expense
         </Button>
