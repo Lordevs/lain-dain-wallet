@@ -17,9 +17,11 @@ export function useReorderCategoriesMutation() {
       if (error) throw toApiError(error)
       return data
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] })
-      queryClient.invalidateQueries({ queryKey: ['category-budgets'] })
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['categories'] }),
+        queryClient.invalidateQueries({ queryKey: ['category-budgets'] }),
+      ])
     },
   })
 }

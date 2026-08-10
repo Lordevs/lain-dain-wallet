@@ -43,17 +43,27 @@ interface CategoryPickerProps {
    * for where that gets resolved to a real category_id at submit time. */
   selectedCategoryId: string
   onSelectCategory: (icon: string) => void
+  onAddCategoryOpenChange?: (isOpen: boolean) => void
 }
 
 export default function CategoryPicker({
   selectedCategoryId,
   onSelectCategory,
+  onAddCategoryOpenChange,
 }: CategoryPickerProps) {
   const categoriesQuery = useCategoriesQuery()
   const createCategory = useCreateCategoryMutation()
   const [showAddCategory, setShowAddCategory] = useState(false)
 
-  const closeAddCategory = useDrawerBackHandler(showAddCategory, () => setShowAddCategory(false))
+  const closeAddCategory = useDrawerBackHandler(showAddCategory, () => {
+    setShowAddCategory(false)
+    onAddCategoryOpenChange?.(false)
+  })
+
+  const openAddCategory = () => {
+    setShowAddCategory(true)
+    onAddCategoryOpenChange?.(true)
+  }
 
   const handleSaveCategory = (name: string, icon: string, color: string) => {
     createCategory.mutate(
@@ -97,7 +107,7 @@ export default function CategoryPicker({
       {/* Add Category Pill */}
       <button
         type="button"
-        onClick={() => setShowAddCategory(true)}
+        onClick={openAddCategory}
         className="flex items-center gap-1.5 px-4 py-2.5 bg-transparent rounded-full text-[13px] font-medium text-primary border-[1.5px] border-dashed border-[#E8E5DE] cursor-pointer hover:bg-[#E4F2EB]/40 transition-all"
       >
         <Plus size={14} strokeWidth={2.5} />
@@ -106,11 +116,12 @@ export default function CategoryPicker({
 
       {/* Add Category Flow Overlay */}
       {showAddCategory && (
-        <div className="fixed inset-0 z-50 bg-[#FEFAF1]">
+        <div className="app-fullscreen z-50 overflow-hidden bg-[#FEFAF1]">
           <AddCategoryFlow
             isOpen={showAddCategory}
             onClose={closeAddCategory}
             onSave={handleSaveCategory}
+            showHeader={false}
           />
         </div>
       )}

@@ -109,6 +109,7 @@ export default function AddExpenseBase({
   const [noteText, setNoteText] = useState(initialData?.noteText || '')
   const [showNoteOverlay, setShowNoteOverlay] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [isAddingCategory, setIsAddingCategory] = useState(false)
   const [showDateDrawer, setShowDateDrawer] = useState(false)
 
   // Shared Expense Specific State
@@ -220,11 +221,11 @@ export default function AddExpenseBase({
   return (
     <form
       onSubmit={handleFormSubmit}
-      className="fixed inset-0 z-60 flex flex-col bg-background select-none justify-between overflow-hidden"
+      className="app-fullscreen z-60 flex min-h-0 flex-col justify-between overflow-hidden bg-background select-none"
     >
       {/* Header */}
       <FlowHeader
-        title={title}
+        title={isAddingCategory ? 'Add Category' : title}
         onBack={onBack}
         backVariant="circle"
         rightSlot={
@@ -395,6 +396,7 @@ export default function AddExpenseBase({
             <CategoryPicker
               selectedCategoryId={selectedCategory}
               onSelectCategory={setSelectedCategory}
+              onAddCategoryOpenChange={setIsAddingCategory}
             />
           </div>
         </div>

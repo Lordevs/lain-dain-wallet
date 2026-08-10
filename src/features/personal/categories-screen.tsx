@@ -1,5 +1,23 @@
 import { createElement, useState } from 'react'
-import { Reorder } from 'framer-motion'
+import {
+  AutoScrollActivator,
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { toast } from 'sonner'
 import {
   Plus,
@@ -24,6 +42,100 @@ import type { components } from '@/lib/api/schema'
 
 type Category = components['schemas']['Category']
 
+interface SortableCategoryRowProps {
+  category: Category
+  spent: number
+  currency: string
+  isReordering: boolean
+  onOpen: (category: Category) => void
+}
+
+function SortableCategoryRow({
+  category,
+  spent,
+  currency,
+  isReordering,
+  onOpen,
+}: SortableCategoryRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: category.id, disabled: !isReordering })
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 20 : undefined,
+        boxShadow: isDragging ? '0 10px 28px rgba(0, 0, 0, 0.12)' : undefined,
+      }}
+      className={cn(
+        'relative flex items-center justify-between bg-white p-4 transition-[background-color,box-shadow] select-none',
+        !isReordering && 'cursor-pointer hover:bg-muted/5',
+        isDragging && 'scale-[1.015] rounded-[18px]',
+      )}
+      onClick={() => {
+        if (!isReordering) onOpen(category)
+      }}
+    >
+      <div className="flex min-w-0 flex-1 items-center">
+        <button
+          type="button"
+          aria-label={`Reorder ${category.name}`}
+          disabled={!isReordering}
+          className={cn(
+            'mr-1 flex shrink-0 flex-col gap-0.75 border-0 bg-transparent py-3 pl-1 pr-3 select-none',
+            isReordering ? 'cursor-grab touch-none active:cursor-grabbing' : 'pointer-events-none',
+          )}
+          {...attributes}
+          {...listeners}
+        >
+          <span className="h-[1.2px] w-3.5 rounded-full bg-[#C8C4BD]" />
+          <span className="h-[1.2px] w-3.5 rounded-full bg-[#C8C4BD]" />
+          <span className="h-[1.2px] w-3.5 rounded-full bg-[#C8C4BD]" />
+        </button>
+
+        <div
+          className="mr-3.5 flex size-10 shrink-0 items-center justify-center rounded-[12px]"
+          style={{ backgroundColor: `${category.color}1A`, color: category.color }}
+        >
+          {createElement(iconForCategory(category.icon), { size: 18, strokeWidth: 1.5 })}
+        </div>
+
+        <div className="flex min-w-0 flex-1 flex-col pr-1 text-left">
+          <span className="text-[15px] leading-snug font-bold text-[#1A1A1A]">
+            {category.name}
+          </span>
+          {!isReordering && (
+            <span className="mt-0.5 text-[12.5px] leading-tight font-normal text-[#6B6B6B]">
+              {formatCurrency(spent, currency)} spent this period
+            </span>
+          )}
+        </div>
+      </div>
+
+      {!isReordering && (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation()
+            onOpen(category)
+          }}
+          className="flex shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-1.5 text-[#C8C4BD] transition-colors hover:text-[#1A1A1A]"
+        >
+          <MoreVertical size={16} />
+        </button>
+      )}
+    </div>
+  )
+}
+
 export default function PersonalCategoriesScreen() {
   const categoryBudgetsQuery = useCategoryBudgetsQuery()
   const createCategory = useCreateCategoryMutation()
@@ -35,6 +147,13 @@ export default function PersonalCategoriesScreen() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null)
   const [showAddCategory, setShowAddCategory] = useState(false)
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 180, tolerance: 8 },
+    }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
 
   const closeAddCategory = useDrawerBackHandler(showAddCategory, () => setShowAddCategory(false))
 
@@ -59,14 +178,31 @@ export default function PersonalCategoriesScreen() {
   }
 
   const handleDoneReordering = () => {
-    setIsReordering(false)
-    reorderCategories.mutate(draftOrder.map((c) => c.id))
+    reorderCategories.mutate(draftOrder.map((c) => c.id), {
+      onSuccess: () => {
+        setIsReordering(false)
+        toast.success('Category order updated')
+      },
+      onError: (error) => {
+        toast.error(error.message)
+      },
+    })
+  }
+
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    if (!over || active.id === over.id) return
+
+    setDraftOrder((current) => {
+      const oldIndex = current.findIndex((category) => category.id === active.id)
+      const newIndex = current.findIndex((category) => category.id === over.id)
+      return oldIndex < 0 || newIndex < 0 ? current : arrayMove(current, oldIndex, newIndex)
+    })
   }
 
   const isLoading = categoryBudgetsQuery.isLoading
 
   return (
-    <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-6 select-none overflow-hidden text-left">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-[#FEFAF1] text-left select-none">
       {/* Top Header */}
       <FlowHeader
         title="Manage Categories"
@@ -76,7 +212,8 @@ export default function PersonalCategoriesScreen() {
           isReordering ? (
             <button
               onClick={handleDoneReordering}
-              className="text-positive font-extrabold text-[15px] cursor-pointer hover:opacity-80 transition-opacity p-2 border-0 bg-transparent"
+              disabled={reorderCategories.isPending}
+              className="text-positive font-extrabold text-[15px] cursor-pointer hover:opacity-80 transition-opacity p-2 border-0 bg-transparent disabled:cursor-not-allowed disabled:opacity-40"
             >
               Done
             </button>
@@ -99,7 +236,7 @@ export default function PersonalCategoriesScreen() {
       )}
 
       {/* Settings Scroll Area */}
-      <div className="flex-1 overflow-y-auto pb-4">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain pb-10">
 
         {/* Section Title */}
         <h4 className="text-[11px] font-semibold text-[#6B6B6B] tracking-widest mb-1 px-7 uppercase">
@@ -120,75 +257,41 @@ export default function PersonalCategoriesScreen() {
             ))}
           </div>
         ) : (
-          <div className="mx-6 bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_2px_10px_0px_#0000000D] overflow-hidden mb-6">
-            <Reorder.Group
-              axis="y"
-              values={displayList}
-              onReorder={setDraftOrder}
-              className="divide-y divide-[#EFE7DD]"
+          <div className={cn(
+            "mx-6 bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_2px_10px_0px_#0000000D] mb-6",
+            isReordering ? "overflow-visible" : "overflow-hidden",
+          )}>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              autoScroll={{
+                enabled: isReordering,
+                activator: AutoScrollActivator.Pointer,
+                threshold: { x: 0.05, y: 0.18 },
+                acceleration: 12,
+                interval: 5,
+                layoutShiftCompensation: true,
+              }}
+              onDragEnd={handleDragEnd}
             >
-              {displayList.map((cat) => {
-                const spent = spentByCategory.get(cat.id) ?? 0
-
-                return (
-                  <Reorder.Item
-                    key={cat.id}
-                    value={cat}
-                    dragListener={isReordering}
-                    as="div"
-                    className={cn(
-                      "p-4 flex items-center justify-between transition-colors bg-white select-none",
-                      !isReordering && "hover:bg-muted/5 cursor-pointer",
-                    )}
-                    onClick={() => {
-                      if (!isReordering) {
-                        setSelectedCategory(cat)
-                      }
-                    }}
-                  >
-                    <div className="flex items-center flex-1 min-w-0">
-                      {/* Drag Handle (Compact custom handle) */}
-                      <div className="flex flex-col gap-0.75 pr-3 pl-1 py-2 shrink-0 select-none">
-                        <div className="w-3.5 h-[1.2px] rounded-full bg-[#C8C4BD]" />
-                        <div className="w-3.5 h-[1.2px] rounded-full bg-[#C8C4BD]" />
-                        <div className="w-3.5 h-[1.2px] rounded-full bg-[#C8C4BD]" />
-                      </div>
-
-                      {/* Icon Squircle */}
-                      <div
-                        className="w-10 h-10 rounded-[12px] flex items-center justify-center shrink-0 mr-3.5"
-                        style={{ backgroundColor: `${cat.color}1A`, color: cat.color }}
-                      >
-                        {createElement(iconForCategory(cat.icon), { size: 18, strokeWidth: 1.5 })}
-                      </div>
-
-                      {/* Info Block */}
-                      <div className="flex flex-col text-left flex-1 min-w-0 pr-1">
-                        <span className="font-bold text-[15px] text-[#1A1A1A] leading-snug">
-                          {cat.name}
-                        </span>
-                        <span className="text-[12.5px] font-normal text-[#6B6B6B] mt-0.5 leading-tight">
-                          {!isReordering && `${formatCurrency(spent, currency)} spent this period`}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* 3 dots action button (only in Normal view) */}
-                    {!isReordering && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setSelectedCategory(cat)
-                        }}
-                        className="text-[#C8C4BD] p-1.5 cursor-pointer bg-transparent border-0 hover:text-[#1A1A1A] transition-colors shrink-0 flex items-center justify-center"
-                      >
-                        <MoreVertical size={16} />
-                      </button>
-                    )}
-                  </Reorder.Item>
-                )
-              })}
-            </Reorder.Group>
+              <SortableContext
+                items={displayList.map((category) => category.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="divide-y divide-[#EFE7DD]">
+                  {displayList.map((category) => (
+                    <SortableCategoryRow
+                      key={category.id}
+                      category={category}
+                      spent={spentByCategory.get(category.id) ?? 0}
+                      currency={currency}
+                      isReordering={isReordering}
+                      onOpen={setSelectedCategory}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           </div>
         )}
 
@@ -274,7 +377,7 @@ export default function PersonalCategoriesScreen() {
 
       {/* Add Custom Category Drawer Flow */}
       {showAddCategory && (
-        <div className="fixed inset-0 z-50 bg-[#FEFAF1]">
+        <div className="app-fullscreen z-50 overflow-hidden bg-[#FEFAF1]">
           <AddCategoryFlow
             isOpen={showAddCategory}
             onClose={closeAddCategory}

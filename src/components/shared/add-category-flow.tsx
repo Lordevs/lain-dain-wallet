@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { ChevronLeft } from 'lucide-react'
 import { ADD_CATEGORY_ICON_OPTIONS as ICON_OPTIONS } from '@/features/expenses/lib/category-icons'
+import FlowHeader from '@/components/shared/flow-header'
 
 const COLORS = [
   '#0B683A', // Green
@@ -15,6 +15,7 @@ const COLORS = [
 interface AddCategoryFlowProps {
   isOpen: boolean
   onClose: () => void
+  showHeader?: boolean
   /** `icon` is the backend-facing icon name (see category-icons.ts), not a component */
   onSave: (name: string, icon: string, color: string) => void
 }
@@ -22,6 +23,7 @@ interface AddCategoryFlowProps {
 export default function AddCategoryFlow({
   onClose,
   onSave,
+  showHeader = true,
 }: AddCategoryFlowProps) {
   const [categoryName, setCategoryName] = useState('Food')
   const [selectedIconIndex, setSelectedIconIndex] = useState(0) // Default to Coffee
@@ -35,33 +37,17 @@ export default function AddCategoryFlow({
   }
 
   return (
-    <div className="flex flex-col h-full select-none overflow-y-auto pb-8 text-foreground font-sans">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 pt-5 pb-3 relative shrink-0">
-        <button
-          type="button"
-          onClick={onClose}
-          className="size-10 flex items-center justify-start cursor-pointer bg-transparent border-0 outline-none"
-        >
-          <ChevronLeft size={20} className="text-foreground" />
-        </button>
-        
-        <h3 className="text-lg font-extrabold text-foreground">
-          Add Category
-        </h3>
-
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={!categoryName.trim()}
-          className="text-positive font-extrabold text-base bg-transparent border-0 cursor-pointer p-2 outline-none hover:opacity-80 disabled:opacity-40 transition-all"
-        >
-          Save
-        </button>
-      </div>
+    <div className="h-full min-h-0 overflow-y-auto overscroll-y-contain pb-5 font-sans text-foreground select-none touch-pan-y">
+      {showHeader && (
+        <FlowHeader
+          title="Add Category"
+          onBack={onClose}
+          backVariant="circle"
+        />
+      )}
 
       {/* Main Form Fields */}
-      <div className="flex-1 px-6 py-4 flex flex-col gap-6 text-left">
+      <div className={`flex flex-col gap-6 px-6 pb-4 text-left ${showHeader ? 'pt-4' : 'pt-20'}`}>
         {/* Category Name input */}
         <div className="flex flex-col">
           <span className="text-[11px] font-bold text-muted-faint uppercase tracking-wider mb-2">
@@ -159,7 +145,7 @@ export default function AddCategoryFlow({
           type="button"
           onClick={handleSave}
           disabled={!categoryName.trim()}
-          className="w-full h-14 rounded-[20px] bg-positive text-white font-extrabold text-base cursor-pointer shadow-[0px_4px_16px_rgba(11,104,58,0.15)] hover:bg-positive/95 disabled:opacity-40 transition-all flex items-center justify-center outline-none border-0 mt-2"
+          className="-mx-2 h-14 w-[calc(100%+1rem)] rounded-[20px] bg-positive text-white font-extrabold text-base cursor-pointer shadow-[0px_4px_16px_rgba(11,104,58,0.15)] hover:bg-positive/95 disabled:opacity-40 transition-all flex shrink-0 items-center justify-center outline-none border-0 mt-2"
         >
           Save Category
         </button>
