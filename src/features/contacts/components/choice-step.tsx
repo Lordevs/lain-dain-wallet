@@ -138,7 +138,7 @@ export default function ChoiceStep({ flow }: ChoiceStepProps) {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => shareInvite(contact.name)}
+                      onClick={() => shareInvite(contact.name, contact.phone ?? '')}
                       className="h-8 rounded-[10px] border-[1.26px] border-divider text-xs font-bold px-4 bg-transparent! text-muted-foreground"
                     >
                       Invite

@@ -16,12 +16,22 @@ export function useContactSyncMutation() {
       let syncedCount = 0
       for (let i = 0; i < contacts.length; i += SYNC_CHUNK_SIZE) {
         const chunk = contacts.slice(i, i + SYNC_CHUNK_SIZE)
-        const { data, error } = await apiClient.POST('/api/contacts/sync/', {
+        const { data, error, response } = await apiClient.POST('/api/contacts/sync/', {
           body: {
             contacts: chunk.map((c) => ({ phone_number: c.phoneNumber, display_name: c.displayName })),
           },
         })
-        if (error) throw toApiError(error)
+        const httpStatus = response.status
+        if (error) {
+          const apiError = toApiError(error)
+          // Some proxy/500 responses have no DRF JSON body, which previously
+          // collapsed to an unhelpful generic message. Preserve the HTTP
+          // status so native logs identify the failing backend path precisely.
+          if (apiError.message === 'Something went wrong. Please try again.') {
+            throw new ApiError(`Contact sync API failed with HTTP ${httpStatus}.`)
+          }
+          throw apiError
+        }
         syncedCount += data.synced_count
       }
       return syncedCount

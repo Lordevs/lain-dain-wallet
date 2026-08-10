@@ -1,22 +1,22 @@
 // Invites are entirely client-side by design (see apps/contacts' docs) —
-// the backend has no memory of who was invited or when. This just hands
-// off to whatever share surface the platform actually has; there's no
-// invite-tracking state to update afterward either way.
-export async function shareInvite(displayName: string): Promise<void> {
+// the backend has no memory of who was invited or when. Open the selected
+// person's WhatsApp conversation directly instead of displaying the generic
+// OS share sheet/contact picker.
+export function shareInvite(displayName: string, phoneNumber: string): void {
   const firstName = displayName.trim().split(/\s+/)[0] || 'there'
   const message = `Hey ${firstName}! I'm using Lain Dain to split expenses and settle up with friends — thought you'd want in. Search for "Lain Dain" on the App Store or Play Store.`
+  // wa.me requires an international number containing digits only (no '+',
+  // spaces, brackets, or dashes). Device contacts are already normalized to
+  // E.164, but sanitizing here also makes server-sourced contacts safe.
+  const whatsappNumber = phoneNumber.replace(/\D/g, '')
 
-  if (navigator.share) {
-    try {
-      await navigator.share({ text: message })
-    } catch {
-      // User dismissed the share sheet — not an error.
-    }
-    return
-  }
-
-  // wa.me with no phone number opens WhatsApp's own contact picker for the
-  // message — the same "OS share sheet" fallback the architecture docs
-  // describe, for browsers/platforms without the Web Share API.
-  window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank')
+  // WhatsApp intentionally requires the user to press Send; third-party apps
+  // cannot silently send a message on their behalf. This universal link opens
+  // the exact chat with the invitation prefilled in WhatsApp when installed,
+  // and falls back to WhatsApp Web otherwise.
+  window.open(
+    `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`,
+    '_blank',
+    'noopener,noreferrer',
+  )
 }
