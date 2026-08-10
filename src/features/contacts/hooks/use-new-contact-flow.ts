@@ -9,6 +9,8 @@ import { useCreateFriendshipMutation } from '@/features/contacts/api/use-friends
 import { useCreateGroupMutation } from '@/features/contacts/api/use-create-group-mutation'
 import { mapSyncedContact } from '@/features/contacts/lib/map-synced-contact'
 import { parseCurrencyMismatch, type CurrencyMismatch } from '@/features/contacts/lib/parse-currency-mismatch'
+import { colorForName, initialsForName } from '@/lib/avatar-visuals'
+import { useAuthStore } from '@/store/use-auth-store'
 import { useDeviceContactsSync, type ContactsSyncStatus } from './use-device-contacts-sync'
 
 // ─── Public interface of the hook ─────────────────────────────────────────────
@@ -30,6 +32,7 @@ export interface NewContactFlowState {
   // ── Device contacts sync ────────────────────────────────────────────────────
   syncStatus: ContactsSyncStatus
   isSyncing: boolean
+  syncError: string | null
   requestContactsAccess: () => Promise<boolean>
 
   // ── Contact selection ────────────────────────────────────────────────────────
@@ -91,6 +94,7 @@ export interface NewContactFlowState {
  */
 export function useNewContactFlow(): NewContactFlowState {
   const navigate = useNavigate()
+  const ownPhone = useAuthStore((state) => state.userProfile?.phone)
 
   const [step, setStep] = useState<NewFlowStep>('choice')
   const [selectedContacts, setSelectedContacts] = useState<string[]>([])
@@ -121,10 +125,34 @@ export function useNewContactFlow(): NewContactFlowState {
     () => onAppQuery.contacts.map(mapSyncedContact),
     [onAppQuery.contacts],
   )
-  const inviteContacts = useMemo(
-    () => inviteQuery.contacts.map(mapSyncedContact),
-    [inviteQuery.contacts],
-  )
+  const inviteContacts = useMemo(() => {
+    const serverContacts = inviteQuery.contacts.map(mapSyncedContact)
+    const knownNumbers = new Set(
+      [...onAppQuery.contacts, ...inviteQuery.contacts].map((contact) => contact.phone_number),
+    )
+    const localContacts: Contact[] = deviceSync.deviceContacts
+      .filter((contact) => contact.phoneNumber !== ownPhone && !knownNumbers.has(contact.phoneNumber))
+      .filter((contact) => {
+        const search = searchQuery.trim().toLowerCase()
+        return !search
+          || contact.displayName.toLowerCase().includes(search)
+          || contact.phoneNumber.includes(search)
+      })
+      .map((contact) => ({
+        id: `device:${contact.phoneNumber}`,
+        name: contact.displayName,
+        phone: contact.phoneNumber,
+        initials: initialsForName(contact.displayName),
+        avatarColor: colorForName(contact.displayName),
+        ledgerCount: 0,
+        netAmount: 0,
+        tags: [],
+        isOnLainDain: false,
+        type: 'person',
+      }))
+
+    return [...serverContacts, ...localContacts]
+  }, [deviceSync.deviceContacts, inviteQuery.contacts, onAppQuery.contacts, ownPhone, searchQuery])
 
   const selectedList = filteredContacts.filter((c) => selectedContacts.includes(c.id))
 
@@ -255,6 +283,7 @@ export function useNewContactFlow(): NewContactFlowState {
     goBack,
     syncStatus: deviceSync.status,
     isSyncing: deviceSync.isSyncing,
+    syncError: deviceSync.syncError,
     requestContactsAccess: deviceSync.requestAccess,
     selectedContacts,
     selectedList,

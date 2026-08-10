@@ -55,7 +55,11 @@ export async function getDeviceContacts(defaultCountry: Country = 'PK'): Promise
     projection: { name: true, phones: true },
   })
 
-  const results: DeviceContact[] = []
+  // iOS commonly exposes the same number more than once when another app
+  // adds a custom-labelled entry (for example "mobile" + "X-WhatsApp").
+  // The sync endpoint treats phone_number as unique for an owner, so sending
+  // both copies in one batch can fail the entire request.
+  const resultsByPhone = new Map<string, DeviceContact>()
   for (const contact of contacts) {
     const displayName = contact.name?.display?.trim()
     if (!displayName) continue
@@ -63,10 +67,17 @@ export async function getDeviceContacts(defaultCountry: Country = 'PK'): Promise
     for (const phone of contact.phones ?? []) {
       if (!phone.number) continue
       const e164 = await toE164(phone.number, defaultCountry)
-      if (e164) results.push({ displayName, phoneNumber: e164 })
+      if (e164 && !resultsByPhone.has(e164)) {
+        resultsByPhone.set(e164, {
+          // Match ContactSyncItemSerializer's max_length so an unusually long
+          // device-contact name cannot invalidate the whole upload.
+          displayName: displayName.slice(0, 150),
+          phoneNumber: e164,
+        })
+      }
     }
   }
-  return results
+  return [...resultsByPhone.values()]
 }
 
 // libphonenumber (197KB via react-phone-number-input) is only needed once

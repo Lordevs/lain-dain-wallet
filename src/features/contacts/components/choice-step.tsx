@@ -86,7 +86,7 @@ export default function ChoiceStep({ flow }: ChoiceStepProps) {
           Contacts access is off — enable it in your device settings to see who's already on Lain Dain.
         </p>
       )}
-      <FormError message={flow.submitError} className="mb-4" />
+      <FormError message={flow.syncError ?? flow.submitError} className="mb-4" />
 
       {/* Scrollable contact lists */}
       <div className="space-y-6">
