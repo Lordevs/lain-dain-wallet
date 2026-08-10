@@ -1,4 +1,5 @@
 import type { CapacitorConfig } from '@capacitor/cli';
+import { KeyboardResize, KeyboardStyle } from '@capacitor/keyboard';
 import fs from 'fs';
 import path from 'path';
 
@@ -18,7 +19,7 @@ try {
       }
     });
   }
-} catch (e) {
+} catch {
   // Ignore env loading errors
 }
 
@@ -46,7 +47,10 @@ const config: CapacitorConfig = {
       overlaysWebView: false,
     },
     SplashScreen: {
-      launchShowDuration: 0,
+      // iOS does not have Android 12's separate OS-managed splash phase.
+      // A zero duration therefore removes the configured launch image as soon
+      // as Capacitor starts. Keep it briefly while the WebView initializes.
+      launchShowDuration: 1200,
       launchAutoHide: true,
       backgroundColor: '#FEFAF1',
       androidSplashResourceName: 'splash',
@@ -54,15 +58,16 @@ const config: CapacitorConfig = {
       showSpinner: false,
     },
     Keyboard: {
-      // KeyboardResize.Body = "body" — only body element resizes, not the viewport
-      // Only applies on iOS; Android handles it via resizeOnFullScreen
-      resize: 'body' as any,
+      // Resize the native WKWebView instead of mutating document.body. Body
+      // resizing races fixed overlays/drawers during the iOS keyboard animation
+      // and can leave their visual and hit-test coordinate spaces out of sync.
+      resize: KeyboardResize.Native,
       // KeyboardStyle.Light = "LIGHT"
-      style: 'LIGHT' as any,
+      style: KeyboardStyle.Light,
       // Android: workaround for resize not working when StatusBar overlays the WebView
       resizeOnFullScreen: true,
       // iOS v8: tint the area behind keyboard to match app background automatically
-      autoBackdropColor: 'auto' as any,
+      autoBackdropColor: 'auto',
     },
   },
 };

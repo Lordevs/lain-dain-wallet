@@ -23,20 +23,38 @@ export function useCapacitorSetup() {
     const listeners: Array<Promise<{ remove: () => void }>> = []
 
     // ─── 1. Keyboard ───────────────────────────────────────────────────────────
-    // When keyboard opens, set --keyboard-height so bottom sheets/inputs can shift up
+    const resetKeyboardState = () => {
+      document.documentElement.style.setProperty('--keyboard-height', '0px')
+      document.body.classList.remove('keyboard-open')
+    }
+
+    // Keep the keyboard height available to components that need it without
+    // resizing document.body. WKWebView itself is resized natively on iOS.
     listeners.push(
       Keyboard.addListener('keyboardWillShow', (info) => {
+        document.body.classList.add('keyboard-open')
         document.documentElement.style.setProperty(
           '--keyboard-height',
           `${info.keyboardHeight}px`
         )
+
+        requestAnimationFrame(() => {
+          const activeElement = document.activeElement
+          if (activeElement instanceof HTMLElement) {
+            activeElement.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+          }
+        })
       })
     )
 
     listeners.push(
-      Keyboard.addListener('keyboardWillHide', () => {
-        document.documentElement.style.setProperty('--keyboard-height', '0px')
-      })
+      Keyboard.addListener('keyboardWillHide', resetKeyboardState)
+    )
+
+    // didHide is the authoritative end of the native animation. Keeping both
+    // events covers cancelled/interactive keyboard dismissals on iOS.
+    listeners.push(
+      Keyboard.addListener('keyboardDidHide', resetKeyboardState)
     )
 
     // ─── 2. Android Back Button ─────────────────────────────────────────────────
@@ -63,6 +81,7 @@ export function useCapacitorSetup() {
           // TODO (when backend is ready): lock app / pause sensitive operations
           console.log('[App] Moved to background')
         } else {
+          resetKeyboardState()
           // App returned to foreground
           // TODO (when backend is ready): re-validate auth token
           console.log('[App] Returned to foreground')
