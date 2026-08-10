@@ -85,18 +85,18 @@ export default function EditProfilePanel({
     .slice(0, 2)
 
   return (
-    <div className="min-h-screen bg-[#FEFAF1] flex flex-col select-none overflow-y-auto text-[#1A1A1A]">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#FEFAF1] text-[#1A1A1A] select-none">
       <FlowHeader
         title="Edit Profile"
         onBack={onClose}
       />
 
-      <form onSubmit={handleSubmit(onFormSubmit)} className="flex-1 flex flex-col justify-between px-6 pb-8 pt-2">
-        <div className="space-y-6">
+      <form onSubmit={handleSubmit(onFormSubmit)} className="flex min-h-0 flex-1 flex-col justify-between px-6 pb-5 pt-1">
+        <div className="space-y-[clamp(16px,2.8vh,24px)]">
           {/* Avatar / Photo Uploader */}
           <div className="flex flex-col items-center">
             <div className="relative">
-              <Avatar className="w-22 h-22 select-none shadow-[0px_6px_20px_0px_#0B683A52]">
+              <Avatar className="size-[clamp(72px,11vh,88px)] select-none shadow-[0px_6px_20px_0px_#0B683A52]">
                 {avatar ? (
                   <AvatarImage src={avatar} alt="Profile Picture" className="object-cover" />
                 ) : (
@@ -120,14 +120,14 @@ export default function EditProfilePanel({
             <button
               type="button"
               onClick={() => navigate({ to: ROUTES.USER_PHOTO })}
-              className="text-positive font-semibold text-[15px] cursor-pointer mt-2.5 block text-center"
+              className="mt-2 block cursor-pointer text-center text-[clamp(13px,3.8vw,15px)] font-semibold text-positive"
             >
               Change Profile Icon
             </button>
           </div>
 
           {/* Form Fields */}
-          <div className="space-y-4 text-left">
+          <div className="space-y-[clamp(12px,2vh,16px)] text-left">
             {/* Full Name */}
             <div className="space-y-1.5">
               <label className="text-[11px] font-semibold tracking-widest text-[#6B6B6B] uppercase px-1">
@@ -141,7 +141,7 @@ export default function EditProfilePanel({
                   <>
                     <div
                       className={cn(
-                        'bg-white border-[0.8px] focus-within:border-[#0B683A73] rounded-[16px] px-5 py-4 transition-all shadow-[0px_2px_10px_0px_rgba(0,0,0,0.03)]',
+                        'bg-white border-[0.8px] focus-within:border-[#0B683A73] rounded-[16px] px-5 py-[clamp(12px,1.8vh,16px)] transition-all shadow-[0px_2px_10px_0px_rgba(0,0,0,0.03)]',
                         fieldState.error ? 'border-tertiary' : 'border-[#E8E4DC]'
                       )}
                     >
@@ -165,7 +165,7 @@ export default function EditProfilePanel({
               <label className="text-[11px] font-semibold tracking-widest text-[#6B6B6B] uppercase px-1">
                 Phone Number
               </label>
-              <div className="flex items-center justify-between bg-white border-[0.8px] border-[#E8E4DC] rounded-[16px] px-5 py-4 shadow-[0px_2px_10px_0px_rgba(0,0,0,0.03)]">
+              <div className="flex items-center justify-between bg-white border-[0.8px] border-[#E8E4DC] rounded-[16px] px-5 py-[clamp(12px,1.8vh,16px)] shadow-[0px_2px_10px_0px_rgba(0,0,0,0.03)]">
                 <span className="text-[15px] font-medium text-[#1A1A1A]">
                   {userProfile?.phone}
                 </span>
@@ -187,7 +187,7 @@ export default function EditProfilePanel({
                   <>
                     <div
                       className={cn(
-                        'bg-white border-[0.8px] focus-within:border-[#0B683A73] rounded-[16px] px-5 py-4 transition-all shadow-[0px_2px_10px_0px_rgba(0,0,0,0.03)]',
+                        'bg-white border-[0.8px] focus-within:border-[#0B683A73] rounded-[16px] px-5 py-[clamp(12px,1.8vh,16px)] transition-all shadow-[0px_2px_10px_0px_rgba(0,0,0,0.03)]',
                         fieldState.error ? 'border-tertiary' : 'border-[#E8E4DC]'
                       )}
                     >
@@ -209,14 +209,14 @@ export default function EditProfilePanel({
         </div>
 
         {/* Bottom Save Changes Button */}
-        <div className="mt-8">
+        <div className="mt-4 shrink-0 pt-2">
           {!hasFieldErrors && (
             <FormError message={updateProfile.error?.message} className="mb-4 justify-center" />
           )}
           <button
             type="submit"
             disabled={updateProfile.isPending}
-            className="w-full h-14 bg-positive text-white rounded-full font-bold text-base shadow-[0px_8px_20px_rgba(11,104,58,0.3)] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center cursor-pointer"
+            className="flex h-12 w-full cursor-pointer items-center justify-center rounded-full bg-positive text-[clamp(14px,4vw,16px)] font-bold text-white shadow-[0px_8px_20px_rgba(11,104,58,0.3)] transition-all active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
           >
             {updateProfile.isPending ? 'Saving...' : 'Save Changes'}
           </button>

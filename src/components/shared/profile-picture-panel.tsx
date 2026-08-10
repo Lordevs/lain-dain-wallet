@@ -6,6 +6,7 @@ import { haptic } from '@/lib/haptics'
 import FlowHeader from '@/components/shared/flow-header'
 import FormError from '@/components/shared/form-error'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import ProfileImageCropper from '@/components/shared/profile-image-cropper'
 
 interface ProfilePicturePanelProps {
   currentAvatar: string | null
@@ -30,6 +31,7 @@ export default function ProfilePicturePanel({
   const [tempAvatar, setTempAvatar] = useState<string | null>(currentAvatar)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [cropSource, setCropSource] = useState<string | null>(null)
 
   // ─── Handlers ────────────────────────────────────────────────────────────────
 
@@ -37,10 +39,10 @@ export default function ProfilePicturePanel({
     haptic.light()
     if (Capacitor.isNativePlatform()) {
       const photo = await takePhoto()
-      if (photo?.webPath) setTempAvatar(photo.webPath)
+      if (photo?.webPath) setCropSource(photo.webPath)
     } else {
       // Web fallback: file input
-      openWebFilePicker((url) => setTempAvatar(url))
+      openWebFilePicker(setCropSource)
     }
   }
 
@@ -48,9 +50,9 @@ export default function ProfilePicturePanel({
     haptic.light()
     if (Capacitor.isNativePlatform()) {
       const photo = await pickFromGallery()
-      if (photo?.webPath) setTempAvatar(photo.webPath)
+      if (photo?.webPath) setCropSource(photo.webPath)
     } else {
-      openWebFilePicker((url) => setTempAvatar(url))
+      openWebFilePicker(setCropSource)
     }
   }
 
@@ -69,7 +71,7 @@ export default function ProfilePicturePanel({
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col select-none overflow-y-auto text-foreground">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background text-foreground select-none">
       <FlowHeader
         title={title}
         onBack={onClose}
@@ -147,6 +149,17 @@ export default function ProfilePicturePanel({
           </button>
         </div>
       </div>
+
+      {cropSource && (
+        <ProfileImageCropper
+          source={cropSource}
+          onCancel={() => setCropSource(null)}
+          onConfirm={(blob) => {
+            setTempAvatar(URL.createObjectURL(blob))
+            setCropSource(null)
+          }}
+        />
+      )}
     </div>
   )
 }
