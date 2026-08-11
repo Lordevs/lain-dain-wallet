@@ -1852,6 +1852,8 @@ export interface components {
         };
         ContactSyncResult: {
             synced_count: number;
+            matched_count: number;
+            invalid_count: number;
         };
         /**
          * @description * `AF` - Afghanistan

@@ -3407,6 +3407,7 @@ components:
         phone_number:
           type: string
           minLength: 1
+          maxLength: 64
         display_name:
           type: string
           minLength: 1
@@ -3428,7 +3429,13 @@ components:
       properties:
         synced_count:
           type: integer
+        matched_count:
+          type: integer
+        invalid_count:
+          type: integer
       required:
+      - invalid_count
+      - matched_count
       - synced_count
     CountryEnum:
       enum:

@@ -24,6 +24,7 @@ export const apiClient = createClient<paths>({ baseUrl: env.apiBaseUrl })
 // "api/accounts/" — the app's own internal name doesn't match its URL
 // prefix, easy to get wrong without checking urls.py directly.
 const REFRESH_PATH = '/api/auth/token/refresh/'
+const STARTUP_REFRESH_TIMEOUT_MS = 8_000
 
 // Concurrent 401s (e.g. a screen firing several queries at once right as
 // the access token expires) must share one in-flight refresh, not each
@@ -41,14 +42,19 @@ export async function refreshAccessToken(): Promise<string | null> {
     if (!refresh) return null
 
     let response: Response
+    const controller = new AbortController()
+    const timeout = window.setTimeout(() => controller.abort(), STARTUP_REFRESH_TIMEOUT_MS)
     try {
       response = await fetch(`${env.apiBaseUrl}${REFRESH_PATH}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh }),
+        signal: controller.signal,
       })
     } catch {
       return null // offline — caller decides what "no token" means here
+    } finally {
+      window.clearTimeout(timeout)
     }
     if (!response.ok) return null
 
