@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Check, Scale, Info, TextAlignJustify, RefreshCw } from 'lucide-react'
+import { X, Check, Scale, Info, TextAlignJustify, RefreshCw, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   Drawer,
@@ -37,7 +37,7 @@ interface SplitExpenseDrawerProps {
   description: string
   categoryLabel: string
   categoryColor: string
-  CategoryIcon: any
+  CategoryIcon: LucideIcon
   onClose: () => void
   onSave: (splitData: SplitData) => void
   initialSplitData?: SplitData | null

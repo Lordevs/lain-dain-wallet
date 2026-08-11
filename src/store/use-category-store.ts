@@ -9,13 +9,14 @@ import {
   Fuel as FuelIcon,
   HelpCircle,
   ForkKnife,
+  type LucideIcon,
 } from 'lucide-react'
 
 export interface CategoryOption {
   id: string
   label: string
   color: string // hex color of icon
-  icon: any
+  icon: LucideIcon
   expensesCount: number
   totalAmount: number
   isHidden?: boolean
@@ -27,7 +28,7 @@ export interface CategoryOption {
 
 interface CategoryState {
   categories: CategoryOption[]
-  addCategory: (name: string, icon: any, color: string) => void
+  addCategory: (name: string, icon: LucideIcon, color: string) => void
   hideCategory: (id: string, isHidden: boolean) => void
   deleteCategory: (id: string) => void
   reorderCategories: (newOrder: CategoryOption[]) => void

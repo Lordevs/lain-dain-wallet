@@ -2,7 +2,7 @@ import { Check } from 'lucide-react'
 import FlowHeader from '@/components/shared/flow-header'
 import SearchBar from '@/components/shared/search-bar'
 import ContactList from '@/components/shared/contact-list'
-import ContactListItem from '@/components/shared/contact-list-item'
+import ContactListItem, { type ContactInfo } from '@/components/shared/contact-list-item'
 import { cn } from '@/lib/utils'
 
 interface AddMembersDrawerProps {
@@ -10,7 +10,7 @@ interface AddMembersDrawerProps {
   onClose: () => void
   peopleSearch: string
   setPeopleSearch: (v: string) => void
-  peopleList: any[]
+  peopleList: ContactInfo[]
   selectedIds: string[]
   onToggle: (id: string) => void
 }

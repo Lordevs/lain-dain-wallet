@@ -1,6 +1,10 @@
 import { useEffect, useRef } from 'react'
 import { Check } from 'lucide-react'
 
+interface WebKitAudioWindow extends Window {
+  webkitAudioContext?: typeof AudioContext
+}
+
 interface SuccessCheckProps {
   onComplete: () => void
   text?: string
@@ -41,7 +45,7 @@ export default function SuccessCheck({
     if (showConfetti && !soundPlayedRef.current) {
       soundPlayedRef.current = true
       try {
-        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
+        const AudioContextClass = window.AudioContext || (window as WebKitAudioWindow).webkitAudioContext
         if (AudioContextClass) {
           const audioCtx = new AudioContextClass()
 
@@ -61,7 +65,7 @@ export default function SuccessCheck({
             // ignore resume rejection
           })
         }
-      } catch (err) {
+      } catch {
         // Ignore autoplay blocking error
       }
     }

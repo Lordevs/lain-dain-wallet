@@ -40,7 +40,7 @@ export async function takePhoto(): Promise<MediaResult | null> {
   try {
     const result = await Camera.takePhoto({ quality: 85 })
     return result
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (isCancelError(err)) return null
     console.error('[Camera] takePhoto error:', err)
     return null
@@ -58,7 +58,7 @@ export async function pickFromGallery(): Promise<MediaResult | null> {
       allowMultipleSelection: false,
     })
     return results[0] ?? null
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (isCancelError(err)) return null
     console.error('[Camera] pickFromGallery error:', err)
     return null
@@ -74,7 +74,7 @@ export async function pickMultipleFromGallery(limit = 5): Promise<MediaResult[]>
       limit,
     })
     return results
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (isCancelError(err)) return []
     console.error('[Camera] pickMultipleFromGallery error:', err)
     return []
@@ -111,8 +111,9 @@ export async function checkCameraPermissions() {
 export const isCameraAvailable = () => Capacitor.isNativePlatform()
 
 /** Normalise cancel/dismiss errors so callers don't need to handle them */
-function isCancelError(err: any): boolean {
-  const msg = String(err?.message ?? err ?? '').toLowerCase()
+function isCancelError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : err
+  const msg = String(message ?? '').toLowerCase()
   return (
     msg.includes('cancel') ||
     msg.includes('dismiss') ||

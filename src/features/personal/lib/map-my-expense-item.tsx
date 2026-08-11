@@ -6,7 +6,7 @@ type MyExpenseItem = components['schemas']['MyExpenseItem']
 /** Maps one row of the combined "My Expenses" feed into the shared
  * ExpenseList's generic item shape — `your_share` (not the full expense
  * amount) is what "you spent" means for a shared expense. */
-export function toExpenseListItem(item: MyExpenseItem, _myId: string | undefined): ExpenseListData {
+export function toExpenseListItem(item: MyExpenseItem): ExpenseListData {
   return {
     id: item.id,
     name: item.description,

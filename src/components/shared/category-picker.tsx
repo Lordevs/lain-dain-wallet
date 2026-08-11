@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, type LucideIcon } from 'lucide-react'
 import AddCategoryFlow from '@/components/shared/add-category-flow'
 import { useDrawerBackHandler } from '@/hooks/use-drawer-back-handler'
 import { useCategoriesQuery } from '@/features/expenses/api/use-categories-query'
@@ -22,7 +22,7 @@ export interface CategoryOption {
   id: string
   label: string
   color: string
-  icon: any
+  icon: LucideIcon
 }
 
 export const CATEGORIES: CategoryOption[] = [

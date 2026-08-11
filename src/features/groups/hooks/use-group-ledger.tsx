@@ -3,6 +3,7 @@ import { Handshake, HelpCircle, Building2 } from 'lucide-react'
 import { useContactStore } from '@/store/use-contact-store'
 import { useTransactionStore } from '@/store/use-transaction-store'
 import { type TransactionListItem } from '@/components/shared/expense-list'
+import { type ExpenseCategory } from '@/components/shared/expense-item'
 import { CATEGORIES } from '@/components/shared/category-picker'
 
 export const getCategoryDetails = (catId: string) => {
@@ -36,6 +37,9 @@ export function useGroupLedger(id: string) {
 
   // Get grouped transaction history
   const transactions = useMemo(() => {
+    // Reading this selected state makes the derived grouping refresh whenever
+    // the store's transaction map changes.
+    void transactionState
     if (!contact) return { Today: [], Yesterday: [], Earlier: [] }
     const list = useTransactionStore.getState().getContactTransactions(id, contact.name)
     const firstName = contact.name.split(' ')[0]
@@ -53,7 +57,7 @@ export function useGroupLedger(id: string) {
         name: record.name,
         subtitle: displaySubtitle,
         amount: Math.abs(record.amount),
-        category: record.category as any,
+        category: record.category as ExpenseCategory,
         rightSubtitle: record.rightSubtitle,
         showChevron: record.showChevron,
         className: record.className,
@@ -81,7 +85,7 @@ export function useGroupLedger(id: string) {
       Yesterday: yesterday,
       Earlier: earlier,
     }
-  }, [id, contact?.name, transactionState])
+  }, [id, contact, transactionState])
 
   // Flat combined list of expenses with custom category icon, background highlights, and chevron overrides matching the mockup
   const groupExpensesData = useMemo(() => {

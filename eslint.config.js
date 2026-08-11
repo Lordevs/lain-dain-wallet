@@ -18,5 +18,26 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+    rules: {
+      'react-refresh/only-export-components': ['error', {
+        allowConstantExport: true,
+        allowExportNames: [
+          'Route',
+          'useComboboxAnchor',
+          'CATEGORIES',
+          'badgeVariants',
+          'buttonVariants',
+          'tabsListVariants',
+        ],
+      }],
+    },
+  },
+  {
+    // TanStack Router route modules intentionally export a Route object and
+    // keep its screen component in the same file for file-based routing/HMR.
+    files: ['src/routes/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
   },
 ])

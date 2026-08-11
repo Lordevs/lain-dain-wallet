@@ -3,7 +3,6 @@ import { useNavigate } from '@tanstack/react-router'
 import { MoreVertical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ROUTES } from '@/constants/routes'
-import { useAuthStore } from '@/store/use-auth-store'
 import { useMyExpensesSummaryQuery } from '@/features/expenses/api/use-my-expenses-summary-query'
 import { useMyExpensesListQuery } from '@/features/expenses/api/use-my-expenses-list-query'
 import ExpenseSummaryCard from './components/expense-summary-card'
@@ -25,7 +24,6 @@ import { recentPeriods, periodKey, parsePeriodKey, periodLabel, type Period } fr
  */
 export default function PersonalScreen() {
   const navigate = useNavigate()
-  const myId = useAuthStore((s) => s.userProfile?.id)
 
   // undefined = the period containing today (the backend's own default) —
   // only set once the user actually picks a different one.
@@ -41,8 +39,8 @@ export default function PersonalScreen() {
   const activePeriod = period ?? recentPeriods(1)[0]
 
   const items = useMemo(
-    () => (listQuery.data ?? []).map((item) => toExpenseListItem(item, myId)),
-    [listQuery.data, myId],
+    () => (listQuery.data ?? []).map((item) => toExpenseListItem(item)),
+    [listQuery.data],
   )
 
   // Stable identity required for ExpenseItem's memo() to actually skip
