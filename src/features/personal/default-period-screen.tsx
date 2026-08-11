@@ -138,7 +138,7 @@ function DefaultPeriodForm({ initialResetDay }: { initialResetDay: number }) {
       </div>
 
       {/* Fixed bottom action button */}
-      <div className="fixed bottom-3 left-3 right-3 z-10">
+      <div className="safe-action-fixed z-10">
         <Button
           onClick={handleSave}
           disabled={updateSettings.isPending}

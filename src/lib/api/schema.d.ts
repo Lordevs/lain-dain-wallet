@@ -920,9 +920,10 @@ export interface paths {
         };
         /**
          * @description GET /api/expenses/wallet/?tab=receivables|payables&type=all|people|group&sort=newest|oldest|highest|lowest
-         *     — every person and group the caller has a nonzero balance with,
-         *     combined and sorted. Not paginated: bounded by how many people/
-         *     groups someone actually has an open balance with, not by
+         *     — every person with a nonzero balance plus every active group (zero-
+         *     balance groups are included so they remain reachable before their
+         *     first expense), combined and sorted. Not paginated: bounded by how many people/
+         *     groups someone has a relationship/membership with, not by
          *     transaction volume, so it stays small regardless of how long the
          *     account's been active — unlike Expense history, which does need
          *     cursor pagination. See services.wallet_list for what each row
@@ -1694,6 +1695,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/notifications/test/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description POST /api/notifications/test/ — queues a real FCM push to the
+         *     caller's active devices without adding anything to the notification
+         *     inbox. Returns actionable errors when server Firebase or device
+         *     registration is missing instead of claiming a push was sent.
+         */
+        post: operations["notifications_test_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/notifications/unread-count/": {
         parameters: {
             query?: never;
@@ -1747,6 +1770,14 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * @description * `none` - No action
+         *     * `pending` - Pending
+         *     * `resolved` - Resolved
+         *     * `cancelled` - Cancelled
+         * @enum {string}
+         */
+        ActionStatusEnum: "none" | "pending" | "resolved" | "cancelled";
         /**
          * @description POST body for LedgerAdjustmentView — which currency's adjustment
          *     (from the GET preview) to actually apply.
@@ -2814,6 +2845,9 @@ export interface components {
             readonly payload: unknown;
             /** Format: date-time */
             readonly read_at: string | null;
+            readonly action_status: components["schemas"]["ActionStatusEnum"];
+            /** Format: date-time */
+            readonly resolved_at: string | null;
             /** Format: date-time */
             readonly created_at: string;
         };
@@ -4085,7 +4119,7 @@ export interface operations {
                 cursor?: string;
                 /** @description Number of results to return per page. */
                 page_size?: number;
-                /** @description One of newest (default) | oldest | highest | lowest. */
+                /** @description One of newest (default) | oldest | oldest_created | highest | lowest. */
                 sort?: string;
             };
             header?: never;
@@ -4232,7 +4266,7 @@ export interface operations {
                 cursor?: string;
                 /** @description Number of results to return per page. */
                 page_size?: number;
-                /** @description One of newest (default) | oldest | highest | lowest. */
+                /** @description One of newest (default) | oldest | oldest_created | highest | lowest. */
                 sort?: string;
             };
             header?: never;
@@ -4288,7 +4322,7 @@ export interface operations {
                 cursor?: string;
                 /** @description Number of results to return per page. */
                 page_size?: number;
-                /** @description One of newest (default) | oldest | highest | lowest. */
+                /** @description One of newest (default) | oldest | oldest_created | highest | lowest. */
                 sort?: string;
             };
             header?: never;
@@ -4435,7 +4469,7 @@ export interface operations {
                 cursor?: string;
                 /** @description Number of results to return per page. */
                 page_size?: number;
-                /** @description One of newest (default) | oldest | highest | lowest. */
+                /** @description One of newest (default) | oldest | oldest_created | highest | lowest. */
                 sort?: string;
             };
             header?: never;
@@ -4661,7 +4695,7 @@ export interface operations {
                 cursor?: string;
                 /** @description Number of results to return per page. */
                 page_size?: number;
-                /** @description One of newest (default) | oldest | highest | lowest. */
+                /** @description One of newest (default) | oldest | oldest_created | highest | lowest. */
                 sort?: string;
             };
             header?: never;
@@ -5904,6 +5938,24 @@ export interface operations {
         responses: {
             /** @description No response body */
             204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    notifications_test_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            202: {
                 headers: {
                     [name: string]: unknown;
                 };

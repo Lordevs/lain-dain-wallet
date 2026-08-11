@@ -19,7 +19,7 @@ export default function BalanceSummaryCard({ summary }: BalanceSummaryCardProps)
   }
 
   return (
-    <div className="bg-white rounded-lg border-[1.08px] border-border-card shadow-[0px_2.69px_10.76px_0px_#0000000D] mx-6 mt-3">
+    <div className="mx-6 mt-3 shrink-0 rounded-lg border-[1.08px] border-border-card bg-white shadow-[0px_2.69px_10.76px_0px_#0000000D]">
       <div className="flex divide-x divide-border-card text-center">
         {/* Receivable Column */}
         <div className="flex-1 py-3 px-1 sm:px-2 space-y-3 min-w-0">

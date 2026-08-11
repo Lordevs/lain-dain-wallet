@@ -153,9 +153,9 @@ export default function ContactDetailScreen() {
     })
 
     const list: { category: 'Today' | 'Yesterday' | 'Earlier'; expenses: ExpenseListItemWithDate[] }[] = []
-    if (groups.Today.length > 0) list.push({ category: 'Today', expenses: groups.Today })
-    if (groups.Yesterday.length > 0) list.push({ category: 'Yesterday', expenses: groups.Yesterday })
     if (groups.Earlier.length > 0) list.push({ category: 'Earlier', expenses: groups.Earlier })
+    if (groups.Yesterday.length > 0) list.push({ category: 'Yesterday', expenses: groups.Yesterday })
+    if (groups.Today.length > 0) list.push({ category: 'Today', expenses: groups.Today })
 
     return list
   }, [items])
@@ -177,21 +177,21 @@ export default function ContactDetailScreen() {
 
   if (ledgers.isLoading) {
     return (
-      <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24">
-        <div className="flex items-center gap-3 px-6 pt-5 pb-3">
+      <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-[#FEFAF1]">
+        <div className="flex shrink-0 items-center gap-3 px-6 pb-3 pt-5">
           <Skeleton className="size-11 rounded-full shrink-0" />
           <div className="flex flex-col gap-2">
             <Skeleton className="h-4 w-32" />
             <Skeleton className="h-3 w-24" />
           </div>
         </div>
-        <div className="px-6 mb-6">
+        <div className="mb-4 shrink-0 px-6">
           <div className="bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] p-6 flex flex-col gap-3">
             <Skeleton className="h-3 w-28" />
             <Skeleton className="h-8 w-36" />
           </div>
         </div>
-        <div className="px-6">
+        <div className="min-h-0 flex-1 overflow-hidden px-6">
           <ExpenseListSkeleton />
         </div>
       </div>
@@ -200,7 +200,7 @@ export default function ContactDetailScreen() {
 
   if (ledgers.isError || !ledgers.data) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-[#FEFAF1]">
+      <div className="flex h-full min-h-0 flex-1 flex-col items-center justify-center bg-[#FEFAF1] p-6">
         <p className="text-muted-foreground text-sm mb-4">Couldn't load this contact.</p>
         <button
           onClick={() => navigate({ to: ROUTES.DASHBOARD })}
@@ -230,7 +230,7 @@ export default function ContactDetailScreen() {
   const isBlocked = friendshipQuery.data?.is_blocked ?? false
 
   return (
-    <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24 relative select-none">
+    <div className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-[#FEFAF1] select-none">
       <FlowHeader
         title={otherUser.full_name}
         subtitle="Personal Balance"
@@ -258,7 +258,7 @@ export default function ContactDetailScreen() {
       />
 
       {/* Direct 1-to-1 Balance Stat Card */}
-      <div className="px-6 mb-6">
+      <div className="mb-4 shrink-0 px-6">
         <div className="bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-6 flex items-center justify-between">
           <div className="flex flex-col text-left">
             <span className="text-[#6B6B6B] text-[13px] font-semibold">{statusLabel}</span>
@@ -282,7 +282,7 @@ export default function ContactDetailScreen() {
       </div>
 
       {/* Transaction history grouped by Today, Yesterday, Earlier */}
-      <div className="flex flex-col gap-6 px-6 pb-12 overflow-y-auto">
+      <div className="flex min-h-0 flex-1 touch-pan-y flex-col gap-6 overflow-y-auto overscroll-y-contain px-6 pb-4">
         {transactions.isLoading && <ExpenseListSkeleton />}
         {!transactions.isLoading && items.length === 0 && (
           <EmptyState
@@ -320,8 +320,11 @@ export default function ContactDetailScreen() {
         )}
       </div>
 
-      {/* Sticky Bottom Row Buttons */}
-      <div className="fixed bottom-3 left-3 right-3 z-10 flex items-center gap-4">
+      {/* #root owns the real OS inset exactly once. This bar only adds its
+          normal visual spacing: 12px with gesture/no navigation controls,
+          while Android three-button navigation or the iOS home indicator
+          increases the space through #root's runtime safe-area padding. */}
+      <div className="z-10 flex shrink-0 items-center gap-3 bg-[#FEFAF1] px-3 pb-3 pt-3">
         <button
           type="button"
           disabled={isBlocked}

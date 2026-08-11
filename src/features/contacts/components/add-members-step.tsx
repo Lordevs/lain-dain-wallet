@@ -24,7 +24,7 @@ interface AddMembersStepProps {
  */
 export default function AddMembersStep({ flow }: AddMembersStepProps) {
   return (
-    <div className="flex-1 flex flex-col px-6 overflow-hidden">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-6">
       {/* Search */}
       <SearchBar
         id="add-members-search"
@@ -42,7 +42,7 @@ export default function AddMembersStep({ flow }: AddMembersStepProps) {
       />
 
       {/* Contacts list */}
-      <div className="flex-1 overflow-y-auto pb-4">
+      <div className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-y-contain pb-4">
         {flow.isLoadingContacts && <ContactListSkeleton />}
         <ContactList title="Contacts on Lain Dain" titleColor="primary">
           {flow.filteredContacts.map((contact) => {
@@ -78,12 +78,12 @@ export default function AddMembersStep({ flow }: AddMembersStepProps) {
         />
       </div>
 
-      {/* Sticky Next button */}
+      {/* In-layout Next footer — visible above the real device inset. */}
       {flow.selectedContacts.length > 0 && (
-        <div className="fixed bottom-3 left-3 right-3 z-10">
+        <div className="z-10 shrink-0 bg-background pb-5 pt-3">
           <Button
             onClick={flow.nextStep}
-            className="w-full h-14 rounded-full bg-primary text-white font-extrabold text-[15px] shadow-lg active:scale-[0.98] transition-transform cursor-pointer"
+            className="h-14 w-full cursor-pointer rounded-full bg-primary text-[15px] font-extrabold text-white shadow-lg transition-transform active:scale-[0.98]"
           >
             Next
             <ChevronLeft size={16} className="rotate-180 ml-1 shrink-0" strokeWidth={3} />

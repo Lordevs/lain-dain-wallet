@@ -1,6 +1,5 @@
-import { memo, useCallback, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { toast } from 'sonner'
 import { Check, Wallet, CheckCircle2, Clock, AlertTriangle, MoreVertical } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -113,9 +112,7 @@ const NotificationListItem = memo(function NotificationListItem({
       {
         onSuccess: () => {
           markRead(n.id)
-          toast.success('Reminder sent successfully!')
         },
-        onError: (err) => toast.error(err.message),
       },
     )
   }, [markRead, requestSettlement])
@@ -126,6 +123,12 @@ const NotificationListItem = memo(function NotificationListItem({
   }, [markRead])
 
   const actions = useMemo((): NotificationAction[] | undefined => {
+    if (notification.type === 'payment_confirmation') {
+      if (notification.action_status !== 'pending') return undefined
+    } else if (notification.read_at) {
+      return undefined
+    }
+
     switch (notification.type) {
       case 'payment_settled':
         return undefined
@@ -230,6 +233,9 @@ const NotificationListItem = memo(function NotificationListItem({
     if (notification.type === 'payment_settled') {
       const p = payloadOf(notification as Notification & { type: 'payment_settled' })
       navigate({ to: ROUTES.SETTLEMENT_DETAILS, params: { id: p.settlement_id } })
+    } else if (notification.type === 'payment_confirmation' && notification.action_status === 'resolved') {
+      const p = payloadOf(notification as Notification & { type: 'payment_confirmation' })
+      navigate({ to: ROUTES.SETTLEMENT_DETAILS, params: { id: p.settlement_id } })
     }
   }, [notification, navigate])
 
@@ -265,7 +271,6 @@ export default function NotificationsScreen() {
   const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<string>>(new Set())
   const [optionsOpen, setOptionsOpen] = useState(false)
   const [clearAllOpen, setClearAllOpen] = useState(false)
-  const undoneIdsRef = useRef<Set<string>>(new Set())
 
   const removePendingDelete = useCallback((id: string) => {
     setPendingDeleteIds((prev) => {
@@ -276,52 +281,31 @@ export default function NotificationsScreen() {
     })
   }, [])
 
-  // Swipe-delete removes the row immediately (optimistic, no network call
-  // yet) and shows an undo toast; the real DELETE only fires once the
-  // toast expires/dismisses without being undone. undoneIdsRef guards
-  // against sonner's onAutoClose/onDismiss both firing after Undo is
-  // tapped — commit becomes a no-op either way once an id is marked undone.
-  const handleDelete = useCallback((id: string, message = 'Notification deleted') => {
+  // Swipe/ignore removes the row optimistically and commits immediately;
+  // the app intentionally has no transient toast/undo overlay.
+  const handleDelete = useCallback((id: string) => {
     setPendingDeleteIds((prev) => new Set(prev).add(id))
-
-    const commit = () => {
-      if (undoneIdsRef.current.has(id)) {
-        undoneIdsRef.current.delete(id)
-        return
-      }
-      deleteNotification.mutate(id, {
-        onError: (err) => {
-          toast.error(err.message)
-          removePendingDelete(id)
-        },
-      })
-    }
-
-    toast(message, {
-      action: {
-        label: 'Undo',
-        onClick: () => {
-          undoneIdsRef.current.add(id)
-          removePendingDelete(id)
-        },
-      },
-      duration: 4000,
-      onAutoClose: commit,
-      onDismiss: commit,
+    deleteNotification.mutate(id, {
+      onError: () => removePendingDelete(id),
     })
   }, [deleteNotification, removePendingDelete])
 
-  // Action Needed only ever holds *unread* actionable notifications —
-  // once read (via its own action, Ignore, or mark-all-read), it drops
-  // down to Recent with no action buttons, instead of sitting in Action
-  // Needed forever regardless of read_at.
+  const needsAction = useCallback((notification: Notification) => (
+    notification.type === 'payment_confirmation'
+      ? notification.action_status === 'pending'
+      : notification.type !== 'payment_settled' && !notification.read_at
+  ), [])
+
+  // Business action state takes precedence over read state. A pending
+  // payment confirmation stays actionable even if the card was opened;
+  // confirming/disputing/cancelling it resolves the row server-side.
   const recentList = useMemo(
-    () => (notifications ?? []).filter((n) => !pendingDeleteIds.has(n.id) && (n.type === 'payment_settled' || n.read_at)),
-    [notifications, pendingDeleteIds],
+    () => (notifications ?? []).filter((n) => !pendingDeleteIds.has(n.id) && !needsAction(n)),
+    [notifications, pendingDeleteIds, needsAction],
   )
   const actionList = useMemo(
-    () => (notifications ?? []).filter((n) => !pendingDeleteIds.has(n.id) && n.type !== 'payment_settled' && !n.read_at),
-    [notifications, pendingDeleteIds],
+    () => (notifications ?? []).filter((n) => !pendingDeleteIds.has(n.id) && needsAction(n)),
+    [notifications, pendingDeleteIds, needsAction],
   )
 
   return (
@@ -429,8 +413,7 @@ export default function NotificationsScreen() {
         onConfirm={() => {
           haptic.heavy()
           clearAllNotifications.mutate(undefined, {
-            onSuccess: () => toast.success('Notifications cleared'),
-            onError: (err) => toast.error(err.message),
+            onError: () => {},
           })
         }}
       />

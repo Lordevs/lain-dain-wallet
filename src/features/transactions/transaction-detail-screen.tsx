@@ -1,7 +1,6 @@
 import { useState, createElement } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
-import { ChevronLeft, Pencil, Trash2, FileText, Check } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { ChevronLeft, Pencil, Trash2, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ROUTES } from '@/constants/routes'
 import { useAuthStore } from '@/store/use-auth-store'
@@ -19,7 +18,6 @@ export default function TransactionDetailScreen() {
 
   const expenseQuery = useExpenseQuery(id)
   const deleteExpense = useDeleteExpenseMutation()
-  const [toast, setToast] = useState<{ message: string } | null>(null)
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false)
 
   if (expenseQuery.isLoading) {
@@ -107,31 +105,12 @@ export default function TransactionDetailScreen() {
         onSuccess: () => {
           navigate(backTarget as never)
         },
-        onError: (err) => setToast({ message: err.message }),
       },
     )
   }
 
   return (
     <div className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-[#FEFAF1] text-[#1A1A1A] select-none">
-      {/* Toast Alert overlay */}
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            initial={{ opacity: 0, y: -20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            onAnimationComplete={() => setTimeout(() => setToast(null), 3000)}
-            className="fixed top-[calc(var(--safe-top)+1.5rem)] left-6 right-6 z-120 mx-auto max-w-[380px] bg-white/90 backdrop-blur-md border border-[#EFE7DD] shadow-[0px_10px_30px_rgba(0,0,0,0.08)] rounded-2xl p-4 flex items-center gap-3"
-          >
-            <div className="w-8 h-8 rounded-full bg-[#E4F2EB] flex items-center justify-center text-positive shrink-0">
-              <Check size={16} strokeWidth={3} />
-            </div>
-            <span className="text-sm font-semibold text-[#1A1A1A]">{toast.message}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Header */}
       <div className="flex items-center px-6 pt-5 pb-3 relative shrink-0">
         <button

@@ -298,7 +298,7 @@ export default function GroupDetailScreen() {
       </div>
 
       {/* Sticky Bottom Row Buttons */}
-      <div className="fixed bottom-3 left-3 right-3 z-10 flex items-center gap-4">
+      <div className="safe-action-fixed z-10 flex items-center gap-4">
         <button
           type="button"
           onClick={() => navigate({ to: ROUTES.GROUP_ADD_EXPENSE, params: { id: groupId } })}

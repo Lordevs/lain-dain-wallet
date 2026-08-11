@@ -66,12 +66,11 @@ export default function GroupDetailsStep({ flow }: GroupDetailsStepProps) {
         .filter((code): code is string => !!code && code !== groupCurrency),
     ),
   ]
+  const canCreate = !!flow.groupName.trim() && !!flow.selectedCategory
 
   return (
-    <div className={cn(
-      "flex-1 overflow-y-auto px-6 scrollbar-none relative",
-      (flow.groupName.trim() && flow.selectedCategory) ? "pb-24" : "pb-4"
-    )}>
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-y-contain px-6 pb-4 scrollbar-none">
       {/* Row 1: Group Avatar placeholder + Name Input */}
       <div className="flex gap-4 items-center mt-3 mb-3 shrink-0">
         {/* Group avatar input */}
@@ -257,14 +256,17 @@ export default function GroupDetailsStep({ flow }: GroupDetailsStepProps) {
         })}
       </RadioGroup>
 
-      {/* Sticky Create Group button */}
-      {flow.groupName.trim() && flow.selectedCategory && (
-        <div className="fixed bottom-3 left-3 right-3 z-10">
+      </div>
+
+      {/* In-layout footer cannot be covered by system navigation and leaves
+          the category list all remaining height on short devices. */}
+      {canCreate && (
+        <div className="z-10 shrink-0 bg-background px-6 pb-5 pt-3">
           <FormError message={flow.submitError} className="mb-3 justify-center" />
           <Button
             onClick={flow.createGroup}
             disabled={flow.isSubmitting}
-            className="w-full h-14 rounded-full bg-primary text-white font-extrabold text-[15px] shadow-lg active:scale-[0.98] transition-transform cursor-pointer disabled:opacity-70"
+            className="h-14 w-full cursor-pointer rounded-full bg-primary text-[15px] font-extrabold text-white shadow-lg transition-transform active:scale-[0.98] disabled:opacity-70"
           >
             {flow.isSubmitting ? 'Creating...' : 'Create Group'}
           </Button>

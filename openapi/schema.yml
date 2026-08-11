@@ -668,7 +668,8 @@ paths:
         name: sort
         schema:
           type: string
-        description: One of newest (default) | oldest | highest | lowest.
+        description: One of newest (default) | oldest | oldest_created | highest |
+          lowest.
       tags:
       - expenses
       security:
@@ -909,7 +910,8 @@ paths:
         name: sort
         schema:
           type: string
-        description: One of newest (default) | oldest | highest | lowest.
+        description: One of newest (default) | oldest | oldest_created | highest |
+          lowest.
       tags:
       - expenses
       security:
@@ -981,7 +983,8 @@ paths:
         name: sort
         schema:
           type: string
-        description: One of newest (default) | oldest | highest | lowest.
+        description: One of newest (default) | oldest | oldest_created | highest |
+          lowest.
       tags:
       - expenses
       security:
@@ -1228,7 +1231,8 @@ paths:
         name: sort
         schema:
           type: string
-        description: One of newest (default) | oldest | highest | lowest.
+        description: One of newest (default) | oldest | oldest_created | highest |
+          lowest.
       tags:
       - expenses
       security:
@@ -1484,7 +1488,8 @@ paths:
         name: sort
         schema:
           type: string
-        description: One of newest (default) | oldest | highest | lowest.
+        description: One of newest (default) | oldest | oldest_created | highest |
+          lowest.
       tags:
       - expenses
       security:
@@ -1858,9 +1863,10 @@ paths:
       operationId: expenses_wallet_list
       description: |-
         GET /api/expenses/wallet/?tab=receivables|payables&type=all|people|group&sort=newest|oldest|highest|lowest
-        — every person and group the caller has a nonzero balance with,
-        combined and sorted. Not paginated: bounded by how many people/
-        groups someone actually has an open balance with, not by
+        — every person with a nonzero balance plus every active group (zero-
+        balance groups are included so they remain reachable before their
+        first expense), combined and sorted. Not paginated: bounded by how many people/
+        groups someone has a relationship/membership with, not by
         transaction volume, so it stays small regardless of how long the
         account's been active — unlike Expense history, which does need
         cursor pagination. See services.wallet_list for what each row
@@ -3095,6 +3101,21 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/notifications/test/:
+    post:
+      operationId: notifications_test_create
+      description: |-
+        POST /api/notifications/test/ — queues a real FCM push to the
+        caller's active devices without adding anything to the notification
+        inbox. Returns actionable errors when server Firebase or device
+        registration is missing instead of claiming a push was sent.
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '202':
+          description: No response body
   /api/notifications/unread-count/:
     get:
       operationId: notifications_unread_count_retrieve
@@ -3171,6 +3192,18 @@ paths:
           description: ''
 components:
   schemas:
+    ActionStatusEnum:
+      enum:
+      - none
+      - pending
+      - resolved
+      - cancelled
+      type: string
+      description: |-
+        * `none` - No action
+        * `pending` - Pending
+        * `resolved` - Resolved
+        * `cancelled` - Cancelled
     ApplyLedgerAdjustmentRequestRequest:
       type: object
       description: |-
@@ -5365,15 +5398,26 @@ components:
           format: date-time
           readOnly: true
           nullable: true
+        action_status:
+          allOf:
+          - $ref: '#/components/schemas/ActionStatusEnum'
+          readOnly: true
+        resolved_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
         created_at:
           type: string
           format: date-time
           readOnly: true
       required:
+      - action_status
       - created_at
       - id
       - payload
       - read_at
+      - resolved_at
       - type
     NotificationTypeEnum:
       enum:

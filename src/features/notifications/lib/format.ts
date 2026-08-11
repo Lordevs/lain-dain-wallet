@@ -45,10 +45,15 @@ export function getNotificationCardContent(notification: Notification): Notifica
     }
     case 'payment_confirmation': {
       const p = payloadOf(notification as Notification & { type: 'payment_confirmation' })
+      const isPending = notification.action_status === 'pending'
       return {
-        tag: 'Payment confirmation',
-        title: `${p.payer.full_name} says he paid ${formatCurrency(Number(p.amount), p.currency)}`,
-        subtitle: notification.read_at ? 'You responded to this request.' : 'Confirm if you received it.',
+        tag: isPending ? 'Payment confirmation' : 'Payment response recorded',
+        title: `${p.payer.full_name} says they paid ${formatCurrency(Number(p.amount), p.currency)}`,
+        subtitle: isPending
+          ? 'Confirm if you received it.'
+          : notification.action_status === 'cancelled'
+            ? 'This payment request was cancelled.'
+            : 'This payment request has been resolved.',
         theme: 'green',
       }
     }

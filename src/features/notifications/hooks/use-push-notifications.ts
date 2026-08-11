@@ -3,10 +3,16 @@ import { Capacitor } from '@capacitor/core'
 import { FirebaseMessaging } from '@capacitor-firebase/messaging'
 import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
-import { toast } from 'sonner'
 import { useAuthStore } from '@/store/use-auth-store'
 import { ROUTES } from '@/constants/routes'
 import { useRegisterFcmDeviceMutation } from '../api/use-register-fcm-device-mutation'
+
+const GROUP_ACTIVITY_TYPES = new Set([
+  'group_created',
+  'group_members_invited',
+  'group_member_joined',
+  'group_expense_added',
+])
 
 /**
  * Registers this device for FCM push once the user is fully signed in, and
@@ -55,15 +61,23 @@ export function usePushNotifications() {
 
     listeners.push(
       FirebaseMessaging.addListener('notificationReceived', (event) => {
-        queryClient.invalidateQueries({ queryKey: ['notifications'] })
-        if (event.notification.title) {
-          toast.info(event.notification.title, { description: event.notification.body })
+        const data = event.notification.data as Record<string, unknown> | undefined
+        const type = String(data?.type ?? '')
+        if (!GROUP_ACTIVITY_TYPES.has(type)) {
+          queryClient.invalidateQueries({ queryKey: ['notifications'] })
         }
       }),
     )
 
     listeners.push(
-      FirebaseMessaging.addListener('notificationActionPerformed', () => {
+      FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
+        const data = event.notification.data as Record<string, unknown> | undefined
+        const type = String(data?.type ?? '')
+        const groupId = data?.group_id
+        if (GROUP_ACTIVITY_TYPES.has(type) && typeof groupId === 'string') {
+          router.navigate({ to: ROUTES.GROUP_DETAILS, params: { id: groupId } })
+          return
+        }
         queryClient.invalidateQueries({ queryKey: ['notifications'] })
         router.navigate({ to: ROUTES.NOTIFICATIONS })
       }),

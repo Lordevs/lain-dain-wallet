@@ -229,7 +229,7 @@ export default function RecurringPaymentsScreen({
 
       {/* Absolute Bottom Actions Bar (Admin/Owner only) */}
       {canManage && (
-        <div className="fixed bottom-3 left-3 right-3 z-10">
+        <div className="safe-action-fixed z-10">
           <button
             type="button"
             onClick={() => {

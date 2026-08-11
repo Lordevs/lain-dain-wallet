@@ -23,12 +23,13 @@ function ContactLedgerCard({ contact, onSelect }: ContactLedgerCardProps) {
   const { name, initials, avatarColor, avatar, ledgerCount, netAmount, currency, tags, isOnline, type } = contact
 
   const isReceivable = netAmount > 0
+  const isSettled = netAmount === 0
 
   return (
     <button
       id={`contact-card-${contact.id}`}
       onClick={() => onSelect?.(contact)}
-      className="w-full bg-[linear-gradient(160deg,#FFFDF5_8.49%,#FFFFFF_58.3%)] rounded-lg border-[1.08px] border-border-card text-left overflow-hidden hover:shadow-md active:scale-[0.99] transition-all"
+      className="w-full shrink-0 overflow-hidden rounded-lg border-[1.08px] border-border-card bg-[linear-gradient(160deg,#FFFDF5_8.49%,#FFFFFF_58.3%)] text-left transition-all hover:shadow-md active:scale-[0.99]"
     >
       {/* Top Row */}
       <div className="flex items-center gap-2 px-4 pt-4 pb-3">
@@ -70,7 +71,7 @@ function ContactLedgerCard({ contact, onSelect }: ContactLedgerCardProps) {
         <div className="flex items-center gap-1 shrink-0">
           <span className={cn(
             'text-[15px] font-extrabold',
-            isReceivable ? 'text-primary' : 'text-orange-payable'
+            isSettled ? 'text-muted-foreground' : isReceivable ? 'text-primary' : 'text-orange-payable'
           )}>
             {formatCurrency(netAmount, currency ?? 'PKR')}
           </span>

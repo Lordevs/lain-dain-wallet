@@ -48,7 +48,11 @@ export default function AppShell({ children }: AppShellProps) {
   return (
     <div className="relative flex min-h-0 w-full flex-1 flex-col bg-[#FEFAF1]">
       {/* Scrollable content area */}
-      <main className={`flex-1 min-h-0 flex flex-col ${usesFixedViewport ? 'overflow-hidden' : 'overflow-y-auto'} ${showNav ? 'pb-15' : 'pb-[var(--safe-bottom)]'}`}>
+      {/* #root already reserves the device safe-area insets. Screens without
+          the app tab bar must not reserve --safe-bottom again: on Android
+          gesture navigation that creates a visible dead strip, while on
+          three-button navigation it doubles the system-bar clearance. */}
+      <main className={`flex-1 min-h-0 flex flex-col ${usesFixedViewport ? 'overflow-hidden' : 'overflow-y-auto'} ${showNav ? 'pb-15' : 'pb-0'}`}>
         {children}
       </main>
 

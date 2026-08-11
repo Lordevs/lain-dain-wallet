@@ -24,6 +24,7 @@ function invalidateForSettlement(queryClient: ReturnType<typeof useQueryClient>,
   }
   queryClient.invalidateQueries({ queryKey: ['user-ledgers', otherUserId(settlement)] })
   queryClient.invalidateQueries({ queryKey: ['wallet'] })
+  queryClient.invalidateQueries({ queryKey: ['notifications'] })
 }
 
 /** POST /api/expenses/settlements/{id}/confirm/ — only the party who
@@ -87,6 +88,7 @@ export function useCancelSettlementMutation() {
       }
       queryClient.invalidateQueries({ queryKey: cached ? ['user-ledgers', otherUserId(cached)] : ['user-ledgers'] })
       queryClient.invalidateQueries({ queryKey: ['wallet'] })
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
     },
   })
 }

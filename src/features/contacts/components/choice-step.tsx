@@ -45,7 +45,8 @@ export default function ChoiceStep({ flow }: ChoiceStepProps) {
   const hasSelection = flow.selectedContacts.length > 0
 
   return (
-    <div className="flex-1 overflow-y-auto px-6 pb-24 relative scrollbar-none">
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-y-contain px-6 pb-4 scrollbar-none">
       {/* Search */}
       <SearchBar
         id="choice-search"
@@ -156,22 +157,6 @@ export default function ChoiceStep({ flow }: ChoiceStepProps) {
         )}
       </div>
 
-      {/* Sticky Next button */}
-      {hasSelection && (
-        <div className="fixed bottom-3 left-3 right-3 z-10">
-          <Button
-            onClick={flow.nextStep}
-            disabled={flow.isSubmitting}
-            className="w-full h-14 rounded-full bg-primary text-white font-extrabold text-[15px] shadow-lg active:scale-[0.98] transition-transform cursor-pointer disabled:opacity-70"
-          >
-            {flow.isSubmitting ? 'Starting...' : 'Next'}
-            {!flow.isSubmitting && (
-              <ChevronLeft size={16} className="rotate-180 ml-1 shrink-0" strokeWidth={3} />
-            )}
-          </Button>
-        </div>
-      )}
-
       {/* Security footer */}
       {!hasSelection && (
         <div className="flex items-center justify-center gap-1.5 py-4 shrink-0">
@@ -179,6 +164,24 @@ export default function ChoiceStep({ flow }: ChoiceStepProps) {
           <span className="text-xs font-medium text-muted-foreground">
             All expenses are private and secure
           </span>
+        </div>
+      )}
+      </div>
+
+      {/* In-layout footer stays above the root device inset and cannot be
+          clipped by Android navigation controls or the iOS home indicator. */}
+      {hasSelection && (
+        <div className="z-10 shrink-0 bg-background px-6 pb-5 pt-3">
+          <Button
+            onClick={flow.nextStep}
+            disabled={flow.isSubmitting}
+            className="h-14 w-full cursor-pointer rounded-full bg-primary text-[15px] font-extrabold text-white shadow-lg transition-transform active:scale-[0.98] disabled:opacity-70"
+          >
+            {flow.isSubmitting ? 'Starting...' : 'Next'}
+            {!flow.isSubmitting && (
+              <ChevronLeft size={16} className="ml-1 shrink-0 rotate-180" strokeWidth={3} />
+            )}
+          </Button>
         </div>
       )}
 

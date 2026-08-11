@@ -236,7 +236,7 @@ function SortFilterForm({ sortBy, filterType, onApply, onReset }: SortFilterForm
       </div>
 
       {/* Footer - Apply Filters Button */}
-      <div className="fixed bottom-3 left-3 right-3 z-10">
+      <div className="safe-action-fixed z-10">
         <Button
           type="button"
           onClick={handleApply}

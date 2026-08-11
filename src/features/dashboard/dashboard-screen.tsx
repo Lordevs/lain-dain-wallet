@@ -138,7 +138,7 @@ export default function DashboardScreen() {
 
 
   return (
-    <div className="flex flex-col flex-1 bg-[#FEFAF1] overflow-hidden">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-[#FEFAF1]">
       {/* App Header — Logo + Avatar (hidden when search is active) */}
       {!isSearchActive && <AppHeader />}
 
@@ -158,7 +158,7 @@ export default function DashboardScreen() {
         </div>
       ) : (
         /* Passive Search Bar (tap to activate) */
-        <div className="px-6 mt-3">
+        <div className="mt-3 shrink-0 px-6">
           <SearchBar
             value=""
             onChange={() => {}}
@@ -183,10 +183,10 @@ export default function DashboardScreen() {
         />
       ) : (
         /* Main Content */
-        <div className="flex min-h-0 flex-1 flex-col">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {/* Balance Summary Card */}
           {summaryQuery.isLoading ? (
-            <div className="bg-white rounded-lg border-[1.08px] border-border-card shadow-[0px_2.69px_10.76px_0px_#0000000D] mx-6 mt-3 flex divide-x divide-border-card">
+            <div className="mx-6 mt-3 flex shrink-0 divide-x divide-border-card rounded-lg border-[1.08px] border-border-card bg-white shadow-[0px_2.69px_10.76px_0px_#0000000D]">
               {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex-1 py-3 px-2 flex flex-col items-center gap-3">
                   <Skeleton className="h-3 w-16" />
@@ -214,13 +214,13 @@ export default function DashboardScreen() {
           {/* Contact/Group Ledger Cards */}
           <div className={isWalletEmpty
             ? 'flex min-h-0 flex-1 items-center justify-center overflow-hidden px-6 pb-4'
-            : 'flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto px-6 pb-6'
+            : 'flex min-h-0 flex-1 touch-pan-y flex-col gap-1.5 overflow-y-auto overscroll-y-contain px-6 pb-24'
           }>
             {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <div
                   key={i}
-                  className="bg-white rounded-lg border-[1.08px] border-border-card px-4 pt-4 pb-3 flex items-center gap-3"
+                  className="flex shrink-0 items-center gap-3 rounded-lg border-[1.08px] border-border-card bg-white px-4 pb-3 pt-4"
                 >
                   <Skeleton className="size-12 rounded-full shrink-0" />
                   <div className="flex-1 flex flex-col gap-2">

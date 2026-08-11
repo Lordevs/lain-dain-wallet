@@ -40,7 +40,7 @@ export default function NewContactScreen() {
   })
 
   return (
-    <div className="flex flex-col flex-1 bg-background h-screen overflow-hidden text-foreground">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background text-foreground">
       {/* Header */}
       <FlowHeader
         title={STEP_TITLES[flow.step]}

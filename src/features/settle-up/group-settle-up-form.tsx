@@ -364,7 +364,7 @@ function GroupSettleUpFormBody({
       </div>
 
       {/* Sticky Bottom Actions */}
-      <div className="fixed bottom-3 left-3 right-3 z-10 flex flex-col items-center justify-center gap-4">
+      <div className="safe-action-fixed z-10 flex flex-col items-center justify-center gap-4">
 
         <button
           type="button"

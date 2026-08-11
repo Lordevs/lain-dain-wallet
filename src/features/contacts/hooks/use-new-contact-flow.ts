@@ -67,6 +67,8 @@ export interface NewContactFlowState {
   setSelectedCategory: (v: string) => void
   groupAvatar: string | null
   setGroupAvatar: (v: string | null) => void
+  /** ID returned by POST /groups/, used by the success CTA. */
+  createdGroupId: string | null
 
   // ── Step actions ─────────────────────────────────────────────────────────────
   /** Advance from choice → success (creates the Friendship) or add_members → group_details */
@@ -105,6 +107,7 @@ export function useNewContactFlow(): NewContactFlowState {
   const [currencyRates, setCurrencyRates] = useState<Record<string, string>>({})
   const [selectedCategory, setSelectedCategory] = useState(MOCK_CATEGORIES[0].id)
   const [groupAvatar, setGroupAvatar] = useState<string | null>(null)
+  const [createdGroupId, setCreatedGroupId] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [currencyMismatch, setCurrencyMismatch] = useState<CurrencyMismatch | null>(null)
 
@@ -271,7 +274,10 @@ export function useNewContactFlow(): NewContactFlowState {
         ),
       },
       {
-        onSuccess: () => setStep('success'),
+        onSuccess: (group) => {
+          setCreatedGroupId(group.id)
+          setStep('success')
+        },
         onError: (err) => setSubmitError(err.message),
       },
     )
@@ -316,6 +322,7 @@ export function useNewContactFlow(): NewContactFlowState {
     setSelectedCategory,
     groupAvatar,
     setGroupAvatar,
+    createdGroupId,
     nextStep,
     createGroup,
     isSubmitting: createFriendship.isPending || createGroupMutation.isPending,

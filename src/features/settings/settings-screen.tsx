@@ -8,6 +8,8 @@ import {
   Info,
   Trash2,
   Check,
+  BellRing,
+  LoaderCircle,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/use-auth-store'
 import { ROUTES } from '@/constants/routes'
@@ -19,6 +21,7 @@ import CurrencySelectDrawer from '@/components/shared/currency-select-drawer'
 import { getCurrency } from '@/lib/currency'
 import { usePersonalExpenseSettingsQuery } from '@/features/expenses/api/use-personal-expense-settings-query'
 import { useUpdatePersonalExpenseSettingsMutation } from '@/features/expenses/api/use-update-personal-expense-settings-mutation'
+import { useTestNotificationMutation } from '@/features/notifications/api/use-test-notification-mutation'
 
 // ─── Main Screen Component ─────────────────────────────────────────────────────
 export default function SettingsScreen() {
@@ -31,6 +34,7 @@ export default function SettingsScreen() {
 
   const personalSettings = usePersonalExpenseSettingsQuery()
   const updateSettings = useUpdatePersonalExpenseSettingsMutation()
+  const testNotification = useTestNotificationMutation()
   const autoReminders = personalSettings.data?.auto_reminder_enabled ?? true
   const reminderInterval = personalSettings.data?.auto_reminder_interval_days === 14 ? 'two_weeks' : 'week'
 
@@ -117,6 +121,31 @@ export default function SettingsScreen() {
                 </div>
                 <Switch checked={pushNotifications} onCheckedChange={setPushNotifications} size="lg" />
               </div>
+
+              {/* End-to-end Firebase delivery check. The backend rejects
+                  this with a useful message if this device has not yet
+                  registered or server-side Firebase is unavailable. */}
+              <button
+                type="button"
+                disabled={testNotification.isPending}
+                onClick={() => testNotification.mutate()}
+                className="w-full flex items-center justify-between p-5 text-left active:bg-[#FEFAF1]/80 transition-colors cursor-pointer outline-none disabled:cursor-wait disabled:opacity-60"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-11 h-11 rounded-[14px] bg-[#E4F2EB] flex items-center justify-center text-primary shrink-0">
+                    <BellRing size={20} strokeWidth={2.2} />
+                  </div>
+                  <div>
+                    <h4 className="text-[15px] font-semibold text-[#1A1A1A] leading-tight">Test Notification</h4>
+                    <p className="text-[12px] text-[#6B6B6B] mt-1">Verify notifications on this device</p>
+                  </div>
+                </div>
+                {testNotification.isPending ? (
+                  <LoaderCircle size={18} className="text-primary animate-spin" />
+                ) : (
+                  <ChevronRight size={18} className="text-[#9A9590]" strokeWidth={2.5} />
+                )}
+              </button>
 
               {/* Auto Personal Reminders Row */}
               <div className="flex flex-col p-5">

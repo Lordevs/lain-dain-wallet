@@ -128,7 +128,7 @@ export default function SendReminderScreen() {
       </div>
 
       {/* Sticky Bottom Send Reminder button */}
-      <div className="fixed bottom-3 left-3 right-3 z-10">
+      <div className="safe-action-fixed z-10">
         <button
           type="button"
           disabled={!ledgers.friendshipId || requestSettlement.isPending}

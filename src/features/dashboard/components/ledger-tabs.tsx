@@ -14,7 +14,7 @@ interface LedgerTabsProps {
  */
 export default function LedgerTabs({ activeTab, onTabChange }: LedgerTabsProps) {
   return (
-    <div className="mx-6 mt-4">
+    <div className="mx-6 mt-4 shrink-0">
       <Tabs
         value={activeTab}
         onValueChange={(val) => onTabChange(val as LedgerTab)}

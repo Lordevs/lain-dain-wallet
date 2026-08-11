@@ -35,7 +35,14 @@ export default function GroupSuccessStep({ flow }: GroupSuccessStepProps) {
   })()
 
   const handleAddFirstExpense = () => {
-    if (isGroupFlow) {
+    if (isGroupFlow && flow.createdGroupId) {
+      navigate({
+        to: ROUTES.GROUP_ADD_EXPENSE,
+        params: { id: flow.createdGroupId },
+      })
+    } else if (isGroupFlow) {
+      // Defensive fallback for a stale success screen restored without
+      // its mutation result; a normal successful create always has an ID.
       navigate({ to: ROUTES.DASHBOARD })
     } else if (singleContact) {
       navigate({

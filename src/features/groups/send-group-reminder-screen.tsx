@@ -182,7 +182,7 @@ export default function SendGroupReminderScreen() {
 
       {/* Sticky Bottom Send Reminder button */}
       {owedRows.length > 0 && (
-        <div className="fixed bottom-3 left-3 right-3 z-10">
+        <div className="safe-action-fixed z-10">
           <button
             type="button"
             disabled={selectedIds.size === 0 || isSending}

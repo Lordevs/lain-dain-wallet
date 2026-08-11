@@ -148,6 +148,15 @@ select {
   height: 100%;
 }
 
+/* Every routed screen is a flex item inside AppShell. `min-height:auto`
+   otherwise lets a tall child force the shell beyond the device viewport,
+   which is the common source of clipped footers on short phones. Screens
+   that need more content height scroll their own content region or main. */
+#root main > * {
+  min-width: 0;
+  min-height: 0;
+}
+
 /* Native-safe surface for full-screen flows. Backdrops intentionally keep
    using inset-0, while interactive content stays below system UI. */
 .app-fullscreen {
@@ -156,6 +165,17 @@ select {
   right: var(--safe-right);
   bottom: var(--safe-bottom);
   left: var(--safe-left);
+}
+
+/* Shared positioning for the few actions that must remain viewport-fixed
+   (drawers and standalone forms). The base 12px gap remains on devices with
+   gesture navigation/no bottom controls; the live OS inset is added only
+   when a home indicator or Android navigation bar occupies that edge. */
+.safe-action-fixed {
+  position: fixed;
+  left: max(0.75rem, var(--safe-left));
+  right: max(0.75rem, var(--safe-right));
+  bottom: calc(0.75rem + var(--safe-bottom));
 }
 
 body {

@@ -491,9 +491,9 @@ function AddRecurringForm({
       />
 
       {/* Sticky Fixed Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 flex flex-col bg-background border-t border-divider/60 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
+      <div className="fixed bottom-0 left-0 right-0 z-30 flex flex-col border-t border-divider/60 bg-background pb-[var(--safe-bottom)] shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
         {/* Primary Save Button */}
-        <div className="px-6 py-4">
+        <div className="px-[max(1.5rem,var(--safe-left),var(--safe-right))] py-4">
           <button
             type="submit"
             disabled={!isFormValid}

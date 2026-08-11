@@ -25,7 +25,7 @@ export default function SectionHeader({
   const isFilterActive = sortBy !== 'newest' || filterType !== 'all'
 
   return (
-    <div className="flex items-center justify-between px-6 mt-5 mb-3">
+    <div className="mb-3 mt-5 flex shrink-0 items-center justify-between px-6">
       <h2 className="text-[17px] font-bold text-foreground">{title}</h2>
       <SortFilterDrawer
         sortBy={sortBy}
@@ -48,4 +48,3 @@ export default function SectionHeader({
     </div>
   )
 }
-

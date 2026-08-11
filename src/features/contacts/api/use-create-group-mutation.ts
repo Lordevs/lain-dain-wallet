@@ -48,6 +48,7 @@ export function useCreateGroupMutation() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['groups'] })
+      queryClient.invalidateQueries({ queryKey: ['wallet'] })
     },
   })
 }

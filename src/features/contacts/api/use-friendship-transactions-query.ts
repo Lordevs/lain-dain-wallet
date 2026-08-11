@@ -37,14 +37,14 @@ function cursorFromUrl(url: string | null | undefined): string | null {
 }
 
 function compareTransactions(a: FriendshipTransaction, b: FriendshipTransaction): number {
-  const byDate = b.date.localeCompare(a.date)
+  const byDate = a.data.created_at.localeCompare(b.data.created_at)
   if (byDate !== 0) return byDate
 
-  // Match both backend cursors' exact secondary ordering: ("-date", "-id").
-  const byId = b.data.id.localeCompare(a.data.id)
+  // Match both backend cursors' exact secondary ordering: ("created_at", "id").
+  const byId = a.data.id.localeCompare(b.data.id)
   if (byId !== 0) return byId
 
-  return b.kind.localeCompare(a.kind)
+  return a.kind.localeCompare(b.kind)
 }
 
 async function fetchExpenses(
@@ -54,7 +54,7 @@ async function fetchExpenses(
   const { data, error } = await apiClient.GET('/api/expenses/friendships/{friendship_id}/', {
     params: {
       path: { friendship_id: friendshipId },
-      query: { page_size: PAGE_SIZE, cursor },
+      query: { page_size: PAGE_SIZE, cursor, sort: 'oldest_created' },
     },
   })
   if (error) throw toApiError(error)
@@ -72,7 +72,7 @@ async function fetchSettlements(
   const { data, error } = await apiClient.GET('/api/expenses/friendships/{friendship_id}/settlements/', {
     params: {
       path: { friendship_id: friendshipId },
-      query: { page_size: PAGE_SIZE, cursor },
+      query: { page_size: PAGE_SIZE, cursor, sort: 'oldest_created' },
     },
   })
   if (error) throw toApiError(error)
@@ -164,7 +164,9 @@ export function useFriendshipTransactionsQuery(friendshipId: string | undefined)
     // Keep the existing prefix so mutation invalidations still match, while
     // preventing persisted data from the previous non-infinite query shape
     // from being read as InfiniteData.
-    queryKey: ['friendship-transactions', friendshipId, 'infinite-v2'],
+    // v3 separates this ascending-created-at feed from the previous cached
+    // newest-first cursor state; cursor directions must never be mixed.
+    queryKey: ['friendship-transactions', friendshipId, 'infinite-v3'],
     queryFn: ({ pageParam }: { pageParam: TransactionsPageParam }) => fetchPage(friendshipId!, pageParam),
     initialPageParam: INITIAL_PAGE_PARAM,
     getNextPageParam: (lastPage) => lastPage.nextPageParam,
