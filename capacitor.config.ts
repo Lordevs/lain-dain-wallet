@@ -1,5 +1,4 @@
 import type { CapacitorConfig } from '@capacitor/cli';
-import { KeyboardResize, KeyboardStyle } from '@capacitor/keyboard';
 import fs from 'fs';
 import path from 'path';
 
@@ -56,18 +55,6 @@ const config: CapacitorConfig = {
       androidSplashResourceName: 'splash',
       androidScaleType: 'CENTER_CROP',
       showSpinner: false,
-    },
-    Keyboard: {
-      // Resize the native WKWebView instead of mutating document.body. Body
-      // resizing races fixed overlays/drawers during the iOS keyboard animation
-      // and can leave their visual and hit-test coordinate spaces out of sync.
-      resize: KeyboardResize.Native,
-      // KeyboardStyle.Light = "LIGHT"
-      style: KeyboardStyle.Light,
-      // Android: workaround for resize not working when StatusBar overlays the WebView
-      resizeOnFullScreen: true,
-      // iOS v8: tint the area behind keyboard to match app background automatically
-      autoBackdropColor: 'auto',
     },
   },
 };
