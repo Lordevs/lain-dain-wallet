@@ -5427,7 +5427,9 @@ components:
       - payment_confirmation
       - late_payment_reminder
       - payment_dispute
+      - expense_added
       - expense_edited
+      - group_invitation
       type: string
       description: |-
         * `payment_settled` - Payment settled
@@ -5436,7 +5438,9 @@ components:
         * `payment_confirmation` - Payment confirmation
         * `late_payment_reminder` - Late payment reminder
         * `payment_dispute` - Payment dispute
+        * `expense_added` - Expense added
         * `expense_edited` - Expense edited
+        * `group_invitation` - Group invitation
     NotificationUnreadCount:
       type: object
       description: |-

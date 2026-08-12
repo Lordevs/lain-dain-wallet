@@ -27,7 +27,7 @@ function OnboardingComponent() {
   }
 
   return (
-    <div className="flex flex-col flex-1 px-6 pb-8 pt-4 w-full bg-[#FEFAF1] min-height-screen justify-between relative overflow-y-auto">
+    <div className="relative flex min-h-0 w-full flex-1 flex-col justify-between overflow-y-auto overscroll-contain bg-[#FEFAF1] px-4 pt-3 pb-6 sm:px-6 sm:pt-4 sm:pb-8">
       <div className="flex-1 flex flex-col justify-between">
         <div>
           <BrandLogo />

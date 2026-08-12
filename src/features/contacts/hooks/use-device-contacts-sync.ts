@@ -32,6 +32,7 @@ export function useDeviceContactsSync() {
   )
   const [syncError, setSyncError] = useState<string | null>(null)
   const [deviceContacts, setDeviceContacts] = useState<DeviceContact[]>([])
+  const [isReadingContacts, setIsReadingContacts] = useState(false)
   const activeSync = useRef<Promise<void> | null>(null)
   const syncMutation = useContactSyncMutation()
   const userProfile = useAuthStore((s) => s.userProfile)
@@ -44,11 +45,16 @@ export function useDeviceContactsSync() {
 
     const task = (async () => {
       setSyncError(null)
-      const contacts = await getDeviceContacts((userProfile?.country as Country) || 'PK')
-      // Keep the native result locally regardless of whether the optional
-      // server-side Lain Dain matching step succeeds.
-      setDeviceContacts(contacts)
-      if (contacts.length > 0) await syncMutation.mutateAsync(contacts)
+      setIsReadingContacts(true)
+      try {
+        const contacts = await getDeviceContacts((userProfile?.country as Country) || 'PK')
+        // Keep the native result locally regardless of whether the optional
+        // server-side Lain Dain matching step succeeds.
+        setDeviceContacts(contacts)
+        if (contacts.length > 0) await syncMutation.mutateAsync(contacts)
+      } finally {
+        setIsReadingContacts(false)
+      }
     })()
     activeSync.current = task
     try {
@@ -104,7 +110,7 @@ export function useDeviceContactsSync() {
 
   return {
     status,
-    isSyncing: syncMutation.isPending,
+    isSyncing: isReadingContacts || syncMutation.isPending,
     syncError,
     deviceContacts,
     requestAccess,

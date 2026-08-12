@@ -34,6 +34,7 @@ export interface NewContactFlowState {
   isSyncing: boolean
   syncError: string | null
   requestContactsAccess: () => Promise<boolean>
+  resyncContacts: () => Promise<void>
 
   // ── Contact selection ────────────────────────────────────────────────────────
   selectedContacts: string[]
@@ -291,6 +292,7 @@ export function useNewContactFlow(): NewContactFlowState {
     isSyncing: deviceSync.isSyncing,
     syncError: deviceSync.syncError,
     requestContactsAccess: deviceSync.requestAccess,
+    resyncContacts: deviceSync.resync,
     selectedContacts,
     selectedList,
     filteredContacts,
@@ -305,7 +307,10 @@ export function useNewContactFlow(): NewContactFlowState {
       isFetchingMore: inviteQuery.isFetchingNextPage,
       fetchMore: inviteQuery.fetchNextPage,
     },
-    isLoadingContacts: onAppQuery.isLoading || inviteQuery.isLoading,
+    isLoadingContacts:
+      (onAppQuery.isLoading || inviteQuery.isLoading || deviceSync.status === 'checking')
+      && filteredContacts.length === 0
+      && inviteContacts.length === 0,
     toggleContact,
     removeContact,
     searchQuery,

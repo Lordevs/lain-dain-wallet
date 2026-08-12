@@ -15,8 +15,28 @@ export function useCapacitorSetup() {
   const router = useRouter()
 
   useEffect(() => {
+    // iOS WKWebView's dynamic viewport units can briefly report the layout
+    // viewport while a native picker/keyboard is animating. Keep an exact
+    // visual-viewport height available to sheets so they resize without
+    // pushing or stretching the routed screen behind them.
+    const viewport = window.visualViewport
+    const updateViewportHeight = () => {
+      document.documentElement.style.setProperty(
+        '--app-viewport-height',
+        `${viewport?.height ?? window.innerHeight}px`,
+      )
+    }
+    updateViewportHeight()
+    viewport?.addEventListener('resize', updateViewportHeight)
+    window.addEventListener('orientationchange', updateViewportHeight)
+
     // Only run on real native devices — no-op in browser dev
-    if (!Capacitor.isNativePlatform()) return
+    if (!Capacitor.isNativePlatform()) {
+      return () => {
+        viewport?.removeEventListener('resize', updateViewportHeight)
+        window.removeEventListener('orientationchange', updateViewportHeight)
+      }
+    }
 
     const listeners: Array<Promise<{ remove: () => void }>> = []
     const platform = Capacitor.getPlatform()
@@ -54,6 +74,8 @@ export function useCapacitorSetup() {
 
     // Cleanup all listeners on unmount
     return () => {
+      viewport?.removeEventListener('resize', updateViewportHeight)
+      window.removeEventListener('orientationchange', updateViewportHeight)
       listeners.forEach((listenerPromise) => {
         listenerPromise.then((listener) => listener.remove())
       })

@@ -1,4 +1,4 @@
-import { Check, Users, Shield, ChevronLeft, Contact as ContactIcon } from 'lucide-react'
+import { Check, Users, Shield, ChevronLeft, Contact as ContactIcon, LoaderCircle, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import SearchBar from '@/components/shared/search-bar'
 import QuickActionButton from '@/features/contacts/components/quick-action-button'
@@ -87,7 +87,35 @@ export default function ChoiceStep({ flow }: ChoiceStepProps) {
           Contacts access is off — enable it in your device settings to see who's already on Lain Dain.
         </p>
       )}
-      <FormError message={flow.syncError ?? flow.submitError} className="mb-4" />
+      {(flow.syncStatus === 'checking' || flow.isSyncing) && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="mb-4 flex items-center gap-3 rounded-xl border border-border-card bg-white px-4 py-3 shadow-[0px_2px_8px_0px_#00000005]"
+        >
+          <LoaderCircle className="size-5 shrink-0 animate-spin text-primary" aria-hidden="true" />
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-foreground">Syncing contacts</p>
+            <p className="text-xs text-muted-foreground">Finding people you already know on Lain Dain…</p>
+          </div>
+        </div>
+      )}
+      {flow.syncError && !flow.isSyncing && (
+        <div className="mb-4">
+          <FormError message={flow.syncError} />
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => void flow.resyncContacts()}
+            className="mt-1 h-8 gap-1.5 px-1 text-xs font-bold text-primary"
+          >
+            <RefreshCw className="size-3.5" />
+            Try syncing again
+          </Button>
+        </div>
+      )}
+      <FormError message={flow.submitError} className="mb-4" />
 
       {/* Scrollable contact lists */}
       <div className="space-y-6">

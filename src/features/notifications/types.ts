@@ -46,6 +46,16 @@ export interface ExpenseEditedPayload {
   currency: string
 }
 
+export interface ExpenseAddedPayload {
+  expense_id: string
+  friendship_id: string
+  added_by: PersonBrief
+  description: string
+  amount: string
+  currency: string
+  route: 'expense_detail'
+}
+
 export interface BudgetAlertPayload {
   spent: string
   limit: string
@@ -75,6 +85,14 @@ export interface LatePaymentReminderPayload {
   target_id: string
 }
 
+export interface GroupInvitationPayload {
+  invitation_id: string
+  group_id: string
+  group_name: string
+  invited_by: PersonBrief
+  route: 'group_invitation'
+}
+
 export type PayloadFor<T extends NotificationApiType> = T extends 'payment_settled'
   ? PaymentSettledPayload
   : T extends 'payment_confirmation'
@@ -83,13 +101,17 @@ export type PayloadFor<T extends NotificationApiType> = T extends 'payment_settl
       ? PaymentDisputePayload
       : T extends 'expense_edited'
         ? ExpenseEditedPayload
-        : T extends 'budget_alert'
-          ? BudgetAlertPayload
-          : T extends 'settlement_request'
-            ? SettlementRequestPayload
-            : T extends 'late_payment_reminder'
-              ? LatePaymentReminderPayload
-              : never
+        : T extends 'expense_added'
+          ? ExpenseAddedPayload
+          : T extends 'budget_alert'
+            ? BudgetAlertPayload
+            : T extends 'settlement_request'
+              ? SettlementRequestPayload
+              : T extends 'late_payment_reminder'
+                ? LatePaymentReminderPayload
+                : T extends 'group_invitation'
+                  ? GroupInvitationPayload
+                  : never
 
 /** Narrows `notification.payload` (typed `unknown`) to the shape that
  * `notification.type` guarantees it has, per the backend's notify_* builders. */

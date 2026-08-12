@@ -17,8 +17,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import FlowHeader from '@/components/shared/flow-header'
 import { Switch } from '@/components/ui/switch'
-import CurrencySelectDrawer from '@/components/shared/currency-select-drawer'
-import { getCurrency } from '@/lib/currency'
+// import CurrencySelectDrawer from '@/components/shared/currency-select-drawer'
+// import { getCurrency } from '@/lib/currency'
 import { usePersonalExpenseSettingsQuery } from '@/features/expenses/api/use-personal-expense-settings-query'
 import { useUpdatePersonalExpenseSettingsMutation } from '@/features/expenses/api/use-update-personal-expense-settings-mutation'
 import { useTestNotificationMutation } from '@/features/notifications/api/use-test-notification-mutation'
@@ -29,7 +29,7 @@ export default function SettingsScreen() {
   const { userProfile } = useAuthStore()
 
   // Local state for interactive settings mockup
-  const [currency, setCurrency] = useState('pkr')
+  // const [currency, setCurrency] = useState('pkr')
   const [pushNotifications, setPushNotifications] = useState(true)
 
   const personalSettings = usePersonalExpenseSettingsQuery()
@@ -39,8 +39,8 @@ export default function SettingsScreen() {
   const reminderInterval = personalSettings.data?.auto_reminder_interval_days === 14 ? 'two_weeks' : 'week'
 
   // Derive display values from store with mockup fallbacks
-  const displayName = userProfile?.name || 'Muhammad Huzaifa'
-  const displayPhone = userProfile?.phone || '+92 300 1234567'
+  const displayName = userProfile?.name || ''
+  const displayPhone = userProfile?.phone || ''
 
   const initials = displayName
     .split(/\s+/)
@@ -230,7 +230,7 @@ export default function SettingsScreen() {
                 </AnimatePresence>
               </div>
 
-              {/* Currency Row */}
+              {/* Currency Row 
               <CurrencySelectDrawer value={currency} onChange={setCurrency}>
                 <button
                   type="button"
@@ -248,6 +248,7 @@ export default function SettingsScreen() {
                   <ChevronRight size={18} className="text-[#9A9590]" strokeWidth={2.5} />
                 </button>
               </CurrencySelectDrawer>
+              */}
 
             </div>
           </div>

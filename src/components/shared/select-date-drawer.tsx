@@ -71,8 +71,15 @@ export default function SelectDateDrawer({
     : 'closed'
 
   return (
-    <Drawer open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
-      <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-foreground data-[vaul-drawer-direction=bottom]:h-[min(90dvh,760px)] data-[vaul-drawer-direction=bottom]:max-h-[calc(100dvh-var(--safe-top))]">
+    <Drawer
+      open={isOpen}
+      repositionInputs={false}
+      onOpenChange={(open) => { if (!open) onClose() }}
+    >
+      <DrawerContent
+        className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-foreground data-[vaul-drawer-direction=bottom]:h-[min(42rem,calc(var(--app-viewport-height,100dvh)-var(--safe-top)-0.5rem))] data-[vaul-drawer-direction=bottom]:max-h-[calc(var(--app-viewport-height,100dvh)-var(--safe-top)-0.5rem)]"
+        style={{ paddingBottom: 'var(--safe-bottom)' }}
+      >
         <SelectDateDrawerContent
           key={contentKey}
           onClose={onClose}
@@ -166,7 +173,7 @@ function SelectDateDrawerContent({
   return (
     <>
       {/* Drawer Header */}
-      <div className="px-6 pt-5 pb-3 shrink-0 flex items-center justify-between">
+      <div className="mx-auto flex w-full max-w-lg shrink-0 items-center justify-between px-4 pt-4 pb-2 sm:px-6 sm:pt-5 sm:pb-3">
         <h3 className="text-[17px] font-bold text-foreground text-left">
           {isDob ? 'Select Date of Birth' : 'Select Date'}
         </h3>
@@ -183,7 +190,7 @@ function SelectDateDrawerContent({
       <hr className="border-divider border-b-[0.8px] w-full shrink-0" />
 
       {/* Content Area */}
-      <div className="flex-1 px-6 py-2 flex flex-col items-center overflow-y-auto">
+      <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col items-center overflow-y-auto overscroll-contain px-4 py-2 sm:px-6">
         {/* Calendar Picker Block */}
         <div className="relative w-full py-1">
           <button
@@ -248,7 +255,7 @@ function SelectDateDrawerContent({
               [&_.rdp-nav]:hidden!
               [&_.rdp-weekday]:text-muted-faint [&_.rdp-weekday]:font-semibold [&_.rdp-weekday]:text-xs [&_.rdp-weekday]:h-6 [&_.rdp-weekday]:flex [&_.rdp-weekday]:items-center [&_.rdp-weekday]:justify-center
               [&_.rdp-week]:mt-0.5!
-              [&_button[data-day]]:w-10 [&_button[data-day]]:h-10 [&_button[data-day]]:flex [&_button[data-day]]:items-center [&_button[data-day]]:justify-center [&_button[data-day]]:font-medium! [&_button[data-day]]:text-[13px]! [&_button[data-day]]:text-foreground [&_button[data-day]]:rounded-full [&_button[data-day]]:mx-auto
+              [&_button[data-day]]:size-[clamp(2rem,10vw,2.5rem)] [&_button[data-day]]:flex [&_button[data-day]]:items-center [&_button[data-day]]:justify-center [&_button[data-day]]:font-medium! [&_button[data-day]]:text-[13px]! [&_button[data-day]]:text-foreground [&_button[data-day]]:rounded-full [&_button[data-day]]:mx-auto
               **:data-[selected-single=true]:bg-primary! **:data-[selected-single=true]:text-white! **:data-[selected-single=true]:font-bold!
               [&_button[aria-disabled=true]]:text-[#CCCCCC]! [&_button[aria-disabled=true]]:font-normal! [&_button[aria-disabled=true]]:pointer-events-none"
           />
@@ -298,7 +305,7 @@ function SelectDateDrawerContent({
       </div>
 
       {/* Pinned Bottom Selection Confirm Bar */}
-      <div className="px-6 py-4 bg-white shrink-0">
+      <div className="mx-auto w-full max-w-lg shrink-0 bg-white px-4 pt-3 pb-3 sm:px-6 sm:pt-4 sm:pb-4">
         <button
           type="button"
           onClick={handleConfirmSelect}

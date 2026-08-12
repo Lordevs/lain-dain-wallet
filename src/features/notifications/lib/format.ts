@@ -93,6 +93,15 @@ export function getNotificationCardContent(notification: Notification): Notifica
         theme: 'orange',
       }
     }
+    case 'expense_added': {
+      const p = payloadOf(notification as Notification & { type: 'expense_added' })
+      return {
+        tag: 'New 1-to-1 expense',
+        title: p.description,
+        subtitle: `${p.added_by.full_name} added this expense · ${formatCurrency(Number(p.amount), p.currency)}`,
+        theme: 'green',
+      }
+    }
     case 'budget_alert': {
       const p = payloadOf(notification as Notification & { type: 'budget_alert' })
       return {
@@ -102,5 +111,26 @@ export function getNotificationCardContent(notification: Notification): Notifica
         theme: 'orange',
       }
     }
+    case 'group_invitation': {
+      const p = payloadOf(notification as Notification & { type: 'group_invitation' })
+      const isPending = notification.action_status === 'pending'
+      return {
+        tag: isPending ? 'Group invitation' : 'Invitation updated',
+        title: `${p.invited_by.full_name} invited you to ${p.group_name}`,
+        subtitle: isPending
+          ? 'Accept to join this group.'
+          : notification.action_status === 'cancelled'
+            ? 'This invitation was cancelled.'
+            : 'This invitation has been answered.',
+        theme: 'green',
+      }
+    }
+    default:
+      return {
+        tag: 'Notification',
+        title: 'You have a new notification',
+        subtitle: formatTimeAgo(notification.created_at),
+        theme: 'green',
+      }
   }
 }

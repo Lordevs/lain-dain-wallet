@@ -14,6 +14,27 @@ export interface DeviceContact {
   phoneNumber: string // E.164
 }
 
+function cleanDisplayName(rawName: string | null | undefined, phoneNumber: string): string {
+  const printableName = [...(rawName ?? '')]
+    .map((character) => {
+      const codePoint = character.codePointAt(0) ?? 0
+      return codePoint < 32 || codePoint === 127 ? ' ' : character
+    })
+    .join('')
+  const normalized = printableName
+    // Native address books can contain line breaks/control characters copied
+    // from vCards. They break row layout and make initials look corrupted.
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  // Names containing no letters or digits (".", "-", etc.) are common in
+  // imported iOS contacts. A readable phone fallback is more useful and
+  // keeps avatar generation deterministic.
+  return /[\p{L}\p{N}]/u.test(normalized)
+    ? normalized.slice(0, 150)
+    : phoneNumber
+}
+
 /** Only real native builds can read the address book — there's no browser
  * equivalent, and this app only ships as a Capacitor native app anyway
  * (see secure-storage.ts). */
@@ -61,9 +82,6 @@ export async function getDeviceContacts(defaultCountry: Country = 'PK'): Promise
   // both copies in one batch can fail the entire request.
   const resultsByPhone = new Map<string, DeviceContact>()
   for (const contact of contacts) {
-    const displayName = contact.name?.display?.trim()
-    if (!displayName) continue
-
     for (const phone of contact.phones ?? []) {
       if (!phone.number) continue
       const e164 = await toE164(phone.number, defaultCountry)
@@ -71,7 +89,7 @@ export async function getDeviceContacts(defaultCountry: Country = 'PK'): Promise
         resultsByPhone.set(e164, {
           // Match ContactSyncItemSerializer's max_length so an unusually long
           // device-contact name cannot invalidate the whole upload.
-          displayName: displayName.slice(0, 150),
+          displayName: cleanDisplayName(contact.name?.display, e164),
           phoneNumber: e164,
         })
       }

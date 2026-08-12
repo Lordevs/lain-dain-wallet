@@ -6,6 +6,8 @@ import { ROUTES } from '@/constants/routes'
 import { useAuthStore } from '@/store/use-auth-store'
 import { useExpenseQuery } from '@/features/expenses/api/use-expense-query'
 import { useDeleteExpenseMutation } from '@/features/expenses/api/use-delete-expense-mutation'
+import { useGroupQuery } from '@/features/groups/api/use-group-query'
+import { resolveGroupRole } from '@/features/groups/lib/group-roles'
 import { iconForCategory } from '@/features/expenses/lib/category-icons'
 import { formatCurrency } from '@/lib/currency'
 import ConfirmActionDrawer from '@/components/shared/confirm-action-drawer'
@@ -17,6 +19,7 @@ export default function TransactionDetailScreen() {
   const myId = useAuthStore((s) => s.userProfile?.id)
 
   const expenseQuery = useExpenseQuery(id)
+  const groupQuery = useGroupQuery(expenseQuery.data?.group ?? undefined)
   const deleteExpense = useDeleteExpenseMutation()
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false)
 
@@ -82,6 +85,15 @@ export default function TransactionDetailScreen() {
   }
 
   const formattedAmount = formatCurrency(Number(expense.amount), expense.currency)
+  const isOwnEntry = expense.added_by.id === myId
+  const isGroupOwner = expense.context === 'group'
+    && !!myId
+    && resolveGroupRole(groupQuery.data, myId) === 'owner'
+  const canManageExpense = expense.context === 'group'
+    ? isOwnEntry || isGroupOwner
+    : expense.context === 'friendship'
+      ? isOwnEntry
+      : true
 
   const payerNames = expense.payers
     .map((p) => (p.id === myId ? 'You' : p.full_name))
@@ -259,7 +271,8 @@ export default function TransactionDetailScreen() {
           </div>
         </div>
 
-        {/* Actions belong to the detail flow and appear after all content. */}
+        {/* Group entries can only be changed by their creator or the owner. */}
+        {canManageExpense && (
         <div className="flex w-full shrink-0 items-center gap-3 pb-2">
           <button
             type="button"
@@ -280,9 +293,10 @@ export default function TransactionDetailScreen() {
             {deleteExpense.isPending ? 'Deleting...' : 'Delete'}
           </button>
         </div>
+        )}
       </div>
 
-      <ConfirmActionDrawer
+      {canManageExpense && <ConfirmActionDrawer
         isOpen={isConfirmDeleteOpen}
         onClose={() => setIsConfirmDeleteOpen(false)}
         title="Delete this expense"
@@ -291,7 +305,7 @@ export default function TransactionDetailScreen() {
         buttonText="Delete"
         variant="danger"
         onConfirm={handleDelete}
-      />
+      />}
     </div>
   )
 }

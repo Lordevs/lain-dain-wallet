@@ -74,6 +74,12 @@ export function usePushNotifications() {
         const data = event.notification.data as Record<string, unknown> | undefined
         const type = String(data?.type ?? '')
         const groupId = data?.group_id
+        const expenseId = data?.expense_id
+        if ((type === 'expense_added' || type === 'expense_edited') && typeof expenseId === 'string') {
+          queryClient.invalidateQueries({ queryKey: ['notifications'] })
+          router.navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: expenseId } })
+          return
+        }
         if (GROUP_ACTIVITY_TYPES.has(type) && typeof groupId === 'string') {
           router.navigate({ to: ROUTES.GROUP_DETAILS, params: { id: groupId } })
           return
