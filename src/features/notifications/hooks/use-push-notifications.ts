@@ -1,11 +1,30 @@
 import { useEffect } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { FirebaseMessaging } from '@capacitor-firebase/messaging'
+import { App } from '@capacitor/app'
 import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
 import { useAuthStore } from '@/store/use-auth-store'
 import { ROUTES } from '@/constants/routes'
 import { useRegisterFcmDeviceMutation } from '../api/use-register-fcm-device-mutation'
+import { toast } from 'sonner'
+import { clearRefreshToken } from '@/lib/secure-storage'
+import { apiClient } from '@/lib/api/client'
+
+let isHandlingSessionRevocation = false
+
+async function handleSessionRevoked(router: ReturnType<typeof useRouter>, queryClient: ReturnType<typeof useQueryClient>) {
+  if (isHandlingSessionRevocation) return
+  isHandlingSessionRevocation = true
+  await clearRefreshToken()
+  queryClient.clear()
+  useAuthStore.getState().logout()
+  toast.error('You were logged out', {
+    description: 'Your account was signed in on another device.',
+  })
+  await router.navigate({ to: ROUTES.AUTH })
+  isHandlingSessionRevocation = false
+}
 
 const GROUP_ACTIVITY_TYPES = new Set([
   'group_created',
@@ -41,6 +60,14 @@ export function usePushNotifications() {
     let cancelled = false
     const listeners: Array<Promise<{ remove: () => void }>> = []
 
+    async function registerToken(token: string) {
+      await registerDevice.mutateAsync({
+        registration_id: token,
+        type: Capacitor.getPlatform() === 'ios' ? 'ios' : 'android',
+        active: true,
+      })
+    }
+
     async function register() {
       let status = await FirebaseMessaging.checkPermissions()
       if (status.receive === 'prompt' || status.receive === 'prompt-with-rationale') {
@@ -50,19 +77,38 @@ export function usePushNotifications() {
 
       const { token } = await FirebaseMessaging.getToken()
       if (cancelled) return
-      registerDevice.mutate({
-        registration_id: token,
-        type: Capacitor.getPlatform() === 'ios' ? 'ios' : 'android',
-        active: true,
-      })
+      await registerToken(token)
     }
 
-    register().catch(() => {})
+    register().catch((error) => {
+      toast.error('Could not enable notifications', {
+        description: error instanceof Error ? error.message : 'Please try again from Settings.',
+      })
+    })
+
+    // FCM can rotate Android registration tokens after restore, reinstall,
+    // or security maintenance. Keep the backend destination current rather
+    // than waiting for another login cycle.
+    listeners.push(
+      FirebaseMessaging.addListener('tokenReceived', ({ token }) => {
+        if (cancelled) return
+        registerToken(token).catch(() => {
+          toast.error('Could not update this device’s notification registration.')
+        })
+      }),
+    )
 
     listeners.push(
       FirebaseMessaging.addListener('notificationReceived', (event) => {
         const data = event.notification.data as Record<string, unknown> | undefined
         const type = String(data?.type ?? '')
+        if (type === 'session_revoked') {
+          handleSessionRevoked(router, queryClient)
+          return
+        }
+        toast.info(event.notification.title || 'Lain Dain', {
+          description: event.notification.body,
+        })
         if (!GROUP_ACTIVITY_TYPES.has(type)) {
           queryClient.invalidateQueries({ queryKey: ['notifications'] })
         }
@@ -75,6 +121,10 @@ export function usePushNotifications() {
         const type = String(data?.type ?? '')
         const groupId = data?.group_id
         const expenseId = data?.expense_id
+        if (type === 'session_revoked') {
+          handleSessionRevoked(router, queryClient)
+          return
+        }
         if ((type === 'expense_added' || type === 'expense_edited') && typeof expenseId === 'string') {
           queryClient.invalidateQueries({ queryKey: ['notifications'] })
           router.navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: expenseId } })
@@ -86,6 +136,16 @@ export function usePushNotifications() {
         }
         queryClient.invalidateQueries({ queryKey: ['notifications'] })
         router.navigate({ to: ROUTES.NOTIFICATIONS })
+      }),
+    )
+
+    // Push is the instant path. This foreground validation is the reliable
+    // recovery path when notifications were denied, delayed, or the app was
+    // suspended by the OS during the takeover.
+    listeners.push(
+      App.addListener('appStateChange', ({ isActive }) => {
+        if (!isActive || cancelled) return
+        apiClient.GET('/api/auth/profile/').catch(() => {})
       }),
     )
 

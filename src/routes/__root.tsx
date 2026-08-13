@@ -8,6 +8,7 @@ import AppShell from '@/components/layout/app-shell'
 import { useCapacitorSetup } from '@/hooks/use-capacitor-setup'
 import { usePushNotifications } from '@/features/notifications/hooks/use-push-notifications'
 import coinAnimation from '@/assets/coin.webp'
+import { Toaster } from '@/components/ui/sonner'
 
 function RootComponent() {
   const [showSplash, setShowSplash] = useState(true)
@@ -38,6 +39,7 @@ function RootComponent() {
       <AppShell>
         <Outlet />
       </AppShell>
+      <Toaster />
       {showSplash && (
         <div
           className="fixed inset-0 z-9999 bg-[#FEFAF1] flex flex-col items-center justify-center select-none"

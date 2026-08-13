@@ -188,7 +188,7 @@ export default function ProfileForm({ onSubmit, isSubmitting = false, submitErro
                         id="fullName"
                         placeholder="Enter your full name"
                         className={cn(
-                          "w-full h-12 pl-12 pr-4 rounded-full border-[0.98px] bg-[#FEF5EE] text-foreground text-sm! focus-visible:ring-1 focus-visible:ring-primary shadow-none font-normal placeholder:text-[#9A9590]",
+                          "w-full h-12 pl-12 pr-4 rounded-full border-[0.98px] bg-[#FEF5EE] text-foreground text-base md:text-sm focus-visible:ring-1 focus-visible:ring-primary shadow-none font-normal placeholder:text-[#9A9590]",
                           fieldState.error ? "border-tertiary" : "border-[#EFE7DD]"
                         )}
                       />
@@ -377,7 +377,7 @@ export default function ProfileForm({ onSubmit, isSubmitting = false, submitErro
                         type="email"
                         placeholder="Enter Email"
                         className={cn(
-                          "h-12 pl-12 pr-4 rounded-full border-[0.98px] bg-[#FEF5EE] text-foreground text-sm! placeholder:text-[#9A9590] shadow-none",
+                          "h-12 pl-12 pr-4 rounded-full border-[0.98px] bg-[#FEF5EE] text-foreground text-base md:text-sm placeholder:text-[#9A9590] shadow-none",
                           fieldState.error ? "border-tertiary" : "border-[#EFE7DD]"
                         )}
                         {...field}

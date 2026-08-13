@@ -2,6 +2,8 @@ import { useState } from 'react'
 import {
   Drawer,
   DrawerContent,
+  DrawerDescription,
+  DrawerTitle,
 } from '@/components/ui/drawer'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -22,12 +24,17 @@ export default function GenderSelectorDrawer({
   const [tempGender, setTempGender] = useState(value)
 
   return (
-    <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="bg-white rounded-t-[32px] p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A]">
-        <div className="flex items-start justify-between px-6 pt-2 pb-4 shrink-0 relative">
+    <Drawer open={isOpen} repositionInputs={false} onOpenChange={(open) => !open && onClose()}>
+      <DrawerContent
+        className="bg-white rounded-t-[32px] p-0 flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A] data-[vaul-drawer-direction=bottom]:max-h-[calc(var(--app-viewport-height,100dvh)-var(--safe-top)-0.5rem)]"
+        style={{ paddingBottom: 'var(--safe-bottom)' }}
+        onOpenAutoFocus={(event) => event.preventDefault()}
+        onCloseAutoFocus={(event) => event.preventDefault()}
+      >
+        <div className="flex items-start justify-between px-4 pt-2 pb-4 sm:px-6 shrink-0 relative">
           <div className="flex flex-col text-left">
-            <h3 className="text-[20px] font-extrabold text-[#1A1A1A] leading-tight">Select Gender</h3>
-            <p className="text-[13px] text-[#9A9590] mt-1 font-medium">Choose your gender identity.</p>
+            <DrawerTitle className="text-[20px] font-extrabold text-[#1A1A1A] leading-tight">Select Gender</DrawerTitle>
+            <DrawerDescription className="text-[13px] text-[#9A9590] mt-1 font-medium">Choose your gender identity.</DrawerDescription>
           </div>
           <button
             type="button"
@@ -51,7 +58,7 @@ export default function GenderSelectorDrawer({
                   key={opt.value}
                   type="button"
                   onClick={() => setTempGender(opt.value)}
-                  className="w-full flex items-center justify-between py-4 px-6 border-b border-[#EBEBEB] text-left text-base font-semibold transition-colors outline-none cursor-pointer hover:bg-gray-50/50"
+                  className="w-full min-h-14 flex items-center justify-between py-3.5 px-4 sm:px-6 border-b border-[#EBEBEB] text-left text-base font-semibold transition-colors outline-none cursor-pointer hover:bg-gray-50/50"
                 >
                   <span>{opt.label}</span>
                   <div className={cn(
@@ -66,7 +73,7 @@ export default function GenderSelectorDrawer({
           </div>
         </div>
 
-        <div className="px-6 py-4 shrink-0 bg-white border-t border-[#EBEBEB]">
+        <div className="px-4 py-3 sm:px-6 sm:py-4 shrink-0 bg-white border-t border-[#EBEBEB]">
           <Button
             type="button"
             onClick={() => {

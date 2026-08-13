@@ -11,7 +11,12 @@ import FormError from '@/components/shared/form-error'
 
 // Import separate components
 import CountdownTimer from './countdown-timer'
-import { useRequestOtpMutation, useVerifyOtpMutation } from '@/features/auth/api/use-auth-mutations'
+import {
+  ActiveDeviceSessionError,
+  useRequestOtpMutation,
+  useTakeoverMutation,
+  useVerifyOtpMutation,
+} from '@/features/auth/api/use-auth-mutations'
 import { mapUserToProfile } from '@/features/auth/api/map-user'
 import { setRefreshToken } from '@/lib/secure-storage'
 import { useAuthStore } from '@/store/use-auth-store'
@@ -32,7 +37,9 @@ export default function OtpForm({
   onBack
 }: OtpFormProps) {
   const [otpValue, setOtpValue] = useState('')
+  const [deviceConflict, setDeviceConflict] = useState<ActiveDeviceSessionError | null>(null)
   const verifyOtp = useVerifyOtpMutation()
+  const takeover = useTakeoverMutation()
   const requestOtp = useRequestOtpMutation()
   const { setAccessToken, setProfile, setIsAuthenticated } = useAuthStore()
 
@@ -49,26 +56,28 @@ export default function OtpForm({
     // Silently ignore parse errors — phoneNumber may not be E.164 in all cases
   }
 
-  const handleVerify = (e: React.FormEvent) => {
+  const finishLogin = async (data: Awaited<ReturnType<typeof verifyOtp.mutateAsync>>) => {
+    setAccessToken(data.access)
+    await setRefreshToken(data.refresh)
+    const profile = mapUserToProfile(data.user)
+    setProfile(profile)
+    setIsAuthenticated(true)
+    onVerify(!profile.profileComplete)
+  }
+
+  const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault()
-    verifyOtp.mutate(
-      { phoneNumber, code: otpValue },
-      {
-        onSuccess: async (data) => {
-          if (!data) return
-          setAccessToken(data.access)
-          await setRefreshToken(data.refresh)
-          const profile = mapUserToProfile(data.user)
-          setProfile(profile)
-          // Tokens are valid the instant OTP is verified — isAuthenticated
-          // reflects "has a session," not "finished onboarding" (see
-          // routes/__root.tsx), so this is safe to flip now even if the
-          // profile step is still ahead.
-          setIsAuthenticated(true)
-          onVerify(!profile.profileComplete)
-        },
-      },
-    )
+    setDeviceConflict(null)
+    try {
+      await finishLogin(await verifyOtp.mutateAsync({ phoneNumber, code: otpValue }))
+    } catch (error) {
+      if (error instanceof ActiveDeviceSessionError) setDeviceConflict(error)
+    }
+  }
+
+  const handleTakeover = async () => {
+    if (!deviceConflict) return
+    await finishLogin(await takeover.mutateAsync(deviceConflict.takeoverToken))
   }
 
   const handleResend = () => {
@@ -126,19 +135,42 @@ export default function OtpForm({
             {/* Reusable Countdown Timer Component */}
             <CountdownTimer onResend={handleResend} />
 
-            <FormError message={verifyOtp.error?.message} className="mt-4 justify-center" />
+            {deviceConflict ? (
+              <Alert className="mt-5 border-tertiary/30 bg-orange-soft-bg text-left">
+                <AlertTitle>Account active on another device</AlertTitle>
+                <AlertDescription>
+                  Your account is signed in on {deviceConflict.activeDeviceName}. Continuing will immediately log out that device and stop its notifications.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <FormError message={verifyOtp.error?.message} className="mt-4 justify-center" />
+            )}
           </div>
         </div>
 
         {/* Bottom Actions */}
         <div className="mt-12 space-y-6 shrink-0">
           <Button
-            type="submit"
-            disabled={otpValue.length !== 6 || verifyOtp.isPending}
+            type={deviceConflict ? 'button' : 'submit'}
+            onClick={deviceConflict ? handleTakeover : undefined}
+            disabled={deviceConflict ? takeover.isPending : otpValue.length !== 6 || verifyOtp.isPending}
             className="w-full h-14 bg-primary text-white rounded-full font-bold text-base hover:bg-primary/95 disabled:bg-[#D9D2C5] disabled:text-white disabled:shadow-none disabled:opacity-100 transition-all"
           >
-            {verifyOtp.isPending ? 'Verifying...' : 'Verify Phone Number'}
+            {deviceConflict
+              ? (takeover.isPending ? 'Switching device...' : 'Log out old device and continue')
+              : (verifyOtp.isPending ? 'Verifying...' : 'Verify Phone Number')}
           </Button>
+
+          {deviceConflict && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="w-full text-sm font-bold text-muted-foreground"
+            >
+              Cancel
+            </button>
+          )}
+          <FormError message={takeover.error?.message} className="justify-center" />
 
           <p className="text-sm font-medium text-muted-foreground text-center">
             Wrong Phone Number ?{' '}

@@ -7,6 +7,7 @@ import { SecureStorage } from '@aparajita/capacitor-secure-storage'
 // storage in the browser, which is fine for local dev and never reached
 // in a real deployed build (the app only ships as a Capacitor native app).
 const REFRESH_TOKEN_KEY = 'refresh_token'
+const DEVICE_ID_KEY = 'device_id'
 
 export async function getRefreshToken(): Promise<string | null> {
   try {
@@ -27,4 +28,17 @@ export async function clearRefreshToken(): Promise<void> {
   } catch {
     // Nothing was stored — fine, logout should never fail because of this.
   }
+}
+
+export async function getOrCreateDeviceId(): Promise<string> {
+  try {
+    const existing = await SecureStorage.getItem(DEVICE_ID_KEY)
+    if (typeof existing === 'string' && existing) return existing
+  } catch {
+    // Continue and create the installation identity below.
+  }
+
+  const deviceId = crypto.randomUUID()
+  await SecureStorage.setItem(DEVICE_ID_KEY, deviceId)
+  return deviceId
 }

@@ -16,10 +16,9 @@ export interface paths {
         /**
          * @description POST /api/auth/logout/ — blacklists the given refresh token (requires
          *     rest_framework_simplejwt.token_blacklist, already installed) so it can
-         *     no longer be used to mint new access tokens. The already-issued access
-         *     token stays valid until it expires (ACCESS_TOKEN_LIFETIME=30min) since
-         *     that's stateless and can't be revoked — this only stops silent
-         *     re-authentication via refresh.
+         *     no longer be used to mint new access tokens. Revoking the associated
+         *     DeviceSession also makes already-issued access tokens fail on their next
+         *     request and deactivates this account's old push registration.
          */
         post: operations["auth_logout_create"];
         delete?: never;
@@ -38,6 +37,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["auth_otp_request_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/otp/takeover/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["auth_otp_takeover_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1600,6 +1615,10 @@ export interface paths {
          *     own DRF viewset as-is: scopes to request.user automatically, upserts
          *     by registration_id (a re-registered token from the same device
          *     updates the existing row instead of duplicating it).
+         *
+         *     A POST means the app has just obtained a usable FCM token, so it also
+         *     reactivates an older row that Firebase previously marked inactive.
+         *     PATCH and DELETE retain their normal explicit-unregister behaviour.
          */
         get: operations["notifications_devices_list"];
         put?: never;
@@ -1608,6 +1627,10 @@ export interface paths {
          *     own DRF viewset as-is: scopes to request.user automatically, upserts
          *     by registration_id (a re-registered token from the same device
          *     updates the existing row instead of duplicating it).
+         *
+         *     A POST means the app has just obtained a usable FCM token, so it also
+         *     reactivates an older row that Firebase previously marked inactive.
+         *     PATCH and DELETE retain their normal explicit-unregister behaviour.
          */
         post: operations["notifications_devices_create"];
         delete?: never;
@@ -1628,6 +1651,10 @@ export interface paths {
          *     own DRF viewset as-is: scopes to request.user automatically, upserts
          *     by registration_id (a re-registered token from the same device
          *     updates the existing row instead of duplicating it).
+         *
+         *     A POST means the app has just obtained a usable FCM token, so it also
+         *     reactivates an older row that Firebase previously marked inactive.
+         *     PATCH and DELETE retain their normal explicit-unregister behaviour.
          */
         get: operations["notifications_devices_retrieve"];
         /**
@@ -1635,6 +1662,10 @@ export interface paths {
          *     own DRF viewset as-is: scopes to request.user automatically, upserts
          *     by registration_id (a re-registered token from the same device
          *     updates the existing row instead of duplicating it).
+         *
+         *     A POST means the app has just obtained a usable FCM token, so it also
+         *     reactivates an older row that Firebase previously marked inactive.
+         *     PATCH and DELETE retain their normal explicit-unregister behaviour.
          */
         put: operations["notifications_devices_update"];
         post?: never;
@@ -1643,6 +1674,10 @@ export interface paths {
          *     own DRF viewset as-is: scopes to request.user automatically, upserts
          *     by registration_id (a re-registered token from the same device
          *     updates the existing row instead of duplicating it).
+         *
+         *     A POST means the app has just obtained a usable FCM token, so it also
+         *     reactivates an older row that Firebase previously marked inactive.
+         *     PATCH and DELETE retain their normal explicit-unregister behaviour.
          */
         delete: operations["notifications_devices_destroy"];
         options?: never;
@@ -1652,6 +1687,10 @@ export interface paths {
          *     own DRF viewset as-is: scopes to request.user automatically, upserts
          *     by registration_id (a re-registered token from the same device
          *     updates the existing row instead of duplicating it).
+         *
+         *     A POST means the app has just obtained a usable FCM token, so it also
+         *     reactivates an older row that Firebase previously marked inactive.
+         *     PATCH and DELETE retain their normal explicit-unregister behaviour.
          */
         patch: operations["notifications_devices_partial_update"];
         trace?: never;
@@ -1866,7 +1905,7 @@ export interface components {
             /** Format: uuid */
             readonly id: string;
             readonly phone_number: string;
-            display_name: string;
+            readonly display_name: string;
             readonly is_on_lain_dain: boolean;
             /** Format: uuid */
             readonly lain_dain_user_id: string | null;
@@ -2145,6 +2184,19 @@ export interface components {
          * @enum {string}
          */
         CreatedViaEnum: "manual" | "group";
+        DeviceConflict: {
+            code: string;
+            detail: string;
+            active_device_name: string;
+            takeover_token: string;
+        };
+        DeviceSessionTokenRefresh: {
+            refresh: string;
+            readonly access: string;
+        };
+        DeviceSessionTokenRefreshRequest: {
+            refresh: string;
+        };
         /**
          * @description * `owed_to_you` - owed_to_you
          *     * `you_owe` - you_owe
@@ -2346,7 +2398,7 @@ export interface components {
              * Format: date-time
              */
             readonly date_created: string | null;
-            type: components["schemas"]["FCMDeviceTypeEnum"];
+            type: components["schemas"]["Type071Enum"];
         };
         FCMDeviceRequest: {
             name?: string | null;
@@ -2360,15 +2412,8 @@ export interface components {
              * @default true
              */
             active: boolean;
-            type: components["schemas"]["FCMDeviceTypeEnum"];
+            type: components["schemas"]["Type071Enum"];
         };
-        /**
-         * @description * `ios` - ios
-         *     * `android` - android
-         *     * `web` - web
-         * @enum {string}
-         */
-        FCMDeviceTypeEnum: "ios" | "android" | "web";
         /**
          * @description * `weekly` - Weekly
          *     * `monthly` - Monthly
@@ -2858,6 +2903,7 @@ export interface components {
          *     * `payment_confirmation` - Payment confirmation
          *     * `late_payment_reminder` - Late payment reminder
          *     * `payment_dispute` - Payment dispute
+         *     * `expense_added` - Expense added
          *     * `expense_edited` - Expense edited
          *     * `group_invitation` - Group invitation
          * @enum {string}
@@ -3050,7 +3096,7 @@ export interface components {
              * @default true
              */
             active: boolean;
-            type?: components["schemas"]["FCMDeviceTypeEnum"];
+            type?: components["schemas"]["Type071Enum"];
         };
         PatchedFriendshipAutoRemindUpdateRequest: {
             auto_remind_override?: boolean | null;
@@ -3227,6 +3273,13 @@ export interface components {
             auto_reminder_enabled: boolean;
             auto_reminder_interval_days: number;
         };
+        /**
+         * @description * `ios` - ios
+         *     * `android` - android
+         *     * `web` - web
+         * @enum {string}
+         */
+        PlatformEnum: "ios" | "android" | "web";
         /**
          * @description * `signup` - Signup
          *     * `login` - Login
@@ -3522,13 +3575,16 @@ export interface components {
          * @enum {string}
          */
         SplitTypeEnum: "equal" | "unequal" | "adjustment";
-        TokenRefresh: {
-            readonly access: string;
-            refresh: string;
+        TakeoverRequest: {
+            takeover_token: string;
         };
-        TokenRefreshRequest: {
-            refresh: string;
-        };
+        /**
+         * @description * `ios` - ios
+         *     * `android` - android
+         *     * `web` - web
+         * @enum {string}
+         */
+        Type071Enum: "ios" | "android" | "web";
         User: {
             /** Format: uuid */
             readonly id: string;
@@ -3599,6 +3655,10 @@ export interface components {
         VerifyOTPRequest: {
             phone_number: string;
             code: string;
+            /** Format: uuid */
+            device_id: string;
+            device_name?: string;
+            platform: components["schemas"]["PlatformEnum"];
         };
         /**
          * @description One component of a wallet row's breakdown — for a "person" row,
@@ -3707,6 +3767,39 @@ export interface operations {
             };
         };
     };
+    auth_otp_takeover_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TakeoverRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["TakeoverRequest"];
+                "multipart/form-data": components["schemas"]["TakeoverRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OTPVerified"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
     auth_otp_verify_create: {
         parameters: {
             query?: never;
@@ -3736,6 +3829,14 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceConflict"];
                 };
             };
         };
@@ -3834,9 +3935,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["TokenRefreshRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["TokenRefreshRequest"];
-                "multipart/form-data": components["schemas"]["TokenRefreshRequest"];
+                "application/json": components["schemas"]["DeviceSessionTokenRefreshRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["DeviceSessionTokenRefreshRequest"];
+                "multipart/form-data": components["schemas"]["DeviceSessionTokenRefreshRequest"];
             };
         };
         responses: {
@@ -3845,7 +3946,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TokenRefresh"];
+                    "application/json": components["schemas"]["DeviceSessionTokenRefresh"];
                 };
             };
         };

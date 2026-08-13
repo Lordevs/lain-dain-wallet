@@ -2,6 +2,26 @@ import { useMutation } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
 import { ApiError, toApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
+import { Capacitor } from '@capacitor/core'
+import { getOrCreateDeviceId } from '@/lib/secure-storage'
+
+export class ActiveDeviceSessionError extends ApiError {
+  activeDeviceName: string
+  takeoverToken: string
+
+  constructor(activeDeviceName: string, takeoverToken: string) {
+    super(`This account is currently active on ${activeDeviceName}.`)
+    this.name = 'ActiveDeviceSessionError'
+    this.activeDeviceName = activeDeviceName
+    this.takeoverToken = takeoverToken
+  }
+}
+
+function getDeviceLabel(platform: string): string {
+  if (platform === 'ios') return 'iPhone or iPad'
+  if (platform === 'android') return 'Android device'
+  return 'Web browser'
+}
 
 export function useRequestOtpMutation() {
   return useMutation<components['schemas']['OTPRequested'], ApiError, string>({
@@ -22,8 +42,44 @@ export function useVerifyOtpMutation() {
     { phoneNumber: string; code: string }
   >({
     mutationFn: async (vars) => {
-      const { data, error } = await apiClient.POST('/api/auth/otp/verify/', {
-        body: { phone_number: vars.phoneNumber, code: vars.code },
+      const platform = Capacitor.getPlatform() as 'ios' | 'android' | 'web'
+      const { data, error, response } = await apiClient.POST('/api/auth/otp/verify/', {
+        body: {
+          phone_number: vars.phoneNumber,
+          code: vars.code,
+          device_id: await getOrCreateDeviceId(),
+          device_name: getDeviceLabel(platform),
+          platform,
+        },
+      })
+      if (error) {
+        const conflict = error as unknown as {
+          code?: string
+          active_device_name?: string
+          takeover_token?: string
+        }
+        if (
+          response.status === 409 &&
+          conflict.code === 'active_device_session' &&
+          conflict.takeover_token
+        ) {
+          throw new ActiveDeviceSessionError(
+            conflict.active_device_name || 'another device',
+            conflict.takeover_token,
+          )
+        }
+        throw toApiError(error)
+      }
+      return data
+    },
+  })
+}
+
+export function useTakeoverMutation() {
+  return useMutation<components['schemas']['OTPVerified'], ApiError, string>({
+    mutationFn: async (takeoverToken) => {
+      const { data, error } = await apiClient.POST('/api/auth/otp/takeover/', {
+        body: { takeover_token: takeoverToken },
       })
       if (error) throw toApiError(error)
       return data

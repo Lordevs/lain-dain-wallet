@@ -18,6 +18,17 @@ select {
   font-size: max(16px, 1em);
 }
 
+/* Tailwind's important text-size utilities can otherwise override the rule
+   above. Keep native form controls at the iOS no-zoom threshold on phones,
+   while still allowing compact typography at tablet/desktop widths. */
+@media (max-width: 767px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
 :root {
   /* Safe area insets — critical for iPhone notch / Dynamic Island / home indicator */
   --safe-top: env(safe-area-inset-top, 0px);

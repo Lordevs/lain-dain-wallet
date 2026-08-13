@@ -5,6 +5,8 @@ import {
   Drawer,
   DrawerContent,
   DrawerClose,
+  DrawerDescription,
+  DrawerTitle,
 } from '@/components/ui/drawer'
 import { Calendar } from '@/components/ui/calendar'
 
@@ -79,6 +81,8 @@ export default function SelectDateDrawer({
       <DrawerContent
         className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-foreground data-[vaul-drawer-direction=bottom]:h-[min(42rem,calc(var(--app-viewport-height,100dvh)-var(--safe-top)-0.5rem))] data-[vaul-drawer-direction=bottom]:max-h-[calc(var(--app-viewport-height,100dvh)-var(--safe-top)-0.5rem)]"
         style={{ paddingBottom: 'var(--safe-bottom)' }}
+        onOpenAutoFocus={(event) => event.preventDefault()}
+        onCloseAutoFocus={(event) => event.preventDefault()}
       >
         <SelectDateDrawerContent
           key={contentKey}
@@ -174,9 +178,12 @@ function SelectDateDrawerContent({
     <>
       {/* Drawer Header */}
       <div className="mx-auto flex w-full max-w-lg shrink-0 items-center justify-between px-4 pt-4 pb-2 sm:px-6 sm:pt-5 sm:pb-3">
-        <h3 className="text-[17px] font-bold text-foreground text-left">
+        <DrawerTitle className="text-[17px] font-bold text-foreground text-left">
           {isDob ? 'Select Date of Birth' : 'Select Date'}
-        </h3>
+        </DrawerTitle>
+        <DrawerDescription className="sr-only">
+          {isDob ? 'Choose your date of birth from the calendar.' : 'Choose a date from the calendar.'}
+        </DrawerDescription>
         <DrawerClose asChild>
           <button
             type="button"

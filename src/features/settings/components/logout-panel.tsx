@@ -7,6 +7,7 @@ import { getRefreshToken, clearRefreshToken } from '@/lib/secure-storage'
 import { useLogoutMutation } from '@/features/auth/api/use-auth-mutations'
 import { queryClient } from '@/lib/query-client'
 import { ROUTES } from '@/constants/routes'
+import FormError from '@/components/shared/form-error'
 
 interface LogoutPanelProps {
   onClose?: () => void
@@ -24,12 +25,10 @@ export default function LogoutPanel({
   const handleConfirm = onConfirm ?? (async () => {
     const refreshToken = await getRefreshToken()
     if (refreshToken) {
-      // Best-effort: blacklists the refresh token server-side so it can't
-      // silently re-authenticate the app later. If this fails (offline,
-      // already expired, etc.) we still log the device out locally —
-      // the user asked to leave, and their own device's session is the
-      // one thing we can always clear.
-      await logoutMutation.mutateAsync(refreshToken).catch(() => {})
+      // Server acknowledgement matters: it revokes this device session and
+      // deactivates its FCM token. Silently continuing on failure would make
+      // the screen look logged out while this phone could still receive push.
+      await logoutMutation.mutateAsync(refreshToken)
     }
     // logout() only clears in-memory auth state — the refresh token sitting
     // in secure storage has to be cleared explicitly, or a "logged out" app
@@ -98,6 +97,7 @@ export default function LogoutPanel({
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-3.5 mt-8">
+          <FormError message={logoutMutation.error?.message} className="justify-center" />
           {/* Yes, Log Out Button */}
           <button
             type="button"

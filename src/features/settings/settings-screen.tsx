@@ -22,6 +22,7 @@ import { Switch } from '@/components/ui/switch'
 import { usePersonalExpenseSettingsQuery } from '@/features/expenses/api/use-personal-expense-settings-query'
 import { useUpdatePersonalExpenseSettingsMutation } from '@/features/expenses/api/use-update-personal-expense-settings-mutation'
 import { useTestNotificationMutation } from '@/features/notifications/api/use-test-notification-mutation'
+import { toast } from 'sonner'
 
 // ─── Main Screen Component ─────────────────────────────────────────────────────
 export default function SettingsScreen() {
@@ -128,7 +129,14 @@ export default function SettingsScreen() {
               <button
                 type="button"
                 disabled={testNotification.isPending}
-                onClick={() => testNotification.mutate()}
+                onClick={() => testNotification.mutate(undefined, {
+                  onSuccess: () => toast.success('Test notification sent', {
+                    description: 'It should appear on this device in a moment.',
+                  }),
+                  onError: (error) => toast.error('Could not send test notification', {
+                    description: error.message,
+                  }),
+                })}
                 className="w-full flex items-center justify-between p-5 text-left active:bg-[#FEFAF1]/80 transition-colors cursor-pointer outline-none disabled:cursor-wait disabled:opacity-60"
               >
                 <div className="flex items-center gap-4">

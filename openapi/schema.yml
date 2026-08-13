@@ -10,10 +10,9 @@ paths:
       description: |-
         POST /api/auth/logout/ — blacklists the given refresh token (requires
         rest_framework_simplejwt.token_blacklist, already installed) so it can
-        no longer be used to mint new access tokens. The already-issued access
-        token stays valid until it expires (ACCESS_TOKEN_LIFETIME=30min) since
-        that's stateless and can't be revoked — this only stops silent
-        re-authentication via refresh.
+        no longer be used to mint new access tokens. Revoking the associated
+        DeviceSession also makes already-issued access tokens fail on their next
+        request and deactivates this account's old push registration.
       tags:
       - auth
       requestBody:
@@ -66,6 +65,39 @@ paths:
               schema:
                 $ref: '#/components/schemas/OTPRequested'
           description: ''
+  /api/auth/otp/takeover/:
+    post:
+      operationId: auth_otp_takeover_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TakeoverRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TakeoverRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TakeoverRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OTPVerified'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: ''
   /api/auth/otp/verify/:
     post:
       operationId: auth_otp_verify_create
@@ -98,6 +130,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceConflict'
           description: ''
   /api/auth/profile/:
     get:
@@ -185,20 +223,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TokenRefreshRequest'
+              $ref: '#/components/schemas/DeviceSessionTokenRefreshRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/TokenRefreshRequest'
+              $ref: '#/components/schemas/DeviceSessionTokenRefreshRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/TokenRefreshRequest'
+              $ref: '#/components/schemas/DeviceSessionTokenRefreshRequest'
         required: true
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TokenRefresh'
+                $ref: '#/components/schemas/DeviceSessionTokenRefresh'
           description: ''
   /api/contacts/:
     get:
@@ -2900,6 +2938,10 @@ paths:
         own DRF viewset as-is: scopes to request.user automatically, upserts
         by registration_id (a re-registered token from the same device
         updates the existing row instead of duplicating it).
+
+        A POST means the app has just obtained a usable FCM token, so it also
+        reactivates an older row that Firebase previously marked inactive.
+        PATCH and DELETE retain their normal explicit-unregister behaviour.
       tags:
       - notifications
       security:
@@ -2920,6 +2962,10 @@ paths:
         own DRF viewset as-is: scopes to request.user automatically, upserts
         by registration_id (a re-registered token from the same device
         updates the existing row instead of duplicating it).
+
+        A POST means the app has just obtained a usable FCM token, so it also
+        reactivates an older row that Firebase previously marked inactive.
+        PATCH and DELETE retain their normal explicit-unregister behaviour.
       tags:
       - notifications
       requestBody:
@@ -2951,6 +2997,10 @@ paths:
         own DRF viewset as-is: scopes to request.user automatically, upserts
         by registration_id (a re-registered token from the same device
         updates the existing row instead of duplicating it).
+
+        A POST means the app has just obtained a usable FCM token, so it also
+        reactivates an older row that Firebase previously marked inactive.
+        PATCH and DELETE retain their normal explicit-unregister behaviour.
       parameters:
       - in: path
         name: registration_id
@@ -2976,6 +3026,10 @@ paths:
         own DRF viewset as-is: scopes to request.user automatically, upserts
         by registration_id (a re-registered token from the same device
         updates the existing row instead of duplicating it).
+
+        A POST means the app has just obtained a usable FCM token, so it also
+        reactivates an older row that Firebase previously marked inactive.
+        PATCH and DELETE retain their normal explicit-unregister behaviour.
       parameters:
       - in: path
         name: registration_id
@@ -3013,6 +3067,10 @@ paths:
         own DRF viewset as-is: scopes to request.user automatically, upserts
         by registration_id (a re-registered token from the same device
         updates the existing row instead of duplicating it).
+
+        A POST means the app has just obtained a usable FCM token, so it also
+        reactivates an older row that Firebase previously marked inactive.
+        PATCH and DELETE retain their normal explicit-unregister behaviour.
       parameters:
       - in: path
         name: registration_id
@@ -3049,6 +3107,10 @@ paths:
         own DRF viewset as-is: scopes to request.user automatically, upserts
         by registration_id (a re-registered token from the same device
         updates the existing row instead of duplicating it).
+
+        A POST means the app has just obtained a usable FCM token, so it also
+        reactivates an older row that Firebase previously marked inactive.
+        PATCH and DELETE retain their normal explicit-unregister behaviour.
       parameters:
       - in: path
         name: registration_id
@@ -3409,7 +3471,7 @@ components:
           readOnly: true
         display_name:
           type: string
-          maxLength: 150
+          readOnly: true
         is_on_lain_dain:
           type: boolean
           readOnly: true
@@ -3980,6 +4042,41 @@ components:
       description: |-
         * `manual` - Manual
         * `group` - Group
+    DeviceConflict:
+      type: object
+      properties:
+        code:
+          type: string
+        detail:
+          type: string
+        active_device_name:
+          type: string
+        takeover_token:
+          type: string
+      required:
+      - active_device_name
+      - code
+      - detail
+      - takeover_token
+    DeviceSessionTokenRefresh:
+      type: object
+      properties:
+        refresh:
+          type: string
+        access:
+          type: string
+          readOnly: true
+      required:
+      - access
+      - refresh
+    DeviceSessionTokenRefreshRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+          minLength: 1
+      required:
+      - refresh
     DirectionEnum:
       enum:
       - owed_to_you
@@ -4373,7 +4470,7 @@ components:
           nullable: true
           title: Creation date
         type:
-          $ref: '#/components/schemas/FCMDeviceTypeEnum'
+          $ref: '#/components/schemas/Type071Enum'
       required:
       - date_created
       - id
@@ -4401,20 +4498,10 @@ components:
           title: Is active
           description: Inactive devices will not be sent notifications
         type:
-          $ref: '#/components/schemas/FCMDeviceTypeEnum'
+          $ref: '#/components/schemas/Type071Enum'
       required:
       - registration_id
       - type
-    FCMDeviceTypeEnum:
-      enum:
-      - ios
-      - android
-      - web
-      type: string
-      description: |-
-        * `ios` - ios
-        * `android` - android
-        * `web` - web
     FrequencyEnum:
       enum:
       - weekly
@@ -5733,7 +5820,7 @@ components:
           title: Is active
           description: Inactive devices will not be sent notifications
         type:
-          $ref: '#/components/schemas/FCMDeviceTypeEnum'
+          $ref: '#/components/schemas/Type071Enum'
     PatchedFriendshipAutoRemindUpdateRequest:
       type: object
       properties:
@@ -6053,6 +6140,16 @@ components:
       - monthly_budget_limit
       - period_start_day
       - show_spending_comparison
+    PlatformEnum:
+      enum:
+      - ios
+      - android
+      - web
+      type: string
+      description: |-
+        * `ios` - ios
+        * `android` - android
+        * `web` - web
     PurposeEnum:
       enum:
       - signup
@@ -6598,25 +6695,24 @@ components:
         * `equal` - Equal
         * `unequal` - Unequal
         * `adjustment` - Adjustment
-    TokenRefresh:
+    TakeoverRequest:
       type: object
       properties:
-        access:
-          type: string
-          readOnly: true
-        refresh:
-          type: string
-      required:
-      - access
-      - refresh
-    TokenRefreshRequest:
-      type: object
-      properties:
-        refresh:
+        takeover_token:
           type: string
           minLength: 1
       required:
-      - refresh
+      - takeover_token
+    Type071Enum:
+      enum:
+      - ios
+      - android
+      - web
+      type: string
+      description: |-
+        * `ios` - ios
+        * `android` - android
+        * `web` - web
     User:
       type: object
       properties:
@@ -6790,9 +6886,19 @@ components:
           type: string
           minLength: 4
           maxLength: 6
+        device_id:
+          type: string
+          format: uuid
+        device_name:
+          type: string
+          maxLength: 120
+        platform:
+          $ref: '#/components/schemas/PlatformEnum'
       required:
       - code
+      - device_id
       - phone_number
+      - platform
     WalletBreakdownItem:
       type: object
       description: |-

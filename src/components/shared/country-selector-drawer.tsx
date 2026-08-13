@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import {
   Drawer,
   DrawerContent,
+  DrawerDescription,
+  DrawerTitle,
 } from '@/components/ui/drawer'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -79,12 +81,17 @@ export default function CountrySelectorDrawer({
   }, [tempCountry])
 
   return (
-    <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="bg-white rounded-t-[32px] p-0 data-[vaul-drawer-direction=bottom]:h-[80vh]! flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A]">
-        <div className="flex items-start justify-between px-6 pt-2 pb-4 shrink-0 relative">
+    <Drawer open={isOpen} repositionInputs={false} onOpenChange={(open) => !open && onClose()}>
+      <DrawerContent
+        className="bg-white rounded-t-[32px] p-0 data-[vaul-drawer-direction=bottom]:h-[min(80dvh,calc(var(--app-viewport-height,100dvh)-var(--safe-top)-0.5rem))]! data-[vaul-drawer-direction=bottom]:max-h-[calc(var(--app-viewport-height,100dvh)-var(--safe-top)-0.5rem)] flex flex-col focus:outline-none overflow-hidden text-[#1A1A1A]"
+        style={{ paddingBottom: 'var(--safe-bottom)' }}
+        onOpenAutoFocus={(event) => event.preventDefault()}
+        onCloseAutoFocus={(event) => event.preventDefault()}
+      >
+        <div className="flex items-start justify-between px-4 pt-2 pb-4 sm:px-6 shrink-0 relative">
           <div className="flex flex-col text-left">
-            <h3 className="text-[20px] font-extrabold text-[#1A1A1A] leading-tight">Select Country</h3>
-            <p className="text-[13px] text-[#9A9590] mt-1 font-medium">Choose your country of residence.</p>
+            <DrawerTitle className="text-[20px] font-extrabold text-[#1A1A1A] leading-tight">Select Country</DrawerTitle>
+            <DrawerDescription className="text-[13px] text-[#9A9590] mt-1 font-medium">Choose your country of residence.</DrawerDescription>
           </div>
           <button
             type="button"
@@ -104,7 +111,7 @@ export default function CountrySelectorDrawer({
                    key={opt}
                    type="button"
                    onClick={() => setTempCountry(opt)}
-                   className="w-full flex items-center justify-between py-4 px-6 border-b border-[#E0E0E0] text-left text-base font-semibold transition-colors outline-none cursor-pointer hover:bg-gray-50/50"
+                   className="w-full min-h-14 flex items-center justify-between py-3.5 px-4 sm:px-6 border-b border-[#E0E0E0] text-left text-base font-semibold transition-colors outline-none cursor-pointer hover:bg-gray-50/50"
                 >
                   <span>{opt}</span>
                   <div className={cn(
@@ -119,7 +126,7 @@ export default function CountrySelectorDrawer({
           </div>
 
           {tempCountry === 'Other' && (
-            <div ref={customInputContainerRef} className="px-6 py-4 flex flex-col gap-2.5 text-left bg-white">
+            <div ref={customInputContainerRef} className="px-4 py-4 sm:px-6 flex flex-col gap-2.5 text-left bg-white">
               <label className="text-[13px] font-bold text-[#1A1A1A]">Tell us your country</label>
               <Input
                 type="text"
@@ -132,7 +139,7 @@ export default function CountrySelectorDrawer({
           )}
         </div>
 
-        <div className="px-6 py-4 shrink-0 bg-white border-t border-[#E0E0E0]">
+        <div className="px-4 py-3 sm:px-6 sm:py-4 shrink-0 bg-white border-t border-[#E0E0E0]">
           <Button
             type="button"
             onClick={() => {
