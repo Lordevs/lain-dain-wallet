@@ -1,0 +1,38 @@
+/**
+ * Resolve the structural parent of a screen. Back navigation must follow
+ * product hierarchy, not whichever screens happen to be in browser history.
+ */
+export function parentPath(pathname: string): string | null {
+  const path = pathname.replace(/\/$/, '') || '/'
+
+  const group = path.match(/^\/groups\/([^/]+)(?:\/(.*))?$/)
+  if (group) {
+    const [, id, rest = ''] = group
+    if (!rest) return '/dashboard'
+    if (rest === 'settings') return `/groups/${id}`
+    if (rest.startsWith('settings/')) return `/groups/${id}/settings`
+    if (rest === 'recurring') return `/groups/${id}/settings`
+    if (rest.startsWith('recurring/')) return `/groups/${id}/recurring`
+    return `/groups/${id}`
+  }
+
+  const contact = path.match(/^\/contacts\/([^/]+)(?:\/(.*))?$/)
+  if (contact) {
+    const [, id, rest = ''] = contact
+    if (!rest) return '/dashboard'
+    if (rest === 'recurring') return `/contacts/${id}`
+    if (rest.startsWith('recurring/')) return `/contacts/${id}/recurring`
+    return `/contacts/${id}`
+  }
+
+  const transaction = path.match(/^\/transactions\/([^/]+)(?:\/(.*))?$/)
+  if (transaction) return transaction[2] ? `/transactions/${transaction[1]}` : '/dashboard'
+
+  if (path.startsWith('/settings/')) return '/settings'
+  if (path === '/settings') return '/dashboard'
+  if (path.startsWith('/personal/settings/')) return '/personal/settings'
+  if (path === '/personal/settings' || path.startsWith('/personal/')) return '/dashboard'
+  if (path === '/notifications' || path === '/settle-up') return '/dashboard'
+  if (path === '/privacy-policy') return '/settings'
+  return null
+}

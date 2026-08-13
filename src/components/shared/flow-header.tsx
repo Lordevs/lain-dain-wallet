@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { ChevronLeft } from 'lucide-react'
+import { useHierarchyBack } from '@/hooks/use-hierarchy-back'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -8,12 +9,14 @@ interface FlowHeaderProps {
   title: string
   /** Subtitle text displayed below the title */
   subtitle?: string
-  /** Called when the back-chevron button is tapped. Defaults to window.history.back() */
+  /** Optional flow-specific back action; otherwise the route hierarchy is used. */
   onBack?: () => void
   /** Back button style variant: 'circle' (default circular button) or 'minimal' (just the chevron arrow) */
   backVariant?: 'circle' | 'minimal'
   /** Optional avatar component (renders between back button and text) */
   avatar?: ReactNode
+  /** Makes the avatar/title block an accessible navigation target. */
+  onTitleClick?: () => void
   /** Optional element rendered on the right side */
   rightSlot?: ReactNode
 }
@@ -32,18 +35,16 @@ export default function FlowHeader({
   onBack,
   backVariant = 'circle',
   avatar,
+  onTitleClick,
   rightSlot,
 }: FlowHeaderProps) {
+  const hierarchyBack = useHierarchyBack()
   const handleBack = () => {
     if (onBack) {
       onBack()
       return
     }
-    // window.history.length is always ≥ 2 in a Capacitor WebView (the WebView
-    // pre-populates the stack with a blank entry before the app loads), so
-    // checking it is an unreliable guard. Every screen in this app is reached
-    // via in-app navigation, so history.back() is always safe to call.
-    window.history.back()
+    hierarchyBack()
   }
 
   // Check if subtitle contains "selected" to style it green
@@ -74,11 +75,21 @@ export default function FlowHeader({
           </button>
         )}
 
-        {/* Optional Avatar */}
-        {avatar && <div className="shrink-0 flex items-center">{avatar}</div>}
-
-        {/* Title & Subtitle */}
-        <div className="flex flex-col text-left">
+        {/* Title area can act as a profile/settings link on detail screens. */}
+        <div
+          role={onTitleClick ? 'button' : undefined}
+          tabIndex={onTitleClick ? 0 : undefined}
+          onClick={onTitleClick}
+          onKeyDown={(event) => {
+            if (onTitleClick && (event.key === 'Enter' || event.key === ' ')) {
+              event.preventDefault()
+              onTitleClick()
+            }
+          }}
+          className={`flex items-center gap-3 ${onTitleClick ? 'cursor-pointer outline-none' : ''}`}
+        >
+          {avatar && <div className="shrink-0 flex items-center">{avatar}</div>}
+          <div className="flex flex-col text-left">
           <h1 className="text-lg font-bold! text-foreground leading-tight select-none">
             {title}
           </h1>
@@ -90,6 +101,7 @@ export default function FlowHeader({
               {subtitle}
             </span>
           )}
+          </div>
         </div>
       </div>
 

@@ -12,6 +12,7 @@ import { queryClient } from '@/lib/query-client'
 const HIDE_NAV_PREFIXES = [
   ROUTES.AUTH,                                 // '/auth' — nothing to navigate to yet
   ROUTES.ONBOARDING,                           // '/onboarding' — same
+  ROUTES.PRIVACY_POLICY,                       // public legal screen
   ROUTES.CONTACTS,                             // '/contacts' all child routes
   ROUTES.GROUPS,                               // '/groups' all child routes
   ROUTES.TRANSACTIONS,                         // '/transactions' all child routes

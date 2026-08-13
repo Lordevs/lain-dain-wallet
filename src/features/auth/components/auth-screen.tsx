@@ -113,6 +113,16 @@ export default function AuthScreen() {
           }} />
         </div>
       )}
+
+      {(step === 'signin' || step === 'signup_phone') && (
+        <button
+          type="button"
+          onClick={() => navigate({ to: ROUTES.PRIVACY_POLICY })}
+          className="mx-auto mt-6 border-0 bg-transparent p-1 text-center text-xs font-semibold text-[#6B6B6B] underline underline-offset-4 cursor-pointer"
+        >
+          Privacy Policy
+        </button>
+      )}
     </div>
   )
 }

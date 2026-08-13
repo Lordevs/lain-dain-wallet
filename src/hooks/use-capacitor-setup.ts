@@ -1,7 +1,8 @@
-import { useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { App } from '@capacitor/app'
 import { useRouter } from '@tanstack/react-router'
+import { parentPath } from '@/lib/navigation-hierarchy'
 
 /**
  * useCapacitorSetup
@@ -13,6 +14,13 @@ import { useRouter } from '@tanstack/react-router'
  */
 export function useCapacitorSetup() {
   const router = useRouter()
+
+  const navigateToParent = useCallback(() => {
+    const parent = parentPath(router.state.location.pathname)
+    if (!parent) return false
+    void router.navigate({ to: parent, replace: true } as never)
+    return true
+  }, [router])
 
   useEffect(() => {
     // iOS WKWebView's dynamic viewport units can briefly report the layout
@@ -29,26 +37,54 @@ export function useCapacitorSetup() {
     updateViewportHeight()
     viewport?.addEventListener('resize', updateViewportHeight)
     window.addEventListener('orientationchange', updateViewportHeight)
+    const platform = Capacitor.getPlatform()
+
+    // Edge swipe works independently of the OS navigation-bar mode. Android
+    // accepts an inward swipe from either edge; iOS uses the familiar left
+    // edge. Vertical scrolling and controls are deliberately ignored.
+    let startX = 0
+    let startY = 0
+    let trackingEdgeSwipe = false
+    const onTouchStart = (event: TouchEvent) => {
+      const touch = event.touches[0]
+      const target = event.target as HTMLElement | null
+      if (!touch || target?.closest('input, textarea, select, [data-vaul-drawer]')) return
+      const fromLeft = touch.clientX <= 24
+      const fromRight = platform === 'android' && touch.clientX >= window.innerWidth - 24
+      trackingEdgeSwipe = fromLeft || fromRight
+      startX = touch.clientX
+      startY = touch.clientY
+    }
+    const onTouchEnd = (event: TouchEvent) => {
+      if (!trackingEdgeSwipe) return
+      trackingEdgeSwipe = false
+      const touch = event.changedTouches[0]
+      if (!touch) return
+      const dx = touch.clientX - startX
+      const dy = touch.clientY - startY
+      const inwardDistance = startX <= 24 ? dx : -dx
+      if (inwardDistance >= 72 && Math.abs(dx) > Math.abs(dy) * 1.4) navigateToParent()
+    }
+    document.addEventListener('touchstart', onTouchStart, { passive: true })
+    document.addEventListener('touchend', onTouchEnd, { passive: true })
 
     // Only run on real native devices — no-op in browser dev
     if (!Capacitor.isNativePlatform()) {
       return () => {
         viewport?.removeEventListener('resize', updateViewportHeight)
         window.removeEventListener('orientationchange', updateViewportHeight)
+        document.removeEventListener('touchstart', onTouchStart)
+        document.removeEventListener('touchend', onTouchEnd)
       }
     }
 
     const listeners: Array<Promise<{ remove: () => void }>> = []
-    const platform = Capacitor.getPlatform()
-
     // ─── 1. Android Back Button ─────────────────────────────────────────────────
     // Without this, the back button exits the app instead of navigating back
     if (platform === 'android') {
       listeners.push(
         App.addListener('backButton', ({ canGoBack }) => {
-          if (canGoBack) {
-            router.history.back()
-          } else {
+          if (!navigateToParent() && !canGoBack) {
             // At the root of the app — exit
             App.exitApp()
           }
@@ -76,9 +112,11 @@ export function useCapacitorSetup() {
     return () => {
       viewport?.removeEventListener('resize', updateViewportHeight)
       window.removeEventListener('orientationchange', updateViewportHeight)
+      document.removeEventListener('touchstart', onTouchStart)
+      document.removeEventListener('touchend', onTouchEnd)
       listeners.forEach((listenerPromise) => {
         listenerPromise.then((listener) => listener.remove())
       })
     }
-  }, [router])
+  }, [navigateToParent, router])
 }

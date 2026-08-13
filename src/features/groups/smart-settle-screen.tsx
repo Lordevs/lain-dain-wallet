@@ -30,7 +30,6 @@ export default function SmartSettleScreen() {
       {/* Header */}
       <FlowHeader
         title="Smart Settle"
-        onBack={() => window.history.back()}
         backVariant="circle"
       />
 

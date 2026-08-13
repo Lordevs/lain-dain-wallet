@@ -72,7 +72,7 @@ export function useGroupSettings() {
 
   const smartSettleEnabled = group?.smart_settle_enabled ?? true
   const setSmartSettleEnabled = (enabled: boolean) => {
-    if (id) {
+    if (id && !updateGroup.isPending) {
       updateGroup.mutate({ smart_settle_enabled: enabled })
     }
   }
@@ -259,6 +259,7 @@ export function useGroupSettings() {
     creatorName,
     smartSettleEnabled,
     setSmartSettleEnabled,
+    isSmartSettlePending: updateGroup.isPending,
     groupPhoto,
     groupName,
     isNamePanelOpen,

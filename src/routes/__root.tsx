@@ -8,7 +8,6 @@ import AppShell from '@/components/layout/app-shell'
 import { useCapacitorSetup } from '@/hooks/use-capacitor-setup'
 import { usePushNotifications } from '@/features/notifications/hooks/use-push-notifications'
 import coinAnimation from '@/assets/coin.webp'
-import { Toaster } from '@/components/ui/sonner'
 
 function RootComponent() {
   const [showSplash, setShowSplash] = useState(true)
@@ -39,7 +38,6 @@ function RootComponent() {
       <AppShell>
         <Outlet />
       </AppShell>
-      <Toaster />
       {showSplash && (
         <div
           className="fixed inset-0 z-9999 bg-[#FEFAF1] flex flex-col items-center justify-center select-none"
@@ -99,7 +97,10 @@ export const Route = createRootRoute({
     const pathname = location.pathname
     const isAuthRoute = pathname.startsWith(ROUTES.AUTH)
     const isOnboardingRoute = pathname.startsWith(ROUTES.ONBOARDING)
+    const isPublicLegalRoute = pathname === ROUTES.PRIVACY_POLICY
     const profileComplete = userProfile?.profileComplete ?? false
+
+    if (isPublicLegalRoute) return
 
     if (!isAuthenticated) {
       if (!isAuthRoute) throw redirect({ to: ROUTES.AUTH })

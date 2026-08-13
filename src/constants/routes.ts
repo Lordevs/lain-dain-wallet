@@ -4,6 +4,7 @@ export const ROUTES = {
   DASHBOARD: '/',
   AUTH: '/auth',
   ONBOARDING: '/onboarding',
+  PRIVACY_POLICY: '/privacy-policy',
 
   // ── Settings ─────────────────────────────────────────────────────────────────
   SETTINGS: '/settings',

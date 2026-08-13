@@ -24,6 +24,7 @@ export default function GroupSettingsScreen() {
     creatorName,
     smartSettleEnabled,
     setSmartSettleEnabled,
+    isSmartSettlePending,
     groupPhoto,
     groupName,
     members,
@@ -66,21 +67,11 @@ export default function GroupSettingsScreen() {
 
   const you = members.find((m) => m.id === 'you')
 
-  // Handle back navigation
-  const handleBack = () => {
-    if (window.history.length > 1) {
-      window.history.back()
-    } else {
-      navigate({ to: ROUTES.GROUP_DETAILS, params: { id: group.id } })
-    }
-  }
-
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-12 select-none text-left">
       {/* Page Header */}
       <FlowHeader
         title="Group Settings"
-        onBack={handleBack}
         backVariant="circle"
       />
 
@@ -251,8 +242,8 @@ export default function GroupSettingsScreen() {
           </div>
         </div>
 
-        {/* Group Settings Section */}
-        <div className="flex flex-col text-left">
+        {/* Configuration is deliberately owner-only. */}
+        {isOwner && <div className="flex flex-col text-left">
           <h3 className="text-[12px] font-bold text-[#6B6B6B] tracking-wider mb-2.5 px-1 uppercase">
             Group Settings
           </h3>
@@ -308,11 +299,11 @@ export default function GroupSettingsScreen() {
               {/* Reactive Custom Switch Toggle */}
               <button
                 type="button"
-                disabled={!isAdmin}
+                disabled={isSmartSettlePending}
                 onClick={() => setSmartSettleEnabled(!smartSettleEnabled)}
                 className={cn(
                   "relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none self-start mt-0.5",
-                  isAdmin ? "cursor-pointer" : "cursor-not-allowed opacity-60",
+                  isSmartSettlePending ? "cursor-wait opacity-70" : "cursor-pointer",
                   smartSettleEnabled ? "bg-positive" : "bg-[#D1D1D6]"
                 )}
               >
@@ -340,7 +331,7 @@ export default function GroupSettingsScreen() {
               </p>
             </div>
           </div>
-        </div>
+        </div>}
 
         {/* Danger Zone Section */}
         <div className="flex flex-col text-left">
@@ -362,8 +353,8 @@ export default function GroupSettingsScreen() {
               </p>
             </div>
 
-            {/* Delete Group */}
-            <div
+            {/* Delete Group — only the owner can dissolve the group. */}
+            {isOwner && <div
               onClick={handleDeleteGroup}
               className="p-4 flex items-center gap-3.5 cursor-pointer hover:bg-[#FFF0F0]/20 active:scale-[0.99] transition-all"
             >
@@ -373,7 +364,7 @@ export default function GroupSettingsScreen() {
               <p className="font-bold text-[15px] text-[#EB5757]">
                 Delete Group
               </p>
-            </div>
+            </div>}
           </div>
         </div>
       </div>

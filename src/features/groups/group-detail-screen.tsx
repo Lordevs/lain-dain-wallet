@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
-import { ChevronDown, ChevronUp, ListFilter, MoreVertical } from 'lucide-react'
+import { ChevronDown, ChevronUp, ListFilter } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import { formatCurrency } from '@/lib/currency'
 import { cn } from '@/lib/utils'
@@ -183,15 +183,7 @@ export default function GroupDetailScreen() {
             className="size-11 text-sm font-bold"
           />
         }
-        rightSlot={
-          <button
-            type="button"
-            onClick={() => navigate({ to: ROUTES.GROUP_SETTINGS, params: { id: groupId } })}
-            className="text-[#6B6B6B] cursor-pointer border-0 bg-transparent flex items-center justify-center p-2"
-          >
-            <MoreVertical size={20} />
-          </button>
-        }
+        onTitleClick={() => navigate({ to: ROUTES.GROUP_SETTINGS, params: { id: groupId } })}
       />
 
       {balances.length > 0 && (

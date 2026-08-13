@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettleUpRouteImport } from './routes/settle-up'
+import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as PersonalRouteImport } from './routes/personal'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as NotificationsRouteImport } from './routes/notifications'
@@ -68,6 +69,11 @@ import { Route as ContactsIdRecurringPaymentIdEditRouteImport } from './routes/c
 const SettleUpRoute = SettleUpRouteImport.update({
   id: '/settle-up',
   path: '/settle-up',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
+  id: '/privacy-policy',
+  path: '/privacy-policy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PersonalRoute = PersonalRouteImport.update({
@@ -352,6 +358,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof NotificationsRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/personal': typeof PersonalRouteWithChildren
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/settle-up': typeof SettleUpRoute
   '/contacts/$id': typeof ContactsIdRouteWithChildren
   '/contacts/new': typeof ContactsNewRoute
@@ -407,6 +414,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/settle-up': typeof SettleUpRoute
   '/contacts/new': typeof ContactsNewRoute
   '/personal/add-expense': typeof PersonalAddExpenseRoute
@@ -459,6 +467,7 @@ export interface FileRoutesById {
   '/notifications': typeof NotificationsRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/personal': typeof PersonalRouteWithChildren
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/settle-up': typeof SettleUpRoute
   '/contacts/$id': typeof ContactsIdRouteWithChildren
   '/contacts/new': typeof ContactsNewRoute
@@ -518,6 +527,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/onboarding'
     | '/personal'
+    | '/privacy-policy'
     | '/settle-up'
     | '/contacts/$id'
     | '/contacts/new'
@@ -573,6 +583,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/onboarding'
+    | '/privacy-policy'
     | '/settle-up'
     | '/contacts/new'
     | '/personal/add-expense'
@@ -624,6 +635,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/onboarding'
     | '/personal'
+    | '/privacy-policy'
     | '/settle-up'
     | '/contacts/$id'
     | '/contacts/new'
@@ -682,6 +694,7 @@ export interface RootRouteChildren {
   NotificationsRoute: typeof NotificationsRouteWithChildren
   OnboardingRoute: typeof OnboardingRoute
   PersonalRoute: typeof PersonalRouteWithChildren
+  PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   SettleUpRoute: typeof SettleUpRoute
   ContactsIdRoute: typeof ContactsIdRouteWithChildren
   ContactsNewRoute: typeof ContactsNewRoute
@@ -706,6 +719,13 @@ declare module '@tanstack/react-router' {
       path: '/settle-up'
       fullPath: '/settle-up'
       preLoaderRoute: typeof SettleUpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy-policy': {
+      id: '/privacy-policy'
+      path: '/privacy-policy'
+      fullPath: '/privacy-policy'
+      preLoaderRoute: typeof PrivacyPolicyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/personal': {
@@ -1243,6 +1263,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotificationsRoute: NotificationsRouteWithChildren,
   OnboardingRoute: OnboardingRoute,
   PersonalRoute: PersonalRouteWithChildren,
+  PrivacyPolicyRoute: PrivacyPolicyRoute,
   SettleUpRoute: SettleUpRoute,
   ContactsIdRoute: ContactsIdRouteWithChildren,
   ContactsNewRoute: ContactsNewRoute,

@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
 import { apiClient } from '@/lib/api/client'
 import { ApiError, toApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
@@ -19,7 +18,7 @@ export interface UpdateGroupValues {
 export function useUpdateGroupMutation(groupId: string) {
   const queryClient = useQueryClient()
 
-  return useMutation<components['schemas']['GroupUpdate'], ApiError, UpdateGroupValues>({
+  return useMutation<components['schemas']['GroupUpdate'], ApiError, UpdateGroupValues, { previousGroup?: components['schemas']['Group'] }>({
     mutationFn: async (values: UpdateGroupValues) => {
       const formData = new FormData()
 
@@ -46,12 +45,26 @@ export function useUpdateGroupMutation(groupId: string) {
       if (error) throw toApiError(error)
       return data
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['group', groupId] })
+    onMutate: async (values) => {
+      await queryClient.cancelQueries({ queryKey: ['group', groupId] })
+      const previousGroup = queryClient.getQueryData<components['schemas']['Group']>(['group', groupId])
+      if (previousGroup && values.smart_settle_enabled !== undefined) {
+        queryClient.setQueryData<components['schemas']['Group']>(['group', groupId], {
+          ...previousGroup,
+          smart_settle_enabled: values.smart_settle_enabled,
+        })
+      }
+      return { previousGroup }
+    },
+    onSuccess: (updatedGroup) => {
+      queryClient.setQueryData(['group', groupId], updatedGroup)
       queryClient.invalidateQueries({ queryKey: ['group-balance', groupId] })
     },
-    onError: (error) => {
-      toast.error(error.message)
+    onError: (_error, _values, context) => {
+      if (context?.previousGroup) {
+        queryClient.setQueryData(['group', groupId], context.previousGroup)
+      }
     },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['group', groupId] }),
   })
 }
