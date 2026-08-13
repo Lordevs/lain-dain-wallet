@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { createRootRoute, Outlet, redirect } from '@tanstack/react-router'
+import { createRootRoute, Navigate, Outlet, redirect } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/router-devtools'
 import { SplashScreen } from '@capacitor/splash-screen'
 import { useAuthStore } from '@/store/use-auth-store'
@@ -117,4 +117,5 @@ export const Route = createRootRoute({
     }
   },
   component: RootComponent,
+  notFoundComponent: () => <Navigate to={ROUTES.DASHBOARD} replace />,
 })
