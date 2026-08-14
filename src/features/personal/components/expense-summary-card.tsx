@@ -21,31 +21,38 @@ export default function ExpenseSummaryCard({ summary, label = 'You spent this mo
   const { totalSpent, currency, comparison } = summary
 
   const format = (amount: number) => formatCurrency(amount, currency)
+  const formattedTotal = format(totalSpent)
+  const isLargeAmount = formattedTotal.length > 12
 
   return (
     <div className={cn("bg-white rounded-[20px] border-[0.8px] border-[#EBEBEB] shadow-[0px_2px_5px_0px_#0000000D] p-4 mx-6 mt-3 flex justify-between items-center", className)}>
-      <div className="flex flex-col">
+      <div className="flex min-w-0 flex-1 flex-col">
         <span className="text-[#6B6B6B] text-xs font-medium">
           {label}
         </span>
-        <span className="text-[32px] font-black text-[#1A1A1A] leading-none mt-2">
-          {format(totalSpent)}
+        <span
+          className={cn(
+            'mt-2 whitespace-nowrap font-black leading-none tracking-[-0.04em] text-[#1A1A1A] tabular-nums',
+            isLargeAmount ? 'text-[clamp(20px,7vw,28px)]' : 'text-[clamp(26px,8vw,32px)]',
+          )}
+        >
+          {formattedTotal}
         </span>
         {comparison && (
-          <div className="flex items-center gap-1 px-2.5 py-0.5 bg-[#FFF9E6] rounded-full mt-3 w-fit">
+          <div className="mt-3 flex max-w-full items-start gap-1 rounded-xl bg-[#FFF9E6] px-2.5 py-1">
             {comparison.direction === 'up' ? (
               <TrendingUp size={12} className="text-tertiary" strokeWidth={2.5} />
             ) : (
               <TrendingDown size={12} className="text-positive" strokeWidth={2.5} />
             )}
-            <span className="text-tertiary text-[10px] font-semibold">
+            <span className="min-w-0 text-[10px] font-semibold leading-snug text-tertiary">
               {format(comparison.amount)} {comparison.direction === 'up' ? 'more' : 'less'} than{' '}
               {comparison.previousPeriodLabel}
             </span>
           </div>
         )}
       </div>
-      <img src={coinWalletSvg} alt="Wallet" className="w-28 h-15 shrink-0" />
+      {!isLargeAmount && <img src={coinWalletSvg} alt="" className="h-15 w-28 shrink-0" />}
     </div>
   )
 }

@@ -7,6 +7,8 @@ import { useAuthStore } from '@/store/use-auth-store'
 import { useExpenseQuery } from '@/features/expenses/api/use-expense-query'
 import { useDeleteExpenseMutation } from '@/features/expenses/api/use-delete-expense-mutation'
 import { useGroupQuery } from '@/features/groups/api/use-group-query'
+import { useGroupBalanceQuery } from '@/features/groups/api/use-group-balance-query'
+import { useFriendshipBalanceQuery } from '@/features/contacts/api/use-friendship-balance-query'
 import { resolveGroupRole } from '@/features/groups/lib/group-roles'
 import { iconForCategory } from '@/features/expenses/lib/category-icons'
 import { formatCurrency } from '@/lib/currency'
@@ -20,6 +22,8 @@ export default function TransactionDetailScreen() {
 
   const expenseQuery = useExpenseQuery(id)
   const groupQuery = useGroupQuery(expenseQuery.data?.group ?? undefined)
+  const groupBalanceQuery = useGroupBalanceQuery(expenseQuery.data?.group ?? undefined)
+  const friendshipBalanceQuery = useFriendshipBalanceQuery(expenseQuery.data?.friendship ?? undefined)
   const deleteExpense = useDeleteExpenseMutation()
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false)
 
@@ -94,6 +98,11 @@ export default function TransactionDetailScreen() {
     : expense.context === 'friendship'
       ? isOwnEntry
       : true
+  const hasOutstandingBalance = expense.context === 'group'
+    ? (groupBalanceQuery.data ?? []).some((balance) => Number(balance.net_amount) !== 0)
+    : expense.context === 'friendship'
+      ? (friendshipBalanceQuery.data ?? []).some((balance) => Number(balance.net_amount) !== 0)
+      : false
 
   const payerNames = expense.payers
     .map((p) => (p.id === myId ? 'You' : p.full_name))
@@ -158,7 +167,7 @@ export default function TransactionDetailScreen() {
             </div>
           </div>
 
-          <span className="text-[34px] font-extrabold text-[#1A1A1A] mt-6 tracking-tight leading-none">
+          <span className="mt-6 max-w-full text-[clamp(24px,8vw,34px)] font-extrabold leading-none tracking-[-0.04em] text-[#1A1A1A] tabular-nums [overflow-wrap:anywhere]">
             {formattedAmount}
           </span>
 
@@ -220,9 +229,9 @@ export default function TransactionDetailScreen() {
             </div>
 
             {mySplit && (
-              <div className="px-5 py-4 flex items-center justify-between">
-                <span className="text-sm font-medium text-[#6B6B6B]">Your share</span>
-                <span className="text-sm font-extrabold text-[#1A1A1A]">
+              <div className="flex items-start justify-between gap-4 px-5 py-4">
+                <span className="shrink-0 text-sm font-medium text-[#6B6B6B]">Your share</span>
+                <span className="min-w-0 max-w-[65%] text-right text-sm font-extrabold text-[#1A1A1A] tabular-nums [overflow-wrap:anywhere]">
                   {formatCurrency(myShare, expense.currency)}
                 </span>
               </div>
@@ -246,8 +255,8 @@ export default function TransactionDetailScreen() {
               const isMe = split.id === myId
               const shareAmount = Number(split.amount_owed) + Number(split.extra_amount)
               return (
-                <div key={split.id} className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                <div key={split.id} className="flex items-center justify-between gap-3 p-4">
+                  <div className="flex min-w-0 items-center gap-3">
                     <div
                       className={cn(
                         'w-10 h-10 rounded-full text-white flex items-center justify-center font-extrabold text-sm shadow-sm select-none',
@@ -260,9 +269,9 @@ export default function TransactionDetailScreen() {
                         .slice(0, 2)
                         .join('')}
                     </div>
-                    <span className="font-bold text-sm text-[#1A1A1A]">{isMe ? 'You' : split.full_name}</span>
+                    <span className="min-w-0 truncate text-sm font-bold text-[#1A1A1A]">{isMe ? 'You' : split.full_name}</span>
                   </div>
-                  <span className={cn('font-extrabold text-sm', isMe ? 'text-[#C96A1B]' : 'text-[#1A1A1A]')}>
+                  <span className={cn('max-w-[48%] shrink-0 text-right text-sm font-extrabold tabular-nums [overflow-wrap:anywhere]', isMe ? 'text-[#C96A1B]' : 'text-[#1A1A1A]')}>
                     {formatCurrency(shareAmount, expense.currency)}
                   </span>
                 </div>
@@ -295,6 +304,23 @@ export default function TransactionDetailScreen() {
         </div>
         )}
       </div>
+
+      {hasOutstandingBalance && (
+        <div className="z-10 shrink-0 px-3 pb-3 pt-3">
+          <button
+            type="button"
+            onClick={() => navigate({
+              to: ROUTES.SETTLE_UP,
+              search: expense.context === 'group'
+                ? { groupId: expense.group! }
+                : { contactId: otherParticipant!.id },
+            })}
+            className="flex h-12 w-full items-center justify-center rounded-full border-0 bg-[#FDB105] text-base font-extrabold text-[#1A1A1A] transition-opacity active:opacity-90 cursor-pointer"
+          >
+            Settle Up
+          </button>
+        </div>
+      )}
 
       {canManageExpense && <ConfirmActionDrawer
         isOpen={isConfirmDeleteOpen}

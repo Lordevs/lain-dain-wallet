@@ -90,10 +90,14 @@ export function useCapacitorSetup() {
     if (platform === 'android') {
       listeners.push(
         App.addListener('backButton', ({ canGoBack }) => {
-          if (!navigateToParent() && !canGoBack) {
-            // At the root of the app — exit
-            App.exitApp()
+          if (canGoBack) {
+            window.history.back()
+            return
           }
+          if (navigateToParent()) return
+
+          // At the true root of the app — exit.
+          App.exitApp()
         })
       )
     }

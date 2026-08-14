@@ -112,10 +112,10 @@ function SettlementDetailBody({ settlement }: { settlement: SettlementRead }) {
   const avatarColor = colorForName(counterpart.full_name)
 
   return (
-    <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen select-none pb-12 text-left">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-[#FEFAF1] text-left select-none">
       <FlowHeader title="Settlement" onBack={() => window.history.back()} backVariant="circle" />
 
-      <div className="px-6 mt-4 flex flex-col gap-5">
+      <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-6 pb-4 pt-4">
         {/* Summary card */}
         <div className="bg-white rounded-[24px] border-[0.8px] border-[#EBEBEB] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-6 flex flex-col items-center text-center gap-3">
           <ContactAvatar initials={initials} avatarColor={avatarColor} src={counterpart.image ?? undefined} size="lg" />
@@ -179,10 +179,8 @@ function SettlementDetailBody({ settlement }: { settlement: SettlementRead }) {
             <span className="text-[13px] font-semibold text-[#EB5757]">{confirmError}</span>
           </div>
         )}
-      </div>
-
-      {/* Actions */}
-      <div className="px-6 mt-6 flex flex-col gap-3">
+        {/* Actions */}
+        <div className="mt-1 flex flex-col gap-3 pb-2">
         {settlement.needs_your_confirmation && (
           <>
             <button
@@ -227,6 +225,7 @@ function SettlementDetailBody({ settlement }: { settlement: SettlementRead }) {
             {cancelMutation.isPending ? 'Cancelling...' : 'Cancel Settlement'}
           </button>
         )}
+        </div>
       </div>
 
       <ConfirmActionDrawer

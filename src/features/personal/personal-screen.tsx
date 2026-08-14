@@ -50,7 +50,7 @@ export default function PersonalScreen() {
   }, [navigate])
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#FEFAF1]">
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[#FEFAF1]">
       {/* Top Header */}
       <FlowHeader
         title="My Expenses"
@@ -111,16 +111,14 @@ export default function PersonalScreen() {
         )}
       </div>
 
-      {/* Fixed action inside the usable viewport, above the tab bar. */}
-      <div className="shrink-0 px-2 pb-5 pt-4">
-        <Button
-          type="button"
-          onClick={() => navigate({ to: ROUTES.PERSONAL_ADD_EXPENSE })}
-          className="h-12 w-full rounded-full bg-primary text-[clamp(14px,4vw,16px)] font-bold text-white shadow-lg transition-transform active:scale-[0.99] cursor-pointer"
-        >
-          Add Personal Expense
-        </Button>
-      </div>
+      <Button
+        type="button"
+        onClick={() => navigate({ to: ROUTES.PERSONAL_ADD_EXPENSE })}
+        className="absolute bottom-0 left-2 right-2 z-40 h-12 rounded-full bg-primary text-[clamp(14px,4vw,16px)] font-bold text-white shadow-lg transition-transform active:scale-[0.99] cursor-pointer"
+        aria-label="Add expense"
+      >
+        Add Expense
+      </Button>
     </div>
   )
 }

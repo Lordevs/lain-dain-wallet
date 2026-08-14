@@ -16,6 +16,7 @@ const HIDE_NAV_PREFIXES = [
   ROUTES.CONTACTS,                             // '/contacts' all child routes
   ROUTES.GROUPS,                               // '/groups' all child routes
   ROUTES.TRANSACTIONS,                         // '/transactions' all child routes
+  '/settlements',                              // settlement details and actions
   ROUTES.SETTINGS,                             // '/settings' and all sub-screens
   ROUTES.SETTLE_UP,                            // '/settle-up' screen
 ]
