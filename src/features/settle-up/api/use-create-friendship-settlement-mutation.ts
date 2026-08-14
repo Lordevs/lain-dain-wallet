@@ -33,6 +33,7 @@ export function useCreateFriendshipSettlementMutation(friendshipId: string) {
       const friendship = queryClient.getQueryData<components['schemas']['Friendship']>(['friendship', friendshipId])
       queryClient.invalidateQueries({ queryKey: friendship ? ['user-ledgers', friendship.friend.id] : ['user-ledgers'] })
       queryClient.invalidateQueries({ queryKey: ['wallet'] })
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
     },
   })
 }

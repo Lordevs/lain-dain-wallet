@@ -10,8 +10,9 @@ type RequestSettlementBody = components['schemas']['RequestSettlementRequestRequ
 const NOTIFICATIONS_LIST_KEY = ['notifications', 'list', 'infinite']
 const UNREAD_COUNT_KEY = ['notifications', 'unread-count']
 
-/** POST /api/notifications/{id}/read/ — idempotent; re-marking an
- * already-read notification is a no-op server-side. */
+/** POST /api/notifications/{id}/read/. Informational notifications are
+ * removed by the server once read; pending actions remain until completed
+ * or explicitly ignored. */
 export function useMarkNotificationReadMutation() {
   const queryClient = useQueryClient()
   return useMutation<Notification, ApiError, string>({
@@ -34,7 +35,9 @@ export function useMarkNotificationReadMutation() {
           ...old,
           pages: old.pages.map((page) => ({
             ...page,
-            results: page.results.map((n) => (n.id === updated.id ? updated : n)),
+            results: updated.action_status === 'none'
+              ? page.results.filter((n) => n.id !== updated.id)
+              : page.results.map((n) => (n.id === updated.id ? updated : n)),
           })),
         }
       })
@@ -52,14 +55,15 @@ export function useMarkAllNotificationsReadMutation() {
       if (error) throw toApiError(error)
     },
     onSuccess: () => {
-      const now = new Date().toISOString()
       queryClient.setQueryData<InfiniteData<PaginatedNotificationList>>(NOTIFICATIONS_LIST_KEY, (old) => {
         if (!old) return old
         return {
           ...old,
           pages: old.pages.map((page) => ({
             ...page,
-            results: page.results.map((n) => (n.read_at ? n : { ...n, read_at: now })),
+            // Informational rows are deleted server-side. Pending actions
+            // deliberately remain visible even after being marked read.
+            results: page.results.filter((n) => n.action_status !== 'none'),
           })),
         }
       })

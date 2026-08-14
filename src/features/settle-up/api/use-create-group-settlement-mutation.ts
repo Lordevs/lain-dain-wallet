@@ -48,6 +48,7 @@ export function useCreateGroupSettlementMutation(groupId: string) {
         }
       }
       queryClient.invalidateQueries({ queryKey: ['wallet'] })
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
     },
   })
 }

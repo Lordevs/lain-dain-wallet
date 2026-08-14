@@ -134,9 +134,7 @@ const NotificationListItem = memo(function NotificationListItem({
   }, [markRead])
 
   const actions = useMemo((): NotificationAction[] | undefined => {
-    if (notification.type === 'payment_confirmation' || notification.type === 'group_invitation') {
-      if (notification.action_status !== 'pending') return undefined
-    } else if (notification.read_at) {
+    if (notification.action_status !== 'pending' && notification.read_at) {
       return undefined
     }
 
@@ -300,6 +298,7 @@ const NotificationListItem = memo(function NotificationListItem({
       navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: p.expense_id } })
     } else if (notification.type === 'payment_settled') {
       const p = payloadOf(notification as Notification & { type: 'payment_settled' })
+      markRead(notification.id)
       navigate({ to: ROUTES.SETTLEMENT_DETAILS, params: { id: p.settlement_id } })
     } else if (notification.type === 'payment_confirmation' && notification.action_status === 'resolved') {
       const p = payloadOf(notification as Notification & { type: 'payment_confirmation' })
@@ -363,9 +362,8 @@ export default function NotificationsScreen() {
   }, [deleteNotification, removePendingDelete])
 
   const needsAction = useCallback((notification: Notification) => (
-    notification.type === 'payment_confirmation' || notification.type === 'group_invitation'
-      ? notification.action_status === 'pending'
-      : notification.type !== 'payment_settled' && !notification.read_at
+    notification.action_status === 'pending'
+    || (notification.type !== 'payment_settled' && !notification.read_at)
   ), [])
 
   // Business action state takes precedence over read state. A pending
