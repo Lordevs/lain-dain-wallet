@@ -19,7 +19,6 @@ import { ROUTES } from '@/constants/routes'
 import { initialsForName, colorForName } from '@/lib/avatar-visuals'
 import { formatCurrency } from '@/lib/currency'
 import { cn } from '@/lib/utils'
-import { usePersonalExpenseSettingsQuery } from '@/features/expenses/api/use-personal-expense-settings-query'
 import { useContactLedgers } from './hooks/use-contact-ledgers'
 import { useFriendshipBalanceQuery } from './api/use-friendship-balance-query'
 import { useFriendshipDetailQuery } from './api/use-friendship-detail-query'
@@ -27,10 +26,13 @@ import {
   useBlockFriendshipMutation,
   useClearFriendshipHistoryMutation,
   useUnblockFriendshipMutation,
-  useUpdateFriendshipAutoRemindMutation,
   useUpdateFriendshipExchangeRateMutation,
 } from './api/use-friendship-settings-mutations'
 import ExchangeRateDrawer from './components/exchange-rate-drawer'
+
+// Auto-reminder feature temporarily hidden:
+// import { usePersonalExpenseSettingsQuery } from '@/features/expenses/api/use-personal-expense-settings-query'
+// import { useUpdateFriendshipAutoRemindMutation } from './api/use-friendship-settings-mutations'
 
 interface SettingsRowProps {
   icon?: ReactNode
@@ -113,7 +115,7 @@ export default function ContactSettingsScreen() {
   const friendshipId = ledgers.friendshipId
   const friendshipQuery = useFriendshipDetailQuery(friendshipId)
   const balanceQuery = useFriendshipBalanceQuery(friendshipId)
-  const personalSettings = usePersonalExpenseSettingsQuery()
+  // const personalSettings = usePersonalExpenseSettingsQuery()
 
   const [notifications, setNotifications] = useState(true)
   const [showExchangeRate, setShowExchangeRate] = useState(false)
@@ -124,7 +126,7 @@ export default function ContactSettingsScreen() {
   const unblockMutation = useUnblockFriendshipMutation(friendshipId ?? '')
   const clearMutation = useClearFriendshipHistoryMutation(friendshipId ?? '')
   const exchangeRateMutation = useUpdateFriendshipExchangeRateMutation(friendshipId ?? '')
-  const autoRemindMutation = useUpdateFriendshipAutoRemindMutation(friendshipId ?? '')
+  // const autoRemindMutation = useUpdateFriendshipAutoRemindMutation(friendshipId ?? '')
 
   const friendship = friendshipQuery.data
   const balance = balanceQuery.data?.[0]
@@ -171,12 +173,12 @@ export default function ContactSettingsScreen() {
   }
 
   const balanceAmount = Number(balance?.net_amount ?? 0)
+  // const autoReminders = friendship.my_auto_remind_override ?? personalSettings.data?.auto_reminder_enabled ?? false
   const balanceLabel = balance?.direction === 'owed_to_you'
     ? `${friend.full_name.split(' ')[0]} owes you`
     : balance?.direction === 'you_owe'
       ? `You owe ${friend.full_name.split(' ')[0]}`
       : 'You are settled'
-  const autoReminders = friendship.my_auto_remind_override ?? personalSettings.data?.auto_reminder_enabled ?? true
   const isBlocked = friendship.is_blocked
   const canUnblock = isBlocked && friendship.blocked_by_me
   const isActionPending = blockMutation.isPending || unblockMutation.isPending
@@ -239,6 +241,8 @@ export default function ContactSettingsScreen() {
         </Section>
 
         <Section title="Preferences">
+          {/* Auto-reminder UI is temporarily hidden. Restore the related query
+              and mutation declarations when the feature resumes.
           <SettingsRow
             title="Auto Reminders"
             description={`Remind ${friend.full_name.split(' ')[0]} automatically if overdue`}
@@ -251,6 +255,7 @@ export default function ContactSettingsScreen() {
               />
             }
           />
+          */}
           <SettingsRow
             title="Notifications"
             description={`Payment updates from ${friend.full_name.split(' ')[0]}`}

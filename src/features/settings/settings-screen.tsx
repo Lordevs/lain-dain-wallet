@@ -3,26 +3,27 @@ import { useNavigate } from '@tanstack/react-router'
 import {
   ChevronRight,
   User,
-  Calendar,
   LogOut,
   Info,
   Trash2,
-  Check,
   BellRing,
   LoaderCircle,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/use-auth-store'
 import { ROUTES } from '@/constants/routes'
-import { motion, AnimatePresence } from 'framer-motion'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import FlowHeader from '@/components/shared/flow-header'
 import { Switch } from '@/components/ui/switch'
 // import CurrencySelectDrawer from '@/components/shared/currency-select-drawer'
 // import { getCurrency } from '@/lib/currency'
-import { usePersonalExpenseSettingsQuery } from '@/features/expenses/api/use-personal-expense-settings-query'
-import { useUpdatePersonalExpenseSettingsMutation } from '@/features/expenses/api/use-update-personal-expense-settings-mutation'
 import { useTestNotificationMutation } from '@/features/notifications/api/use-test-notification-mutation'
 import { toast } from 'sonner'
+
+// Auto-reminder feature temporarily hidden:
+// import { Calendar, Check } from 'lucide-react'
+// import { motion, AnimatePresence } from 'framer-motion'
+// import { usePersonalExpenseSettingsQuery } from '@/features/expenses/api/use-personal-expense-settings-query'
+// import { useUpdatePersonalExpenseSettingsMutation } from '@/features/expenses/api/use-update-personal-expense-settings-mutation'
 
 // ─── Main Screen Component ─────────────────────────────────────────────────────
 export default function SettingsScreen() {
@@ -33,11 +34,11 @@ export default function SettingsScreen() {
   // const [currency, setCurrency] = useState('pkr')
   const [pushNotifications, setPushNotifications] = useState(true)
 
-  const personalSettings = usePersonalExpenseSettingsQuery()
-  const updateSettings = useUpdatePersonalExpenseSettingsMutation()
   const testNotification = useTestNotificationMutation()
-  const autoReminders = personalSettings.data?.auto_reminder_enabled ?? true
-  const reminderInterval = personalSettings.data?.auto_reminder_interval_days === 14 ? 'two_weeks' : 'week'
+  // const personalSettings = usePersonalExpenseSettingsQuery()
+  // const updateSettings = useUpdatePersonalExpenseSettingsMutation()
+  // const autoReminders = personalSettings.data?.auto_reminder_enabled ?? false
+  // const reminderInterval = personalSettings.data?.auto_reminder_interval_days === 14 ? 'two_weeks' : 'week'
 
   // Derive display values from store with mockup fallbacks
   const displayName = userProfile?.name || ''
@@ -155,7 +156,8 @@ export default function SettingsScreen() {
                 )}
               </button>
 
-              {/* Auto Personal Reminders Row */}
+              {/* Auto-reminder UI is temporarily hidden. Restore its imports,
+                  query/mutation state, and this block when the feature resumes.
               <div className="flex flex-col p-5">
                 <div className="flex items-center justify-between">
                   <div>
@@ -169,7 +171,6 @@ export default function SettingsScreen() {
                   />
                 </div>
 
-                {/* Collapsible auto reminder frequency sub-options */}
                 <AnimatePresence initial={false}>
                   {autoReminders && (
                     <motion.div
@@ -183,8 +184,6 @@ export default function SettingsScreen() {
                         Send reminder automatically:
                       </span>
                       <div className="border-[1.5px] border-[#E8E4DC] rounded-[13px] bg-[#F7F4EF] overflow-hidden divide-y-[1.5px] divide-[#E8E4DC]">
-
-                     
                         <button
                           type="button"
                           onClick={() => updateSettings.mutate({ auto_reminder_interval_days: 7 })}
@@ -208,7 +207,6 @@ export default function SettingsScreen() {
                           </div>
                         </button>
 
-                        {/* Every 2 weeks option */}
                         <button
                           type="button"
                           onClick={() => updateSettings.mutate({ auto_reminder_interval_days: 14 })}
@@ -231,13 +229,12 @@ export default function SettingsScreen() {
                             )}
                           </div>
                         </button>
-
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
-
               </div>
+              */}
 
               {/* Currency Row 
               <CurrencySelectDrawer value={currency} onChange={setCurrency}>
