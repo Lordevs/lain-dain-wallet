@@ -193,6 +193,7 @@ export default function GroupDetailScreen() {
             formattedNetAmount={formatCurrency(Math.abs(netAmount), group.default_currency)}
             formattedReceivable={formatCurrency(totalReceivable, group.default_currency)}
             formattedPayable={formatCurrency(totalPayable, group.default_currency)}
+            hasReceivable={totalReceivable > 0}
             onRemind={() => navigate({ to: ROUTES.GROUP_REMINDER, params: { id: groupId } })}
           />
         </Suspense>

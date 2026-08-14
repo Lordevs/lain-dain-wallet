@@ -5,6 +5,7 @@ import ExpenseFormSkeleton from '@/components/shared/expense-form-skeleton'
 import { useExpenseQuery } from '@/features/expenses/api/use-expense-query'
 import { useUpdateExpenseMutation } from '@/features/expenses/api/use-update-expense-mutation'
 import { useCategoriesQuery } from '@/features/expenses/api/use-categories-query'
+import { useFriendshipDetailQuery } from '@/features/contacts/api/use-friendship-detail-query'
 import { useAuthStore } from '@/store/use-auth-store'
 import { colorForName, initialsForName } from '@/lib/avatar-visuals'
 import { ROUTES } from '@/constants/routes'
@@ -64,10 +65,11 @@ export default function EditContactExpenseScreen() {
   const myId = userProfile?.id ?? ''
 
   const expenseQuery = useExpenseQuery(txId)
+  const friendshipQuery = useFriendshipDetailQuery(expenseQuery.data?.friendship ?? undefined)
   const updateExpense = useUpdateExpenseMutation()
   const categoriesQuery = useCategoriesQuery()
 
-  if (expenseQuery.isLoading) {
+  if (expenseQuery.isLoading || (expenseQuery.data?.context === 'friendship' && friendshipQuery.isLoading)) {
     return <ExpenseFormSkeleton />
   }
 
@@ -89,7 +91,12 @@ export default function EditContactExpenseScreen() {
     )
   }
 
+  // Most expenses include both people in payer/split rows. A valid
+  // friendship expense may still be self-only (for example, an imported or
+  // recurring personal charge attached to a friendship), so the friendship
+  // itself is the authoritative fallback for its other participant.
   const otherParticipant = [...expense.payers, ...expense.splits].find((p) => p.id !== myId)
+    ?? friendshipQuery.data?.friend
   if (!otherParticipant) {
     return (
       <div className="flex items-center justify-center p-6 bg-[#FEFAF1] h-[50vh]">

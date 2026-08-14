@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
-import {  MoreVertical } from 'lucide-react'
+import { Bell, MoreVertical } from 'lucide-react'
 import ContactAvatar from '@/components/shared/contact-avatar'
 import { ROUTES } from '@/constants/routes'
 import { formatCurrency } from '@/lib/currency'
@@ -226,7 +226,7 @@ export default function ContactDetailScreen() {
   const amountColorClass = isPositive ? 'text-positive' : isNegative ? 'text-[#C96A1B]' : 'text-[#1A1A1A]'
   const initials = initialsForName(otherUser.full_name)
 
-  // const showRemindButton = isPositive || (amount > 0 && !isNegative)
+  const showRemindButton = isPositive && amount > 0
   const isBlocked = friendshipQuery.data?.is_blocked ?? false
 
   return (
@@ -266,7 +266,7 @@ export default function ContactDetailScreen() {
               {formattedVal}
             </span>
           </div>
-          {/* {showRemindButton && (
+          {showRemindButton && (
             <button
               type="button"
               disabled={isBlocked}
@@ -277,7 +277,7 @@ export default function ContactDetailScreen() {
               <Bell size={13} className="text-positive" strokeWidth={2.5} />
               Remind
             </button>
-          )} */}
+          )}
         </div>
       </div>
 
