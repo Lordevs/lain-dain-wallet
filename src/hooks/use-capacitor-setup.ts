@@ -15,7 +15,18 @@ import { parentPath } from '@/lib/navigation-hierarchy'
 export function useCapacitorSetup() {
   const router = useRouter()
 
-  const navigateToParent = useCallback(() => {
+  const navigateBack = useCallback(() => {
+    const browserState = window.history.state as Record<string, unknown> | null
+    if (browserState?.__drawerSentinel || browserState?.__wizardStep) {
+      window.history.back()
+      return true
+    }
+
+    if (router.state.location.state.__TSR_index > 0) {
+      router.history.back()
+      return true
+    }
+
     const parent = parentPath(router.state.location.pathname)
     if (!parent) return false
     void router.navigate({ to: parent, replace: true } as never)
@@ -68,7 +79,7 @@ export function useCapacitorSetup() {
       const dx = touch.clientX - startX
       const dy = touch.clientY - startY
       const inwardDistance = startX <= 24 ? dx : -dx
-      if (inwardDistance >= 72 && Math.abs(dx) > Math.abs(dy) * 1.4) navigateToParent()
+      if (inwardDistance >= 72 && Math.abs(dx) > Math.abs(dy) * 1.4) navigateBack()
     }
     document.addEventListener('touchstart', onTouchStart, { passive: true })
     document.addEventListener('touchend', onTouchEnd, { passive: true })
@@ -94,7 +105,7 @@ export function useCapacitorSetup() {
             window.history.back()
             return
           }
-          if (navigateToParent()) return
+          if (navigateBack()) return
 
           // At the true root of the app — exit.
           App.exitApp()
@@ -129,5 +140,5 @@ export function useCapacitorSetup() {
         listenerPromise.then((listener) => listener.remove())
       })
     }
-  }, [navigateToParent, router])
+  }, [navigateBack, router])
 }

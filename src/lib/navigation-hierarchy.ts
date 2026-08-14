@@ -8,7 +8,7 @@ export function parentPath(pathname: string): string | null {
   const group = path.match(/^\/groups\/([^/]+)(?:\/(.*))?$/)
   if (group) {
     const [, id, rest = ''] = group
-    if (!rest) return '/dashboard'
+    if (!rest) return '/'
     if (rest === 'settings') return `/groups/${id}`
     if (rest.startsWith('settings/')) return `/groups/${id}/settings`
     if (rest === 'recurring') return `/groups/${id}/settings`
@@ -19,21 +19,23 @@ export function parentPath(pathname: string): string | null {
   const contact = path.match(/^\/contacts\/([^/]+)(?:\/(.*))?$/)
   if (contact) {
     const [, id, rest = ''] = contact
-    if (!rest) return '/dashboard'
+    if (!rest) return '/'
     if (rest === 'recurring') return `/contacts/${id}`
     if (rest.startsWith('recurring/')) return `/contacts/${id}/recurring`
     return `/contacts/${id}`
   }
 
   const transaction = path.match(/^\/transactions\/([^/]+)(?:\/(.*))?$/)
-  if (transaction) return transaction[2] ? `/transactions/${transaction[1]}` : '/dashboard'
+  if (transaction) return transaction[2] ? `/transactions/${transaction[1]}` : '/'
+
+  if (/^\/settlements\/[^/]+$/.test(path)) return '/'
 
   if (path.startsWith('/settings/')) return '/settings'
-  if (path === '/settings') return '/dashboard'
+  if (path === '/settings') return '/'
   if (path === '/personal') return '/'
   if (path.startsWith('/personal/settings/')) return '/personal/settings'
   if (path === '/personal/settings' || path.startsWith('/personal/')) return '/personal'
-  if (path === '/notifications' || path === '/settle-up') return '/dashboard'
+  if (path === '/notifications' || path === '/settle-up') return '/'
   if (path === '/privacy-policy') return '/settings'
   return null
 }

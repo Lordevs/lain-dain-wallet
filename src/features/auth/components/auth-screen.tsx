@@ -10,6 +10,7 @@ import BrandLogo from '@/components/shared/brand-logo'
 
 // Import store
 import { ROUTES } from '@/constants/routes'
+import { useWizardBackHandler } from '@/hooks/use-wizard-back-handler'
 
 type AuthStep = 'signin' | 'signup_phone' | 'otp' | 'success'
 
@@ -31,10 +32,15 @@ export default function AuthScreen() {
   // profile_complete flag.
   const [needsProfile, setNeedsProfile] = useState(false)
 
-  const handleBack = () => {
+  const goBackOneStep = () => {
     if (step === 'signup_phone') setStep('signin')
     else if (step === 'otp') setStep(authMode === 'signup' ? 'signup_phone' : 'signin')
   }
+  const handleBack = useWizardBackHandler({
+    step,
+    baseStep: 'signin',
+    goBack: goBackOneStep,
+  })
 
   const handlePhoneContinue = (enteredPhone: string) => {
     setPhone(enteredPhone)

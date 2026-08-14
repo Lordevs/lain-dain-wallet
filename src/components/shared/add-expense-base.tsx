@@ -143,12 +143,11 @@ export default function AddExpenseBase({
   const displayPayerMembers = activePayerMembers.length > 0 ? activePayerMembers : allMembers
   const multiplePayerCount = displayPayerMembers.length
 
-  // Each drawer gets a back-button-aware close handler.
-  // When the mobile back button is pressed while a drawer is open,
-  // it closes the drawer instead of navigating to the previous page.
-  const closePaidBy = useDrawerBackHandler(showPaidBy, () => setShowPaidBy(false))
-  const closeSplit = useDrawerBackHandler(showSplit, () => setShowSplit(false))
-  const closeDateDrawer = useDrawerBackHandler(showDateDrawer, () => setShowDateDrawer(false))
+  // Drawer primitives manage their own back-history entry globally. These
+  // full-screen non-drawer overlays still need an explicit sentinel.
+  const closePaidBy = () => setShowPaidBy(false)
+  const closeSplit = () => setShowSplit(false)
+  const closeDateDrawer = () => setShowDateDrawer(false)
   const closeReceiptOverlay = useDrawerBackHandler(showReceiptOverlay, () => setShowReceiptOverlay(false))
   const closeNoteOverlay = useDrawerBackHandler(showNoteOverlay, () => setShowNoteOverlay(false))
 

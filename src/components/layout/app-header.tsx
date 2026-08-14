@@ -1,6 +1,6 @@
 import { useAuthStore } from '@/store/use-auth-store'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Status, StatusIndicator } from '@/components/kibo-ui/status'
+// import { Status, StatusIndicator } from '@/components/kibo-ui/status'
 import { Link } from '@tanstack/react-router'
 import { ROUTES } from '@/constants/routes'
 

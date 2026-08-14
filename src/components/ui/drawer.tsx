@@ -2,11 +2,36 @@ import * as React from "react"
 import { Drawer as DrawerPrimitive } from "vaul"
 
 import { cn } from "@/lib/utils"
+import { useDrawerBackHandler } from "@/hooks/use-drawer-back-handler"
 
 function Drawer({
+  open,
+  defaultOpen,
+  onOpenChange,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) {
-  return <DrawerPrimitive.Root data-slot="drawer" {...props} />
+  const [internalOpen, setInternalOpen] = React.useState(defaultOpen ?? false)
+  const isControlled = open !== undefined
+  const resolvedOpen = isControlled ? open : internalOpen
+
+  const updateOpen = React.useCallback((nextOpen: boolean) => {
+    if (!isControlled) setInternalOpen(nextOpen)
+    onOpenChange?.(nextOpen)
+  }, [isControlled, onOpenChange])
+
+  const closeWithHistory = useDrawerBackHandler(resolvedOpen, () => updateOpen(false))
+
+  return (
+    <DrawerPrimitive.Root
+      data-slot="drawer"
+      {...props}
+      open={resolvedOpen}
+      onOpenChange={(nextOpen) => {
+        if (nextOpen) updateOpen(true)
+        else closeWithHistory()
+      }}
+    />
+  )
 }
 
 function DrawerTrigger({

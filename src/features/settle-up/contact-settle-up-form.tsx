@@ -99,8 +99,8 @@ function ContactSettleUpFormBody({
   const [isReceiptFlowOpen, setIsReceiptFlowOpen] = useState(false)
   const [isNoteFlowOpen, setIsNoteFlowOpen] = useState(false)
 
-  const closeMethodDrawer = useDrawerBackHandler(isMethodDrawerOpen, () => setIsMethodDrawerOpen(false))
-  const closeDateDrawer = useDrawerBackHandler(isDateDrawerOpen, () => setIsDateDrawerOpen(false))
+  const closeMethodDrawer = () => setIsMethodDrawerOpen(false)
+  const closeDateDrawer = () => setIsDateDrawerOpen(false)
   const closeReceiptFlow = useDrawerBackHandler(isReceiptFlowOpen, () => setIsReceiptFlowOpen(false))
   const closeNoteFlow = useDrawerBackHandler(isNoteFlowOpen, () => setIsNoteFlowOpen(false))
 
