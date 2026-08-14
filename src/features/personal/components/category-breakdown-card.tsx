@@ -16,6 +16,20 @@ function polarToCartesian(cx: number, cy: number, r: number, angleInDegrees: num
 }
 
 function getSlicePath(cx: number, cy: number, r: number, startPercent: number, endPercent: number) {
+  const span = endPercent - startPercent
+  if (span <= 0) return ''
+
+  // A single SVG arc whose start and end coordinates are identical is
+  // degenerate. Draw a complete pie as two 180° arcs instead.
+  if (span >= 0.999999) {
+    return [
+      `M ${cx} ${cy - r}`,
+      `A ${r} ${r} 0 1 1 ${cx} ${cy + r}`,
+      `A ${r} ${r} 0 1 1 ${cx} ${cy - r}`,
+      'Z',
+    ].join(' ')
+  }
+
   const startAngle = startPercent * 360
   const endAngle = endPercent * 360
   const start = polarToCartesian(cx, cy, r, startAngle)
@@ -109,18 +123,20 @@ export default function CategoryBreakdownCard({
                     strokeWidth="1.5"
                     className="cursor-pointer"
                   />
-                  <text
-                    x={slice.labelX}
-                    y={slice.labelY}
-                    fill={labelColor}
-                    fontSize="11"
-                    fontWeight="800"
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    className="pointer-events-none select-none"
-                  >
-                    {slice.cat.percentage}%
-                  </text>
+                  {slice.cat.percentage > 0 && (
+                    <text
+                      x={slice.labelX}
+                      y={slice.labelY}
+                      fill={labelColor}
+                      fontSize="11"
+                      fontWeight="800"
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      className="pointer-events-none select-none"
+                    >
+                      {slice.cat.percentage}%
+                    </text>
+                  )}
                 </g>
               )
             })}

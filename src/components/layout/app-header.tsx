@@ -59,12 +59,12 @@ export default function AppHeader() {
           )}
         </Avatar>
         {/* Online status dot via kibo-ui Status */}
-        <Status
+        {/* <Status
           status="degraded"
           className="absolute top-0.5 right-0.5 p-0 h-auto w-auto bg-transparent border-0 shadow-none ring-2 ring-white rounded-full"
         >
           <StatusIndicator />
-        </Status>
+        </Status> */}
       </Link>
     </header>
   )

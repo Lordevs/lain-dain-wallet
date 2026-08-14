@@ -32,7 +32,7 @@ export function parentPath(pathname: string): string | null {
   if (path === '/settings') return '/dashboard'
   if (path === '/personal') return '/'
   if (path.startsWith('/personal/settings/')) return '/personal/settings'
-  if (path === '/personal/settings' || path.startsWith('/personal/')) return '/dashboard'
+  if (path === '/personal/settings' || path.startsWith('/personal/')) return '/personal'
   if (path === '/notifications' || path === '/settle-up') return '/dashboard'
   if (path === '/privacy-policy') return '/settings'
   return null

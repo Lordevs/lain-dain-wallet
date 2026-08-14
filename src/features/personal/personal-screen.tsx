@@ -54,6 +54,7 @@ export default function PersonalScreen() {
       {/* Top Header */}
       <FlowHeader
         title="My Expenses"
+        backVariant='minimal'
         rightSlot={
           <button
             onClick={() => navigate({ to: ROUTES.PERSONAL_SETTINGS })}
@@ -91,7 +92,7 @@ export default function PersonalScreen() {
       {/* Only this region scrolls when expense rows exist. */}
       <div className={items.length === 0 && !listQuery.isLoading
         ? 'flex min-h-0 flex-1 items-center justify-center overflow-hidden px-6'
-        : 'min-h-0 flex-1 overflow-y-auto px-6'
+        : 'min-h-0 flex-1 overflow-y-auto px-6 pb-16'
       }>
         {listQuery.isLoading ? (
           <ExpenseListSkeleton />
