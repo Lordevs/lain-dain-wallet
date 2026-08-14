@@ -1,7 +1,5 @@
-import React from 'react'
 import { Home, Bell, User } from 'lucide-react'
 import { Link, useRouterState } from '@tanstack/react-router'
-import { Separator } from '@/components/ui/separator'
 import { ROUTES } from '@/constants/routes'
 import { cn } from '@/lib/utils'
 import { useUnreadNotificationCountQuery } from '@/features/notifications/api/use-unread-count-query'
@@ -38,22 +36,16 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 box-border h-[calc(3.75rem+var(--safe-bottom))] bg-white border-t-[1.08px] border-[#EFE7DD] pb-[var(--safe-bottom)] pl-[max(0.75rem,var(--safe-left))] pr-[max(0.75rem,var(--safe-right))] shadow-[0px_-3px_14px_0px_#0000000D] select-none"
+      className="fixed bottom-[calc(0.75rem+var(--safe-bottom))] left-1/2 z-50 box-border h-16 w-[min(28rem,calc(100%_-_max(1.5rem,var(--safe-left))_-_max(1.5rem,var(--safe-right))))] -translate-x-1/2 rounded-[26px] border border-[#E8E4DC] bg-white/95 px-2 shadow-[0_8px_28px_rgba(29,35,31,0.16)] backdrop-blur-xl select-none"
       aria-label="Main navigation"
     >
-      <div className="mx-auto flex h-15 w-full max-w-2xl items-stretch justify-between">
-        {NAV_ITEMS.map(({ label, icon: Icon, to }, idx) => {
+      <div className="mx-auto flex h-full w-full items-stretch justify-between">
+        {NAV_ITEMS.map(({ label, icon: Icon, to }) => {
           const isActive = isNavItemActive(to, pathname)
 
           return (
-            <React.Fragment key={to}>
-              {idx > 0 && (
-                <Separator
-                  orientation="vertical"
-                  className="my-2.5 h-auto w-px self-stretch bg-[#EEEDED]"
-                />
-              )}
-              <Link
+            <Link
+                key={to}
                 to={to}
                 aria-label={label}
                 aria-current={isActive ? 'page' : undefined}
@@ -82,7 +74,6 @@ export default function BottomNav() {
                   {label}
                 </span>
               </Link>
-            </React.Fragment>
           )
         })}
       </div>

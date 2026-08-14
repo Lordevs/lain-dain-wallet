@@ -71,14 +71,14 @@ export default function GroupCurrencyRatesDrawer({
   }
 
   return (
-    <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Drawer open={isOpen} repositionInputs={false} onOpenChange={(open) => !open && onClose()}>
       <DrawerContent className={FULLSCREEN_DRAWER_CN}>
         <div className="min-h-0 flex-1 flex flex-col bg-[#FEFAF1] text-foreground">
-          <header className="relative flex items-center justify-center px-6 pt-5 pb-4">
+          <header className="relative flex shrink-0 items-center justify-center pl-[max(1.5rem,var(--safe-left))] pr-[max(1.5rem,var(--safe-right))] pt-[max(1.25rem,var(--safe-top))] pb-4">
             <button
               type="button"
               onClick={onClose}
-              className="absolute left-6 size-9 rounded-full bg-white border border-divider flex items-center justify-center cursor-pointer"
+              className="absolute left-[max(1.5rem,var(--safe-left))] size-9 rounded-full bg-white border border-divider flex items-center justify-center cursor-pointer"
               aria-label="Close currency settings"
             >
               <X size={17} />
@@ -86,7 +86,7 @@ export default function GroupCurrencyRatesDrawer({
             <h2 className="text-lg font-extrabold">Currency & rates</h2>
           </header>
 
-          <div className="flex-1 overflow-y-auto px-6 pb-8">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pl-[max(1.5rem,var(--safe-left))] pr-[max(1.5rem,var(--safe-right))] pb-[max(2rem,var(--safe-bottom))]">
             <div className="rounded-[24px] border border-[#B9DBCF] bg-[#E7F3EE] p-5">
               <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#5F756A]">
                 Group currency

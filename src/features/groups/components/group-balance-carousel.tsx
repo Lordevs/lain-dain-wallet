@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Bell, ArrowUp, ArrowDown } from 'lucide-react'
+import { ArrowUp, ArrowDown } from 'lucide-react'
 import { motion, type PanInfo } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
@@ -16,7 +16,7 @@ export default function GroupBalanceCarousel({
   formattedNetAmount,
   formattedReceivable,
   formattedPayable,
-  onRemind,
+  // onRemind,
 }: GroupBalanceCarouselProps) {
   const [activeCardIndex, setActiveCardIndex] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -82,7 +82,7 @@ export default function GroupBalanceCarousel({
             </span>
           </div>
 
-          {isReceivable && (
+          {/* {isReceivable && (
             <button
               type="button"
               onClick={(e) => {
@@ -94,7 +94,7 @@ export default function GroupBalanceCarousel({
               <Bell size={13} className="text-positive" strokeWidth={2.5} />
               Remind
             </button>
-          )}
+          )} */}
 
           {/* Pagination dots at bottom right */}
           <div className="absolute bottom-3.5 right-4 flex gap-1.5 z-10">

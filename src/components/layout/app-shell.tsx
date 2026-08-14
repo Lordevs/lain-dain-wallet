@@ -108,7 +108,7 @@ export default function AppShell({ children }: AppShellProps) {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
-        className={`flex-1 min-h-0 flex flex-col ${usesFixedViewport ? 'overflow-hidden' : 'overflow-y-auto'} ${showNav ? 'pb-15' : 'pb-0'}`}
+        className={`flex-1 min-h-0 flex flex-col ${usesFixedViewport ? 'overflow-hidden' : 'overflow-y-auto'} ${showNav ? 'pb-24' : 'pb-0'}`}
       >
         {children}
       </main>

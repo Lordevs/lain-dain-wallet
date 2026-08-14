@@ -98,6 +98,7 @@ export default function ProfileForm({ onSubmit, isSubmitting = false, submitErro
 
   // Avatar uses a separate state since it's a File/URL, not a serialisable form field
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [avatarError, setAvatarError] = useState('')
 
   // Drawer states
   const [isDobOpen, setIsDobOpen] = useState(false)
@@ -109,20 +110,30 @@ export default function ProfileForm({ onSubmit, isSubmitting = false, submitErro
     haptic.light()
     if (Capacitor.isNativePlatform()) {
       const photo = await pickFromGallery()
-      if (photo?.webPath) setAvatarUrl(photo.webPath)
+      if (photo?.webPath) {
+        setAvatarUrl(photo.webPath)
+        setAvatarError('')
+      }
     } else {
       const input = document.createElement('input')
       input.type = 'file'
       input.accept = 'image/*'
       input.onchange = () => {
         const file = input.files?.[0]
-        if (file) setAvatarUrl(URL.createObjectURL(file))
+        if (file) {
+          setAvatarUrl(URL.createObjectURL(file))
+          setAvatarError('')
+        }
       }
       input.click()
     }
   }
 
   const onFormSubmit = (values: FormValues) => {
+    if (!avatarUrl) {
+      setAvatarError('A profile photo is required')
+      return
+    }
     onSubmit({
       fullName: values.fullName,
       // Backend field is a date, not a computed age (an age would go
@@ -150,7 +161,10 @@ export default function ProfileForm({ onSubmit, isSubmitting = false, submitErro
             {/* Avatar uploader */}
             <div className="flex flex-col items-center mb-4">
               <div className="relative">
-                <Avatar className="w-24 h-24 border-2 border-[#EFE7DD] shadow-sm">
+                <Avatar className={cn(
+                  "w-24 h-24 border-2 shadow-sm",
+                  avatarError ? "border-tertiary" : "border-[#EFE7DD]",
+                )}>
                   {avatarUrl ? (
                     <AvatarImage src={avatarUrl} alt="Profile photo" className="object-cover" />
                   ) : (
@@ -167,7 +181,8 @@ export default function ProfileForm({ onSubmit, isSubmitting = false, submitErro
                   <Camera size={20} />
                 </button>
               </div>
-              <span className="text-base font-semibold text-primary mt-2">Add profile photo</span>
+              <span className="text-base font-semibold text-primary mt-2">Add profile photo *</span>
+              {avatarError && <p className="mt-1 text-xs font-medium text-tertiary">{avatarError}</p>}
             </div>
 
             {/* Full Name Input */}

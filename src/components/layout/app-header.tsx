@@ -38,9 +38,9 @@ export default function AppHeader() {
           <span className="text-primary">Lain</span>{" "}
           <span className="text-[#FDB105]">Dain</span>
         </span>
-        <span className="text-[12px] font-bold tracking-[0.2em] text-[#6B6B6B] uppercase">
+        {/* <span className="text-[12px] font-bold tracking-[0.2em] text-[#6B6B6B] uppercase">
           Wallet
-        </span>
+        </span> */}
       </div>
 
       {/* Avatar with online status badge */}

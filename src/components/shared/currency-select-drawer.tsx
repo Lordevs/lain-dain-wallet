@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Banknote,
   Search,
+  ChevronLeft,
   ChevronDown,
   X,
 } from 'lucide-react'
@@ -85,6 +86,14 @@ export default function CurrencySelectDrawer({
 }: CurrencySelectDrawerProps) {
   const [currencySearch, setCurrencySearch] = useState('')
   const [isCurrencyOpen, setIsCurrencyOpen] = useState(false)
+  const [isSearchMode, setIsSearchMode] = useState(false)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!isSearchMode) return
+    const frame = window.requestAnimationFrame(() => searchInputRef.current?.focus())
+    return () => window.cancelAnimationFrame(frame)
+  }, [isSearchMode])
 
   // Sort currencies alphabetically by name
   const sortedCurrencies = useMemo(() => {
@@ -106,7 +115,17 @@ export default function CurrencySelectDrawer({
   }, [sortedCurrencies, currencySearch])
 
   return (
-    <Drawer open={isCurrencyOpen} onOpenChange={setIsCurrencyOpen}>
+    <Drawer
+      open={isCurrencyOpen}
+      repositionInputs={false}
+      onOpenChange={(open) => {
+        setIsCurrencyOpen(open)
+        if (!open) {
+          setIsSearchMode(false)
+          setCurrencySearch('')
+        }
+      }}
+    >
       <DrawerTrigger asChild>
         {children ? (
           children
@@ -131,35 +150,80 @@ export default function CurrencySelectDrawer({
           </button>
         )}
       </DrawerTrigger>
-      <DrawerContent className="bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-foreground h-[65dvh] max-h-[65dvh]">
-        {/* Drawer Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0">
-          <h2 className="text-[19px] font-extrabold text-foreground">
-            Select Currency
-          </h2>
-          <DrawerClose asChild>
+      <DrawerContent
+        className={cn(
+          "bg-white rounded-t-[32px] border-t-0 p-0 flex flex-col focus:outline-none overflow-hidden text-foreground data-[vaul-drawer-direction=bottom]:bottom-[var(--keyboard-inset,0px)]! data-[vaul-drawer-direction=bottom]:max-h-[calc(var(--app-viewport-height,100dvh)-var(--safe-top)-0.5rem)]! transition-[height] duration-200",
+          isSearchMode
+            ? "data-[vaul-drawer-direction=bottom]:h-[calc(var(--app-viewport-height,100dvh)-var(--safe-top)-0.5rem)]! [&>div:first-child]:hidden!"
+            : "data-[vaul-drawer-direction=bottom]:h-[min(65dvh,calc(var(--app-viewport-height,100dvh)-var(--safe-top)-0.5rem))]!",
+        )}
+        style={{ paddingBottom: 'max(var(--safe-bottom), 0.5rem)' }}
+        onOpenAutoFocus={(event) => event.preventDefault()}
+        onCloseAutoFocus={(event) => event.preventDefault()}
+      >
+        {isSearchMode ? (
+          <div className="flex shrink-0 items-center gap-2 border-b border-border-card bg-white pl-[max(0.75rem,var(--safe-left))] pr-[max(0.75rem,var(--safe-right))] py-3">
             <button
               type="button"
-              className="size-8 rounded-full bg-[#0000000A] text-foreground flex items-center justify-center cursor-pointer hover:bg-muted/40 transition-all border-0 focus:outline-none"
+              onClick={() => {
+                setIsSearchMode(false)
+                setCurrencySearch('')
+              }}
+              className="flex size-10 shrink-0 items-center justify-center rounded-full border-0 bg-transparent text-foreground cursor-pointer"
+              aria-label="Back to currencies"
             >
-              <X size={16} className="text-muted-foreground" />
+              <ChevronLeft size={23} strokeWidth={2.4} />
             </button>
-          </DrawerClose>
-        </div>
-
-        <hr className="border-border-card border-b-[1.26px] w-full" />
-
-        {/* Search Input */}
-        <div className="relative mx-5 my-4 shrink-0">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A0A0A0] pointer-events-none size-4" />
-          <Input
-            type="search"
-            placeholder="Search currency..."
-            value={currencySearch}
-            onChange={(e) => setCurrencySearch(e.target.value)}
-            className="w-full h-11 pl-11 pr-4 rounded-md bg-hover-bg border-[1.5px] border-divider text-sm text-foreground placeholder:text-muted-faint focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary transition-all outline-none"
-          />
-        </div>
+            <div className="relative min-w-0 flex-1">
+              <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#A0A0A0] pointer-events-none" />
+              <Input
+                ref={searchInputRef}
+                type="search"
+                enterKeyHint="search"
+                placeholder="Search currency..."
+                value={currencySearch}
+                onChange={(event) => setCurrencySearch(event.target.value)}
+                className="h-11 w-full rounded-full border-[1.5px] border-divider bg-hover-bg pl-11 pr-10 text-base text-foreground outline-none transition-all placeholder:text-muted-faint focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
+              />
+              {currencySearch && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrencySearch('')
+                    searchInputRef.current?.focus()
+                  }}
+                  className="absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full border-0 bg-transparent text-muted-foreground cursor-pointer"
+                  aria-label="Clear currency search"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between pl-[max(1.25rem,var(--safe-left))] pr-[max(1.25rem,var(--safe-right))] pt-5 pb-3 shrink-0">
+              <h2 className="text-[19px] font-extrabold text-foreground">Select Currency</h2>
+              <DrawerClose asChild>
+                <button
+                  type="button"
+                  className="size-8 rounded-full bg-[#0000000A] text-foreground flex items-center justify-center cursor-pointer hover:bg-muted/40 transition-all border-0 focus:outline-none"
+                >
+                  <X size={16} className="text-muted-foreground" />
+                </button>
+              </DrawerClose>
+            </div>
+            <hr className="border-border-card border-b-[1.26px] w-full" />
+            <button
+              type="button"
+              onClick={() => setIsSearchMode(true)}
+              className="relative ml-[max(1.25rem,var(--safe-left))] mr-[max(1.25rem,var(--safe-right))] my-4 flex h-11 shrink-0 items-center rounded-md border-[1.5px] border-divider bg-hover-bg pl-11 pr-4 text-left text-sm text-muted-faint cursor-text"
+            >
+              <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#A0A0A0]" />
+              Search currency...
+            </button>
+          </>
+        )}
 
         {/* Currency List */}
         <RadioGroup
@@ -167,9 +231,10 @@ export default function CurrencySelectDrawer({
           onValueChange={(val) => {
             onChange(val.toLowerCase())
             setIsCurrencyOpen(false)
+            setIsSearchMode(false)
             setCurrencySearch('')
           }}
-          className="overflow-y-auto divide-y-[1.5px]! divide-divider pb-8 gap-0"
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain divide-y-[1.5px]! divide-divider pb-4 gap-0 scroll-pb-4"
         >
           {filteredCurrencies.map((cur) => {
             const isSelected = value.toLowerCase() === cur.code.toLowerCase()

@@ -29,13 +29,18 @@ export function useCapacitorSetup() {
     // pushing or stretching the routed screen behind them.
     const viewport = window.visualViewport
     const updateViewportHeight = () => {
+      const viewportHeight = viewport?.height ?? window.innerHeight
+      const viewportOffsetTop = viewport?.offsetTop ?? 0
+      const keyboardInset = Math.max(0, window.innerHeight - viewportHeight - viewportOffsetTop)
       document.documentElement.style.setProperty(
         '--app-viewport-height',
-        `${viewport?.height ?? window.innerHeight}px`,
+        `${viewportHeight}px`,
       )
+      document.documentElement.style.setProperty('--keyboard-inset', `${keyboardInset}px`)
     }
     updateViewportHeight()
     viewport?.addEventListener('resize', updateViewportHeight)
+    viewport?.addEventListener('scroll', updateViewportHeight)
     window.addEventListener('orientationchange', updateViewportHeight)
     const platform = Capacitor.getPlatform()
 
@@ -72,6 +77,7 @@ export function useCapacitorSetup() {
     if (!Capacitor.isNativePlatform()) {
       return () => {
         viewport?.removeEventListener('resize', updateViewportHeight)
+        viewport?.removeEventListener('scroll', updateViewportHeight)
         window.removeEventListener('orientationchange', updateViewportHeight)
         document.removeEventListener('touchstart', onTouchStart)
         document.removeEventListener('touchend', onTouchEnd)
@@ -111,6 +117,7 @@ export function useCapacitorSetup() {
     // Cleanup all listeners on unmount
     return () => {
       viewport?.removeEventListener('resize', updateViewportHeight)
+      viewport?.removeEventListener('scroll', updateViewportHeight)
       window.removeEventListener('orientationchange', updateViewportHeight)
       document.removeEventListener('touchstart', onTouchStart)
       document.removeEventListener('touchend', onTouchEnd)

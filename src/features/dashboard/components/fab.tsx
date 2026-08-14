@@ -15,7 +15,7 @@ export default function Fab({ onClick }: FabProps) {
       id="fab-add"
       onClick={onClick}
       aria-label="Add new"
-      className="fixed bottom-[calc(4.5rem+var(--safe-bottom))] right-[max(1.25rem,var(--safe-right))] z-40 w-14 h-14 rounded-full bg-secondary text-white flex items-center justify-center shadow-xs hover:bg-secondary/90 active:scale-95 transition-all p-0 shrink-0 cursor-pointer"
+      className="fixed bottom-[calc(5.5rem+var(--safe-bottom))] right-[max(1.25rem,var(--safe-right))] z-40 w-14 h-14 rounded-full bg-secondary text-white flex items-center justify-center shadow-xs hover:bg-secondary/90 active:scale-95 transition-all p-0 shrink-0 cursor-pointer"
     >
       <Plus className="size-6! text-foreground" strokeWidth={2.5} />
     </Button>

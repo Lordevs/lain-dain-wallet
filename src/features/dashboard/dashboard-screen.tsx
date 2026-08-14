@@ -95,6 +95,13 @@ export default function DashboardScreen() {
     // timestamp from the backend) drives newest/oldest now; falls back to
     // the id-based comparison only for any contact missing it.
     const sortedContacts = [...typedContacts].sort((a, b) => {
+      const directionRank = (amount: number) => {
+        if (activeTab === 'receivables') return amount > 0 ? 0 : amount === 0 ? 1 : 2
+        return amount < 0 ? 0 : amount === 0 ? 1 : 2
+      }
+      const rankDifference = directionRank(a.netAmount) - directionRank(b.netAmount)
+      if (rankDifference !== 0) return rankDifference
+
       if (sortBy === 'newest' || sortBy === 'oldest') {
         if (a.latestActivity && b.latestActivity) {
           const diff = new Date(a.latestActivity).getTime() - new Date(b.latestActivity).getTime()
@@ -114,7 +121,7 @@ export default function DashboardScreen() {
     return search.trim()
       ? sortedContacts.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
       : sortedContacts
-  }, [contacts, filterType, sortBy, search])
+  }, [contacts, activeTab, filterType, sortBy, search])
 
   const handleContactSelect = useCallback((contact: Contact) => {
     if (contact.type === 'person') {

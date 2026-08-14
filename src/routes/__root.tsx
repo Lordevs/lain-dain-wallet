@@ -64,11 +64,11 @@ function RootComponent() {
               <span className="text-[#FDB105]">Dain</span>
             </span>
             <div className="flex items-center gap-3.5 w-44 mt-3.5 justify-center">
-              <div className="h-[0.8px] flex-1 bg-[#FDB105]/60" />
-              <span className="text-[12px] font-normal tracking-[0.25em] text-positive uppercase leading-none">
+              {/* <div className="h-[0.8px] flex-1 bg-[#FDB105]/60" /> */}
+              {/* <span className="text-[12px] font-normal tracking-[0.25em] text-positive uppercase leading-none">
                 Wallet
-              </span>
-              <div className="h-[0.8px] flex-1 bg-[#FDB105]/60" />
+              </span> */}
+              {/* <div className="h-[0.8px] flex-1 bg-[#FDB105]/60" /> */}
             </div>
           </div>
         </div>

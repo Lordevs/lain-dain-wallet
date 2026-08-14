@@ -184,7 +184,7 @@ export default function SettingsScreen() {
                       </span>
                       <div className="border-[1.5px] border-[#E8E4DC] rounded-[13px] bg-[#F7F4EF] overflow-hidden divide-y-[1.5px] divide-[#E8E4DC]">
 
-                        {/* Every week option */}
+                     
                         <button
                           type="button"
                           onClick={() => updateSettings.mutate({ auto_reminder_interval_days: 7 })}
@@ -236,6 +236,7 @@ export default function SettingsScreen() {
                     </motion.div>
                   )}
                 </AnimatePresence>
+
               </div>
 
               {/* Currency Row 

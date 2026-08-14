@@ -8,7 +8,7 @@ type WalletRow = components['schemas']['WalletRow']
 /**
  * GET /api/expenses/wallet/ for one tab, always `type=all&sort=newest`
  * (the backend's own defaults) — every person/group with a nonzero
- * balance in that direction, unfiltered and unsorted beyond recency.
+ * balance state. The tab prioritizes that direction but does not filter rows.
  * Deliberately not re-fetched per filter/sort/search change: the list is
  * already small and bounded (services.wallet_list's own docstring: it's
  * bounded by relationship count, not transaction volume), so the
