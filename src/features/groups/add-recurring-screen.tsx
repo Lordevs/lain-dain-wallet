@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { FileText, ChevronRight, ChevronDown, Calendar, Users, User } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { useFormattedAmountInput } from '@/hooks/use-formatted-amount-input'
 import CategoryPicker, { CATEGORIES } from '@/components/shared/category-picker'
 import PaidByDrawer from '@/components/shared/paid-by-drawer'
@@ -187,7 +188,7 @@ function AddRecurringForm({
     editPaymentId ?? '',
   )
 
-  const { amount, formattedAmount, handleAmountChange } = useFormattedAmountInput(
+  const { amount, formattedAmount, handleAmountChange, isTooLong: isAmountTooLong } = useFormattedAmountInput(
     editingPayment ? String(editingPayment.amount) : ''
   )
   const [description, setDescription] = useState(editingPayment?.description ?? '')
@@ -337,7 +338,7 @@ function AddRecurringForm({
   const parsedAmount = Number(amount) || 0
   const isAmountValid = parsedAmount > 0
   const isDescriptionValid = description.trim().length > 0
-  const isFormValid = isAmountValid && isDescriptionValid && !activeMutation.isPending
+  const isFormValid = isAmountValid && isDescriptionValid && !isAmountTooLong && !activeMutation.isPending
 
   return (
     <form
@@ -359,7 +360,12 @@ function AddRecurringForm({
             <span className="text-[13px] font-bold text-muted-foreground mb-1.5 px-1 uppercase tracking-wide">
               Amount
             </span>
-            <div className="flex rounded-[20px] border border-divider overflow-hidden bg-white shadow-[0px_2px_8px_rgba(0,0,0,0.02)] h-20 items-stretch">
+            <div
+              className={cn(
+                "flex rounded-[20px] border overflow-hidden bg-white shadow-[0px_2px_8px_rgba(0,0,0,0.02)] h-20 items-stretch",
+                isAmountTooLong ? "border-destructive" : "border-divider",
+              )}
+            >
               <div className="flex items-center justify-center bg-[#FFF9E6] px-6 border-r border-divider select-none shrink-0">
                 <span className="text-[16px] font-extrabold text-orange-payable leading-none">
                   Rs.
@@ -377,6 +383,11 @@ function AddRecurringForm({
                 />
               </div>
             </div>
+            {isAmountTooLong && (
+              <span className="text-xs font-semibold text-destructive mt-1.5 px-1">
+                Amount cannot be more than 10 digits
+              </span>
+            )}
           </div>
 
           {/* Description field */}

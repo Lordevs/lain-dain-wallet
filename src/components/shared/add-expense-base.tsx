@@ -92,7 +92,7 @@ export default function AddExpenseBase({
   onBack,
 }: AddExpenseBaseProps) {
   // State management
-  const { amount, handleAmountChange, formattedAmount } = useFormattedAmountInput(initialData?.amount || '')
+  const { amount, handleAmountChange, formattedAmount, isTooLong: isAmountTooLong } = useFormattedAmountInput(initialData?.amount || '')
   const [description, setDescription] = useState(initialData?.description || '')
   const [selectedCategory, setSelectedCategory] = useState(initialData?.category || '')
   const [dateValue, setDateValue] = useState(initialData?.dateValue || 'Today')
@@ -215,7 +215,7 @@ export default function AddExpenseBase({
     )
   }
 
-  const isFormInvalid = !amount || Number(amount) <= 0 || !description.trim() || !selectedCategory
+  const isFormInvalid = !amount || Number(amount) <= 0 || !description.trim() || !selectedCategory || isAmountTooLong
 
   return (
     <form
@@ -249,7 +249,12 @@ export default function AddExpenseBase({
             <span className="text-sm font-medium text-muted-foreground tracking-wider mb-2">
               AMOUNT
             </span>
-            <div className="flex rounded-[18px] border-[0.8px] border-divider overflow-hidden bg-white shadow-[0px_2px_10px_0px_#0000000D] h-18 items-stretch">
+            <div
+              className={cn(
+                "flex rounded-[18px] border-[0.8px] overflow-hidden bg-white shadow-[0px_2px_10px_0px_#0000000D] h-18 items-stretch",
+                isAmountTooLong ? "border-destructive" : "border-divider",
+              )}
+            >
               <div className="flex items-center justify-center bg-[#FFF9E6] px-5 border-r border-divider select-none shrink-0">
                 <span className="text-base font-extrabold text-secondary leading-none">
                   Rs.
@@ -267,6 +272,11 @@ export default function AddExpenseBase({
                 />
               </div>
             </div>
+            {isAmountTooLong && (
+              <span className="text-xs font-semibold text-destructive mt-1.5">
+                Amount cannot be more than 10 digits
+              </span>
+            )}
           </div>
 
           {/* Description Section */}

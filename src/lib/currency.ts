@@ -40,7 +40,8 @@ export function getCurrency(code: string): Currency {
 }
 
 /**
- * Format a compact amount for cards (e.g. 1500000 → "1.5M", 2500 → "2.5K")
+ * Format a compact amount for cards (e.g. 1500000 → "1.5M", 2500 → "2.5K",
+ * 5050015564.5 → "5.05B")
  */
 export function formatCompact(amount: number, currencyCode: string): string {
   const currency = getCurrency(currencyCode)
@@ -48,8 +49,13 @@ export function formatCompact(amount: number, currencyCode: string): string {
   const abs = Math.abs(amount)
   let formatted: string
 
-  if (abs >= 1_000_000) {
-    formatted = `${(abs / 1_000_000).toFixed(1)}M`
+  // Two decimal places from M upward — at that scale a single decimal
+  // (the K-tier convention) hides amounts that are meaningfully different
+  // for a financial figure (e.g. 5.05B vs 5.09B is a ~40M gap).
+  if (abs >= 1_000_000_000) {
+    formatted = `${(abs / 1_000_000_000).toFixed(2)}B`
+  } else if (abs >= 1_000_000) {
+    formatted = `${(abs / 1_000_000).toFixed(2)}M`
   } else if (abs >= 1_000) {
     formatted = `${(abs / 1_000).toFixed(1)}K`
   } else {
