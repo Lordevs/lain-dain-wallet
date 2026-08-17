@@ -18,7 +18,7 @@ export default function AddEntryScreen() {
     }
 
     try {
-      await createExpense.mutateAsync({
+      const result = await createExpense.mutateAsync({
         description: data.description,
         amount: data.amount.toFixed(2),
         date: data.dateISO,
@@ -26,6 +26,7 @@ export default function AddEntryScreen() {
         note: data.noteText,
         receipt: data.receiptFile?.dataUrl,
       })
+      if (!result.synced) toast.success("Saved — we'll sync it once you're back online")
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
       throw err

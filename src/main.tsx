@@ -7,6 +7,7 @@ import { routeTree } from './routeTree.gen'
 import ErrorFallback from './components/layout/error-fallback'
 import { preferencesStorage } from './lib/query-persister-storage'
 import { setUpNetworkStatusListener } from './lib/network'
+import { setUpSyncTriggers } from './lib/sync/triggers'
 import { bootstrapAuth } from './lib/api/bootstrap'
 import { getDatabase } from './lib/sqlite/init'
 import { queryClient, CACHE_MAX_AGE } from './lib/query-client'
@@ -30,14 +31,20 @@ const persister = createAsyncStoragePersister({
 // mount/unmount lifecycle.
 setUpNetworkStatusListener()
 
-// creates/opens the local SQLite store so it's warm
-// by the time a later phase actually reads or writes through it. Fired
-// alongside bootstrapAuth(), not chained into its .finally() — nothing in
-// the app depends on this yet, so a slow or failed open must never block
-// first render.
+// Creates/opens the local SQLite store — the offline expense outbox
+// (src/lib/sync/expense-outbox.ts) reads/writes through this. Fired
+// alongside bootstrapAuth(), not chained into its .finally() — a slow or
+// failed open must never block first render; queueing an expense before
+// this resolves just awaits the same shared connection promise.
 getDatabase().catch((error) => {
   console.error('SQLite init failed', error)
 })
+
+// Reconnect-triggered sync for every resource with an offline outbox —
+// see setUpSyncTriggers's own doc comment for why this is separate from
+// setUpNetworkStatusListener() above (feeding onlineManager vs. reacting
+// to it) and where the app-foreground trigger lives instead.
+setUpSyncTriggers()
 
 declare module '@tanstack/react-router' {
   interface Register {

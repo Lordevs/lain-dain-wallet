@@ -99,7 +99,7 @@ export default function AddGroupExpenseScreen() {
     }
 
     try {
-      await createExpense.mutateAsync({
+      const result = await createExpense.mutateAsync({
         groupId,
         values: {
           description: data.description,
@@ -113,6 +113,7 @@ export default function AddGroupExpenseScreen() {
           splits: buildSplits(data),
         },
       })
+      if (!result.synced) toast.success("Saved — we'll sync it once you're back online")
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
       throw err

@@ -121,7 +121,7 @@ export default function AddContactExpenseScreen() {
       : buildSplits(data, myId, otherUser.id)
 
     try {
-      await createExpense.mutateAsync({
+      const result = await createExpense.mutateAsync({
         friendshipId,
         values: {
           description: data.description,
@@ -135,6 +135,7 @@ export default function AddContactExpenseScreen() {
           splits,
         },
       })
+      if (!result.synced) toast.success("Saved — we'll sync it once you're back online")
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
       throw err
