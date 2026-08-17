@@ -8,6 +8,7 @@ import ErrorFallback from './components/layout/error-fallback'
 import { preferencesStorage } from './lib/query-persister-storage'
 import { setUpNetworkStatusListener } from './lib/network'
 import { bootstrapAuth } from './lib/api/bootstrap'
+import { getDatabase } from './lib/sqlite/init'
 import { queryClient, CACHE_MAX_AGE } from './lib/query-client'
 import './index.css'
 
@@ -28,6 +29,15 @@ const persister = createAsyncStoragePersister({
 // onlineManager is an app-wide singleton, this isn't tied to anything's
 // mount/unmount lifecycle.
 setUpNetworkStatusListener()
+
+// creates/opens the local SQLite store so it's warm
+// by the time a later phase actually reads or writes through it. Fired
+// alongside bootstrapAuth(), not chained into its .finally() — nothing in
+// the app depends on this yet, so a slow or failed open must never block
+// first render.
+getDatabase().catch((error) => {
+  console.error('SQLite init failed', error)
+})
 
 declare module '@tanstack/react-router' {
   interface Register {
