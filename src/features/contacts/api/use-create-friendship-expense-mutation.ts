@@ -1,39 +1,18 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api/client'
-import { ApiError, toApiError } from '@/lib/api/errors'
-import type { components } from '@/lib/api/schema'
-import { buildFriendshipExpenseFormData, type FriendshipExpenseFormValues } from '../lib/build-friendship-expense-form-data'
+import { useMutation } from '@tanstack/react-query'
+import { ApiError } from '@/lib/api/errors'
+import { queueExpenseCreate, type QueueExpenseCreateResult } from '@/lib/sync/expense-outbox'
+import type { FriendshipExpenseFormValues } from '../lib/build-friendship-expense-form-data'
 
 interface CreateFriendshipExpenseVariables {
   friendshipId: string
   values: FriendshipExpenseFormValues
 }
 
+/** Queues through the offline-safe expense outbox — see
+ * use-create-personal-expense-mutation.ts's own doc comment for the
+ * shared reasoning (same pattern, friendship context). */
 export function useCreateFriendshipExpenseMutation() {
-  const queryClient = useQueryClient()
-
-  return useMutation<components['schemas']['ExpenseCreate'], ApiError, CreateFriendshipExpenseVariables>({
-    mutationFn: async ({ friendshipId, values }: CreateFriendshipExpenseVariables) => {
-      const formData = await buildFriendshipExpenseFormData(values)
-      const { data, error } = await apiClient.POST('/api/expenses/friendships/{friendship_id}/', {
-        params: { path: { friendship_id: friendshipId } },
-        body: formData as unknown as components['schemas']['ExpenseCreateRequest'],
-      })
-      if (error) throw toApiError(error)
-      return data
-    },
-    onSuccess: (_data, { friendshipId }) => {
-      // Refreshes the contact's balance/breakdown, transaction history,
-      // and the dashboard's wallet totals — all of which this new
-      // expense just changed.
-      queryClient.invalidateQueries({ queryKey: ['friendship-transactions', friendshipId] })
-      // Scoped to the one contact affected, not every cached combined
-      // ledger view — the friendship's `friend` is virtually always
-      // already cached (you can't be here without having loaded it),
-      // but fall back to the old broad invalidation if it isn't.
-      const friendship = queryClient.getQueryData<components['schemas']['Friendship']>(['friendship', friendshipId])
-      queryClient.invalidateQueries({ queryKey: friendship ? ['user-ledgers', friendship.friend.id] : ['user-ledgers'] })
-      queryClient.invalidateQueries({ queryKey: ['wallet'] })
-    },
+  return useMutation<QueueExpenseCreateResult, ApiError, CreateFriendshipExpenseVariables>({
+    mutationFn: ({ friendshipId, values }) => queueExpenseCreate({ kind: 'friendship', friendshipId, values }),
   })
 }
