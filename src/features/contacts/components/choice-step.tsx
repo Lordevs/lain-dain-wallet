@@ -74,8 +74,8 @@ export default function ChoiceStep({ flow }: ChoiceStepProps) {
             <ContactIcon size={20} strokeWidth={2.2} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-foreground">See who's on Lain Dain</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Allow contacts access to match your phone contacts against the app.</p>
+            <p className="text-sm font-bold text-foreground">Find Friends on Lain Dain</p>
+            <p className="text-xs text-muted-foreground mt-0.5">See which contacts are already using the app.</p>
           </div>
           <Button onClick={flow.requestContactsAccess} className="h-9 rounded-full px-4 text-xs font-bold shrink-0">
             Allow

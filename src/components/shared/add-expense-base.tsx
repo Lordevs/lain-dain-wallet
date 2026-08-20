@@ -291,7 +291,7 @@ export default function AddExpenseBase({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="flex-1 bg-transparent border-0 outline-none text-[15px] font-bold text-foreground placeholder:text-muted-faint py-1"
-                placeholder={showPaidByAndSplit ? 'What was this for?' : 'Dinner at Monal'}
+                placeholder={showPaidByAndSplit ? 'What was this for?' : 'Dinner, drinks, groceries...'}
                 required
               />
             </div>
