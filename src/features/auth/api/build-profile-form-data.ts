@@ -16,13 +16,7 @@ import type { ProfileFormData } from '@/features/auth/components/profile-form'
  */
 export async function buildProfileFormData(data: Partial<ProfileFormData>): Promise<FormData> {
   const formData = new FormData()
-
-  if (data.fullName) formData.append('full_name', data.fullName)
-  if (data.dateOfBirth) formData.append('date_of_birth', data.dateOfBirth)
-  if (data.gender) formData.append('gender', data.gender.toLowerCase())
-  if (data.country) formData.append('country', COUNTRY_NAME_TO_CODE[data.country] ?? data.country)
-  if (data.occupation) formData.append('occupation', data.occupation)
-  if (data.email) formData.append('email', data.email)
+  for (const [key, value] of profileFields(data)) formData.append(key, value)
 
   if (data.avatar) {
     const blob = await fetch(data.avatar).then((res) => res.blob())
@@ -30,4 +24,15 @@ export async function buildProfileFormData(data: Partial<ProfileFormData>): Prom
   }
 
   return formData
+}
+
+export function profileFields(data: Partial<ProfileFormData>): Array<[string, string]> {
+  const fields: Array<[string, string]> = []
+  if (data.fullName) fields.push(['full_name', data.fullName])
+  if (data.dateOfBirth) fields.push(['date_of_birth', data.dateOfBirth])
+  if (data.gender) fields.push(['gender', data.gender.toLowerCase()])
+  if (data.country) fields.push(['country', COUNTRY_NAME_TO_CODE[data.country] ?? data.country])
+  if (data.occupation) fields.push(['occupation', data.occupation])
+  if (data.email) fields.push(['email', data.email])
+  return fields
 }

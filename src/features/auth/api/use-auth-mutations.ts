@@ -4,6 +4,12 @@ import { ApiError, toApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
 import { Capacitor } from '@capacitor/core'
 import { getOrCreateDeviceId } from '@/lib/secure-storage'
+import type { ProfileFormData } from '@/features/auth/components/profile-form'
+import { profileFields } from '@/features/auth/api/build-profile-form-data'
+import { queueMutation } from '@/lib/sync/mutation-outbox'
+import { upsertSnapshotRecord } from '@/lib/sqlite/resource-snapshot-store'
+import { useAuthStore } from '@/store/use-auth-store'
+import { COUNTRY_NAME_TO_CODE } from '@/features/auth/api/country-codes'
 
 export class ActiveDeviceSessionError extends ApiError {
   activeDeviceName: string
@@ -108,18 +114,37 @@ export function useDeleteAccountMutation() {
 }
 
 export function useUpdateProfileMutation() {
-  return useMutation<components['schemas']['User'], ApiError, FormData>({
-    mutationFn: async (formData: FormData) => {
-      const { data, error } = await apiClient.PATCH('/api/auth/profile/', {
-        // openapi-fetch's defaultBodySerializer passes FormData through
-        // untouched (checked instanceof FormData) and lets the browser set
-        // Content-Type + boundary itself — the typed body param just
-        // expects the plain PatchedUserRequest shape, which doesn't apply
-        // to a real multipart upload, hence the cast.
-        body: formData as unknown as components['schemas']['PatchedUserRequest'],
+  return useMutation<components['schemas']['User'], ApiError, Partial<ProfileFormData>>({
+    mutationFn: async (values) => {
+      const current = useAuthStore.getState().userProfile
+      if (!current?.id) throw new ApiError('Sign in before updating your profile.')
+      const optimisticUser = {
+        id: current.id,
+        phone_number: current.phone,
+        full_name: values.fullName ?? current.name ?? '',
+        date_of_birth: values.dateOfBirth ?? current.dateOfBirth ?? null,
+        gender: (values.gender?.toLowerCase() ?? current.gender ?? '') as components['schemas']['GenderEnum'],
+        country: values.country
+          ? (COUNTRY_NAME_TO_CODE[values.country] ?? values.country)
+          : (current.country ?? ''),
+        email: values.email ?? current.email ?? null,
+        occupation: values.occupation ?? current.occupation ?? '',
+        image: values.avatar ?? current.avatar ?? null,
+        profile_complete: true,
+        default_currency: current.defaultCurrency,
+      } as components['schemas']['User']
+      const result = await queueMutation({
+        resource: 'profile', method: 'PATCH', path: '/api/auth/profile/',
+        multipart: {
+          fields: profileFields(values),
+          file: values.avatar ? {
+            field: 'image', sourceUri: values.avatar, filename: 'avatar.jpg', mimeType: 'image/jpeg',
+          } : undefined,
+        },
+        optimisticResult: optimisticUser,
       })
-      if (error) throw toApiError(error)
-      return data
+      await upsertSnapshotRecord(current.id, 'profile', { id: current.id, data: result.data })
+      return result.data
     },
   })
 }
