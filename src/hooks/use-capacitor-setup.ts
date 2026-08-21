@@ -3,7 +3,7 @@ import { Capacitor } from '@capacitor/core'
 import { App } from '@capacitor/app'
 import { useRouter } from '@tanstack/react-router'
 import { parentPath } from '@/lib/navigation-hierarchy'
-import { drainExpenseOutbox } from '@/lib/sync/expense-outbox'
+import { syncOfflineData } from '@/lib/sync/triggers'
 
 /**
  * useCapacitorSetup
@@ -130,7 +130,7 @@ export function useCapacitorSetup() {
           // src/lib/sync/triggers.ts for the reconnect-triggered sibling
           // of this. void: drainExpenseOutbox never rejects (see its own
           // doc comment), nothing here needs to await it.
-          void drainExpenseOutbox()
+          void syncOfflineData()
         }
       })
     )

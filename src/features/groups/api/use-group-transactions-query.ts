@@ -3,6 +3,9 @@ import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
 import { toApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
+import { onlineManager } from '@tanstack/react-query'
+import { useAuthStore } from '@/store/use-auth-store'
+import { getLocalExpenses, upsertServerExpense } from '@/lib/sqlite/expenses-store'
 
 export type GroupTransaction =
   | { kind: 'expense'; date: string; data: components['schemas']['ExpenseRead'] }
@@ -74,6 +77,15 @@ async function fetchExpenses(
   sort: GroupSortBy,
   categoryId: string | undefined,
 ): Promise<{ items: GroupTransaction[]; nextCursor: string | null }> {
+  const ownerId = useAuthStore.getState().userProfile?.id
+  if (!onlineManager.isOnline() && ownerId) {
+    const expenses = (await getLocalExpenses(ownerId, { groupId }))
+      .filter((expense) => !categoryId || expense.category.id === categoryId)
+    return {
+      items: expenses.map((expense) => ({ kind: 'expense' as const, date: expense.date, data: expense })),
+      nextCursor: null,
+    }
+  }
   const { data, error } = await apiClient.GET('/api/expenses/groups/{group_id}/', {
     params: {
       path: { group_id: groupId },
@@ -81,6 +93,11 @@ async function fetchExpenses(
     },
   })
   if (error) throw toApiError(error)
+  if (ownerId) {
+    await Promise.all(data.results.map((expense) => upsertServerExpense(ownerId, {
+      ...expense, updated_at: expense.edited_at ?? expense.created_at, is_deleted: false, deleted_at: null,
+    })))
+  }
 
   return {
     items: data.results.map((expense) => ({ kind: 'expense', date: expense.date, data: expense })),
@@ -93,6 +110,7 @@ async function fetchSettlements(
   cursor: string | undefined,
   sort: GroupSortBy,
 ): Promise<{ items: GroupTransaction[]; nextCursor: string | null }> {
+  if (!onlineManager.isOnline()) return { items: [], nextCursor: null }
   const { data, error } = await apiClient.GET('/api/expenses/groups/{group_id}/settlements/', {
     params: {
       path: { group_id: groupId },
@@ -208,6 +226,7 @@ export function useGroupTransactionsQuery(
     initialPageParam: initialPageParam(filter),
     getNextPageParam: (lastPage) => lastPage.nextPageParam,
     enabled: !!groupId,
+    networkMode: 'always',
     // sort/filter changes restart pagination from scratch via the query
     // key (by design — see the comment above) — keep the previous
     // results on screen while the new sort/filter's first page loads

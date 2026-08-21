@@ -11,7 +11,7 @@
  * future schema change; never edit an already-shipped entry in place.
  */
 export const DB_NAME = 'laindain'
-export const DB_VERSION = 1
+export const DB_VERSION = 2
 
 export interface SchemaUpgrade {
   toVersion: number
@@ -83,6 +83,16 @@ export const upgradeStatements: SchemaUpgrade[] = [
         resource TEXT PRIMARY KEY,
         cursor TEXT
       )`,
+    ],
+  },
+  {
+    toVersion: 2,
+    statements: [
+      `ALTER TABLE expenses ADD COLUMN owner_id TEXT NOT NULL DEFAULT ''`,
+      `ALTER TABLE expenses ADD COLUMN server_json TEXT`,
+      `ALTER TABLE expense_outbox ADD COLUMN owner_id TEXT NOT NULL DEFAULT ''`,
+      `CREATE INDEX idx_expenses_owner_scope ON expenses(owner_id, context, group_id, friendship_id)`,
+      `CREATE INDEX idx_expense_outbox_owner_status ON expense_outbox(owner_id, status, created_at)`,
     ],
   },
 ]

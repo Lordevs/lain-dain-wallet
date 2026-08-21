@@ -1,5 +1,12 @@
 import { onlineManager } from '@tanstack/react-query'
 import { drainExpenseOutbox } from './expense-outbox'
+import { pullExpenseChanges } from './expense-pull'
+import { useAuthStore } from '@/store/use-auth-store'
+
+export async function syncOfflineData(): Promise<void> {
+  await drainExpenseOutbox()
+  await pullExpenseChanges()
+}
 
 /**
  * Wires every "connectivity might have just become available" signal to
@@ -18,7 +25,11 @@ import { drainExpenseOutbox } from './expense-outbox'
  */
 export function setUpSyncTriggers(): void {
   onlineManager.subscribe((isOnline) => {
-    if (isOnline) void drainExpenseOutbox()
+    if (isOnline) void syncOfflineData()
+  })
+
+  useAuthStore.subscribe((state, previous) => {
+    if (state.isAuthenticated && !previous.isAuthenticated) void syncOfflineData()
   })
 
   // Cold start: onlineManager's real status hasn't resolved from native
@@ -26,5 +37,5 @@ export function setUpSyncTriggers(): void {
   // fire while still effectively unknown/offline — harmless either way,
   // since drainExpenseOutbox's own online check (and, worst case, a
   // failed fetch treated as a transient error) makes this self-correcting.
-  void drainExpenseOutbox()
+  void syncOfflineData()
 }

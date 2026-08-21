@@ -1,6 +1,10 @@
 import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
 import { toApiError } from '@/lib/api/errors'
+import { onlineManager } from '@tanstack/react-query'
+import { useAuthStore } from '@/store/use-auth-store'
+import { getLocalExpenses } from '@/lib/sqlite/expenses-store'
+import type { components } from '@/lib/api/schema'
 
 const PAGE_SIZE = 20
 
@@ -25,6 +29,30 @@ export function useMyExpensesListQuery(year?: number, month?: number) {
   const query = useInfiniteQuery({
     queryKey: ['my-expenses-list', year, month, 'infinite'],
     queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
+      const ownerId = useAuthStore.getState().userProfile?.id
+      if (!onlineManager.isOnline() && ownerId) {
+        const rows = (await getLocalExpenses(ownerId)).filter((expense) => {
+          const inPeriod = !year || !month || (Number(expense.date.slice(0, 4)) === year && Number(expense.date.slice(5, 7)) === month)
+          return inPeriod && (expense.context === 'personal' || expense.splits.some((split) => split.id === ownerId))
+        })
+        const results: components['schemas']['MyExpenseItem'][] = rows.map((expense) => ({
+          id: expense.id,
+          context: expense.context,
+          friendship: expense.friendship,
+          group: expense.group ? { id: expense.group, name: 'Group' } : null,
+          added_by: expense.added_by,
+          description: expense.description,
+          your_share: expense.context === 'personal'
+            ? expense.amount
+            : expense.splits.find((split) => split.id === ownerId)?.amount_owed ?? '0.00',
+          currency: expense.currency,
+          date: expense.date,
+          category: expense.category,
+          payers: expense.payers,
+          created_at: expense.created_at,
+        }))
+        return { results, next: null, previous: null }
+      }
       const requestQuery: MyExpensesListQuery = {
         page_size: PAGE_SIZE,
         ...(pageParam ? { cursor: pageParam } : {}),
@@ -42,6 +70,7 @@ export function useMyExpensesListQuery(year?: number, month?: number) {
     // that swap flashes a full loading skeleton instead of keeping last
     // period's rows on screen until the new period's first page lands.
     placeholderData: keepPreviousData,
+    networkMode: 'always',
   })
 
   return {

@@ -1,4 +1,5 @@
 import { getDatabase } from './init'
+import type { components } from '@/lib/api/schema'
 
 export type ExpenseSyncStatus = 'pending' | 'syncing' | 'synced' | 'failed'
 
@@ -18,6 +19,8 @@ export interface LocalExpenseInsert {
   payersJson: string
   splitsJson: string
   createdAt: string
+  ownerId: string
+  serverExpense?: components['schemas']['ExpenseRead']
 }
 
 /** Inserted with an empty currency — the backend derives currency
@@ -31,22 +34,90 @@ export async function insertLocalExpense(row: LocalExpenseInsert): Promise<void>
     `INSERT INTO expenses (
       id, context, friendship_id, group_id, added_by_id, description, amount, currency, date,
       category_id, note, receipt_url, local_receipt_path, split_type, payers_json, splits_json,
-      edited_at, created_at, updated_at, is_deleted, sync_status
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, NULL, ?, ?, ?, ?, NULL, ?, ?, 0, 'pending')`,
+      edited_at, created_at, updated_at, is_deleted, sync_status, owner_id, server_json
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, NULL, ?, ?, ?, ?, NULL, ?, ?, 0, 'pending', ?, ?)`,
     [
       row.id, row.context, row.friendshipId, row.groupId, row.addedById, row.description, row.amount, row.date,
       row.categoryId, row.note, row.localReceiptPath, row.splitType, row.payersJson, row.splitsJson,
-      row.createdAt, row.createdAt,
+      row.createdAt, row.createdAt, row.ownerId, row.serverExpense ? JSON.stringify(row.serverExpense) : null,
     ],
   )
 }
 
-export async function markLocalExpenseSynced(id: string, currency: string, receiptUrl: string | null): Promise<void> {
+export async function markLocalExpenseSynced(
+  id: string,
+  currency: string,
+  receiptUrl: string | null,
+  serverExpense?: components['schemas']['ExpenseRead'],
+): Promise<void> {
   const db = await getDatabase()
   await db.run(
-    `UPDATE expenses SET sync_status = 'synced', currency = ?, receipt_url = ?, local_receipt_path = NULL, updated_at = ? WHERE id = ?`,
-    [currency, receiptUrl, new Date().toISOString(), id],
+    `UPDATE expenses SET sync_status = 'synced', currency = ?, receipt_url = ?, local_receipt_path = NULL,
+      server_json = COALESCE(?, server_json), updated_at = ? WHERE id = ?`,
+    [currency, receiptUrl, serverExpense ? JSON.stringify(serverExpense) : null, new Date().toISOString(), id],
   )
+}
+
+export async function upsertServerExpense(
+  ownerId: string,
+  expense: components['schemas']['ExpenseDelta'],
+): Promise<void> {
+  const db = await getDatabase()
+  await db.run(
+    `INSERT INTO expenses (
+      id, context, friendship_id, group_id, added_by_id, description, amount, currency, date,
+      category_id, note, receipt_url, local_receipt_path, split_type, payers_json, splits_json,
+      edited_at, created_at, updated_at, is_deleted, sync_status, owner_id, server_json
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      context=excluded.context, friendship_id=excluded.friendship_id, group_id=excluded.group_id,
+      added_by_id=excluded.added_by_id, description=excluded.description, amount=excluded.amount,
+      currency=excluded.currency, date=excluded.date, category_id=excluded.category_id,
+      note=excluded.note, receipt_url=excluded.receipt_url, split_type=excluded.split_type,
+      payers_json=excluded.payers_json, splits_json=excluded.splits_json, edited_at=excluded.edited_at,
+      updated_at=excluded.updated_at, is_deleted=excluded.is_deleted, sync_status='synced',
+      owner_id=excluded.owner_id, server_json=excluded.server_json`,
+    [
+      expense.id, expense.context, expense.friendship ?? null, expense.group ?? null,
+      expense.added_by.id, expense.description, expense.amount, expense.currency, expense.date,
+      expense.category.id, expense.note ?? '', expense.receipt ?? null, expense.split_type,
+      JSON.stringify(expense.payers), JSON.stringify(expense.splits), expense.edited_at ?? null,
+      expense.created_at, expense.updated_at, expense.is_deleted ? 1 : 0, ownerId,
+      JSON.stringify(expense),
+    ],
+  )
+}
+
+interface StoredExpenseRow { server_json: string | null }
+
+export async function getLocalExpense(ownerId: string, id: string): Promise<components['schemas']['ExpenseRead'] | null> {
+  const db = await getDatabase()
+  const result = await db.query(
+    `SELECT server_json FROM expenses WHERE owner_id = ? AND id = ? AND is_deleted = 0`,
+    [ownerId, id],
+  )
+  const row = result.values?.[0] as StoredExpenseRow | undefined
+  return row?.server_json ? JSON.parse(row.server_json) as components['schemas']['ExpenseRead'] : null
+}
+
+export async function getLocalExpenses(
+  ownerId: string,
+  filters: { context?: string; friendshipId?: string; groupId?: string } = {},
+): Promise<components['schemas']['ExpenseRead'][]> {
+  const clauses = ['owner_id = ?', 'is_deleted = 0', 'server_json IS NOT NULL']
+  const values: string[] = [ownerId]
+  if (filters.context) { clauses.push('context = ?'); values.push(filters.context) }
+  if (filters.friendshipId) { clauses.push('friendship_id = ?'); values.push(filters.friendshipId) }
+  if (filters.groupId) { clauses.push('group_id = ?'); values.push(filters.groupId) }
+  const db = await getDatabase()
+  const result = await db.query(
+    `SELECT server_json FROM expenses WHERE ${clauses.join(' AND ')} ORDER BY date DESC, id DESC`,
+    values,
+  )
+  return (result.values ?? []).flatMap((value) => {
+    const json = (value as StoredExpenseRow).server_json
+    return json ? [JSON.parse(json) as components['schemas']['ExpenseRead']] : []
+  })
 }
 
 export async function markLocalExpenseFailed(id: string): Promise<void> {

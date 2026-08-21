@@ -1,6 +1,8 @@
 import { apiClient, refreshAccessToken } from './client'
 import { mapUserToProfile } from '@/features/auth/api/map-user'
 import { useAuthStore } from '@/store/use-auth-store'
+import { Network } from '@capacitor/network'
+import { getCachedOfflineProfile } from '@/lib/cached-profile'
 
 /**
  * Cold-start session restore — the access token lives in memory only (see
@@ -15,7 +17,17 @@ import { useAuthStore } from '@/store/use-auth-store'
  */
 export async function bootstrapAuth(): Promise<void> {
   const accessToken = await refreshAccessToken()
-  if (!accessToken) return
+  if (!accessToken) {
+    const { connected } = await Network.getStatus()
+    if (!connected) {
+      const cachedProfile = await getCachedOfflineProfile()
+      if (cachedProfile) {
+        useAuthStore.getState().setProfile(cachedProfile)
+        useAuthStore.getState().setIsAuthenticated(true)
+      }
+    }
+    return
+  }
 
   const { data, error } = await apiClient.GET('/api/auth/profile/')
   if (error || !data) return
