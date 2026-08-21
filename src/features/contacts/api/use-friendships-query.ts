@@ -1,6 +1,10 @@
 import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
 import { toApiError } from '@/lib/api/errors'
+import { onlineManager } from '@tanstack/react-query'
+import { useAuthStore } from '@/store/use-auth-store'
+import { getResourceSnapshot } from '@/lib/sqlite/resource-snapshot-store'
+import type { components } from '@/lib/api/schema'
 
 const PAGE_SIZE = 20
 
@@ -21,6 +25,15 @@ export function useFriendshipsQuery(search?: string) {
   const query = useInfiniteQuery({
     queryKey: ['friendships', 'list', 'infinite', search ?? null],
     queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
+      const ownerId = useAuthStore.getState().userProfile?.id
+      if (!onlineManager.isOnline() && ownerId) {
+        const all = await getResourceSnapshot<components['schemas']['Friendship']>(ownerId, 'friendships')
+        const needle = search?.trim().toLocaleLowerCase()
+        const results = needle
+          ? all.filter((item) => item.friend.full_name.toLocaleLowerCase().includes(needle))
+          : all
+        return { results, next: null, previous: null }
+      }
       const { data, error } = await apiClient.GET('/api/ledger/friendships/', {
         params: { query: { page_size: PAGE_SIZE, cursor: pageParam, ...(search ? { search } : {}) } },
       })
@@ -34,6 +47,7 @@ export function useFriendshipsQuery(search?: string) {
     // whole query key — keep last search's results on screen instead of
     // flashing empty while the new ones load.
     placeholderData: keepPreviousData,
+    networkMode: 'always',
   })
 
   return {

@@ -3,6 +3,9 @@ import { toast } from 'sonner'
 import { apiClient } from '@/lib/api/client'
 import { ApiError, toApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
+import { queueMutation } from '@/lib/sync/mutation-outbox'
+import { getSnapshotRecord, upsertSnapshotRecord } from '@/lib/sqlite/resource-snapshot-store'
+import { useAuthStore } from '@/store/use-auth-store'
 
 type Friendship = components['schemas']['Friendship']
 
@@ -14,20 +17,22 @@ function useFriendshipAction(
 
   return useMutation<Friendship, ApiError, void>({
     mutationFn: async () => {
-      if (action === 'block') {
-        const result = await apiClient.POST('/api/ledger/friendships/{friendship_id}/block/', {
-            params: { path: { friendship_id: friendshipId } },
-          })
-        const { data, error } = result as { data?: Friendship; error?: unknown }
-        if (error || !data) throw toApiError(error)
-        return data
+      const ownerId = useAuthStore.getState().userProfile?.id
+      const current = queryClient.getQueryData<Friendship>(['friendship', friendshipId])
+        ?? (ownerId ? await getSnapshotRecord<Friendship>(ownerId, 'friendships', friendshipId) : null)
+      if (!current) throw new ApiError('Open this contact online once before changing its settings offline.')
+      const optimistic = {
+        ...current,
+        is_blocked: action === 'block',
+        blocked_by_me: action === 'block',
       }
-      const result = await apiClient.POST('/api/ledger/friendships/{friendship_id}/unblock/', {
-        params: { path: { friendship_id: friendshipId } },
+      const result = await queueMutation({
+        resource: 'friendships', method: 'POST',
+        path: `/api/ledger/friendships/${friendshipId}/${action}/`,
+        optimisticResult: optimistic,
       })
-      const { data, error } = result as { data?: Friendship; error?: unknown }
-      if (error || !data) throw toApiError(error)
-      return data
+      if (ownerId) await upsertSnapshotRecord(ownerId, 'friendships', { id: friendshipId, data: result.data })
+      return result.data
     },
     onSuccess: (friendship) => {
       queryClient.setQueryData(['friendship', friendshipId], friendship)
@@ -51,12 +56,18 @@ export function useUpdateFriendshipExchangeRateMutation(friendshipId: string) {
 
   return useMutation<Friendship, ApiError, string>({
     mutationFn: async (exchangeRate) => {
-      const { data, error } = await apiClient.PATCH('/api/ledger/friendships/{friendship_id}/exchange-rate/', {
-        params: { path: { friendship_id: friendshipId } },
+      const ownerId = useAuthStore.getState().userProfile?.id
+      const current = queryClient.getQueryData<Friendship>(['friendship', friendshipId])
+        ?? (ownerId ? await getSnapshotRecord<Friendship>(ownerId, 'friendships', friendshipId) : null)
+      if (!current) throw new ApiError('Open this contact online once before changing its settings offline.')
+      const result = await queueMutation({
+        resource: 'friendships', method: 'PATCH',
+        path: `/api/ledger/friendships/${friendshipId}/exchange-rate/`,
         body: { exchange_rate: exchangeRate },
+        optimisticResult: { ...current, exchange_rate: exchangeRate },
       })
-      if (error) throw toApiError(error)
-      return data
+      if (ownerId) await upsertSnapshotRecord(ownerId, 'friendships', { id: friendshipId, data: result.data })
+      return result.data
     },
     onSuccess: (friendship) => {
       queryClient.setQueryData(['friendship', friendshipId], friendship)
@@ -73,12 +84,18 @@ export function useUpdateFriendshipAutoRemindMutation(friendshipId: string) {
 
   return useMutation<Friendship, ApiError, boolean | null>({
     mutationFn: async (autoRemindOverride) => {
-      const { data, error } = await apiClient.PATCH('/api/ledger/friendships/{friendship_id}/auto-remind/', {
-        params: { path: { friendship_id: friendshipId } },
+      const ownerId = useAuthStore.getState().userProfile?.id
+      const current = queryClient.getQueryData<Friendship>(['friendship', friendshipId])
+        ?? (ownerId ? await getSnapshotRecord<Friendship>(ownerId, 'friendships', friendshipId) : null)
+      if (!current) throw new ApiError('Open this contact online once before changing its settings offline.')
+      const result = await queueMutation({
+        resource: 'friendships', method: 'PATCH',
+        path: `/api/ledger/friendships/${friendshipId}/auto-remind/`,
         body: { auto_remind_override: autoRemindOverride },
+        optimisticResult: { ...current, my_auto_remind_override: autoRemindOverride },
       })
-      if (error) throw toApiError(error)
-      return data
+      if (ownerId) await upsertSnapshotRecord(ownerId, 'friendships', { id: friendshipId, data: result.data })
+      return result.data
     },
     onSuccess: (friendship) => {
       queryClient.setQueryData(['friendship', friendshipId], friendship)

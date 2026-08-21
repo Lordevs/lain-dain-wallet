@@ -1,8 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { apiClient } from '@/lib/api/client'
-import { ApiError, toApiError } from '@/lib/api/errors'
+import { ApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
+import { queueMutation } from '@/lib/sync/mutation-outbox'
+import { getSnapshotRecord, upsertSnapshotRecord } from '@/lib/sqlite/resource-snapshot-store'
+import { useAuthStore } from '@/store/use-auth-store'
 
 type Group = components['schemas']['Group']
 
@@ -11,12 +13,16 @@ export function useSetGroupCurrencyRateMutation(groupId: string) {
 
   return useMutation<Group, ApiError, { currency: string; rate: string }>({
     mutationFn: async ({ currency, rate }) => {
-      const { data, error } = await apiClient.POST('/api/ledger/groups/{group_id}/currency-rates/', {
-        params: { path: { group_id: groupId } },
-        body: { currency: currency.toUpperCase(), rate },
+      const ownerId = useAuthStore.getState().userProfile?.id
+      const current = queryClient.getQueryData<Group>(['group', groupId])
+        ?? (ownerId ? await getSnapshotRecord<Group>(ownerId, 'groups', groupId) : null)
+      if (!current) throw new ApiError('Open this group online once before changing its currency offline.')
+      const result = await queueMutation({
+        resource: 'groups', method: 'POST', path: `/api/ledger/groups/${groupId}/currency-rates/`,
+        body: { currency: currency.toUpperCase(), rate }, optimisticResult: current,
       })
-      if (error) throw toApiError(error)
-      return data
+      if (ownerId) await upsertSnapshotRecord(ownerId, 'groups', { id: groupId, data: result.data })
+      return result.data
     },
     onSuccess: (group) => {
       queryClient.setQueryData(['group', groupId], group)
@@ -31,16 +37,17 @@ export function useRemoveGroupCurrencyRateMutation(groupId: string) {
 
   return useMutation<Group, ApiError, string>({
     mutationFn: async (currency) => {
-      const { data, error } = await apiClient.DELETE(
-        '/api/ledger/groups/{group_id}/currency-rates/{currency}/',
-        {
-          params: {
-            path: { group_id: groupId, currency: currency.toUpperCase() },
-          },
-        },
-      )
-      if (error) throw toApiError(error)
-      return data
+      const ownerId = useAuthStore.getState().userProfile?.id
+      const current = queryClient.getQueryData<Group>(['group', groupId])
+        ?? (ownerId ? await getSnapshotRecord<Group>(ownerId, 'groups', groupId) : null)
+      if (!current) throw new ApiError('Open this group online once before changing its currency offline.')
+      const result = await queueMutation({
+        resource: 'groups', method: 'DELETE',
+        path: `/api/ledger/groups/${groupId}/currency-rates/${currency.toUpperCase()}/`,
+        optimisticResult: current,
+      })
+      if (ownerId) await upsertSnapshotRecord(ownerId, 'groups', { id: groupId, data: result.data })
+      return result.data
     },
     onSuccess: (group) => {
       queryClient.setQueryData(['group', groupId], group)
