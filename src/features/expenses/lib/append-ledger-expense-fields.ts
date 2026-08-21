@@ -10,6 +10,19 @@ export interface LedgerExpenseCoreValues {
   splits: ({ user_id: string } | { user_id: string; amount_owed: string } | { user_id: string; extra_amount: string })[]
 }
 
+export function ledgerExpenseFields(data: LedgerExpenseCoreValues): Array<[string, string]> {
+  const fields: Array<[string, string]> = [
+    ['description', data.description],
+    ['amount', data.amount],
+    ['category_id', data.categoryId],
+    ['split_type', data.splitType],
+    ['payers', JSON.stringify(data.payers)],
+    ['splits', JSON.stringify(data.splits)],
+  ]
+  if (data.note) fields.push(['note', data.note])
+  return fields
+}
+
 /**
  * Appends the fields shared by every "money + payers/splits" multipart
  * form — friendship/group expense create, group recurring payment
@@ -22,13 +35,7 @@ export interface LedgerExpenseCoreValues {
  * (`start_date`/`next_occurrence`).
  */
 export async function appendLedgerExpenseFields(formData: FormData, data: LedgerExpenseCoreValues): Promise<void> {
-  formData.append('description', data.description)
-  formData.append('amount', data.amount)
-  formData.append('category_id', data.categoryId)
-  if (data.note) formData.append('note', data.note)
-  formData.append('split_type', data.splitType)
-  formData.append('payers', JSON.stringify(data.payers))
-  formData.append('splits', JSON.stringify(data.splits))
+  for (const [key, value] of ledgerExpenseFields(data)) formData.append(key, value)
 
   if (data.receipt) {
     const blob = await fetch(data.receipt).then((res) => res.blob())

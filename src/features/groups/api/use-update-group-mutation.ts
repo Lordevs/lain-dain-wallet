@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api/client'
-import { ApiError, toApiError } from '@/lib/api/errors'
+import { ApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
+import { queueMutation } from '@/lib/sync/mutation-outbox'
 
 export interface UpdateGroupValues {
   name?: string
@@ -20,30 +20,26 @@ export function useUpdateGroupMutation(groupId: string) {
 
   return useMutation<components['schemas']['GroupUpdate'], ApiError, UpdateGroupValues, { previousGroup?: components['schemas']['Group'] }>({
     mutationFn: async (values: UpdateGroupValues) => {
-      const formData = new FormData()
-
-      if (values.name !== undefined) formData.append('name', values.name)
-      if (values.description !== undefined) formData.append('description', values.description)
+      const fields: Array<[string, string]> = []
+      if (values.name !== undefined) fields.push(['name', values.name])
+      if (values.description !== undefined) fields.push(['description', values.description])
       if (values.smart_settle_enabled !== undefined) {
-        formData.append('smart_settle_enabled', String(values.smart_settle_enabled))
+        fields.push(['smart_settle_enabled', String(values.smart_settle_enabled)])
       }
-
-      if (values.image !== undefined) {
-        if (values.image === null) {
-          formData.append('remove_image', 'true')
-        } else {
-          const blob = await fetch(values.image).then((r) => r.blob())
-          const ext = blob.type.split('/')[1] || 'jpg'
-          formData.append('image', blob, `group-image.${ext}`)
-        }
-      }
-
-      const { data, error } = await apiClient.PATCH('/api/ledger/groups/{id}/', {
-        params: { path: { id: groupId } },
-        body: formData as unknown as components['schemas']['PatchedGroupUpdateRequest'],
+      if (values.image === null) fields.push(['remove_image', 'true'])
+      const current = queryClient.getQueryData<components['schemas']['Group']>(['group', groupId])
+      const optimistic = { ...current, ...values, id: groupId } as components['schemas']['GroupUpdate']
+      const result = await queueMutation({
+        resource: 'group', method: 'PATCH', path: `/api/ledger/groups/${groupId}/`,
+        multipart: {
+          fields,
+          file: typeof values.image === 'string' ? {
+            field: 'image', sourceUri: values.image, filename: 'group-image.jpg', mimeType: 'image/jpeg',
+          } : undefined,
+        },
+        optimisticResult: optimistic,
       })
-      if (error) throw toApiError(error)
-      return data
+      return result.data
     },
     onMutate: async (values) => {
       await queryClient.cancelQueries({ queryKey: ['group', groupId] })

@@ -32,8 +32,53 @@ function blobToBase64(blob: Blob): Promise<string> {
   })
 }
 
-function base64ToBlob(base64: string): Promise<Blob> {
-  return fetch(`data:application/octet-stream;base64,${base64}`).then((res) => res.blob())
+function base64ToBlob(base64: string, mimeType = 'application/octet-stream'): Promise<Blob> {
+  return fetch(`data:${mimeType};base64,${base64}`).then((res) => res.blob())
+}
+
+export interface StagedFile {
+  path: string
+  filename: string
+  mimeType: string
+}
+
+function safeExtension(filename: string): string {
+  const match = filename.match(/\.([a-zA-Z0-9]{1,8})$/)
+  return match ? `.${match[1].toLowerCase()}` : ''
+}
+
+/** Persist a picker URL for any queued multipart mutation. Only metadata is
+ * stored in SQLite; the binary stays in Capacitor's durable file store. */
+export async function stageFileForOffline(
+  sourceUri: string,
+  mutationId: string,
+  filename = 'attachment',
+  mimeType?: string,
+): Promise<StagedFile> {
+  const blob = await fetch(sourceUri).then((res) => res.blob())
+  const resolvedMimeType = mimeType || blob.type || 'application/octet-stream'
+  const extension = safeExtension(filename)
+  const path = `mutation-attachments/${mutationId}${extension}`
+  await Filesystem.writeFile({
+    path,
+    data: await blobToBase64(blob),
+    directory: RECEIPT_DIR,
+    recursive: true,
+  })
+  return { path, filename, mimeType: resolvedMimeType }
+}
+
+export async function readStagedFile(file: StagedFile): Promise<Blob> {
+  const { data } = await Filesystem.readFile({ path: file.path, directory: RECEIPT_DIR })
+  return base64ToBlob(data as string, file.mimeType)
+}
+
+export async function deleteStagedFile(path: string): Promise<void> {
+  try {
+    await Filesystem.deleteFile({ path, directory: RECEIPT_DIR })
+  } catch {
+    // Best-effort cleanup. The mutation has already reached the server.
+  }
 }
 
 /** Copies a picker-supplied receipt URL into durable storage, returning

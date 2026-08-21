@@ -18,14 +18,21 @@ export interface SettlementCoreValues {
   receipt?: string | null
 }
 
+export function settlementFields(data: SettlementCoreValues): Array<[string, string]> {
+  const fields: Array<[string, string]> = [
+    ['mode', data.mode],
+    ['method', toApiMethod(data.method)],
+  ]
+  if (data.date) fields.push(['date', data.date])
+  if (data.note) fields.push(['note', data.note])
+  return fields
+}
+
 /** Appends the fields shared by both friendship and group settlement
  * creation — only `amount` (friendship) vs `entries` (group) differ,
  * appended separately by each caller before this runs. */
 export async function appendSettlementFields(formData: FormData, data: SettlementCoreValues): Promise<void> {
-  formData.append('mode', data.mode)
-  formData.append('method', toApiMethod(data.method))
-  if (data.date) formData.append('date', data.date)
-  if (data.note) formData.append('note', data.note)
+  for (const [key, value] of settlementFields(data)) formData.append(key, value)
 
   if (data.receipt) {
     const blob = await fetch(data.receipt).then((res) => res.blob())

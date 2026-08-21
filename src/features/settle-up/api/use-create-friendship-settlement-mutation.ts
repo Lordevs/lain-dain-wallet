@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api/client'
-import { ApiError, toApiError } from '@/lib/api/errors'
+import { ApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
-import { appendSettlementFields, type SettlementCoreValues } from '../lib/append-settlement-fields'
+import { queueMutation } from '@/lib/sync/mutation-outbox'
+import { settlementFields, type SettlementCoreValues } from '../lib/append-settlement-fields'
 
 export interface FriendshipSettlementFormValues extends SettlementCoreValues {
   amount: string
@@ -17,16 +17,19 @@ export function useCreateFriendshipSettlementMutation(friendshipId: string) {
 
   return useMutation<unknown, ApiError, FriendshipSettlementFormValues>({
     mutationFn: async (values) => {
-      const formData = new FormData()
-      formData.append('amount', values.amount)
-      await appendSettlementFields(formData, values)
-
-      const { data, error } = await apiClient.POST('/api/expenses/friendships/{friendship_id}/settlements/', {
-        params: { path: { friendship_id: friendshipId } },
-        body: formData as unknown as components['schemas']['FriendshipSettlementCreateRequest'],
+      const result = await queueMutation<unknown>({
+        resource: 'settlement',
+        method: 'POST',
+        path: `/api/expenses/friendships/${friendshipId}/settlements/`,
+        multipart: {
+          fields: [['amount', values.amount], ...settlementFields(values)],
+          file: values.receipt ? {
+            field: 'receipt', sourceUri: values.receipt, filename: 'receipt.jpg', mimeType: 'image/jpeg',
+          } : undefined,
+        },
+        optimisticResult: undefined,
       })
-      if (error) throw toApiError(error)
-      return data
+      return result.data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['friendship-transactions', friendshipId] })

@@ -1,9 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { apiClient } from '@/lib/api/client'
-import { ApiError, toApiError } from '@/lib/api/errors'
+import { ApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
-import { appendLedgerExpenseFields, type LedgerExpenseCoreValues } from '@/features/expenses/lib/append-ledger-expense-fields'
+import {
+  appendLedgerExpenseFields,
+  ledgerExpenseFields,
+  type LedgerExpenseCoreValues,
+} from '@/features/expenses/lib/append-ledger-expense-fields'
 import { queueMutation } from '@/lib/sync/mutation-outbox'
 
 export interface GroupRecurringFormValues extends LedgerExpenseCoreValues {
@@ -23,19 +26,37 @@ export async function buildRecurringExpenseFormData(data: GroupRecurringFormValu
   return formData
 }
 
+function recurringFields(data: GroupRecurringFormValues, isUpdate: boolean): Array<[string, string]> {
+  return [
+    ['frequency', data.frequency],
+    ...(!isUpdate ? [['start_date', data.startDate] as [string, string]] : []),
+    ['next_occurrence', data.nextOccurrence],
+    ...ledgerExpenseFields(data),
+  ]
+}
+
+function recurringMultipart(data: GroupRecurringFormValues, isUpdate: boolean) {
+  return {
+    fields: recurringFields(data, isUpdate),
+    file: data.receipt ? {
+      field: 'receipt', sourceUri: data.receipt, filename: 'receipt.jpg', mimeType: 'image/jpeg',
+    } : undefined,
+  }
+}
+
 /** POST /api/expenses/friendships/{friendship_id}/recurring/ */
 export function useCreateFriendshipRecurringMutation(friendshipId: string) {
   const queryClient = useQueryClient()
 
   return useMutation<components['schemas']['RecurringExpenseCreate'], ApiError, GroupRecurringFormValues>({
     mutationFn: async (values) => {
-      const formData = await buildRecurringExpenseFormData(values, false)
-      const { data, error } = await apiClient.POST('/api/expenses/friendships/{friendship_id}/recurring/', {
-        params: { path: { friendship_id: friendshipId } },
-        body: formData as unknown as components['schemas']['RecurringExpenseCreateRequest'],
+      const result = await queueMutation({
+        resource: 'recurring', method: 'POST',
+        path: `/api/expenses/friendships/${friendshipId}/recurring/`,
+        multipart: recurringMultipart(values, false),
+        optimisticResult: {} as components['schemas']['RecurringExpenseCreate'],
       })
-      if (error) throw toApiError(error)
-      return data
+      return result.data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['friendship-recurring', friendshipId] })
@@ -49,13 +70,12 @@ export function useUpdateFriendshipRecurringMutation(friendshipId: string, recur
 
   return useMutation<components['schemas']['RecurringExpenseUpdate'], ApiError, GroupRecurringFormValues>({
     mutationFn: async (values) => {
-      const formData = await buildRecurringExpenseFormData(values, true)
-      const { data, error } = await apiClient.PATCH('/api/expenses/recurring/{id}/', {
-        params: { path: { id: recurringId } },
-        body: formData as unknown as components['schemas']['PatchedRecurringExpenseUpdateRequest'],
+      const result = await queueMutation({
+        resource: 'recurring', method: 'PATCH', path: `/api/expenses/recurring/${recurringId}/`,
+        multipart: recurringMultipart(values, true),
+        optimisticResult: {} as components['schemas']['RecurringExpenseUpdate'],
       })
-      if (error) throw toApiError(error)
-      return data
+      return result.data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['friendship-recurring', friendshipId] })
@@ -87,13 +107,12 @@ export function useCreateGroupRecurringMutation(groupId: string) {
 
   return useMutation<components['schemas']['RecurringExpenseCreate'], ApiError, GroupRecurringFormValues>({
     mutationFn: async (values: GroupRecurringFormValues) => {
-      const formData = await buildRecurringExpenseFormData(values, false)
-      const { data, error } = await apiClient.POST('/api/expenses/groups/{group_id}/recurring/', {
-        params: { path: { group_id: groupId } },
-        body: formData as unknown as components['schemas']['RecurringExpenseCreateRequest'],
+      const result = await queueMutation({
+        resource: 'recurring', method: 'POST', path: `/api/expenses/groups/${groupId}/recurring/`,
+        multipart: recurringMultipart(values, false),
+        optimisticResult: {} as components['schemas']['RecurringExpenseCreate'],
       })
-      if (error) throw toApiError(error)
-      return data
+      return result.data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['group-recurring', groupId] })
@@ -110,13 +129,12 @@ export function useUpdateGroupRecurringMutation(groupId: string, recurringId: st
 
   return useMutation<components['schemas']['RecurringExpenseUpdate'], ApiError, GroupRecurringFormValues>({
     mutationFn: async (values: GroupRecurringFormValues) => {
-      const formData = await buildRecurringExpenseFormData(values, true)
-      const { data, error } = await apiClient.PATCH('/api/expenses/recurring/{id}/', {
-        params: { path: { id: recurringId } },
-        body: formData as unknown as components['schemas']['PatchedRecurringExpenseUpdateRequest'],
+      const result = await queueMutation({
+        resource: 'recurring', method: 'PATCH', path: `/api/expenses/recurring/${recurringId}/`,
+        multipart: recurringMultipart(values, true),
+        optimisticResult: {} as components['schemas']['RecurringExpenseUpdate'],
       })
-      if (error) throw toApiError(error)
-      return data
+      return result.data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['group-recurring', groupId] })
