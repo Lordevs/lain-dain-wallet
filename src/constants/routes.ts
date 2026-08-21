@@ -41,6 +41,7 @@ export const ROUTES = {
   // ── Personal ─────────────────────────────────────────────────────────────────
   PERSONAL: '/personal',
   PERSONAL_REPORTS: '/personal/reports',
+  PERSONAL_CATEGORY_BREAKDOWN: '/personal/reports/category-breakdown',
   PERSONAL_SETTINGS: '/personal/settings',
   PERSONAL_CATEGORIES: '/personal/categories',
   PERSONAL_HIDE_LEDGERS: '/personal/hide-ledgers',
