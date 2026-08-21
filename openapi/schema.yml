@@ -7614,7 +7614,7 @@ components:
         emoji:
           type: string
           minLength: 1
-          maxLength: 8
+          maxLength: 32
       required:
       - emoji
     RecurringExpenseCreate:

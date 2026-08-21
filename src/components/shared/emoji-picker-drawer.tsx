@@ -1,6 +1,14 @@
+import { Suspense, lazy } from 'react'
+import { EmojiStyle, type EmojiClickData } from 'emoji-picker-react'
 import { Drawer, DrawerContent, DrawerHeader, DrawerClose } from '@/components/ui/drawer'
 import { haptic } from '@/lib/haptics'
 import { X } from 'lucide-react'
+
+// The library itself (plus its bundled emoji data) is only needed once
+// the user actually opens the "+" custom-emoji picker, so it's kept out
+// of every screen's initial bundle the same way this app already
+// lazy-loads other rarely-opened drawers/flows.
+const EmojiPicker = lazy(() => import('emoji-picker-react'))
 
 interface EmojiPickerDrawerProps {
   isOpen: boolean
@@ -9,26 +17,21 @@ interface EmojiPickerDrawerProps {
   activeEmoji?: string | null
 }
 
-// A larger, hand-picked emoji set for the "+" custom-reaction picker —
-// no emoji-picker library is installed in this repo, and a flat grid of
-// commonly-used reaction emoji covers the WhatsApp-style "pick any
-// emoji" need without pulling in a full emoji-data dependency. Kept to
-// single-codepoint-ish emoji (no long ZWJ sequences) so every entry
-// comfortably fits the backend's Reaction.emoji max_length=8 field.
-const EMOJI_GRID = [
-  '👍', '👎', '❤️', '😂', '😍', '😅', '😮', '😢',
-  '😡', '🙏', '✅', '❌', '🎉', '🔥', '💯', '👏',
-  '😬', '😴', '🤔', '😎', '🥳', '😱', '🤝', '💸',
-  '💰', '📈', '📉', '⭐', '💡', '⚡', '👀', '🙌',
-]
-
 /** The "+" custom-emoji picker opened from ReactionPicker's quick-react
  * bar — WhatsApp-style: the fixed 6-emoji quick bar covers the common
- * case, this covers "something else". */
-export default function EmojiPickerDrawer({ isOpen, onClose, onSelect, activeEmoji }: EmojiPickerDrawerProps) {
+ * case, this (a real emoji-picker-react instance, the full emoji set
+ * with search + categories, rendered as native unicode glyphs) covers
+ * "something else". */
+export default function EmojiPickerDrawer({ isOpen, onClose, onSelect }: EmojiPickerDrawerProps) {
+  const handlePick = (data: EmojiClickData) => {
+    haptic.light()
+    onSelect(data.emoji)
+    onClose()
+  }
+
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="bg-white rounded-t-[32px] pb-8 border-t-0 text-foreground outline-none">
+      <DrawerContent className="bg-white rounded-t-[32px] border-t-0 text-foreground outline-none">
         <DrawerHeader className="relative flex items-center justify-center px-14 pt-4 pb-4 shrink-0 text-center">
           <h3 className="text-[17px] font-extrabold text-foreground leading-snug">Choose a reaction</h3>
           <DrawerClose asChild>
@@ -43,25 +46,19 @@ export default function EmojiPickerDrawer({ isOpen, onClose, onSelect, activeEmo
         </DrawerHeader>
         <hr className="border-divider border-b-[0.8px] w-full shrink-0" />
 
-        <div className="grid grid-cols-8 gap-1 p-4 max-h-[40vh] overflow-y-auto">
-          {EMOJI_GRID.map((emoji) => (
-            <button
-              key={emoji}
-              type="button"
-              onClick={() => {
-                haptic.light()
-                onSelect(emoji)
-                onClose()
-              }}
-              className={
-                'text-2xl leading-none aspect-square flex items-center justify-center rounded-xl transition-transform active:scale-90 border-0 cursor-pointer ' +
-                (activeEmoji === emoji ? 'bg-foreground/15 ring-2 ring-foreground/30' : 'bg-transparent hover:bg-muted/20')
-              }
-              aria-label={`React with ${emoji}`}
-            >
-              {emoji}
-            </button>
-          ))}
+        <div className="flex justify-center px-2 pb-4">
+          {isOpen && (
+            <Suspense fallback={<div className="h-[min(60vh,420px)] w-full max-w-full" />}>
+              <EmojiPicker
+                onEmojiClick={handlePick}
+                emojiStyle={EmojiStyle.NATIVE}
+                autoFocusSearch={false}
+                width="100%"
+                height="min(60vh, 420px)"
+                previewConfig={{ showPreview: false }}
+              />
+            </Suspense>
+          )}
         </div>
       </DrawerContent>
     </Drawer>
