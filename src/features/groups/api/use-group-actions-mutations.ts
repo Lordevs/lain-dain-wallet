@@ -1,18 +1,35 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { apiClient } from '@/lib/api/client'
-import { ApiError, toApiError } from '@/lib/api/errors'
+import { ApiError } from '@/lib/api/errors'
+import type { components } from '@/lib/api/schema'
+import { queueMutation } from '@/lib/sync/mutation-outbox'
+import { deleteSnapshotRecord, getSnapshotRecord, upsertSnapshotRecord } from '@/lib/sqlite/resource-snapshot-store'
+import { useAuthStore } from '@/store/use-auth-store'
+
+type Group = components['schemas']['Group']
+
+async function queueGroupAction(
+  queryClient: ReturnType<typeof useQueryClient>,
+  groupId: string,
+  path: string,
+  body?: unknown,
+): Promise<Group> {
+  const ownerId = useAuthStore.getState().userProfile?.id
+  const current = queryClient.getQueryData<Group>(['group', groupId])
+    ?? (ownerId ? await getSnapshotRecord<Group>(ownerId, 'groups', groupId) : null)
+  if (!current) throw new ApiError('Open this group online once before changing it offline.')
+  const result = await queueMutation({
+    resource: 'groups', method: 'POST', path, body, optimisticResult: current,
+  })
+  if (ownerId) await upsertSnapshotRecord(ownerId, 'groups', { id: groupId, data: result.data })
+  return result.data
+}
 
 export function useMakeAdminMutation(groupId: string) {
   const queryClient = useQueryClient()
   return useMutation<unknown, ApiError, string>({
     mutationFn: async (userId: string) => {
-      const { data, error } = await apiClient.POST(
-        '/api/ledger/groups/{group_id}/members/{user_id}/make-admin/',
-        { params: { path: { group_id: groupId, user_id: userId } } }
-      )
-      if (error) throw toApiError(error)
-      return data
+      return queueGroupAction(queryClient, groupId, `/api/ledger/groups/${groupId}/members/${userId}/make-admin/`)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['group', groupId] })
@@ -27,12 +44,7 @@ export function useRemoveAdminMutation(groupId: string) {
   const queryClient = useQueryClient()
   return useMutation<unknown, ApiError, string>({
     mutationFn: async (userId: string) => {
-      const { data, error } = await apiClient.POST(
-        '/api/ledger/groups/{group_id}/members/{user_id}/remove-admin/',
-        { params: { path: { group_id: groupId, user_id: userId } } }
-      )
-      if (error) throw toApiError(error)
-      return data
+      return queueGroupAction(queryClient, groupId, `/api/ledger/groups/${groupId}/members/${userId}/remove-admin/`)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['group', groupId] })
@@ -47,12 +59,7 @@ export function useRemoveMemberMutation(groupId: string) {
   const queryClient = useQueryClient()
   return useMutation<unknown, ApiError, string>({
     mutationFn: async (userId: string) => {
-      const { data, error } = await apiClient.POST(
-        '/api/ledger/groups/{group_id}/members/{user_id}/remove/',
-        { params: { path: { group_id: groupId, user_id: userId } } }
-      )
-      if (error) throw toApiError(error)
-      return data
+      return queueGroupAction(queryClient, groupId, `/api/ledger/groups/${groupId}/members/${userId}/remove/`)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['group', groupId] })
@@ -68,11 +75,9 @@ export function useLeaveGroupMutation(groupId: string) {
   const queryClient = useQueryClient()
   return useMutation<void, ApiError, void>({
     mutationFn: async () => {
-      const { error } = await apiClient.POST(
-        '/api/ledger/groups/{group_id}/leave/',
-        { params: { path: { group_id: groupId } } }
-      )
-      if (error) throw toApiError(error)
+      await queueMutation({ resource: 'groups', method: 'POST', path: `/api/ledger/groups/${groupId}/leave/`, optimisticResult: undefined })
+      const ownerId = useAuthStore.getState().userProfile?.id
+      if (ownerId) await deleteSnapshotRecord(ownerId, 'groups', groupId)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['groups', 'list'] })
@@ -94,11 +99,9 @@ export function useDeleteGroupMutation(groupId: string) {
   const queryClient = useQueryClient()
   return useMutation<void, ApiError, void>({
     mutationFn: async () => {
-      const { error } = await apiClient.DELETE(
-        '/api/ledger/groups/{id}/',
-        { params: { path: { id: groupId } } }
-      )
-      if (error) throw toApiError(error)
+      await queueMutation({ resource: 'groups', method: 'DELETE', path: `/api/ledger/groups/${groupId}/`, optimisticResult: undefined })
+      const ownerId = useAuthStore.getState().userProfile?.id
+      if (ownerId) await deleteSnapshotRecord(ownerId, 'groups', groupId)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['groups', 'list'] })
@@ -122,15 +125,7 @@ export function useAddMembersMutation(groupId: string) {
   const queryClient = useQueryClient()
   return useMutation<unknown, ApiError, string[]>({
     mutationFn: async (memberIds: string[]) => {
-      const { data, error } = await apiClient.POST(
-        '/api/ledger/groups/{group_id}/invitations/',
-        {
-          params: { path: { group_id: groupId } },
-          body: { member_ids: memberIds },
-        }
-      )
-      if (error) throw toApiError(error)
-      return data
+      return queueGroupAction(queryClient, groupId, `/api/ledger/groups/${groupId}/invitations/`, { member_ids: memberIds })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['group', groupId] })
@@ -145,12 +140,7 @@ export function useTransferOwnershipMutation(groupId: string) {
   const queryClient = useQueryClient()
   return useMutation<unknown, ApiError, string>({
     mutationFn: async (userId: string) => {
-      const { data, error } = await apiClient.POST(
-        '/api/ledger/groups/{group_id}/members/{user_id}/transfer-ownership/',
-        { params: { path: { group_id: groupId, user_id: userId } } }
-      )
-      if (error) throw toApiError(error)
-      return data
+      return queueGroupAction(queryClient, groupId, `/api/ledger/groups/${groupId}/members/${userId}/transfer-ownership/`)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['group', groupId] })

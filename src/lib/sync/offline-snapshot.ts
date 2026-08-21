@@ -8,6 +8,7 @@ import { replaceResourceSnapshot } from '@/lib/sqlite/resource-snapshot-store'
 interface OfflineSnapshot {
   profile: components['schemas']['User']
   groups: components['schemas']['Group'][]
+  friendships: components['schemas']['Friendship'][]
   settlements: components['schemas']['SettlementRead'][]
   recurring_expenses: components['schemas']['RecurringExpenseRead'][]
   notifications: components['schemas']['Notification'][]
@@ -35,6 +36,7 @@ export async function pullOfflineSnapshot(): Promise<void> {
     await Promise.all([
       replaceResourceSnapshot(ownerId, 'profile', [{ id: ownerId, data: snapshot.profile }]),
       replaceResourceSnapshot(ownerId, 'groups', snapshot.groups.map((group) => ({ id: group.id, data: group }))),
+      replaceResourceSnapshot(ownerId, 'friendships', snapshot.friendships.map((item) => ({ id: item.id, data: item }))),
       replaceResourceSnapshot(ownerId, 'settlements', snapshot.settlements.map((item) => ({
         id: item.id, scopeId: item.group ?? item.friendship ?? null, data: item,
       }))),
