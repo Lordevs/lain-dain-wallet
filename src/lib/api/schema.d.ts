@@ -895,6 +895,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/expenses/groups/{group_id}/categories/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description GET /api/expenses/groups/{group_id}/categories/ — the distinct set of
+         *     categories actually used by this group's expenses, ordered the same
+         *     way CategoryListCreateView orders the full list (each user's own
+         *     position ordering, falling back to name). Powers the group Expenses
+         *     screen's category filter pills, which show only categories with at
+         *     least one expense in this specific group instead of every category
+         *     that exists globally.
+         */
+        get: operations["expenses_groups_categories_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/expenses/groups/{group_id}/clear-history/": {
         parameters: {
             query?: never;
@@ -5686,6 +5711,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PersonBalance"][];
+                };
+            };
+        };
+    };
+    expenses_groups_categories_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                group_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Category"][];
                 };
             };
         };

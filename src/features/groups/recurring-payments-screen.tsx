@@ -3,7 +3,6 @@ import { useNavigate } from '@tanstack/react-router'
 import { Pencil, Trash2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import FlowHeader from '@/components/shared/flow-header'
-import ContactAvatar from '@/components/shared/contact-avatar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuthStore } from '@/store/use-auth-store'
 import { useGroupQuery } from '@/features/groups/api/use-group-query'
@@ -14,7 +13,6 @@ import { useFriendshipRecurringQuery } from '@/features/contacts/api/use-friends
 import { useDeleteFriendshipRecurringMutation } from '@/features/groups/api/use-group-recurring-mutations'
 import { getGroupPermissions } from '@/features/groups/lib/group-roles'
 import { iconForCategory } from '@/features/expenses/lib/category-icons'
-import { initialsForName, colorForName } from '@/lib/avatar-visuals'
 import { formatCurrency } from '@/lib/currency'
 import { ROUTES } from '@/constants/routes'
 
@@ -152,8 +150,6 @@ export default function RecurringPaymentsScreen({
                 const iconColor = p.category?.color ?? '#0B683A'
                 const mainPayer = p.payers?.[0]
                 const payerName = mainPayer ? (mainPayer.id === myId ? 'You' : mainPayer.full_name) : 'Ledger'
-                const payerInitials = initialsForName(payerName)
-                const payerColor = colorForName(payerName)
                 const amountNum = Number(p.amount) || 0
 
                 return (
@@ -175,12 +171,6 @@ export default function RecurringPaymentsScreen({
                         {/* Payer + Amount Row */}
                         <div className="flex items-center justify-between mt-1.5 pr-2">
                           <div className="flex items-center gap-1.5 min-w-0">
-                            <ContactAvatar
-                              initials={payerInitials}
-                              avatarColor={payerColor}
-                              src={mainPayer?.image ?? undefined}
-                              size="xs"
-                            />
                             <span className="text-[13px] text-[#6B6B6B] font-semibold truncate leading-none">
                               Paid by {payerName}
                             </span>

@@ -28,6 +28,7 @@ export function useDeleteExpenseMutation() {
       if (groupId) {
         queryClient.invalidateQueries({ queryKey: ['group-transactions', groupId] })
         queryClient.invalidateQueries({ queryKey: ['group-balance', groupId] })
+        queryClient.invalidateQueries({ queryKey: ['group-used-categories', groupId] })
       }
       if (friendshipId) {
         // 1:1 — exactly one other user; scope to them instead of every
