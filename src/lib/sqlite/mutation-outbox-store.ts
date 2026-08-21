@@ -56,3 +56,34 @@ export async function deleteMutation(id: string): Promise<void> {
   const db = await getDatabase()
   await db.run(`DELETE FROM mutation_outbox WHERE id = ?`, [id])
 }
+
+export async function getMutationOutboxSummary(ownerId: string): Promise<{
+  pending: number
+  failed: number
+  firstError: string | null
+}> {
+  const db = await getDatabase()
+  const result = await db.query(
+    `SELECT
+       SUM(CASE WHEN status IN ('pending', 'syncing') THEN 1 ELSE 0 END) AS pending,
+       SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed,
+       MIN(CASE WHEN status = 'failed' THEN last_error END) AS first_error
+     FROM mutation_outbox WHERE owner_id = ?`,
+    [ownerId],
+  )
+  const row = result.values?.[0] ?? {}
+  return {
+    pending: Number(row.pending ?? 0),
+    failed: Number(row.failed ?? 0),
+    firstError: (row.first_error as string | null | undefined) ?? null,
+  }
+}
+
+export async function retryFailedMutations(ownerId: string): Promise<void> {
+  const db = await getDatabase()
+  await db.run(
+    `UPDATE mutation_outbox SET status = 'pending', last_error = NULL
+     WHERE owner_id = ? AND status = 'failed'`,
+    [ownerId],
+  )
+}
