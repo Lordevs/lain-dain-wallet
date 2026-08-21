@@ -3,6 +3,7 @@ import { apiClient } from '@/lib/api/client'
 import { ApiError, toApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
 import { useAuthStore } from '@/store/use-auth-store'
+import { queueMutation } from '@/lib/sync/mutation-outbox'
 
 type SettlementRead = components['schemas']['SettlementRead']
 
@@ -34,11 +35,19 @@ export function useConfirmSettlementMutation() {
   const queryClient = useQueryClient()
   return useMutation<SettlementRead, ApiError, string>({
     mutationFn: async (id: string) => {
-      const { data, error } = await apiClient.POST('/api/expenses/settlements/{id}/confirm/', {
-        params: { path: { id } },
-      })
-      if (error) throw toApiError(error)
-      return data
+      const cached = queryClient.getQueryData<SettlementRead>(['settlement', id])
+      if (!cached) {
+        const { data, error } = await apiClient.POST('/api/expenses/settlements/{id}/confirm/', {
+          params: { path: { id } },
+        })
+        if (error) throw toApiError(error)
+        return data
+      }
+      return (await queueMutation({
+        resource: 'settlements', method: 'POST',
+        path: `/api/expenses/settlements/${id}/confirm/`,
+        optimisticResult: { ...cached, status: 'confirmed' as const },
+      })).data
     },
     onSuccess: (data) => invalidateForSettlement(queryClient, data),
   })
@@ -52,11 +61,19 @@ export function useDisputeSettlementMutation() {
   const queryClient = useQueryClient()
   return useMutation<SettlementRead, ApiError, string>({
     mutationFn: async (id: string) => {
-      const { data, error } = await apiClient.POST('/api/expenses/settlements/{id}/dispute/', {
-        params: { path: { id } },
-      })
-      if (error) throw toApiError(error)
-      return data
+      const cached = queryClient.getQueryData<SettlementRead>(['settlement', id])
+      if (!cached) {
+        const { data, error } = await apiClient.POST('/api/expenses/settlements/{id}/dispute/', {
+          params: { path: { id } },
+        })
+        if (error) throw toApiError(error)
+        return data
+      }
+      return (await queueMutation({
+        resource: 'settlements', method: 'POST',
+        path: `/api/expenses/settlements/${id}/dispute/`,
+        optimisticResult: { ...cached, status: 'disputed' as const },
+      })).data
     },
     onSuccess: (data) => invalidateForSettlement(queryClient, data),
   })
@@ -69,10 +86,10 @@ export function useCancelSettlementMutation() {
   const queryClient = useQueryClient()
   return useMutation<void, ApiError, { id: string; friendshipId?: string | null; groupId?: string | null }>({
     mutationFn: async ({ id }) => {
-      const { error } = await apiClient.POST('/api/expenses/settlements/{id}/cancel/', {
-        params: { path: { id } },
+      await queueMutation({
+        resource: 'settlements', method: 'POST',
+        path: `/api/expenses/settlements/${id}/cancel/`, optimisticResult: undefined,
       })
-      if (error) throw toApiError(error)
     },
     onSuccess: (_data, { id, friendshipId, groupId }) => {
       // Cancel is a 204 (no body), so payer/payee aren't in the response —

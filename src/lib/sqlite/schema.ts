@@ -11,7 +11,7 @@
  * future schema change; never edit an already-shipped entry in place.
  */
 export const DB_NAME = 'laindain'
-export const DB_VERSION = 2
+export const DB_VERSION = 3
 
 export interface SchemaUpgrade {
   toVersion: number
@@ -93,6 +93,25 @@ export const upgradeStatements: SchemaUpgrade[] = [
       `ALTER TABLE expense_outbox ADD COLUMN owner_id TEXT NOT NULL DEFAULT ''`,
       `CREATE INDEX idx_expenses_owner_scope ON expenses(owner_id, context, group_id, friendship_id)`,
       `CREATE INDEX idx_expense_outbox_owner_status ON expense_outbox(owner_id, status, created_at)`,
+    ],
+  },
+  {
+    toVersion: 3,
+    statements: [
+      `CREATE TABLE mutation_outbox (
+        id TEXT PRIMARY KEY,
+        owner_id TEXT NOT NULL,
+        resource TEXT NOT NULL,
+        method TEXT NOT NULL,
+        path TEXT NOT NULL,
+        body_json TEXT,
+        status TEXT NOT NULL DEFAULT 'pending',
+        attempt_count INTEGER NOT NULL DEFAULT 0,
+        last_error TEXT,
+        created_at TEXT NOT NULL
+      )`,
+      `CREATE INDEX idx_mutation_outbox_owner_status
+        ON mutation_outbox(owner_id, status, created_at)`,
     ],
   },
 ]
