@@ -1,6 +1,10 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
 import { toApiError } from '@/lib/api/errors'
+import { onlineManager } from '@tanstack/react-query'
+import { useAuthStore } from '@/store/use-auth-store'
+import { getResourceSnapshot } from '@/lib/sqlite/resource-snapshot-store'
+import type { components } from '@/lib/api/schema'
 
 const PAGE_SIZE = 20
 
@@ -16,6 +20,11 @@ export function useNotificationsQuery() {
   const query = useInfiniteQuery({
     queryKey: ['notifications', 'list', 'infinite'],
     queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
+      const ownerId = useAuthStore.getState().userProfile?.id
+      if (!onlineManager.isOnline() && ownerId) {
+        const results = await getResourceSnapshot<components['schemas']['Notification']>(ownerId, 'notifications')
+        return { results, next: null, previous: null }
+      }
       const { data, error } = await apiClient.GET('/api/notifications/', {
         params: {
           query: {
@@ -29,6 +38,7 @@ export function useNotificationsQuery() {
     },
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => cursorFromUrl(lastPage.next),
+    networkMode: 'always',
   })
 
   return {

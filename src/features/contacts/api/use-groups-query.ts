@@ -1,6 +1,10 @@
 import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
 import { toApiError } from '@/lib/api/errors'
+import { onlineManager } from '@tanstack/react-query'
+import { useAuthStore } from '@/store/use-auth-store'
+import { getResourceSnapshot } from '@/lib/sqlite/resource-snapshot-store'
+import type { components } from '@/lib/api/schema'
 
 const PAGE_SIZE = 20
 
@@ -19,6 +23,12 @@ export function useGroupsQuery(search?: string) {
   const query = useInfiniteQuery({
     queryKey: ['groups', 'list', 'infinite', search ?? null],
     queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
+      const ownerId = useAuthStore.getState().userProfile?.id
+      if (!onlineManager.isOnline() && ownerId) {
+        const all = await getResourceSnapshot<components['schemas']['Group']>(ownerId, 'groups')
+        const results = search ? all.filter((group) => group.name.toLowerCase().includes(search.toLowerCase())) : all
+        return { results, next: null, previous: null }
+      }
       const { data, error } = await apiClient.GET('/api/ledger/groups/', {
         params: { query: { page_size: PAGE_SIZE, cursor: pageParam, ...(search ? { search } : {}) } },
       })
@@ -28,6 +38,7 @@ export function useGroupsQuery(search?: string) {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => cursorFromUrl(lastPage.next),
     enabled: search === undefined || search.trim().length > 0,
+    networkMode: 'always',
     // Each keystroke in the search overlay changes `search` and so the
     // whole query key — keep last search's results on screen instead of
     // flashing empty while the new ones load.

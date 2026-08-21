@@ -11,7 +11,7 @@
  * future schema change; never edit an already-shipped entry in place.
  */
 export const DB_NAME = 'laindain'
-export const DB_VERSION = 3
+export const DB_VERSION = 4
 
 export interface SchemaUpgrade {
   toVersion: number
@@ -112,6 +112,21 @@ export const upgradeStatements: SchemaUpgrade[] = [
       )`,
       `CREATE INDEX idx_mutation_outbox_owner_status
         ON mutation_outbox(owner_id, status, created_at)`,
+    ],
+  },
+  {
+    toVersion: 4,
+    statements: [
+      `CREATE TABLE resource_snapshots (
+        owner_id TEXT NOT NULL,
+        resource TEXT NOT NULL,
+        record_id TEXT NOT NULL,
+        scope_id TEXT,
+        data_json TEXT NOT NULL,
+        PRIMARY KEY(owner_id, resource, record_id)
+      )`,
+      `CREATE INDEX idx_resource_snapshots_scope
+        ON resource_snapshots(owner_id, resource, scope_id)`,
     ],
   },
 ]
