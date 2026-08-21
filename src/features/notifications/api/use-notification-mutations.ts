@@ -144,10 +144,10 @@ export function useClearAllNotificationsMutation() {
 export function useRequestSettlementMutation() {
   return useMutation<void, ApiError, RequestSettlementBody>({
     mutationFn: async (body: RequestSettlementBody) => {
-      const { error } = await apiClient.POST('/api/notifications/remind/', {
-        body,
+      await queueMutation({
+        resource: 'notifications', method: 'POST', path: '/api/notifications/remind/',
+        body, optimisticResult: undefined,
       })
-      if (error) throw toApiError(error)
     },
   })
 }

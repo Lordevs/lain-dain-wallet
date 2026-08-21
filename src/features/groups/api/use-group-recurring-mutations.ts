@@ -4,6 +4,7 @@ import { apiClient } from '@/lib/api/client'
 import { ApiError, toApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
 import { appendLedgerExpenseFields, type LedgerExpenseCoreValues } from '@/features/expenses/lib/append-ledger-expense-fields'
+import { queueMutation } from '@/lib/sync/mutation-outbox'
 
 export interface GroupRecurringFormValues extends LedgerExpenseCoreValues {
   frequency: 'weekly' | 'biweekly' | 'monthly' | 'yearly'
@@ -68,10 +69,10 @@ export function useDeleteFriendshipRecurringMutation(friendshipId: string) {
 
   return useMutation<void, ApiError, string>({
     mutationFn: async (recurringId) => {
-      const { error } = await apiClient.DELETE('/api/expenses/recurring/{id}/', {
-        params: { path: { id: recurringId } },
+      await queueMutation({
+        resource: 'recurring', method: 'DELETE', path: `/api/expenses/recurring/${recurringId}/`,
+        optimisticResult: undefined,
       })
-      if (error) throw toApiError(error)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['friendship-recurring', friendshipId] })
@@ -132,10 +133,10 @@ export function useDeleteGroupRecurringMutation(groupId: string) {
 
   return useMutation<void, ApiError, string>({
     mutationFn: async (recurringId: string) => {
-      const { error } = await apiClient.DELETE('/api/expenses/recurring/{id}/', {
-        params: { path: { id: recurringId } },
+      await queueMutation({
+        resource: 'recurring', method: 'DELETE', path: `/api/expenses/recurring/${recurringId}/`,
+        optimisticResult: undefined,
       })
-      if (error) throw toApiError(error)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['group-recurring', groupId] })
