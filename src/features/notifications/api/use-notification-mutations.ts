@@ -2,6 +2,7 @@ import { useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-
 import { apiClient } from '@/lib/api/client'
 import { ApiError, toApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
+import { queueMutation } from '@/lib/sync/mutation-outbox'
 
 type Notification = components['schemas']['Notification']
 type PaginatedNotificationList = components['schemas']['PaginatedNotificationList']
@@ -17,11 +18,19 @@ export function useMarkNotificationReadMutation() {
   const queryClient = useQueryClient()
   return useMutation<Notification, ApiError, string>({
     mutationFn: async (id: string) => {
-      const { data, error } = await apiClient.POST('/api/notifications/{id}/read/', {
-        params: { path: { id } },
-      })
-      if (error) throw toApiError(error)
-      return data
+      const cached = queryClient.getQueryData<InfiniteData<PaginatedNotificationList>>(NOTIFICATIONS_LIST_KEY)
+        ?.pages.flatMap((page) => page.results).find((item) => item.id === id)
+      if (!cached) {
+        const { data, error } = await apiClient.POST('/api/notifications/{id}/read/', {
+          params: { path: { id } },
+        })
+        if (error) throw toApiError(error)
+        return data
+      }
+      return (await queueMutation({
+        resource: 'notifications', method: 'POST', path: `/api/notifications/${id}/read/`,
+        optimisticResult: { ...cached, read_at: new Date().toISOString() },
+      })).data
     },
     // The full feed refetch this used to trigger (bare ['notifications']
     // invalidation, matching both the list and the unread-count queries)
@@ -51,8 +60,10 @@ export function useMarkAllNotificationsReadMutation() {
   const queryClient = useQueryClient()
   return useMutation<void, ApiError, void>({
     mutationFn: async () => {
-      const { error } = await apiClient.POST('/api/notifications/mark-all-read/')
-      if (error) throw toApiError(error)
+      await queueMutation({
+        resource: 'notifications', method: 'POST', path: '/api/notifications/mark-all-read/',
+        optimisticResult: undefined,
+      })
     },
     onSuccess: () => {
       queryClient.setQueryData<InfiniteData<PaginatedNotificationList>>(NOTIFICATIONS_LIST_KEY, (old) => {
@@ -81,10 +92,10 @@ export function useDeleteNotificationMutation() {
   const queryClient = useQueryClient()
   return useMutation<void, ApiError, string>({
     mutationFn: async (id: string) => {
-      const { error } = await apiClient.DELETE('/api/notifications/{id}/', {
-        params: { path: { id } },
+      await queueMutation({
+        resource: 'notifications', method: 'DELETE', path: `/api/notifications/${id}/`,
+        optimisticResult: undefined,
       })
-      if (error) throw toApiError(error)
     },
     onSuccess: (_data, id) => {
       queryClient.setQueryData<InfiniteData<PaginatedNotificationList>>(NOTIFICATIONS_LIST_KEY, (old) => {
@@ -108,8 +119,10 @@ export function useClearAllNotificationsMutation() {
   const queryClient = useQueryClient()
   return useMutation<void, ApiError, void>({
     mutationFn: async () => {
-      const { error } = await apiClient.POST('/api/notifications/clear-all/')
-      if (error) throw toApiError(error)
+      await queueMutation({
+        resource: 'notifications', method: 'POST', path: '/api/notifications/clear-all/',
+        optimisticResult: undefined,
+      })
     },
     onSuccess: () => {
       queryClient.setQueryData<InfiniteData<PaginatedNotificationList>>(NOTIFICATIONS_LIST_KEY, (old) => {
@@ -138,4 +151,3 @@ export function useRequestSettlementMutation() {
     },
   })
 }
-
