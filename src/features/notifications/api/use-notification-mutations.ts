@@ -3,6 +3,13 @@ import { apiClient } from '@/lib/api/client'
 import { ApiError, toApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
 import { queueMutation } from '@/lib/sync/mutation-outbox'
+import { useAuthStore } from '@/store/use-auth-store'
+import {
+  deleteSnapshotRecord,
+  getSnapshotRecord,
+  transformResourceSnapshot,
+  upsertSnapshotRecord,
+} from '@/lib/sqlite/resource-snapshot-store'
 
 type Notification = components['schemas']['Notification']
 type PaginatedNotificationList = components['schemas']['PaginatedNotificationList']
@@ -20,17 +27,26 @@ export function useMarkNotificationReadMutation() {
     mutationFn: async (id: string) => {
       const cached = queryClient.getQueryData<InfiniteData<PaginatedNotificationList>>(NOTIFICATIONS_LIST_KEY)
         ?.pages.flatMap((page) => page.results).find((item) => item.id === id)
-      if (!cached) {
+      const ownerId = useAuthStore.getState().userProfile?.id
+      const local = cached ?? (ownerId
+        ? await getSnapshotRecord<Notification>(ownerId, 'notifications', id)
+        : null)
+      if (!local) {
         const { data, error } = await apiClient.POST('/api/notifications/{id}/read/', {
           params: { path: { id } },
         })
         if (error) throw toApiError(error)
         return data
       }
-      return (await queueMutation({
+      const updated = (await queueMutation({
         resource: 'notifications', method: 'POST', path: `/api/notifications/${id}/read/`,
-        optimisticResult: { ...cached, read_at: new Date().toISOString() },
+        optimisticResult: { ...local, read_at: new Date().toISOString() },
       })).data
+      if (ownerId) {
+        if (updated.action_status === 'none') await deleteSnapshotRecord(ownerId, 'notifications', id)
+        else await upsertSnapshotRecord(ownerId, 'notifications', { id, data: updated })
+      }
+      return updated
     },
     // The full feed refetch this used to trigger (bare ['notifications']
     // invalidation, matching both the list and the unread-count queries)
@@ -64,6 +80,13 @@ export function useMarkAllNotificationsReadMutation() {
         resource: 'notifications', method: 'POST', path: '/api/notifications/mark-all-read/',
         optimisticResult: undefined,
       })
+      const ownerId = useAuthStore.getState().userProfile?.id
+      if (ownerId) {
+        await transformResourceSnapshot<Notification>(ownerId, 'notifications', (items) =>
+          items.filter((item) => item.action_status !== 'none').map((item) => ({
+            ...item, read_at: item.read_at ?? new Date().toISOString(),
+          })))
+      }
     },
     onSuccess: () => {
       queryClient.setQueryData<InfiniteData<PaginatedNotificationList>>(NOTIFICATIONS_LIST_KEY, (old) => {
@@ -96,6 +119,8 @@ export function useDeleteNotificationMutation() {
         resource: 'notifications', method: 'DELETE', path: `/api/notifications/${id}/`,
         optimisticResult: undefined,
       })
+      const ownerId = useAuthStore.getState().userProfile?.id
+      if (ownerId) await deleteSnapshotRecord(ownerId, 'notifications', id)
     },
     onSuccess: (_data, id) => {
       queryClient.setQueryData<InfiniteData<PaginatedNotificationList>>(NOTIFICATIONS_LIST_KEY, (old) => {
@@ -123,6 +148,8 @@ export function useClearAllNotificationsMutation() {
         resource: 'notifications', method: 'POST', path: '/api/notifications/clear-all/',
         optimisticResult: undefined,
       })
+      const ownerId = useAuthStore.getState().userProfile?.id
+      if (ownerId) await transformResourceSnapshot<Notification>(ownerId, 'notifications', () => [])
     },
     onSuccess: () => {
       queryClient.setQueryData<InfiniteData<PaginatedNotificationList>>(NOTIFICATIONS_LIST_KEY, (old) => {

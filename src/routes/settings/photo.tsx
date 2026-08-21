@@ -2,7 +2,6 @@ import { createFileRoute } from '@tanstack/react-router'
 import ProfilePicturePanel from '@/components/shared/profile-picture-panel'
 import { useAuthStore } from '@/store/use-auth-store'
 import { useUpdateProfileMutation } from '@/features/auth/api/use-auth-mutations'
-import { buildProfileFormData } from '@/features/auth/api/build-profile-form-data'
 import { mapUserToProfile } from '@/features/auth/api/map-user'
 
 function UserPhotoRouteComponent() {
@@ -18,8 +17,7 @@ function UserPhotoRouteComponent() {
     // nothing to send.
     if (!newAvatar || newAvatar === userProfile?.avatar) return
 
-    const formData = await buildProfileFormData({ avatar: newAvatar })
-    const user = await updateProfile.mutateAsync(formData)
+    const user = await updateProfile.mutateAsync({ avatar: newAvatar })
     setProfile(mapUserToProfile(user))
   }
 

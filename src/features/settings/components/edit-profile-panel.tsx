@@ -8,7 +8,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuthStore } from '@/store/use-auth-store'
 import { ROUTES } from '@/constants/routes'
 import { useUpdateProfileMutation } from '@/features/auth/api/use-auth-mutations'
-import { buildProfileFormData } from '@/features/auth/api/build-profile-form-data'
 import { mapUserToProfile } from '@/features/auth/api/map-user'
 import { cn } from '@/lib/utils'
 
@@ -68,8 +67,7 @@ export default function EditProfilePanel({
   const name = useWatch({ control, name: 'fullName' })
 
   const onFormSubmit = async (values: FormValues) => {
-    const formData = await buildProfileFormData({ fullName: values.fullName.trim(), email: values.email.trim() })
-    updateProfile.mutate(formData, {
+    updateProfile.mutate({ fullName: values.fullName.trim(), email: values.email.trim() }, {
       onSuccess: (user) => {
         setProfile(mapUserToProfile(user))
         onSuccess?.('Profile updated successfully!')

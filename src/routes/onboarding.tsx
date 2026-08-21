@@ -4,7 +4,6 @@ import ProfileForm, { type ProfileFormData } from '@/features/auth/components/pr
 import { useAuthStore } from '@/store/use-auth-store'
 import { ROUTES } from '@/constants/routes'
 import { useUpdateProfileMutation } from '@/features/auth/api/use-auth-mutations'
-import { buildProfileFormData } from '@/features/auth/api/build-profile-form-data'
 import { mapUserToProfile } from '@/features/auth/api/map-user'
 
 // Only reachable when authenticated with an incomplete profile — see
@@ -17,8 +16,7 @@ function OnboardingComponent() {
   const updateProfile = useUpdateProfileMutation()
 
   const handleSubmit = async (profileData: ProfileFormData) => {
-    const formData = await buildProfileFormData(profileData)
-    updateProfile.mutate(formData, {
+    updateProfile.mutate(profileData, {
       onSuccess: (user) => {
         setProfile(mapUserToProfile(user))
         navigate({ to: ROUTES.DASHBOARD })

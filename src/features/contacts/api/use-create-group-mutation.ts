@@ -2,6 +2,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
 import { queueMutation } from '@/lib/sync/mutation-outbox'
+import { upsertSnapshotRecord } from '@/lib/sqlite/resource-snapshot-store'
+import { useAuthStore } from '@/store/use-auth-store'
 
 interface CreateGroupVariables {
   name: string
@@ -59,6 +61,8 @@ export function useCreateGroupMutation() {
         },
         optimisticResult: optimisticGroup,
       })
+      const ownerId = useAuthStore.getState().userProfile?.id
+      if (ownerId) await upsertSnapshotRecord(ownerId, 'groups', { id, data: result.data })
       return result.data
     },
     onSuccess: () => {

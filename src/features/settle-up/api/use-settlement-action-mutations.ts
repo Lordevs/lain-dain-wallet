@@ -4,6 +4,11 @@ import { ApiError, toApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
 import { useAuthStore } from '@/store/use-auth-store'
 import { queueMutation } from '@/lib/sync/mutation-outbox'
+import {
+  deleteSnapshotRecord,
+  getSnapshotRecord,
+  upsertSnapshotRecord,
+} from '@/lib/sqlite/resource-snapshot-store'
 
 type SettlementRead = components['schemas']['SettlementRead']
 
@@ -35,7 +40,9 @@ export function useConfirmSettlementMutation() {
   const queryClient = useQueryClient()
   return useMutation<SettlementRead, ApiError, string>({
     mutationFn: async (id: string) => {
+      const ownerId = useAuthStore.getState().userProfile?.id
       const cached = queryClient.getQueryData<SettlementRead>(['settlement', id])
+        ?? (ownerId ? await getSnapshotRecord<SettlementRead>(ownerId, 'settlements', id) : null)
       if (!cached) {
         const { data, error } = await apiClient.POST('/api/expenses/settlements/{id}/confirm/', {
           params: { path: { id } },
@@ -43,11 +50,15 @@ export function useConfirmSettlementMutation() {
         if (error) throw toApiError(error)
         return data
       }
-      return (await queueMutation({
+      const updated = (await queueMutation({
         resource: 'settlements', method: 'POST',
         path: `/api/expenses/settlements/${id}/confirm/`,
         optimisticResult: { ...cached, status: 'confirmed' as const },
       })).data
+      if (ownerId) await upsertSnapshotRecord(ownerId, 'settlements', {
+        id, scopeId: updated.group ?? updated.friendship ?? null, data: updated,
+      })
+      return updated
     },
     onSuccess: (data) => invalidateForSettlement(queryClient, data),
   })
@@ -61,7 +72,9 @@ export function useDisputeSettlementMutation() {
   const queryClient = useQueryClient()
   return useMutation<SettlementRead, ApiError, string>({
     mutationFn: async (id: string) => {
+      const ownerId = useAuthStore.getState().userProfile?.id
       const cached = queryClient.getQueryData<SettlementRead>(['settlement', id])
+        ?? (ownerId ? await getSnapshotRecord<SettlementRead>(ownerId, 'settlements', id) : null)
       if (!cached) {
         const { data, error } = await apiClient.POST('/api/expenses/settlements/{id}/dispute/', {
           params: { path: { id } },
@@ -69,11 +82,15 @@ export function useDisputeSettlementMutation() {
         if (error) throw toApiError(error)
         return data
       }
-      return (await queueMutation({
+      const updated = (await queueMutation({
         resource: 'settlements', method: 'POST',
         path: `/api/expenses/settlements/${id}/dispute/`,
         optimisticResult: { ...cached, status: 'disputed' as const },
       })).data
+      if (ownerId) await upsertSnapshotRecord(ownerId, 'settlements', {
+        id, scopeId: updated.group ?? updated.friendship ?? null, data: updated,
+      })
+      return updated
     },
     onSuccess: (data) => invalidateForSettlement(queryClient, data),
   })
@@ -90,6 +107,8 @@ export function useCancelSettlementMutation() {
         resource: 'settlements', method: 'POST',
         path: `/api/expenses/settlements/${id}/cancel/`, optimisticResult: undefined,
       })
+      const ownerId = useAuthStore.getState().userProfile?.id
+      if (ownerId) await deleteSnapshotRecord(ownerId, 'settlements', id)
     },
     onSuccess: (_data, { id, friendshipId, groupId }) => {
       // Cancel is a 204 (no body), so payer/payee aren't in the response —
