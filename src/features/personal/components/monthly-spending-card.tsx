@@ -1,4 +1,5 @@
 import { TrendingUp } from 'lucide-react'
+import { formatCompactNumber } from '@/lib/currency'
 import type { MonthlySpendingItem } from '../types'
 
 interface MonthlySpendingCardProps {
@@ -101,7 +102,11 @@ export default function MonthlySpendingCard({
           {/* Grid Lines & Y-Axis labels */}
           {yTicks.map((tick) => {
             const y = bottomY - (tick / maxVal) * chartHeight
-            const label = tick === 0 ? '0' : tick >= 1000 ? `${tick / 1000}K` : `${tick}`
+            // K/M/B/T-abbreviated (not a naive /1000 + "K", which turns a
+            // billions-scale tick into nonsense like "20000000K") — same
+            // magnitude formatting used everywhere else amounts get
+            // abbreviated, just without a currency symbol on an axis label.
+            const label = formatCompactNumber(tick)
 
             return (
               <g key={tick} className="opacity-80">

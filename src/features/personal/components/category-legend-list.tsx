@@ -1,4 +1,4 @@
-import { formatCurrency } from '@/lib/currency'
+import CompactAmount from '@/components/shared/compact-amount'
 import type { CategoryBreakdownItem } from '../types'
 
 interface CategoryLegendListProps {
@@ -37,7 +37,7 @@ export default function CategoryLegendList({ categories, currency, hoveredIndex,
             </div>
             <div className="flex flex-col items-end">
               <span className="text-[13px] font-bold text-[#1A1A1A]">
-                {formatCurrency(cat.amount, currency)}
+                <CompactAmount amount={cat.amount} currency={currency} drawerTitle={cat.label} />
               </span>
               <span className="text-[11px] font-semibold text-positive">
                 {cat.percentage}%

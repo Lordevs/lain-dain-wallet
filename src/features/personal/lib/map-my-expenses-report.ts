@@ -9,13 +9,15 @@ const MONTH_ABBR = [
 ]
 
 export function toCategoryBreakdownItems(items: BackendCategoryBreakdownItem[]): CategoryBreakdownItem[] {
-  return items.map((item) => ({
-    id: item.category.id,
-    label: item.category.name,
-    amount: Number(item.total),
-    percentage: item.percentage,
-    color: item.category.color,
-  }))
+  return items
+    .map((item) => ({
+      id: item.category.id,
+      label: item.category.name,
+      amount: Number(item.total),
+      percentage: item.percentage,
+      color: item.category.color,
+    }))
+    .filter((item) => item.amount > 0)
 }
 
 export function toMonthlySpendingItems(items: MonthlyTrendItem[]): MonthlySpendingItem[] {

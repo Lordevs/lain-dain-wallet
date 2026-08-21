@@ -39,12 +39,12 @@ export function getCurrency(code: string): Currency {
   return CURRENCIES_BY_CODE.get(code) ?? SUPPORTED_CURRENCIES[0]
 }
 
-/**
- * Format a compact amount for cards (e.g. 1500000 → "1.5M", 2500 → "2.5K",
- * 5050015564.5 → "5.05B")
- */
-export function formatCompact(amount: number, currencyCode: string): string {
-  const currency = getCurrency(currencyCode)
+/** K/M/B/T magnitude suffix for a raw number, no currency symbol — e.g.
+ * 1500000 → "1.5M", 2500 → "2.5K", 5050015564.5 → "5.05B",
+ * 2_300_000_000_000 → "2.30T". Shared by formatCompact (adds a currency
+ * symbol) and any plain-number axis/label that needs the same
+ * abbreviation without one (e.g. a chart's y-axis ticks). */
+export function formatCompactNumber(amount: number): string {
   const isNegative = amount < 0
   const abs = Math.abs(amount)
   let formatted: string
@@ -52,7 +52,9 @@ export function formatCompact(amount: number, currencyCode: string): string {
   // Two decimal places from M upward — at that scale a single decimal
   // (the K-tier convention) hides amounts that are meaningfully different
   // for a financial figure (e.g. 5.05B vs 5.09B is a ~40M gap).
-  if (abs >= 1_000_000_000) {
+  if (abs >= 1_000_000_000_000) {
+    formatted = `${(abs / 1_000_000_000_000).toFixed(2)}T`
+  } else if (abs >= 1_000_000_000) {
     formatted = `${(abs / 1_000_000_000).toFixed(2)}B`
   } else if (abs >= 1_000_000) {
     formatted = `${(abs / 1_000_000).toFixed(2)}M`
@@ -62,6 +64,17 @@ export function formatCompact(amount: number, currencyCode: string): string {
     formatted = abs.toString()
   }
 
+  return `${isNegative ? '-' : ''}${formatted}`
+}
+
+/**
+ * Format a compact amount for cards (e.g. 1500000 → "1.5M", 2500 → "2.5K",
+ * 5050015564.5 → "5.05B")
+ */
+export function formatCompact(amount: number, currencyCode: string): string {
+  const currency = getCurrency(currencyCode)
+  const isNegative = amount < 0
+  const compact = formatCompactNumber(Math.abs(amount))
   const sign = isNegative ? '-' : ''
-  return `${sign}${currency.symbol}${formatted}`
+  return `${sign}${currency.symbol}${compact}`
 }

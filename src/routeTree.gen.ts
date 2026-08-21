@@ -39,6 +39,7 @@ import { Route as GroupsIdRouteImport } from './routes/groups/$id'
 import { Route as ContactsNewRouteImport } from './routes/contacts/new'
 import { Route as ContactsIdRouteImport } from './routes/contacts/$id'
 import { Route as TransactionsIdIndexRouteImport } from './routes/transactions/$id.index'
+import { Route as PersonalReportsIndexRouteImport } from './routes/personal/reports.index'
 import { Route as PersonalCategoryBudgetsIndexRouteImport } from './routes/personal/category-budgets.index'
 import { Route as GroupsIdIndexRouteImport } from './routes/groups/$id.index'
 import { Route as ContactsIdIndexRouteImport } from './routes/contacts/$id.index'
@@ -216,6 +217,11 @@ const TransactionsIdIndexRoute = TransactionsIdIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => TransactionsIdRoute,
+} as any)
+const PersonalReportsIndexRoute = PersonalReportsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PersonalReportsRoute,
 } as any)
 const PersonalCategoryBudgetsIndexRoute =
   PersonalCategoryBudgetsIndexRouteImport.update({
@@ -406,6 +412,7 @@ export interface FileRoutesByFullPath {
   '/contacts/$id/': typeof ContactsIdIndexRoute
   '/groups/$id/': typeof GroupsIdIndexRoute
   '/personal/category-budgets/': typeof PersonalCategoryBudgetsIndexRoute
+  '/personal/reports/': typeof PersonalReportsIndexRoute
   '/transactions/$id/': typeof TransactionsIdIndexRoute
   '/contacts/$id/recurring/new': typeof ContactsIdRecurringNewRoute
   '/groups/$id/category/$catId': typeof GroupsIdCategoryCatIdRoute
@@ -430,7 +437,6 @@ export interface FileRoutesByTo {
   '/personal/categories': typeof PersonalCategoriesRoute
   '/personal/default-period': typeof PersonalDefaultPeriodRoute
   '/personal/hide-ledgers': typeof PersonalHideLedgersRoute
-  '/personal/reports': typeof PersonalReportsRouteWithChildren
   '/personal/settings': typeof PersonalSettingsRoute
   '/settings/delete-account': typeof SettingsDeleteAccountRoute
   '/settings/logout': typeof SettingsLogoutRoute
@@ -457,6 +463,7 @@ export interface FileRoutesByTo {
   '/contacts/$id': typeof ContactsIdIndexRoute
   '/groups/$id': typeof GroupsIdIndexRoute
   '/personal/category-budgets': typeof PersonalCategoryBudgetsIndexRoute
+  '/personal/reports': typeof PersonalReportsIndexRoute
   '/transactions/$id': typeof TransactionsIdIndexRoute
   '/contacts/$id/recurring/new': typeof ContactsIdRecurringNewRoute
   '/groups/$id/category/$catId': typeof GroupsIdCategoryCatIdRoute
@@ -517,6 +524,7 @@ export interface FileRoutesById {
   '/contacts/$id/': typeof ContactsIdIndexRoute
   '/groups/$id/': typeof GroupsIdIndexRoute
   '/personal/category-budgets/': typeof PersonalCategoryBudgetsIndexRoute
+  '/personal/reports/': typeof PersonalReportsIndexRoute
   '/transactions/$id/': typeof TransactionsIdIndexRoute
   '/contacts/$id/recurring/new': typeof ContactsIdRecurringNewRoute
   '/groups/$id/category/$catId': typeof GroupsIdCategoryCatIdRoute
@@ -578,6 +586,7 @@ export interface FileRouteTypes {
     | '/contacts/$id/'
     | '/groups/$id/'
     | '/personal/category-budgets/'
+    | '/personal/reports/'
     | '/transactions/$id/'
     | '/contacts/$id/recurring/new'
     | '/groups/$id/category/$catId'
@@ -602,7 +611,6 @@ export interface FileRouteTypes {
     | '/personal/categories'
     | '/personal/default-period'
     | '/personal/hide-ledgers'
-    | '/personal/reports'
     | '/personal/settings'
     | '/settings/delete-account'
     | '/settings/logout'
@@ -629,6 +637,7 @@ export interface FileRouteTypes {
     | '/contacts/$id'
     | '/groups/$id'
     | '/personal/category-budgets'
+    | '/personal/reports'
     | '/transactions/$id'
     | '/contacts/$id/recurring/new'
     | '/groups/$id/category/$catId'
@@ -688,6 +697,7 @@ export interface FileRouteTypes {
     | '/contacts/$id/'
     | '/groups/$id/'
     | '/personal/category-budgets/'
+    | '/personal/reports/'
     | '/transactions/$id/'
     | '/contacts/$id/recurring/new'
     | '/groups/$id/category/$catId'
@@ -937,6 +947,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TransactionsIdIndexRouteImport
       parentRoute: typeof TransactionsIdRoute
     }
+    '/personal/reports/': {
+      id: '/personal/reports/'
+      path: '/'
+      fullPath: '/personal/reports/'
+      preLoaderRoute: typeof PersonalReportsIndexRouteImport
+      parentRoute: typeof PersonalReportsRoute
+    }
     '/personal/category-budgets/': {
       id: '/personal/category-budgets/'
       path: '/category-budgets'
@@ -1143,10 +1160,12 @@ const NotificationsRouteWithChildren = NotificationsRoute._addFileChildren(
 
 interface PersonalReportsRouteChildren {
   PersonalReportsCategoryBreakdownRoute: typeof PersonalReportsCategoryBreakdownRoute
+  PersonalReportsIndexRoute: typeof PersonalReportsIndexRoute
 }
 
 const PersonalReportsRouteChildren: PersonalReportsRouteChildren = {
   PersonalReportsCategoryBreakdownRoute: PersonalReportsCategoryBreakdownRoute,
+  PersonalReportsIndexRoute: PersonalReportsIndexRoute,
 }
 
 const PersonalReportsRouteWithChildren = PersonalReportsRoute._addFileChildren(
