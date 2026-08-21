@@ -1,16 +1,17 @@
 import { onlineManager } from '@tanstack/react-query'
 import { queryClient } from '@/lib/query-client'
 import { apiClient } from '@/lib/api/client'
-import { ApiError, toApiError } from '@/lib/api/errors'
+import { ApiError, isTransientApiError, toApiError } from '@/lib/api/errors'
 import { useAuthStore } from '@/store/use-auth-store'
 import type { components } from '@/lib/api/schema'
 import { buildPersonalExpenseFormData, type PersonalExpenseFormValues } from '@/features/expenses/lib/build-personal-expense-form-data'
 import { buildFriendshipExpenseFormData, type FriendshipExpenseFormValues } from '@/features/contacts/lib/build-friendship-expense-form-data'
 import {
   insertOutboxRow, markOutboxRowSynced, markOutboxRowFailed, markOutboxRowSyncing, markOutboxRowPending,
-  getPendingOutboxRows, type OutboxRow,
+  getPendingOutboxRows, recoverInterruptedOutboxRows, type OutboxRow,
 } from '@/lib/sqlite/outbox-store'
 import { insertLocalExpense, markLocalExpenseSynced, markLocalExpenseFailed } from '@/lib/sqlite/expenses-store'
+import { getDatabase } from '@/lib/sqlite/init'
 import { stageReceiptForOffline, readStagedReceipt, deleteStagedReceipt } from './receipt-staging'
 
 /**
@@ -48,22 +49,65 @@ export interface QueueExpenseCreateResult {
 // regardless of context (see _ExpenseListCreateBase.create() in
 // apps/expenses/views.py), the generated types just don't reflect that
 // for this one endpoint. Only currency/receipt are actually needed here.
-interface ExpenseCreateResponse {
-  currency: string
-  receipt?: string | null
-}
+type ExpenseCreateResponse = components['schemas']['ExpenseRead']
 
 export async function queueExpenseCreate(payload: QueuedExpensePayload): Promise<QueueExpenseCreateResult> {
   const id = crypto.randomUUID()
   const now = new Date().toISOString()
   const myId = useAuthStore.getState().userProfile?.id ?? ''
+  if (!myId) throw new ApiError('Sign in before saving an expense.')
+  const profile = useAuthStore.getState().userProfile
+  const category = queryClient.getQueryData<components['schemas']['Category'][]>(['categories'])
+    ?.find((item) => item.id === payload.values.categoryId)
+  if (!category) throw new ApiError('Open the app online once to download expense categories.')
 
   let localReceiptPath: string | null = null
   if (payload.values.receipt) {
     localReceiptPath = await stageReceiptForOffline(payload.values.receipt, id)
   }
 
-  await insertLocalExpense({
+  const userSummary: components['schemas']['UserSummary'] = {
+    id: myId,
+    full_name: profile?.name ?? 'You',
+    phone_number: profile?.phone ?? '',
+    image: profile?.avatar ?? null,
+  }
+  const participant = (userId: string) => userId === myId
+    ? userSummary
+    : { id: userId, full_name: 'Member', phone_number: '', image: null }
+  const payers = payload.kind === 'personal'
+    ? [{ ...userSummary, amount: payload.values.amount }]
+    : payload.values.payers.map((payer) => ({ ...participant(payer.user_id), amount: payer.amount }))
+  const splits = payload.kind === 'personal'
+    ? [{ ...userSummary, amount_owed: payload.values.amount, extra_amount: '0.00' }]
+    : payload.values.splits.map((split) => ({
+        ...participant(split.user_id),
+        amount_owed: 'amount_owed' in split ? split.amount_owed ?? '0.00' : '0.00',
+        extra_amount: 'extra_amount' in split ? split.extra_amount ?? '0.00' : '0.00',
+      }))
+  const localExpense = {
+    id,
+    context: payload.kind,
+    friendship: payload.kind === 'friendship' ? payload.friendshipId : null,
+    group: payload.kind === 'group' ? payload.groupId : null,
+    added_by: userSummary,
+    description: payload.values.description,
+    amount: payload.values.amount,
+    currency: profile?.defaultCurrency ?? 'PKR',
+    date: payload.values.date,
+    category,
+    note: payload.values.note ?? '',
+    receipt: payload.values.receipt ?? null,
+    split_type: payload.kind === 'personal' ? 'equal' : payload.values.splitType,
+    payers,
+    splits,
+    reactions: [],
+    edited_at: null,
+    recurring_source: null,
+    created_at: now,
+  } as components['schemas']['ExpenseRead']
+
+  const localRow = {
     id,
     context: payload.kind,
     friendshipId: payload.kind === 'friendship' ? payload.friendshipId : null,
@@ -79,7 +123,9 @@ export async function queueExpenseCreate(payload: QueuedExpensePayload): Promise
     payersJson: payload.kind === 'personal' ? '[]' : JSON.stringify(payload.values.payers),
     splitsJson: payload.kind === 'personal' ? '[]' : JSON.stringify(payload.values.splits),
     createdAt: now,
-  })
+    ownerId: myId,
+    serverExpense: localExpense,
+  }
 
   // Stripped of the (now-stale) local receipt URL — the staged copy at
   // localReceiptPath is what actually gets submitted, from here on. Cast
@@ -89,7 +135,22 @@ export async function queueExpenseCreate(payload: QueuedExpensePayload): Promise
   const storedPayload = { ...payload, values: { ...payload.values, receipt: null } } as QueuedExpensePayload
   const payloadJson = JSON.stringify(storedPayload)
 
-  await insertOutboxRow({ id, idempotencyKey: id, method: 'POST', payloadJson, localReceiptPath, createdAt: now })
+  const db = await getDatabase()
+  await db.beginTransaction()
+  try {
+    await insertLocalExpense(localRow)
+    await insertOutboxRow({
+      id, idempotencyKey: id, method: 'POST', payloadJson, localReceiptPath, createdAt: now, ownerId: myId,
+    })
+    await db.commitTransaction()
+  } catch (error) {
+    await db.rollbackTransaction()
+    if (localReceiptPath) await deleteStagedReceipt(localReceiptPath)
+    throw error
+  }
+
+  queryClient.setQueryData(['expense', id], localExpense)
+  invalidateQueriesFor(storedPayload)
 
   if (!onlineManager.isOnline()) {
     return { id, synced: false }
@@ -100,7 +161,7 @@ export async function queueExpenseCreate(payload: QueuedExpensePayload): Promise
     await finalizeSyncedRow(id, storedPayload, response, localReceiptPath)
     return { id, synced: true }
   } catch (err) {
-    if (err instanceof ApiError) {
+    if (err instanceof ApiError && !isTransientApiError(err)) {
       await markOutboxRowFailed(id, err.message)
       await markLocalExpenseFailed(id)
       throw err
@@ -139,7 +200,7 @@ async function submitOutboxPayload(row: {
   }
 
   const headers = { 'Idempotency-Key': row.idempotencyKey }
-  const { data, error } =
+  const { data, error, response } =
     payload.kind === 'personal'
       ? await apiClient.POST('/api/expenses/personal/', {
           body: formData as unknown as components['schemas']['PersonalExpenseCreateRequest'],
@@ -157,7 +218,7 @@ async function submitOutboxPayload(row: {
             headers,
           })
 
-  if (error) throw toApiError(error)
+  if (error) throw toApiError(error, (response as unknown as Response).status)
   // See ExpenseCreateResponse's own comment — the generated response type
   // for the personal-expense branch doesn't reflect what the backend
   // actually returns (verified directly against apps/expenses/views.py).
@@ -176,7 +237,7 @@ async function finalizeSyncedRow(
   response: ExpenseCreateResponse,
   localReceiptPath: string | null,
 ): Promise<void> {
-  await markLocalExpenseSynced(id, response.currency, response.receipt ?? null)
+  await markLocalExpenseSynced(id, response.currency, response.receipt ?? null, response)
   await markOutboxRowSynced(id)
   if (localReceiptPath) await deleteStagedReceipt(localReceiptPath)
   invalidateQueriesFor(payload)
@@ -227,9 +288,12 @@ let isDraining = false
  * the next trigger. */
 export async function drainExpenseOutbox(): Promise<void> {
   if (isDraining || !onlineManager.isOnline()) return
+  const ownerId = useAuthStore.getState().userProfile?.id
+  if (!ownerId) return
   isDraining = true
   try {
-    const rows = await getPendingOutboxRows()
+    await recoverInterruptedOutboxRows(ownerId)
+    const rows = await getPendingOutboxRows(ownerId)
     for (const row of rows) {
       try {
         await drainOneRow(row)
@@ -258,7 +322,7 @@ async function drainOneRow(row: OutboxRow): Promise<void> {
     })
     await finalizeSyncedRow(row.id, payload, response, row.local_receipt_path)
   } catch (err) {
-    if (err instanceof ApiError) {
+    if (err instanceof ApiError && !isTransientApiError(err)) {
       await markOutboxRowFailed(row.id, err.message)
       await markLocalExpenseFailed(row.id)
       return

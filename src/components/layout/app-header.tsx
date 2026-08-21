@@ -1,8 +1,8 @@
 import { useAuthStore } from '@/store/use-auth-store'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-// import { Status, StatusIndicator } from '@/components/kibo-ui/status'
 import { Link } from '@tanstack/react-router'
 import { ROUTES } from '@/constants/routes'
+import { useNetworkStatus } from '@/hooks/use-network-status'
 
 /**
  * AppHeader — shown at the top of every main app screen.
@@ -10,6 +10,7 @@ import { ROUTES } from '@/constants/routes'
  */
 export default function AppHeader() {
   const { userProfile } = useAuthStore()
+  const isOnline = useNetworkStatus()
 
   // Derive initials from profile data
   const initials = (() => {
@@ -58,13 +59,11 @@ export default function AppHeader() {
             </AvatarFallback>
           )}
         </Avatar>
-        {/* Online status dot via kibo-ui Status */}
-        {/* <Status
-          status="degraded"
-          className="absolute top-0.5 right-0.5 p-0 h-auto w-auto bg-transparent border-0 shadow-none ring-2 ring-white rounded-full"
-        >
-          <StatusIndicator />
-        </Status> */}
+        <span
+          className={`absolute right-0.5 top-0.5 size-3 rounded-full ring-2 ring-white ${isOnline ? 'bg-positive' : 'bg-[#8A8A8A]'}`}
+          aria-label={isOnline ? 'Online' : 'Offline'}
+          title={isOnline ? 'Online' : 'Offline'}
+        />
       </Link>
     </header>
   )

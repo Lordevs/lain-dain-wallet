@@ -12,6 +12,7 @@ export interface OutboxRow {
   attempt_count: number
   last_error: string | null
   created_at: string
+  owner_id: string
 }
 
 export async function insertOutboxRow(row: {
@@ -21,23 +22,40 @@ export async function insertOutboxRow(row: {
   payloadJson: string
   localReceiptPath: string | null
   createdAt: string
+  ownerId: string
 }): Promise<void> {
   const db = await getDatabase()
   await db.run(
-    `INSERT INTO expense_outbox (id, idempotency_key, method, payload_json, local_receipt_path, status, attempt_count, created_at)
-     VALUES (?, ?, ?, ?, ?, 'pending', 0, ?)`,
-    [row.id, row.idempotencyKey, row.method, row.payloadJson, row.localReceiptPath, row.createdAt],
+    `INSERT INTO expense_outbox (id, idempotency_key, method, payload_json, local_receipt_path, status, attempt_count, created_at, owner_id)
+     VALUES (?, ?, ?, ?, ?, 'pending', 0, ?, ?)`,
+    [row.id, row.idempotencyKey, row.method, row.payloadJson, row.localReceiptPath, row.createdAt, row.ownerId],
   )
 }
 
 /** Oldest-first — see offline-sync.md's "apply queued mutations in the
  * order they were created locally". */
-export async function getPendingOutboxRows(): Promise<OutboxRow[]> {
+export async function getPendingOutboxRows(ownerId: string): Promise<OutboxRow[]> {
   const db = await getDatabase()
   const result = await db.query(
-    `SELECT * FROM expense_outbox WHERE status = 'pending' ORDER BY created_at ASC`,
+    `SELECT * FROM expense_outbox WHERE owner_id = ? AND status = 'pending' ORDER BY created_at ASC`,
+    [ownerId],
   )
   return (result.values ?? []) as OutboxRow[]
+}
+
+/** A process can die after marking a row syncing but before receiving a
+ * response. Idempotency makes replay safe, so every new drain recovers it. */
+export async function recoverInterruptedOutboxRows(ownerId: string): Promise<void> {
+  const db = await getDatabase()
+  // Version-1 rows had no owner column. The backend permits one active
+  // device session per account, so the first restored session after the
+  // upgrade is the only safe owner and no queued work has to be discarded.
+  await db.run(`UPDATE expense_outbox SET owner_id = ? WHERE owner_id = ''`, [ownerId])
+  await db.run(`UPDATE expenses SET owner_id = ? WHERE owner_id = ''`, [ownerId])
+  await db.run(
+    `UPDATE expense_outbox SET status = 'pending' WHERE owner_id = ? AND status = 'syncing'`,
+    [ownerId],
+  )
 }
 
 export async function markOutboxRowSyncing(id: string): Promise<void> {

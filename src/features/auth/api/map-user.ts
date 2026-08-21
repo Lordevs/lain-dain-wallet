@@ -13,5 +13,6 @@ export function mapUserToProfile(user: components['schemas']['User']): UserProfi
     occupation: user.occupation || undefined,
     avatar: user.image ?? null,
     profileComplete: user.profile_complete,
+    defaultCurrency: user.default_currency,
   }
 }

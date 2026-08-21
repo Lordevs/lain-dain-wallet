@@ -44,14 +44,21 @@ export function extractFieldErrors(error: unknown): Record<string, string> {
 // that caused it (see profile-form.tsx's use of react-hook-form's setError).
 export class ApiError extends Error {
   fields: Record<string, string>
+  status?: number
 
-  constructor(message: string, fields: Record<string, string> = {}) {
+  constructor(message: string, fields: Record<string, string> = {}, status?: number) {
     super(message)
     this.name = 'ApiError'
     this.fields = fields
+    this.status = status
   }
 }
 
-export function toApiError(error: unknown): ApiError {
-  return new ApiError(extractApiErrorMessage(error), extractFieldErrors(error))
+export function toApiError(error: unknown, status?: number): ApiError {
+  return new ApiError(extractApiErrorMessage(error), extractFieldErrors(error), status)
+}
+
+export function isTransientApiError(error: ApiError): boolean {
+  return error.status === undefined || error.status === 401 || error.status === 408
+    || error.status === 425 || error.status === 429 || error.status >= 500
 }

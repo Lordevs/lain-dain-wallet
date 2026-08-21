@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { cacheOfflineProfile, clearCachedOfflineProfile } from '@/lib/cached-profile'
 
 export interface UserProfile {
   id?: string
@@ -14,6 +15,7 @@ export interface UserProfile {
   // route guard lets an authenticated user reach the app or keeps them on
   // /auth to finish onboarding (see routes/__root.tsx beforeLoad).
   profileComplete?: boolean
+  defaultCurrency?: string
 }
 
 interface AuthState {
@@ -37,7 +39,13 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   isAuthenticated: false,
   userProfile: null,
-  setProfile: (profile) => set({ userProfile: profile }),
+  setProfile: (profile) => {
+    set({ userProfile: profile })
+    void cacheOfflineProfile(profile)
+  },
   setIsAuthenticated: (auth) => set({ isAuthenticated: auth }),
-  logout: () => set({ isAuthenticated: false, userProfile: null, accessToken: null }),
+  logout: () => {
+    set({ isAuthenticated: false, userProfile: null, accessToken: null })
+    void clearCachedOfflineProfile()
+  },
 }))

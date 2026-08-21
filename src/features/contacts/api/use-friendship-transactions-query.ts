@@ -3,6 +3,9 @@ import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
 import { toApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
+import { onlineManager } from '@tanstack/react-query'
+import { useAuthStore } from '@/store/use-auth-store'
+import { getLocalExpenses, upsertServerExpense } from '@/lib/sqlite/expenses-store'
 
 export type FriendshipTransaction =
   | { kind: 'expense'; date: string; data: components['schemas']['ExpenseRead'] }
@@ -53,6 +56,14 @@ async function fetchExpenses(
   friendshipId: string,
   cursor: string | undefined,
 ): Promise<{ items: FriendshipTransaction[]; nextCursor: string | null }> {
+  const ownerId = useAuthStore.getState().userProfile?.id
+  if (!onlineManager.isOnline() && ownerId) {
+    const expenses = await getLocalExpenses(ownerId, { friendshipId })
+    return {
+      items: expenses.map((expense) => ({ kind: 'expense' as const, date: expense.date, data: expense })),
+      nextCursor: null,
+    }
+  }
   const { data, error } = await apiClient.GET('/api/expenses/friendships/{friendship_id}/', {
     params: {
       path: { friendship_id: friendshipId },
@@ -60,6 +71,11 @@ async function fetchExpenses(
     },
   })
   if (error) throw toApiError(error)
+  if (ownerId) {
+    await Promise.all(data.results.map((expense) => upsertServerExpense(ownerId, {
+      ...expense, updated_at: expense.edited_at ?? expense.created_at, is_deleted: false, deleted_at: null,
+    })))
+  }
 
   return {
     items: data.results.map((expense) => ({ kind: 'expense', date: expense.date, data: expense })),
@@ -71,6 +87,7 @@ async function fetchSettlements(
   friendshipId: string,
   cursor: string | undefined,
 ): Promise<{ items: FriendshipTransaction[]; nextCursor: string | null }> {
+  if (!onlineManager.isOnline()) return { items: [], nextCursor: null }
   const { data, error } = await apiClient.GET('/api/expenses/friendships/{friendship_id}/settlements/', {
     params: {
       path: { friendship_id: friendshipId },
@@ -175,6 +192,7 @@ export function useFriendshipTransactionsQuery(friendshipId: string | undefined)
     initialPageParam: INITIAL_PAGE_PARAM,
     getNextPageParam: (lastPage) => lastPage.nextPageParam,
     enabled: !!friendshipId,
+    networkMode: 'always',
     // Navigating between two different contacts' transaction screens
     // reuses this same route/component — friendshipId changes but the
     // component doesn't remount, so without this it would flash empty
