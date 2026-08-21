@@ -236,41 +236,48 @@ export default function GroupSettingsScreen() {
           </div>
         </div>
 
-        {/* Configuration is deliberately owner-only. */}
-        {isOwner && <div className="flex flex-col text-left">
+        {/* Smart Settle and Recurring Payments are open to any active admin
+            (apps.expenses.services._require_recurring_manage_permission /
+            apps.ledger.services.update_group both accept admin, not just
+            owner). Currency & exchange rates stays owner-only — that's a
+            separate service, set_group_currency_rate, which still calls
+            _require_active_owner. */}
+        {isAdmin && <div className="flex flex-col text-left">
           <h3 className="text-[12px] font-bold text-[#6B6B6B] tracking-wider mb-2.5 px-1 uppercase">
             Group Settings
           </h3>
 
           <div className="flex flex-col gap-4">
-            {/* Group currency and exchange rates */}
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={() => setIsCurrencyRatesOpen(true)}
-              onKeyDown={(event) => event.key === 'Enter' && setIsCurrencyRatesOpen(true)}
-              className="bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-5 flex items-center gap-4 cursor-pointer hover:bg-muted/5 transition-colors outline-none"
-            >
-              <div className="size-12 rounded-[15px] bg-[#E8F4EF] text-positive flex items-center justify-center shrink-0">
-                <Banknote size={21} strokeWidth={2.2} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-bold text-[15px] text-[#1A1A1A]">
-                    Currency & exchange rates
-                  </p>
-                  <span className="rounded-full bg-[#E8F4EF] px-2.5 py-1 text-[10px] font-extrabold text-positive">
-                    {group.default_currency}
-                  </span>
+            {/* Group currency and exchange rates — owner-only */}
+            {isOwner && (
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => setIsCurrencyRatesOpen(true)}
+                onKeyDown={(event) => event.key === 'Enter' && setIsCurrencyRatesOpen(true)}
+                className="bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-5 flex items-center gap-4 cursor-pointer hover:bg-muted/5 transition-colors outline-none"
+              >
+                <div className="size-12 rounded-[15px] bg-[#E8F4EF] text-positive flex items-center justify-center shrink-0">
+                  <Banknote size={21} strokeWidth={2.2} />
                 </div>
-                <p className="text-[12px] text-[#6B6B6B] leading-relaxed mt-1">
-                  {group.currency_rates.length === 0
-                    ? 'No foreign currencies configured'
-                    : `${group.currency_rates.length} ${group.currency_rates.length === 1 ? 'foreign currency' : 'foreign currencies'} configured`}
-                </p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="font-bold text-[15px] text-[#1A1A1A]">
+                      Currency & exchange rates
+                    </p>
+                    <span className="rounded-full bg-[#E8F4EF] px-2.5 py-1 text-[10px] font-extrabold text-positive">
+                      {group.default_currency}
+                    </span>
+                  </div>
+                  <p className="text-[12px] text-[#6B6B6B] leading-relaxed mt-1">
+                    {group.currency_rates.length === 0
+                      ? 'No foreign currencies configured'
+                      : `${group.currency_rates.length} ${group.currency_rates.length === 1 ? 'foreign currency' : 'foreign currencies'} configured`}
+                  </p>
+                </div>
+                <ChevronRight size={18} className="text-[#8E8A86] shrink-0" />
               </div>
-              <ChevronRight size={18} className="text-[#8E8A86] shrink-0" />
-            </div>
+            )}
 
             {/* Smart Settle */}
             <div className="bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-5 flex items-start justify-between">
