@@ -1074,8 +1074,10 @@ export interface paths {
         /**
          * @description GET /api/expenses/my-expenses/reports/?year=&month= — the Reports
          *     screen: the same summary as above, plus a per-category breakdown for
-         *     that period and a 12-month trend for `year` (defaults to the current
-         *     period's own year, not necessarily the calendar year `today` is in).
+         *     that period, and the "All months" trend — always the trailing 12
+         *     periods ending at the CURRENT period (today), regardless of which
+         *     `year`/`month` the rest of this response is scoped to, so it never
+         *     shows a future month.
          */
         get: operations["expenses_my_expenses_reports_retrieve"];
         put?: never;
@@ -2857,16 +2859,6 @@ export interface components {
          * @enum {string}
          */
         DirectionEnum: "owed_to_you" | "you_owe" | "settled";
-        /**
-         * @description * `👍` - 👍
-         *     * `✅` - ✅
-         *     * `🙏` - 🙏
-         *     * `😅` - 😅
-         *     * `❤️` - ❤️
-         *     * `😬` - 😬
-         * @enum {string}
-         */
-        EmojiEnum: "👍" | "✅" | "🙏" | "😅" | "❤️" | "😬";
         ErrorDetail: {
             detail: string;
         };
@@ -4109,13 +4101,8 @@ export interface components {
             image: string | null;
             emoji: string;
         };
-        /**
-         * @description Emoji set is enforced here too (not just the frontend's fixed
-         *     quick-bar), keeping a stray value out of the DB even if a client
-         *     bypasses the UI.
-         */
         ReactionRequestRequest: {
-            emoji: components["schemas"]["EmojiEnum"];
+            emoji: string;
         };
         /**
          * @description Shared by both friendship and group recurring expenses — same

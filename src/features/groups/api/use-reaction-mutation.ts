@@ -110,13 +110,11 @@ export function useToggleReactionMutation() {
   return useMutation<{ reactions: ReactionEntry[] }, ApiError, ToggleReactionInput, MutationContext>({
     mutationFn: async ({ id, kind, emoji }) => {
       const path = kind === 'expense' ? '/api/expenses/{id}/react/' : '/api/expenses/settlements/{id}/react/'
-      // ReactionPicker only ever offers this fixed 6-emoji set (see
-      // src/components/shared/reaction-picker.tsx), which matches the
-      // backend's EmojiEnum exactly — safe to narrow here at the one
-      // place that actually needs the strict type.
+      // Any single emoji is accepted now (not just the original fixed
+      // 6-choice quick-bar) — see apps.expenses.serializers._validate_emoji.
       const { data, error } = await apiClient.POST(path, {
         params: { path: { id } },
-        body: { emoji: emoji as components['schemas']['EmojiEnum'] },
+        body: { emoji },
       })
       if (error) throw toApiError(error)
       return data

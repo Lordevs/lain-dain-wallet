@@ -1963,8 +1963,10 @@ paths:
       description: |-
         GET /api/expenses/my-expenses/reports/?year=&month= — the Reports
         screen: the same summary as above, plus a per-category breakdown for
-        that period and a 12-month trend for `year` (defaults to the current
-        period's own year, not necessarily the calendar year `today` is in).
+        that period, and the "All months" trend — always the trailing 12
+        periods ending at the CURRENT period (today), regardless of which
+        `year`/`month` the rest of this response is scoped to, so it never
+        shows a future month.
       tags:
       - expenses
       security:
@@ -5248,17 +5250,6 @@ components:
         * `owed_to_you` - owed_to_you
         * `you_owe` - you_owe
         * `settled` - settled
-    EmojiEnum:
-      enum:
-      - "\U0001F44D"
-      - ✅
-      - "\U0001F64F"
-      - "\U0001F605"
-      - ❤️
-      - "\U0001F62C"
-      type: string
-      description: "* `\U0001F44D` - \U0001F44D\n* `✅` - ✅\n* `\U0001F64F` - \U0001F64F\n*
-        `\U0001F605` - \U0001F605\n* `❤️` - ❤️\n* `\U0001F62C` - \U0001F62C"
     ErrorDetail:
       type: object
       properties:
@@ -7619,13 +7610,11 @@ components:
       - phone_number
     ReactionRequestRequest:
       type: object
-      description: |-
-        Emoji set is enforced here too (not just the frontend's fixed
-        quick-bar), keeping a stray value out of the DB even if a client
-        bypasses the UI.
       properties:
         emoji:
-          $ref: '#/components/schemas/EmojiEnum'
+          type: string
+          minLength: 1
+          maxLength: 8
       required:
       - emoji
     RecurringExpenseCreate:

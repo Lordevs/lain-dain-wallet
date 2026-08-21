@@ -1,21 +1,44 @@
 import { useState } from 'react'
+import { Smile } from 'lucide-react'
 import type { ReactionEntry } from './expense-item'
 import ReactionDetailsDrawer from './reaction-details-drawer'
 import { haptic } from '@/lib/haptics'
 
 interface ReactionBadgeProps {
   reactions: ReactionEntry[]
+  /** Opens the same ReactionPicker a long-press does — used by the
+   * default neutral-face icon shown when there are no reactions yet. */
+  onOpenPicker: () => void
 }
 
 /** Aggregated emoji+count pills for one row's reactions — grouped by
  * emoji, insertion order preserved (first-seen emoji sorts first) so the
  * pill order doesn't jitter as counts change. Tapping a pill (or the
- * whole badge) shows who reacted, WhatsApp-style. Positioned within the
- * row's own bounds (not overflowing past it) — the row reserves extra
- * bottom padding for this when reactions are present, see expense-item.tsx. */
-export default function ReactionBadge({ reactions }: ReactionBadgeProps) {
+ * whole badge) shows who reacted, WhatsApp-style. When there are no
+ * reactions yet, shows a plain neutral face instead — tapping IT opens
+ * the reaction picker directly, the same one a long-press opens, so
+ * reacting doesn't require discovering the long-press gesture first.
+ * Positioned within the row's own bounds (not overflowing past it) — the
+ * row reserves extra bottom padding for this, see expense-item.tsx. */
+export default function ReactionBadge({ reactions, onOpenPicker }: ReactionBadgeProps) {
   const [detailsOpen, setDetailsOpen] = useState(false)
-  if (reactions.length === 0) return null
+
+  if (reactions.length === 0) {
+    return (
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation()
+          haptic.light()
+          onOpenPicker()
+        }}
+        className="absolute bottom-1.5 left-12 flex items-center justify-center size-6 rounded-full bg-white border-[0.8px] border-divider text-muted-foreground shadow-sm cursor-pointer active:scale-90 transition-transform"
+        aria-label="Add a reaction"
+      >
+        <Smile size={14} strokeWidth={2} />
+      </button>
+    )
+  }
 
   const counts = new Map<string, number>()
   for (const r of reactions) counts.set(r.emoji, (counts.get(r.emoji) ?? 0) + 1)
