@@ -117,22 +117,30 @@ export default function ContactDetailScreen() {
       }
       const isConfirmed = t.data.status === 'confirmed'
       const isPending = t.data.status === 'pending'
+      const isAdjustment = t.data.method === 'adjustment'
       const otherUserId = ledgers.data?.other_user.id
       const paymentSummary = t.data.payer.id === otherUserId
         ? `${t.data.payer.full_name} paid you`
         : `You paid ${t.data.payee.full_name}`
+      const adjustmentSummary = t.data.payer.id === otherUserId
+        ? `${t.data.payer.full_name} adjusted this with you`
+        : `You adjusted this with ${t.data.payee.full_name}`
 
       return {
         id: t.data.id,
-        name: isConfirmed ? 'Payment settled' : isPending ? 'Payment pending' : 'Payment disputed',
-        subtitle: isConfirmed ? `${paymentSummary}\nBalance adjusted` : paymentSummary,
+        name: isAdjustment ? 'Balance adjusted' : isConfirmed ? 'Payment settled' : isPending ? 'Payment pending' : 'Payment disputed',
+        subtitle: isAdjustment
+          ? `${adjustmentSummary}\nNo payment made`
+          : isConfirmed ? `${paymentSummary}\nBalance settled` : paymentSummary,
         amount: Number(t.data.amount),
         currency: t.data.currency,
-        category: isConfirmed ? 'payment' as const : 'other' as const,
+        category: isAdjustment ? 'adjustment' as const : isConfirmed ? 'payment' as const : 'other' as const,
         rightSubtitle: rightSub,
         showChevron: !isConfirmed,
         amountColor: isConfirmed ? 'green' as const : isPending ? 'orange' as const : 'black' as const,
-        className: isConfirmed ? 'bg-[#DCEFE4] hover:bg-[#DCEFE4]/90' : undefined,
+        className: isAdjustment
+          ? 'bg-[#EDE7F6] hover:bg-[#EDE7F6]/90'
+          : isConfirmed ? 'bg-[#DCEFE4] hover:bg-[#DCEFE4]/90' : undefined,
         kind: 'settlement' as const,
         dateISO: t.data.date,
         reactions: t.data.reactions ?? [],

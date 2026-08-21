@@ -1,5 +1,5 @@
 import { createElement, memo, useState } from 'react'
-import { Coffee, Fuel, ShoppingCart, Truck, Handshake, Layers, ChevronRight } from 'lucide-react'
+import { Coffee, Fuel, ShoppingCart, Truck, Handshake, Layers, ChevronRight, RefreshCw } from 'lucide-react'
 import { formatCurrency } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import { iconForCategory } from '@/features/expenses/lib/category-icons'
@@ -9,7 +9,7 @@ import { haptic } from '@/lib/haptics'
 import ReactionPicker from './reaction-picker'
 import ReactionBadge from './reaction-badge'
 
-export type ExpenseCategory = 'food' | 'fuel' | 'shopping' | 'transport' | 'payment' | 'other'
+export type ExpenseCategory = 'food' | 'fuel' | 'shopping' | 'transport' | 'payment' | 'adjustment' | 'other'
 
 export interface ReactionEntry {
   id: string
@@ -65,6 +65,12 @@ const CATEGORY_VISUALS = {
     icon: <Handshake size={24} className="text-positive" strokeWidth={2.5} />,
     bgClass: 'bg-[#B8DECA]',
   },
+  // A no-money-changes-hands netting between two ledgers — visually
+  // distinct from a real payment settlement so it can't be mistaken for one.
+  adjustment: {
+    icon: <RefreshCw size={22} className="text-[#6C4FCE]" strokeWidth={2.5} />,
+    bgClass: 'bg-[#EDE7F6]',
+  },
   other: {
     icon: <Layers size={24} className="text-muted-faint" />,
     bgClass: 'bg-[#F5F3ED]',
@@ -112,7 +118,9 @@ function ExpenseItem({
   // Resolve text color for the amount
   const colorClass = category === 'payment'
     ? 'text-positive'
-    : cn(
+    : category === 'adjustment'
+      ? 'text-[#6C4FCE]'
+      : cn(
       amountColor === 'green' && 'text-positive',
       amountColor === 'orange' && 'text-orange-payable',
       amountColor === 'black' && 'text-foreground',
@@ -165,7 +173,7 @@ function ExpenseItem({
           <div
             className={cn(
               'w-12 h-12 flex items-center justify-center shrink-0',
-              category === 'payment' ? 'rounded-full' : 'rounded-[13px]',
+              category === 'payment' || category === 'adjustment' ? 'rounded-full' : 'rounded-[13px]',
               bgClass,
             )}
           >
@@ -175,7 +183,7 @@ function ExpenseItem({
         <div>
           <p className={cn(
             "font-bold text-[15px] leading-tight",
-            category === 'payment' ? "text-positive" : "text-foreground"
+            category === 'payment' ? "text-positive" : category === 'adjustment' ? "text-[#6C4FCE]" : "text-foreground"
           )}>
             {name}
           </p>

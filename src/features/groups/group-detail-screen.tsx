@@ -74,24 +74,30 @@ export default function GroupDetailScreen() {
       }
       const isConfirmed = t.data.status === 'confirmed'
       const isPending = t.data.status === 'pending'
+      const isAdjustment = t.data.method === 'adjustment'
       const payerName = t.data.payer.id === myId ? 'You' : t.data.payer.full_name
       const payeeName = t.data.payee.id === myId ? 'you' : t.data.payee.full_name
       const paymentSummary = `${payerName} paid ${payeeName}`
+      const adjustmentSummary = `${payerName} adjusted this with ${payeeName}`
 
       return {
         id: t.data.id,
-        name: isConfirmed ? 'Payment settled' : isPending ? 'Payment pending' : 'Payment disputed',
-        subtitle: isConfirmed ? `${paymentSummary}\nBalance adjusted` : paymentSummary,
+        name: isAdjustment ? 'Balance adjusted' : isConfirmed ? 'Payment settled' : isPending ? 'Payment pending' : 'Payment disputed',
+        subtitle: isAdjustment
+          ? `${adjustmentSummary}\nNo payment made`
+          : isConfirmed ? `${paymentSummary}\nBalance settled` : paymentSummary,
         amount: Number(t.data.amount),
         currency: t.data.currency,
-        category: isConfirmed ? 'payment' as const : 'other' as const,
+        category: isAdjustment ? 'adjustment' as const : isConfirmed ? 'payment' as const : 'other' as const,
         rightSubtitle: new Date(t.data.created_at).toLocaleTimeString('en-US', {
           hour: 'numeric',
           minute: '2-digit',
         }),
         showChevron: !isConfirmed,
         amountColor: isConfirmed ? 'green' as const : isPending ? 'orange' as const : 'black' as const,
-        className: isConfirmed ? 'bg-[#DCEFE4] hover:bg-[#DCEFE4]/90' : undefined,
+        className: isAdjustment
+          ? 'bg-[#EDE7F6] hover:bg-[#EDE7F6]/90'
+          : isConfirmed ? 'bg-[#DCEFE4] hover:bg-[#DCEFE4]/90' : undefined,
         kind: 'settlement' as const,
         reactions: t.data.reactions ?? [],
       }
