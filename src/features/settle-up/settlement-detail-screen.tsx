@@ -22,6 +22,7 @@ type SettlementRead = components['schemas']['SettlementRead']
 
 const METHOD_LABEL: Record<string, string> = {
   cash: 'Cash', bank_transfer: 'Bank Transfer', easypaisa: 'Easypaisa', jazzcash: 'JazzCash', other: 'Other',
+  adjustment: 'Balance Adjustment',
 }
 
 const STATUS_STYLE: Record<SettlementRead['status'] & string, { label: string; className: string }> = {
@@ -80,10 +81,13 @@ function SettlementDetailBody({ settlement }: { settlement: SettlementRead }) {
   const counterpart = isPayer ? settlement.payee : settlement.payer
   const amount = Number(settlement.amount)
   const statusStyle = STATUS_STYLE[settlement.status ?? 'pending']
+  const isAdjustment = settlement.method === 'adjustment'
 
-  const narrative = isPayer
-    ? `You paid ${counterpart.full_name}`
-    : `${counterpart.full_name} paid you`
+  const narrative = isAdjustment
+    ? `Balance adjusted with ${counterpart.full_name}`
+    : isPayer
+      ? `You paid ${counterpart.full_name}`
+      : `${counterpart.full_name} paid you`
 
   const isBusy = confirmMutation.isPending || disputeMutation.isPending || cancelMutation.isPending
 
@@ -120,7 +124,10 @@ function SettlementDetailBody({ settlement }: { settlement: SettlementRead }) {
         <div className="bg-white rounded-[24px] border-[0.8px] border-[#EBEBEB] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-6 flex flex-col items-center text-center gap-3">
           <ContactAvatar initials={initials} avatarColor={avatarColor} src={counterpart.image ?? undefined} size="lg" />
           <span className="font-extrabold text-[16px] text-[#1A1A1A]">{narrative}</span>
-          <span className={cn('text-[32px] font-extrabold leading-none tracking-tight', isPayer ? 'text-[#C96A1B]' : 'text-positive')}>
+          <span className={cn(
+            'text-[32px] font-extrabold leading-none tracking-tight',
+            isAdjustment ? 'text-[#6C4FCE]' : isPayer ? 'text-[#C96A1B]' : 'text-positive',
+          )}>
             {formatCurrency(amount, settlement.currency)}
           </span>
           <span className={cn('text-[11px] font-bold px-3 py-1 rounded-full', statusStyle.className)}>

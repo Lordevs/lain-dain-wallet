@@ -3555,9 +3555,10 @@ export interface components {
          *     * `expense_added` - Expense added
          *     * `expense_edited` - Expense edited
          *     * `added_to_group` - Added to group
+         *     * `balance_adjusted` - Balance adjusted
          * @enum {string}
          */
-        NotificationTypeEnum: "payment_settled" | "budget_alert" | "settlement_request" | "payment_confirmation" | "late_payment_reminder" | "payment_dispute" | "expense_added" | "expense_edited" | "added_to_group";
+        NotificationTypeEnum: "payment_settled" | "budget_alert" | "settlement_request" | "payment_confirmation" | "late_payment_reminder" | "payment_dispute" | "expense_added" | "expense_edited" | "added_to_group" | "balance_adjusted";
         /**
          * @description Response shape for NotificationUnreadCountView — schema-only, never
          *     instantiated with a model instance.

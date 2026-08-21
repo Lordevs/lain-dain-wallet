@@ -1,6 +1,6 @@
 import { memo, useCallback, useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { Check, Wallet, CheckCircle2, Clock, AlertTriangle, MoreVertical, Users } from 'lucide-react'
+import { Check, Wallet, CheckCircle2, Clock, AlertTriangle, MoreVertical, Users, RefreshCw } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import { Skeleton } from '@/components/ui/skeleton'
 import EmptyState from '@/components/shared/empty-state'
@@ -46,6 +46,12 @@ function getNotificationIcon(type: Notification['type']) {
       return (
         <div className="w-10 h-10 rounded-[14px] bg-[#E4F2EB] flex items-center justify-center text-positive border border-positive/10">
           <Users size={20} strokeWidth={2.2} />
+        </div>
+      )
+    case 'balance_adjusted':
+      return (
+        <div className="w-10 h-10 rounded-[14px] bg-[#EDE7F6] flex items-center justify-center text-[#6C4FCE] border border-[#6C4FCE]/10">
+          <RefreshCw size={20} strokeWidth={2.2} />
         </div>
       )
     case 'late_payment_reminder':
@@ -247,6 +253,7 @@ const NotificationListItem = memo(function NotificationListItem({
         ]
       }
       case 'added_to_group':
+      case 'balance_adjusted':
         return undefined
     }
   }, [notification, navigate, markRead, handleIgnore, handleRemind, goToSettlement])
@@ -267,6 +274,10 @@ const NotificationListItem = memo(function NotificationListItem({
       const p = payloadOf(notification as Notification & { type: 'added_to_group' })
       markRead(notification.id)
       navigate({ to: ROUTES.GROUP_DETAILS, params: { id: p.group_id } })
+    } else if (notification.type === 'balance_adjusted') {
+      const p = payloadOf(notification as Notification & { type: 'balance_adjusted' })
+      markRead(notification.id)
+      navigate({ to: ROUTES.CONTACT_DETAILS, params: { id: p.adjusted_by.id } })
     }
   }, [notification, navigate, markRead])
 

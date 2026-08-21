@@ -120,6 +120,15 @@ export function getNotificationCardContent(notification: Notification): Notifica
         theme: 'green',
       }
     }
+    case 'balance_adjusted': {
+      const p = payloadOf(notification as Notification & { type: 'balance_adjusted' })
+      return {
+        tag: 'Balance adjusted',
+        title: `${p.adjusted_by.full_name} adjusted ${formatCurrency(Number(p.amount), p.currency)} of your balance`,
+        subtitle: 'No payment was made — this just netted out what you owed each other.',
+        theme: 'green',
+      }
+    }
     default:
       return {
         tag: 'Notification',

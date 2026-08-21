@@ -92,6 +92,12 @@ export interface AddedToGroupPayload {
   route: 'added_to_group'
 }
 
+export interface BalanceAdjustedPayload {
+  adjusted_by: PersonBrief
+  amount: string
+  currency: string
+}
+
 export type PayloadFor<T extends NotificationApiType> = T extends 'payment_settled'
   ? PaymentSettledPayload
   : T extends 'payment_confirmation'
@@ -110,7 +116,9 @@ export type PayloadFor<T extends NotificationApiType> = T extends 'payment_settl
                 ? LatePaymentReminderPayload
                 : T extends 'added_to_group'
                   ? AddedToGroupPayload
-                  : never
+                  : T extends 'balance_adjusted'
+                    ? BalanceAdjustedPayload
+                    : never
 
 /** Narrows `notification.payload` (typed `unknown`) to the shape that
  * `notification.type` guarantees it has, per the backend's notify_* builders. */

@@ -6706,6 +6706,7 @@ components:
       - expense_added
       - expense_edited
       - added_to_group
+      - balance_adjusted
       type: string
       description: |-
         * `payment_settled` - Payment settled
@@ -6717,6 +6718,7 @@ components:
         * `expense_added` - Expense added
         * `expense_edited` - Expense edited
         * `added_to_group` - Added to group
+        * `balance_adjusted` - Balance adjusted
     NotificationUnreadCount:
       type: object
       description: |-
