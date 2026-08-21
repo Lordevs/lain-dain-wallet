@@ -1,8 +1,10 @@
 import { useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api/client'
-import { ApiError, toApiError } from '@/lib/api/errors'
+import { ApiError } from '@/lib/api/errors'
 import { useAuthStore } from '@/store/use-auth-store'
 import type { components } from '@/lib/api/schema'
+import { queueMutation } from '@/lib/sync/mutation-outbox'
+import { getLocalExpense, updateLocalExpenseReactions } from '@/lib/sqlite/expenses-store'
+import { getSnapshotRecord, upsertSnapshotRecord } from '@/lib/sqlite/resource-snapshot-store'
 
 type ReactionEntry = components['schemas']['ReactionRead']
 
@@ -109,15 +111,29 @@ export function useToggleReactionMutation() {
   const queryClient = useQueryClient()
   return useMutation<{ reactions: ReactionEntry[] }, ApiError, ToggleReactionInput, MutationContext>({
     mutationFn: async ({ id, kind, emoji }) => {
-      const path = kind === 'expense' ? '/api/expenses/{id}/react/' : '/api/expenses/settlements/{id}/react/'
-      // Any single emoji is accepted now (not just the original fixed
-      // 6-choice quick-bar) — see apps.expenses.serializers._validate_emoji.
-      const { data, error } = await apiClient.POST(path, {
-        params: { path: { id } },
-        body: { emoji },
+      const profile = useAuthStore.getState().userProfile
+      if (!profile?.id) throw new ApiError('Sign in before reacting.')
+      const source = kind === 'expense'
+        ? await getLocalExpense(profile.id, id)
+        : await getSnapshotRecord<components['schemas']['SettlementRead']>(profile.id, 'settlements', id)
+      const mine: ReactionEntry = {
+        id: profile.id, full_name: profile.name ?? '', phone_number: profile.phone ?? '',
+        image: profile.avatar ?? null, emoji,
+      }
+      const optimistic = { reactions: toggleOptimistic(source?.reactions ?? [], mine) }
+      const result = await queueMutation({
+        resource: 'reactions', method: 'POST',
+        path: kind === 'expense' ? `/api/expenses/${id}/react/` : `/api/expenses/settlements/${id}/react/`,
+        body: { emoji }, optimisticResult: optimistic,
       })
-      if (error) throw toApiError(error)
-      return data
+      if (kind === 'settlement' && source) {
+        await upsertSnapshotRecord(profile.id, 'settlements', {
+          id, scopeId: source.group ?? source.friendship ?? null,
+          data: { ...source, reactions: result.data.reactions },
+        })
+      }
+      if (kind === 'expense') await updateLocalExpenseReactions(profile.id, id, result.data.reactions)
+      return result.data
     },
     onMutate: async ({ id, emoji, groupId, friendshipId }) => {
       const profile = useAuthStore.getState().userProfile

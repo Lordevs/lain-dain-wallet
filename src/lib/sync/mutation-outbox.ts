@@ -35,7 +35,7 @@ type StoredMutationBody =
 
 interface QueueMutationInput<T> {
   resource: string
-  method: 'POST' | 'PATCH' | 'DELETE'
+  method: 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   path: string
   body?: unknown
   multipart?: MultipartInput
@@ -160,13 +160,21 @@ async function removeSyncedMutation(row: MutationOutboxRow): Promise<void> {
 
 let draining = false
 
-export async function drainMutationOutbox(): Promise<void> {
-  if (draining || !onlineManager.isOnline()) return
+function isPrerequisiteCreate(row: MutationOutboxRow): boolean {
+  if (row.method !== 'POST') return false
+  return row.path === '/api/ledger/groups/'
+    || row.path === '/api/ledger/friendships/'
+    || row.path === '/api/expenses/categories/'
+}
+
+async function drainMutations(predicate: (row: MutationOutboxRow) => boolean): Promise<boolean> {
+  if (draining || !onlineManager.isOnline()) return false
   const ownerId = useAuthStore.getState().userProfile?.id
-  if (!ownerId) return
+  if (!ownerId) return false
+  let completed = true
   draining = true
   try {
-    const rows = await getPendingMutations(ownerId)
+    const rows = (await getPendingMutations(ownerId)).filter(predicate)
     for (const row of rows) {
       await setMutationStatus(row.id, 'syncing')
       try {
@@ -178,10 +186,20 @@ export async function drainMutationOutbox(): Promise<void> {
           continue
         }
         await setMutationStatus(row.id, 'pending')
+        completed = false
         break
       }
     }
   } finally {
     draining = false
   }
+  return completed
+}
+
+export async function drainMutationPrerequisites(): Promise<boolean> {
+  return drainMutations(isPrerequisiteCreate)
+}
+
+export async function drainMutationOutbox(): Promise<void> {
+  await drainMutations(() => true)
 }

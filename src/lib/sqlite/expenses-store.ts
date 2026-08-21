@@ -58,6 +58,61 @@ export async function markLocalExpenseSynced(
   )
 }
 
+export async function updateLocalExpenseSnapshot(
+  ownerId: string,
+  expense: components['schemas']['ExpenseRead'],
+): Promise<void> {
+  const db = await getDatabase()
+  await db.run(
+    `UPDATE expenses SET description = ?, amount = ?, date = ?, category_id = ?, note = ?,
+       receipt_url = ?, split_type = ?, payers_json = ?, splits_json = ?, server_json = ?,
+       sync_status = 'pending', updated_at = ?
+     WHERE owner_id = ? AND id = ?`,
+    [
+      expense.description, expense.amount, expense.date, expense.category.id, expense.note ?? '',
+      expense.receipt ?? null, expense.split_type, JSON.stringify(expense.payers),
+      JSON.stringify(expense.splits), JSON.stringify(expense), new Date().toISOString(), ownerId, expense.id,
+    ],
+  )
+}
+
+export async function markLocalExpenseDeleted(ownerId: string, id: string): Promise<void> {
+  const db = await getDatabase()
+  await db.run(
+    `UPDATE expenses SET is_deleted = 1, sync_status = 'pending', updated_at = ?
+     WHERE owner_id = ? AND id = ?`,
+    [new Date().toISOString(), ownerId, id],
+  )
+}
+
+export async function clearLocalExpenseHistory(
+  ownerId: string,
+  scope: { context: 'personal' } | { context: 'friendship'; id: string } | { context: 'group'; id: string },
+): Promise<void> {
+  const db = await getDatabase()
+  if (scope.context === 'personal') {
+    await db.run(`UPDATE expenses SET is_deleted = 1 WHERE owner_id = ? AND context = 'personal'`, [ownerId])
+  } else if (scope.context === 'friendship') {
+    await db.run(`UPDATE expenses SET is_deleted = 1 WHERE owner_id = ? AND friendship_id = ?`, [ownerId, scope.id])
+  } else {
+    await db.run(`UPDATE expenses SET is_deleted = 1 WHERE owner_id = ? AND group_id = ?`, [ownerId, scope.id])
+  }
+}
+
+export async function updateLocalExpenseReactions(
+  ownerId: string,
+  id: string,
+  reactions: components['schemas']['ReactionRead'][],
+): Promise<void> {
+  const expense = await getLocalExpense(ownerId, id)
+  if (!expense) return
+  const db = await getDatabase()
+  await db.run(
+    `UPDATE expenses SET server_json = ?, updated_at = ? WHERE owner_id = ? AND id = ?`,
+    [JSON.stringify({ ...expense, reactions }), new Date().toISOString(), ownerId, id],
+  )
+}
+
 export async function upsertServerExpense(
   ownerId: string,
   expense: components['schemas']['ExpenseDelta'],

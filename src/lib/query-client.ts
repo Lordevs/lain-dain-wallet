@@ -3,7 +3,11 @@ import { QueryClient } from '@tanstack/react-query'
 // The persister's default maxAge is 24h — gcTime must be at least that,
 // or a query gets garbage-collected from memory (and so has nothing left
 // to write) before it's ever actually persisted to disk.
-export const CACHE_MAX_AGE = 1000 * 60 * 60 * 24
+// Derived server projections (wallet/balance/report views) complement the
+// normalized SQLite records while offline. Keep the last authenticated
+// snapshot for a realistic extended-offline window; logout still clears
+// the entire account cache, so this does not cross user boundaries.
+export const CACHE_MAX_AGE = 1000 * 60 * 60 * 24 * 30
 
 // A plain module-level singleton, not just something handed to
 // PersistQueryClientProvider in main.tsx — logout needs to clear it from
@@ -29,11 +33,15 @@ export const queryClient = new QueryClient({
       // packet without leaving the screen looking stuck.
       retry: 1,
     },
-    // 'online' (the default) is what makes a mutation fired while offline
-    // sit paused instead of failing outright — see src/lib/network.ts and
-    // the wallet/expense mutations that will register here once they
-    // exist. Left implicit/default rather than restated, so a future
-    // change to the actual default doesn't silently drift from this
-    // comment.
+    mutations: {
+      // Offline-safe mutation functions must run immediately so they can
+      // persist their intent into SQLite. With TanStack's default
+      // `online` mode the function itself is paused, meaning nothing is
+      // durable if the process is killed before reconnect. Intentionally
+      // online-only operations (OTP, device registration, issue reports)
+      // execute too and surface their normal network error instead of
+      // pretending they were queued.
+      networkMode: 'always',
+    },
   },
 })

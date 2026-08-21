@@ -1,7 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api/client'
-import { ApiError, toApiError } from '@/lib/api/errors'
+import { ApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
+import { queueMutation } from '@/lib/sync/mutation-outbox'
+import { replaceResourceSnapshot } from '@/lib/sqlite/resource-snapshot-store'
+import { useAuthStore } from '@/store/use-auth-store'
 
 /** POST /api/expenses/categories/reorder/ — category_ids is the new
  * top-to-bottom order for as many of the caller's visible categories
@@ -11,11 +13,17 @@ export function useReorderCategoriesMutation() {
 
   return useMutation<components['schemas']['Category'][], ApiError, string[]>({
     mutationFn: async (categoryIds: string[]) => {
-      const { data, error } = await apiClient.POST('/api/expenses/categories/reorder/', {
-        body: { category_ids: categoryIds },
+      const current = queryClient.getQueryData<components['schemas']['Category'][]>(['categories']) ?? []
+      const order = new Map(categoryIds.map((id, index) => [id, index]))
+      const optimistic = [...current].sort((a, b) => (order.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (order.get(b.id) ?? Number.MAX_SAFE_INTEGER))
+      const result = await queueMutation({
+        resource: 'categories', method: 'POST', path: '/api/expenses/categories/reorder/',
+        body: { category_ids: categoryIds }, optimisticResult: optimistic,
       })
-      if (error) throw toApiError(error)
-      return data
+      const ownerId = useAuthStore.getState().userProfile?.id
+      if (ownerId) await replaceResourceSnapshot(ownerId, 'categories', result.data.map((item) => ({ id: item.id, data: item })))
+      queryClient.setQueryData(['categories'], result.data)
+      return result.data
     },
     onSuccess: async () => {
       await Promise.all([

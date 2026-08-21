@@ -1,11 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { apiClient } from '@/lib/api/client'
-import { ApiError, toApiError } from '@/lib/api/errors'
+import { ApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
 import { queueMutation } from '@/lib/sync/mutation-outbox'
 import { getSnapshotRecord, upsertSnapshotRecord } from '@/lib/sqlite/resource-snapshot-store'
 import { useAuthStore } from '@/store/use-auth-store'
+import { clearLocalExpenseHistory } from '@/lib/sqlite/expenses-store'
 
 type Friendship = components['schemas']['Friendship']
 
@@ -110,10 +110,12 @@ export function useClearFriendshipHistoryMutation(friendshipId: string) {
 
   return useMutation<void, ApiError, void>({
     mutationFn: async () => {
-      const { error } = await apiClient.POST('/api/expenses/friendships/{friendship_id}/clear-history/', {
-        params: { path: { friendship_id: friendshipId } },
+      await queueMutation({
+        resource: 'history', method: 'POST',
+        path: `/api/expenses/friendships/${friendshipId}/clear-history/`, optimisticResult: undefined,
       })
-      if (error) throw toApiError(error)
+      const ownerId = useAuthStore.getState().userProfile?.id
+      if (ownerId) await clearLocalExpenseHistory(ownerId, { context: 'friendship', id: friendshipId })
     },
     onSuccess: () => {
       // Read before the ['friendship', friendshipId] invalidation below so

@@ -98,3 +98,35 @@ export async function transformResourceSnapshot<T>(
     data,
   })))
 }
+
+export async function transformSnapshotRecords<T>(
+  ownerId: string,
+  resource: string,
+  transform: (record: SnapshotRecord & { data: T }) => SnapshotRecord & { data: T },
+): Promise<void> {
+  const db = await getDatabase()
+  const result = await db.query(
+    `SELECT record_id, scope_id, data_json FROM resource_snapshots
+     WHERE owner_id = ? AND resource = ?`,
+    [ownerId, resource],
+  )
+  await db.beginTransaction()
+  try {
+    for (const row of result.values ?? []) {
+      const updated = transform({
+        id: row.record_id as string,
+        scopeId: row.scope_id as string | null,
+        data: JSON.parse(row.data_json as string) as T,
+      })
+      await db.run(
+        `UPDATE resource_snapshots SET scope_id = ?, data_json = ?
+         WHERE owner_id = ? AND resource = ? AND record_id = ?`,
+        [updated.scopeId ?? null, JSON.stringify(updated.data), ownerId, resource, updated.id],
+      )
+    }
+    await db.commitTransaction()
+  } catch (error) {
+    await db.rollbackTransaction()
+    throw error
+  }
+}
