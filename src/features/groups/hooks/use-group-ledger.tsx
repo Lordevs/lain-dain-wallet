@@ -41,7 +41,7 @@ export function useGroupLedger(id: string) {
     // the store's transaction map changes.
     void transactionState
     if (!contact) return { Today: [], Yesterday: [], Earlier: [] }
-    const list = useTransactionStore.getState().getContactTransactions(id, contact.name)
+    const list = useTransactionStore.getState().getContactTransactions(id)
     const firstName = contact.name.split(' ')[0]
 
     const items: TransactionListItem[] = list.map((record) => {
@@ -145,60 +145,7 @@ export function useGroupLedger(id: string) {
     })
   }, [groupExpensesData])
 
-  const groupBalances = useMemo(() => {
-    if (id === '5') {
-      return [
-        {
-          id: 'gb1',
-          name: 'Ali Hassan',
-          initials: 'AH',
-          avatarColor: 'bg-[#E8F5E9] text-positive',
-          subtitle: 'Has to pay you',
-          direction: 'in' as const,
-          amount: 3500,
-        },
-        {
-          id: 'gb2',
-          name: 'Sara Khan',
-          initials: 'SK',
-          avatarColor: 'bg-[#FFF8E1] text-[#C96A1B]',
-          subtitle: 'Has to pay you',
-          direction: 'in' as const,
-          amount: 1500,
-        },
-        {
-          id: 'gb3',
-          name: 'Usman',
-          initials: 'US',
-          avatarColor: 'bg-[#E3F2FD] text-[#1E3A8A]',
-          subtitle: 'You have to pay',
-          direction: 'out' as const,
-          amount: 380,
-        }
-      ]
-    }
-    // Fallback member balances (Family group or other)
-    return [
-      {
-        id: 'fgb1',
-        name: 'Sara Khan',
-        initials: 'SK',
-        avatarColor: 'bg-[#FFF8E1] text-[#C96A1B]',
-        subtitle: 'Has to pay you',
-        direction: 'in' as const,
-        amount: 1450,
-      },
-      {
-        id: 'fgb2',
-        name: 'Hamza Ali',
-        initials: 'HA',
-        avatarColor: 'bg-[#E3F2FD] text-[#1E3A8A]',
-        subtitle: 'You have to pay',
-        direction: 'out' as const,
-        amount: 250,
-      }
-    ]
-  }, [id])
+  const groupBalances: never[] = []
 
   return { contact, groupExpensesData, categoriesSummary, groupBalances }
 }
