@@ -20,7 +20,10 @@ export interface SplitMember {
 export function getInitialSplitState(
   members: SplitMember[],
   initialSplitData: SplitData | null,
-  amount: number
+  amount: number,
+  // Adjustment only makes sense with a single payer — force away from it
+  // when reopening the drawer for an expense that now has multiple payers.
+  allowAdjustment: boolean = true,
 ): {
   splitType: 'equal' | 'unequal' | 'adjustment'
   selectedMembers: string[]
@@ -35,7 +38,7 @@ export function getInitialSplitState(
       adjustmentAmounts[m.id] = String(initialSplitData.adjustmentAmounts[m.id] ?? 0)
     })
     return {
-      splitType: initialSplitData.type,
+      splitType: !allowAdjustment && initialSplitData.type === 'adjustment' ? 'equal' : initialSplitData.type,
       selectedMembers: initialSplitData.selectedMembers,
       unequalAmounts,
       adjustmentAmounts,
@@ -65,6 +68,7 @@ export function useSplitExpense({
   members: membersProp,
   initialSplitData,
   onSave,
+  multiplePayerAmounts,
 }: {
   amount: number
   /** Only meaningful when `members` is omitted (1:1 contact mode). */
@@ -76,6 +80,9 @@ export function useSplitExpense({
   members?: SplitMember[]
   initialSplitData: SplitData | null
   onSave: (splitData: SplitData) => void
+  /** Per-person paid amounts when paidBy === 'multiple' — presence of more
+   * than one contributing payer disables the Adjustment split type. */
+  multiplePayerAmounts?: Record<string, number>
 }) {
   const userProfile = useAuthStore((state) => state.userProfile)
   const youInitials = getInitials(userProfile?.name || 'You')
@@ -88,7 +95,12 @@ export function useSplitExpense({
     ]
   }, [membersProp, contactName, contactInitials, contactAvatarColor, youInitials])
 
-  const initial = getInitialSplitState(members, initialSplitData, amount)
+  const payerCount = multiplePayerAmounts
+    ? Object.values(multiplePayerAmounts).filter((v) => v > 0).length
+    : 1
+  const allowAdjustment = payerCount <= 1
+
+  const initial = getInitialSplitState(members, initialSplitData, amount, allowAdjustment)
   const [splitType, setSplitType] = useState<'equal' | 'unequal' | 'adjustment'>(initial.splitType)
   const [selectedMembers, setSelectedMembers] = useState<string[]>(initial.selectedMembers)
   const [unequalAmounts, setUnequalAmounts] = useState<Record<string, string>>(initial.unequalAmounts)
@@ -197,6 +209,7 @@ export function useSplitExpense({
 
   return {
     members,
+    allowAdjustment,
     splitType,
     setSplitType,
     selectedMembers,

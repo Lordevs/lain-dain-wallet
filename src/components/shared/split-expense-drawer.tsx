@@ -133,6 +133,7 @@ function SplitExpenseDrawerContent({
 }: Omit<SplitExpenseDrawerProps, 'isOpen' | 'onClose'>) {
   const {
     members,
+    allowAdjustment,
     splitType,
     setSplitType,
     selectedMembers,
@@ -158,6 +159,7 @@ function SplitExpenseDrawerContent({
     members: membersProp,
     initialSplitData,
     onSave,
+    multiplePayerAmounts,
   })
 
   return (
@@ -256,20 +258,23 @@ function SplitExpenseDrawerContent({
             Unequal
           </button>
 
-          {/* Adjustment Tab */}
-          <button
-            type="button"
-            onClick={() => setSplitType('adjustment')}
-            className={cn(
-              'flex-1 flex items-center justify-center gap-2 p-3 rounded-full text-xs font-semibold cursor-pointer transition-all outline-none border',
-              splitType === 'adjustment'
-                ? 'bg-positive text-white border-positive shadow-sm'
-                : 'bg-white text-[#5C5C5C] border-divider hover:bg-gray-50/50 hover:text-foreground hover:border-gray-300'
-            )}
-          >
-            <TextAlignJustify className="size-4" />
-            Adjustment
-          </button>
+          {/* Adjustment Tab — doesn't make sense once more than one person
+              paid, since "who owes extra" has no single baseline to adjust from. */}
+          {allowAdjustment && (
+            <button
+              type="button"
+              onClick={() => setSplitType('adjustment')}
+              className={cn(
+                'flex-1 flex items-center justify-center gap-2 p-3 rounded-full text-xs font-semibold cursor-pointer transition-all outline-none border',
+                splitType === 'adjustment'
+                  ? 'bg-positive text-white border-positive shadow-sm'
+                  : 'bg-white text-[#5C5C5C] border-divider hover:bg-gray-50/50 hover:text-foreground hover:border-gray-300'
+              )}
+            >
+              <TextAlignJustify className="size-4" />
+              Adjustment
+            </button>
+          )}
         </div>
 
         {/* Banner Info Box */}

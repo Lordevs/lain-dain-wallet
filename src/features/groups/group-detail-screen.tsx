@@ -278,8 +278,8 @@ export default function GroupDetailScreen() {
             <EmptyState
               title="No transactions yet"
               description="Add an expense to start tracking this group's spending."
-              actionLabel="Add Expense"
-              onAction={() => navigate({ to: ROUTES.GROUP_ADD_EXPENSE, params: { id: groupId } })}
+              // actionLabel="Add Expense"
+              // onAction={() => navigate({ to: ROUTES.GROUP_ADD_EXPENSE, params: { id: groupId } })}
               className="py-6"
             />
           )}

@@ -20,7 +20,6 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { toast } from 'sonner'
 import {
-  Plus,
   MoreVertical,
   AlertCircle,
   ArrowUpDown,
@@ -292,29 +291,6 @@ export default function PersonalCategoriesScreen() {
                 </div>
               </SortableContext>
             </DndContext>
-          </div>
-        )}
-
-        {/* Add New Category button card (only in Normal view) */}
-        {!isReordering && (
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={() => setShowAddCategory(true)}
-            className="mx-6 bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_2px_10px_0px_#0000000D] p-5 flex items-center gap-4 cursor-pointer hover:bg-muted/5 transition-colors mb-6 text-left"
-          >
-            {/* Plus icon inside dashed border green squircle */}
-            <div className="w-11 h-11 rounded-[16px] border-2 border-dashed border-[#0B683A33] bg-[#E8F5E9]/30 flex items-center justify-center text-positive shrink-0">
-              <Plus size={20} strokeWidth={1.5} />
-            </div>
-            <div>
-              <p className="font-bold text-[15px] text-positive leading-tight">
-                Add New Category
-              </p>
-              <p className="text-[12px] font-normal text-[#6B6B6B] mt-1 leading-none">
-                Custom name, icon and colour
-              </p>
-            </div>
           </div>
         )}
 

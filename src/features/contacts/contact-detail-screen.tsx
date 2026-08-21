@@ -152,10 +152,12 @@ export default function ContactDetailScreen() {
       groups[cat].push(item)
     })
 
+    // Newest-first, matching the underlying feed's order (see
+    // use-friendship-transactions-query.ts's sort: 'newest').
     const list: { category: 'Today' | 'Yesterday' | 'Earlier'; expenses: ExpenseListItemWithDate[] }[] = []
-    if (groups.Earlier.length > 0) list.push({ category: 'Earlier', expenses: groups.Earlier })
-    if (groups.Yesterday.length > 0) list.push({ category: 'Yesterday', expenses: groups.Yesterday })
     if (groups.Today.length > 0) list.push({ category: 'Today', expenses: groups.Today })
+    if (groups.Yesterday.length > 0) list.push({ category: 'Yesterday', expenses: groups.Yesterday })
+    if (groups.Earlier.length > 0) list.push({ category: 'Earlier', expenses: groups.Earlier })
 
     return list
   }, [items])
@@ -290,10 +292,10 @@ export default function ContactDetailScreen() {
             description={isBlocked
               ? 'This ledger is blocked. Existing history remains visible, but new activity is disabled.'
               : 'Add an expense to start tracking transactions with this contact.'}
-            actionLabel={isBlocked ? undefined : 'Add Expense'}
-            onAction={isBlocked
-              ? undefined
-              : () => navigate({ to: ROUTES.CONTACT_ADD_EXPENSE, params: { id: userId } })}
+            // actionLabel={isBlocked ? undefined : 'Add Expense'}
+            // onAction={isBlocked
+            //   ? undefined
+            //   : () => navigate({ to: ROUTES.CONTACT_ADD_EXPENSE, params: { id: userId } })}
             className="py-6"
           />
         )}
