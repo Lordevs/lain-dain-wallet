@@ -200,7 +200,7 @@ function GroupSettleUpFormBody({
           <div className="flex flex-col">
             <span className="font-extrabold text-[15px] text-[#1A1A1A] leading-tight">{group.name}</span>
             <span className="text-[12px] text-[#6B6B6B] font-semibold mt-0.5">
-              {group.members.filter((m) => m.status === 'active').length} members
+              {group.members.length} members
             </span>
           </div>
         </div>

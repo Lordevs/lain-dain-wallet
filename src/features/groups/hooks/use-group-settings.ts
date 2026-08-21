@@ -11,7 +11,6 @@ import {
   useLeaveGroupMutation,
   useDeleteGroupMutation,
   useTransferOwnershipMutation,
-  useCancelInvitationMutation,
 } from '@/features/groups/api/use-group-actions-mutations'
 import { resolveGroupRole, getGroupPermissions } from '@/features/groups/lib/group-roles'
 import { initialsForName, colorForName } from '@/lib/avatar-visuals'
@@ -28,7 +27,6 @@ export interface GroupMember {
   role: 'owner' | 'admin' | 'member'
   isOwner: boolean
   isAdmin: boolean
-  isPending: boolean
 }
 
 export interface DrawerConfig {
@@ -45,7 +43,6 @@ export interface DrawerConfig {
 function buildOwesText(member: Omit<GroupMember, 'owesText'>): string {
   const roleLabel = member.role === 'owner' ? 'Owner' : member.role === 'admin' ? 'Admin' : 'Member'
   if (member.id === 'you') return `${roleLabel} · Group creator`
-  if (member.isPending) return 'Member · Invited via link'
   if (member.balance > 0) return `${roleLabel} · Owes you Rs. ${member.balance.toLocaleString('en-US')}`
   if (member.balance < 0) return `${roleLabel} · You owe Rs. ${Math.abs(member.balance).toLocaleString('en-US')}`
   return `${roleLabel} · On Lain Dain`
@@ -110,7 +107,6 @@ export function useGroupSettings() {
         role,
         isOwner: role === 'owner',
         isAdmin: role !== 'member',
-        isPending: m.status === 'pending',
       })
     })
   }, [group, balanceQuery.data, myId])
@@ -121,7 +117,6 @@ export function useGroupSettings() {
   const leaveGroupMutation = useLeaveGroupMutation(id ?? '')
   const deleteGroupMutation = useDeleteGroupMutation(id ?? '')
   const transferOwnershipMutation = useTransferOwnershipMutation(id ?? '')
-  const cancelInvitationMutation = useCancelInvitationMutation(id ?? '')
 
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null)
   const [drawerConfig, setDrawerConfig] = useState<DrawerConfig>({
@@ -171,21 +166,6 @@ export function useGroupSettings() {
         },
       })
     }
-  }
-
-  const handleCancelInvitation = (memberId: string) => {
-    setSelectedMemberId(null)
-    if (!id) return
-    setDrawerConfig({
-      type: 'confirm',
-      title: 'Cancel Invitation',
-      confirmTitle: 'Cancel this invitation?',
-      confirmDescription: "They won't be able to join the group via this invite anymore. You can re-invite them later.",
-      buttonText: 'Confirm',
-      onAction: () => {
-        cancelInvitationMutation.mutate(memberId)
-      },
-    })
   }
 
   const handleBlockReport = (memberId: string) => {
@@ -272,7 +252,6 @@ export function useGroupSettings() {
     handleToggleAdmin,
     handleTransferOwnership,
     handleRemoveMember,
-    handleCancelInvitation,
     handleBlockReport,
     handleLeaveGroup,
     handleDeleteGroup,

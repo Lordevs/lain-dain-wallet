@@ -85,12 +85,11 @@ export interface LatePaymentReminderPayload {
   target_id: string
 }
 
-export interface GroupInvitationPayload {
-  invitation_id: string
+export interface AddedToGroupPayload {
   group_id: string
   group_name: string
-  invited_by: PersonBrief
-  route: 'group_invitation'
+  added_by: PersonBrief
+  route: 'added_to_group'
 }
 
 export type PayloadFor<T extends NotificationApiType> = T extends 'payment_settled'
@@ -109,8 +108,8 @@ export type PayloadFor<T extends NotificationApiType> = T extends 'payment_settl
               ? SettlementRequestPayload
               : T extends 'late_payment_reminder'
                 ? LatePaymentReminderPayload
-                : T extends 'group_invitation'
-                  ? GroupInvitationPayload
+                : T extends 'added_to_group'
+                  ? AddedToGroupPayload
                   : never
 
 /** Narrows `notification.payload` (typed `unknown`) to the shape that

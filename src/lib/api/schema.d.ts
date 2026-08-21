@@ -4,6 +4,358 @@
  */
 
 export interface paths {
+    "/api/admin/activity/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description GET /api/admin/activity/?event_type=&user_id= — the raw feature-
+         *     usage log. The "which features are used most" breakdown is a
+         *     separate, cheap aggregate (AdminActivityBreakdownView below) rather
+         *     than folded into this paginated list.
+         */
+        get: operations["admin_activity_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/activity/breakdown/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description GET /api/admin/activity/breakdown/ — count per event_type, the
+         *     "which features are users using" view.
+         */
+        get: operations["admin_activity_breakdown_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/audit-log/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["admin_audit_log_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/auth/login/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description POST /api/admin/auth/login/ — the staff/password counterpart to
+         *     VerifyOTPView (apps.accounts.views), same token-issuance shape
+         *     (RefreshToken.for_user -> {access, refresh}), reusing the existing
+         *     generic /api/auth/token/refresh/ endpoint as-is for refresh — that
+         *     one doesn't care which flow originally issued the token.
+         */
+        post: operations["admin_auth_login_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/expenses/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description GET /api/admin/expenses/?context=&category_id=&date_from=&date_to= */
+        get: operations["admin_expenses_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/expenses/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["admin_expenses_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/groups/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["admin_groups_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/groups/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description GET /api/admin/groups/{id}/ — compound response, same "built by
+         *     hand" reasoning as AdminUserDetailView. `unsettled_pairs` counts
+         *     nonzero PairwiseBalance rows rather than trying to collapse a
+         *     multi-person group's balances into one figure, which is ambiguous
+         *     for anything but a 1:1 ledger.
+         */
+        get: operations["admin_groups_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/issues/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description GET /api/admin/issues/?status=&category=&search= — the endpoint
+         *     that was entirely missing before this app: apps.support only ever
+         *     exposed reporter-scoped list/create/retrieve (see IssueReportListCreateView),
+         *     nothing that showed every report across every user.
+         */
+        get: operations["admin_issues_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/issues/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["admin_issues_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/issues/{id}/update/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * @description PATCH /api/admin/issues/{id}/ — updates status/staff_notes via
+         *     services.update_issue_report, which also writes the AdminAuditLog
+         *     entry.
+         */
+        patch: operations["admin_issues_update_partial_update"];
+        trace?: never;
+    };
+    "/api/admin/overview/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description GET /api/admin/overview/ — the numbers page 1 of the admin panel
+         *     is built around. DAU/WAU/MAU are distinct-user counts over
+         *     ActivityEvent windows, not a separately maintained field — see that
+         *     model's own docstring for why.
+         */
+        get: operations["admin_overview_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/recurring-expenses/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["admin_recurring_expenses_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/settlements/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description GET /api/admin/settlements/?status=&method=&date_from=&date_to= */
+        get: operations["admin_settlements_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/settlements/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["admin_settlements_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description GET /api/admin/users/?search=&is_active=&admin_role= — search
+         *     matches name/phone/email, same shape as apps.contacts.views.
+         *     ContactListView's own `search` param.
+         */
+        get: operations["admin_users_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description GET /api/admin/users/{id}/ — a compound response assembled by hand
+         *     (same pattern as apps.ledger.serializers.UserLedgersResponse's own
+         *     "documentation-only... the view builds this dict by hand" case),
+         *     since the pieces come from genuinely different sources: the User row
+         *     itself, GroupMembership, IssueReport, ActivityEvent, and
+         *     apps.expenses.services.wallet_summary (reused exactly as-is — it
+         *     already takes any `user`, not just the request's own authenticated
+         *     user, so calling it on behalf of an admin viewing someone else's
+         *     account is exactly what it's built for).
+         */
+        get: operations["admin_users_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users/{id}/status/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * @description PATCH /api/admin/users/{id}/status/ — reversible moderation, see
+         *     services.set_user_active_status for why this is deliberately NOT
+         *     apps.accounts.services.anonymize_user.
+         */
+        patch: operations["admin_users_status_partial_update"];
+        trace?: never;
+    };
     "/api/auth/logout/": {
         parameters: {
             query?: never;
@@ -205,8 +557,7 @@ export interface paths {
         };
         /**
          * @description GET/PATCH/DELETE /api/expenses/{id}/ — not nested under a
-         *     group/friendship path, matching how GroupInvitation detail actions
-         *     address by invitation_id alone. Visibility is the OR of all three
+         *     group/friendship path, addressed by id alone. Visibility is the OR of all three
          *     "can view" scopes; edit/delete permission (narrower than view) is
          *     enforced in the service layer, not the queryset — a visible-but-
          *     unauthorized actor gets 403, a true outsider gets 404, matching the
@@ -219,8 +570,7 @@ export interface paths {
         get: operations["expenses_retrieve"];
         /**
          * @description GET/PATCH/DELETE /api/expenses/{id}/ — not nested under a
-         *     group/friendship path, matching how GroupInvitation detail actions
-         *     address by invitation_id alone. Visibility is the OR of all three
+         *     group/friendship path, addressed by id alone. Visibility is the OR of all three
          *     "can view" scopes; edit/delete permission (narrower than view) is
          *     enforced in the service layer, not the queryset — a visible-but-
          *     unauthorized actor gets 403, a true outsider gets 404, matching the
@@ -234,8 +584,7 @@ export interface paths {
         post?: never;
         /**
          * @description GET/PATCH/DELETE /api/expenses/{id}/ — not nested under a
-         *     group/friendship path, matching how GroupInvitation detail actions
-         *     address by invitation_id alone. Visibility is the OR of all three
+         *     group/friendship path, addressed by id alone. Visibility is the OR of all three
          *     "can view" scopes; edit/delete permission (narrower than view) is
          *     enforced in the service layer, not the queryset — a visible-but-
          *     unauthorized actor gets 403, a true outsider gets 404, matching the
@@ -250,8 +599,7 @@ export interface paths {
         head?: never;
         /**
          * @description GET/PATCH/DELETE /api/expenses/{id}/ — not nested under a
-         *     group/friendship path, matching how GroupInvitation detail actions
-         *     address by invitation_id alone. Visibility is the OR of all three
+         *     group/friendship path, addressed by id alone. Visibility is the OR of all three
          *     "can view" scopes; edit/delete permission (narrower than view) is
          *     enforced in the service layer, not the queryset — a visible-but-
          *     unauthorized actor gets 403, a true outsider gets 404, matching the
@@ -349,8 +697,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * @description Wrap a mutating handler so a client retrying the same logical request
+         *     (submitted while offline, retried on reconnect — possibly several
+         *     times) gets the original response replayed verbatim instead of the
+         *     mutation re-executing. See docs/architecture/offline-sync.md.
+         *
+         *     Usage: call self.idempotent_mutation(request, perform) from a view's
+         *     create()/update()/destroy(), where `perform` is a zero-arg callable
+         *     that actually runs the mutation and returns the Response to cache.
+         */
         get: operations["expenses_friendships_list"];
         put?: never;
+        /**
+         * @description Wrap a mutating handler so a client retrying the same logical request
+         *     (submitted while offline, retried on reconnect — possibly several
+         *     times) gets the original response replayed verbatim instead of the
+         *     mutation re-executing. See docs/architecture/offline-sync.md.
+         *
+         *     Usage: call self.idempotent_mutation(request, perform) from a view's
+         *     create()/update()/destroy(), where `perform` is a zero-arg callable
+         *     that actually runs the mutation and returns the Response to cache.
+         */
         post: operations["expenses_friendships_create"];
         delete?: never;
         options?: never;
@@ -420,7 +788,7 @@ export interface paths {
         /**
          * @description Shared by the friendship and group variants below — same pattern as
          *     _ExpenseListCreateBase. Multipart-only: `receipt` is a file. Create/
-         *     update permission depends on scope (group: admin/owner only;
+         *     update permission depends on scope (group: any active admin/owner;
          *     friendship: either party — see
          *     services._require_recurring_manage_permission); list/view stays
          *     open to any currently-active participant either way.
@@ -430,7 +798,7 @@ export interface paths {
         /**
          * @description Shared by the friendship and group variants below — same pattern as
          *     _ExpenseListCreateBase. Multipart-only: `receipt` is a file. Create/
-         *     update permission depends on scope (group: admin/owner only;
+         *     update permission depends on scope (group: any active admin/owner;
          *     friendship: either party — see
          *     services._require_recurring_manage_permission); list/view stays
          *     open to any currently-active participant either way.
@@ -465,8 +833,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * @description Wrap a mutating handler so a client retrying the same logical request
+         *     (submitted while offline, retried on reconnect — possibly several
+         *     times) gets the original response replayed verbatim instead of the
+         *     mutation re-executing. See docs/architecture/offline-sync.md.
+         *
+         *     Usage: call self.idempotent_mutation(request, perform) from a view's
+         *     create()/update()/destroy(), where `perform` is a zero-arg callable
+         *     that actually runs the mutation and returns the Response to cache.
+         */
         get: operations["expenses_groups_list"];
         put?: never;
+        /**
+         * @description Wrap a mutating handler so a client retrying the same logical request
+         *     (submitted while offline, retried on reconnect — possibly several
+         *     times) gets the original response replayed verbatim instead of the
+         *     mutation re-executing. See docs/architecture/offline-sync.md.
+         *
+         *     Usage: call self.idempotent_mutation(request, perform) from a view's
+         *     create()/update()/destroy(), where `perform` is a zero-arg callable
+         *     that actually runs the mutation and returns the Response to cache.
+         */
         post: operations["expenses_groups_create"];
         delete?: never;
         options?: never;
@@ -542,7 +930,7 @@ export interface paths {
         /**
          * @description Shared by the friendship and group variants below — same pattern as
          *     _ExpenseListCreateBase. Multipart-only: `receipt` is a file. Create/
-         *     update permission depends on scope (group: admin/owner only;
+         *     update permission depends on scope (group: any active admin/owner;
          *     friendship: either party — see
          *     services._require_recurring_manage_permission); list/view stays
          *     open to any currently-active participant either way.
@@ -552,7 +940,7 @@ export interface paths {
         /**
          * @description Shared by the friendship and group variants below — same pattern as
          *     _ExpenseListCreateBase. Multipart-only: `receipt` is a file. Create/
-         *     update permission depends on scope (group: admin/owner only;
+         *     update permission depends on scope (group: any active admin/owner;
          *     friendship: either party — see
          *     services._require_recurring_manage_permission); list/view stays
          *     open to any currently-active participant either way.
@@ -730,8 +1118,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * @description Wrap a mutating handler so a client retrying the same logical request
+         *     (submitted while offline, retried on reconnect — possibly several
+         *     times) gets the original response replayed verbatim instead of the
+         *     mutation re-executing. See docs/architecture/offline-sync.md.
+         *
+         *     Usage: call self.idempotent_mutation(request, perform) from a view's
+         *     create()/update()/destroy(), where `perform` is a zero-arg callable
+         *     that actually runs the mutation and returns the Response to cache.
+         */
         get: operations["expenses_personal_list"];
         put?: never;
+        /**
+         * @description Wrap a mutating handler so a client retrying the same logical request
+         *     (submitted while offline, retried on reconnect — possibly several
+         *     times) gets the original response replayed verbatim instead of the
+         *     mutation re-executing. See docs/architecture/offline-sync.md.
+         *
+         *     Usage: call self.idempotent_mutation(request, perform) from a view's
+         *     create()/update()/destroy(), where `perform` is a zero-arg callable
+         *     that actually runs the mutation and returns the Response to cache.
+         */
         post: operations["expenses_personal_create"];
         delete?: never;
         options?: never;
@@ -770,8 +1178,8 @@ export interface paths {
         };
         /**
          * @description GET/PATCH/DELETE /api/expenses/recurring/{id}/ — not nested under a
-         *     friendship/group path, matching how ExpenseDetailView/GroupInvitation
-         *     detail actions address by id alone. Visible to any currently-active
+         *     friendship/group path, matching how ExpenseDetailView addresses by id
+         *     alone. Visible to any currently-active
          *     participant of either scope (broad); edit/delete permission
          *     (narrower — depends on scope, see
          *     services._require_recurring_manage_permission) is enforced in the
@@ -781,8 +1189,8 @@ export interface paths {
         get: operations["expenses_recurring_retrieve"];
         /**
          * @description GET/PATCH/DELETE /api/expenses/recurring/{id}/ — not nested under a
-         *     friendship/group path, matching how ExpenseDetailView/GroupInvitation
-         *     detail actions address by id alone. Visible to any currently-active
+         *     friendship/group path, matching how ExpenseDetailView addresses by id
+         *     alone. Visible to any currently-active
          *     participant of either scope (broad); edit/delete permission
          *     (narrower — depends on scope, see
          *     services._require_recurring_manage_permission) is enforced in the
@@ -793,8 +1201,8 @@ export interface paths {
         post?: never;
         /**
          * @description GET/PATCH/DELETE /api/expenses/recurring/{id}/ — not nested under a
-         *     friendship/group path, matching how ExpenseDetailView/GroupInvitation
-         *     detail actions address by id alone. Visible to any currently-active
+         *     friendship/group path, matching how ExpenseDetailView addresses by id
+         *     alone. Visible to any currently-active
          *     participant of either scope (broad); edit/delete permission
          *     (narrower — depends on scope, see
          *     services._require_recurring_manage_permission) is enforced in the
@@ -806,8 +1214,8 @@ export interface paths {
         head?: never;
         /**
          * @description GET/PATCH/DELETE /api/expenses/recurring/{id}/ — not nested under a
-         *     friendship/group path, matching how ExpenseDetailView/GroupInvitation
-         *     detail actions address by id alone. Visible to any currently-active
+         *     friendship/group path, matching how ExpenseDetailView addresses by id
+         *     alone. Visible to any currently-active
          *     participant of either scope (broad); edit/delete permission
          *     (narrower — depends on scope, see
          *     services._require_recurring_manage_permission) is enforced in the
@@ -935,9 +1343,9 @@ export interface paths {
         };
         /**
          * @description GET /api/expenses/wallet/?tab=receivables|payables&type=all|people|group&sort=newest|oldest|highest|lowest
-         *     — every person with a nonzero balance plus every active group (zero-
-         *     balance groups are included so they remain reachable before their
-         *     first expense), combined and sorted. Not paginated: bounded by how many people/
+         *     — every direct person ledger plus every active group, combined and sorted.
+         *     Receivable/payable tabs prioritize that direction instead of filtering
+         *     out the other rows. Not paginated: bounded by how many people/
          *     groups someone has a relationship/membership with, not by
          *     transaction volume, so it stays small regardless of how long the
          *     account's been active — unlike Expense history, which does need
@@ -1228,7 +1636,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * @description POST /api/ledger/groups/{id}/currency-rates/ — admin-only. Sets or
+         * @description POST /api/ledger/groups/{id}/currency-rates/ — owner-only. Sets or
          *     edits the rate for one foreign currency in this group; always a new
          *     CurrencyRate row, never a mutation, so already-recorded expenses/
          *     settlements keep converting at whatever rate was active when they
@@ -1253,7 +1661,7 @@ export interface paths {
         post?: never;
         /**
          * @description DELETE /api/ledger/groups/{id}/currency-rates/{currency}/ —
-         *     admin-only. Blocked while any active member still uses this
+         *     owner-only. Blocked while any active member still uses this
          *     currency — see services.remove_group_currency_rate.
          */
         delete: operations["ledger_groups_currency_rates_destroy"];
@@ -1272,36 +1680,13 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * @description POST /api/ledger/groups/{id}/invitations/ — admin-only. Invites
-         *     existing users; each becomes a pending GroupInvitation, not an
-         *     immediate member — see apps/ledger/services.py for why.
+         * @description POST /api/ledger/groups/{id}/invitations/ — admin-only. Adds
+         *     existing users to the group immediately — no consent step, see
+         *     apps/ledger/services.py::add_members. URL path kept as
+         *     "invitations" for backward compatibility with the existing frontend
+         *     call site rather than a purely cosmetic rename.
          */
         post: operations["ledger_groups_invitations_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ledger/groups/{group_id}/invitations/{user_id}/cancel/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * @description POST /api/ledger/groups/{group_id}/invitations/{user_id}/cancel/ —
-         *     admin withdraws a pending invitation before the invitee responds.
-         *     Keyed by the invited user's id, not the GroupInvitation's own id —
-         *     GroupParticipantSerializer (the group's merged active/pending member
-         *     list, what the admin UI actually has on hand) only ever exposes the
-         *     user id, never a separate invitation id. Safe to look up this way
-         *     since (group, invited_user) is unique — see services._invite_one.
-         */
-        post: operations["ledger_groups_invitations_cancel_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1412,7 +1797,7 @@ export interface paths {
         };
         /**
          * @description GET retrieves. PATCH updates name/description/image/
-         *     smart_settle_enabled (admin-only — currency/category are
+         *     smart_settle_enabled (any active admin/owner — currency/category are
          *     deliberately not editable here, see services.update_group). DELETE
          *     dissolves the group — owner-only, requires every member's balance to
          *     already be zero — see apps.expenses.services.delete_group (lives
@@ -1423,7 +1808,7 @@ export interface paths {
         get: operations["ledger_groups_retrieve"];
         /**
          * @description GET retrieves. PATCH updates name/description/image/
-         *     smart_settle_enabled (admin-only — currency/category are
+         *     smart_settle_enabled (any active admin/owner — currency/category are
          *     deliberately not editable here, see services.update_group). DELETE
          *     dissolves the group — owner-only, requires every member's balance to
          *     already be zero — see apps.expenses.services.delete_group (lives
@@ -1435,7 +1820,7 @@ export interface paths {
         post?: never;
         /**
          * @description GET retrieves. PATCH updates name/description/image/
-         *     smart_settle_enabled (admin-only — currency/category are
+         *     smart_settle_enabled (any active admin/owner — currency/category are
          *     deliberately not editable here, see services.update_group). DELETE
          *     dissolves the group — owner-only, requires every member's balance to
          *     already be zero — see apps.expenses.services.delete_group (lives
@@ -1448,7 +1833,7 @@ export interface paths {
         head?: never;
         /**
          * @description GET retrieves. PATCH updates name/description/image/
-         *     smart_settle_enabled (admin-only — currency/category are
+         *     smart_settle_enabled (any active admin/owner — currency/category are
          *     deliberately not editable here, see services.update_group). DELETE
          *     dissolves the group — owner-only, requires every member's balance to
          *     already be zero — see apps.expenses.services.delete_group (lives
@@ -1457,66 +1842,6 @@ export interface paths {
          *     of which live above `ledger` in this app's dependency direction).
          */
         patch: operations["ledger_groups_partial_update"];
-        trace?: never;
-    };
-    "/api/ledger/invitations/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * @description GET /api/ledger/invitations/ — invitations sent TO the current user,
-         *     pending ones first for the badge/notification-style UI.
-         */
-        get: operations["ledger_invitations_list"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ledger/invitations/{invitation_id}/accept/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * @description POST /api/ledger/invitations/{id}/accept/ — creates the membership
-         *     and Friendships with current active members. See services.accept_invitation.
-         */
-        post: operations["ledger_invitations_accept_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/ledger/invitations/{invitation_id}/decline/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * @description POST /api/ledger/invitations/{id}/decline/ — no membership, no
-         *     Friendship; the invitation just stops being pending.
-         */
-        post: operations["ledger_invitations_decline_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
         trace?: never;
     };
     "/api/notifications/": {
@@ -1572,8 +1897,11 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * @description POST /api/notifications/{id}/read/ — idempotent; re-marking an
-         *     already-read notification is a no-op, not an error.
+         * @description POST /api/notifications/{id}/read/.
+         *
+         *     Informational rows leave the inbox as soon as they are read. Pending
+         *     actions only record read_at and remain visible until ignored or their
+         *     domain action completes.
          */
         post: operations["notifications_read_create"];
         delete?: never;
@@ -1704,7 +2032,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description POST /api/notifications/mark-all-read/ */
+        /** @description Read all informational rows; pending actions remain in the inbox. */
         post: operations["notifications_mark_all_read_create"];
         delete?: never;
         options?: never;
@@ -1805,10 +2133,62 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sync/expenses/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description GET /api/sync/expenses/?since=<cursor> — every Expense (created,
+         *     updated, or soft-deleted) the caller can see, changed since the given
+         *     cursor. See docs/architecture/offline-sync.md. Mounted under
+         *     apps.sync.urls, not here — apps.sync owns the generic sync surface,
+         *     this view just supplies the resource-specific queryset/serializer, so
+         *     the dependency points from apps.sync to apps.expenses (via urls.py's
+         *     import) and never the other way, same direction
+         *     IdempotentMutationMixin already established.
+         *
+         *     Uses all_objects, not the soft-delete-filtering default manager —
+         *     deliberately, so a deleted row still appears in the feed with
+         *     is_deleted=True; a client needs to be told "remove this," which a row
+         *     that just vanished from every other queryset never could.
+         *
+         *     Visibility mirrors ExpenseDetailView's queryset above (any active
+         *     participant of the friendship/group, or the expense's own owner for
+         *     personal context) — the actual "can this user see this expense" rule
+         *     used throughout this app's own list/detail views — not
+         *     services._my_expenses_queryset's narrower "has a split in it" shape,
+         *     which is specific to the My Expenses personal-aggregation feature and
+         *     would silently under-sync real expenses a user can otherwise see in
+         *     their own group/friendship expense lists. Also deliberately does NOT
+         *     exclude PersonalExpenseSettings' hidden_groups/hidden_friendships —
+         *     that's a display preference for one aggregate screen, not an access
+         *     boundary; a hidden group's own detail screen still needs its
+         *     expenses once that screen is reading from the local synced store.
+         */
+        get: operations["sync_expenses_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * @description * `admin_login` - Admin login
+         *     * `user_deactivated` - User deactivated
+         *     * `user_reactivated` - User reactivated
+         *     * `issue_updated` - Issue updated
+         * @enum {string}
+         */
+        ActionEnum: "admin_login" | "user_deactivated" | "user_reactivated" | "issue_updated";
         /**
          * @description * `none` - No action
          *     * `pending` - Pending
@@ -1817,6 +2197,254 @@ export interface components {
          * @enum {string}
          */
         ActionStatusEnum: "none" | "pending" | "resolved" | "cancelled";
+        AdminActivityEvent: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly user: components["schemas"]["AdminUserSummary"];
+            event_type: components["schemas"]["EventTypeEnum"];
+            metadata?: unknown;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        AdminAuditLog: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly actor: components["schemas"]["AdminUserSummary"];
+            action: components["schemas"]["ActionEnum"];
+            readonly target_user: components["schemas"]["AdminUserSummary"];
+            metadata?: unknown;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        AdminExpense: {
+            /** Format: uuid */
+            readonly id: string;
+            context: components["schemas"]["ExpenseContextEnum"];
+            /** Format: uuid */
+            friendship?: string | null;
+            /** Format: uuid */
+            group?: string | null;
+            readonly added_by: components["schemas"]["AdminUserSummary"];
+            description: string;
+            readonly amount: string;
+            readonly currency: string;
+            /** Format: date */
+            date: string;
+            readonly category_name: string;
+            split_type: components["schemas"]["SplitTypeEnum"];
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        AdminExpenseDetail: {
+            /** Format: uuid */
+            readonly id: string;
+            context: components["schemas"]["ExpenseContextEnum"];
+            /** Format: uuid */
+            friendship?: string | null;
+            /** Format: uuid */
+            group?: string | null;
+            readonly added_by: components["schemas"]["AdminUserSummary"];
+            description: string;
+            readonly amount: string;
+            readonly currency: string;
+            /** Format: date */
+            date: string;
+            readonly category_name: string;
+            split_type: components["schemas"]["SplitTypeEnum"];
+            /** Format: date-time */
+            readonly created_at: string;
+            note?: string;
+            /** Format: uri */
+            receipt?: string | null;
+            /** Format: date-time */
+            edited_at?: string | null;
+            /** Format: uuid */
+            recurring_source?: string | null;
+            readonly payers: components["schemas"]["AdminExpensePayer"][];
+            readonly splits: components["schemas"]["AdminExpenseSplit"][];
+            readonly ledger_entries: components["schemas"]["AdminLedgerEntry"][];
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        AdminExpensePayer: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly user: components["schemas"]["AdminUserSummary"];
+            /** Format: decimal */
+            amount: string;
+        };
+        AdminExpenseSplit: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly user: components["schemas"]["AdminUserSummary"];
+            /** Format: decimal */
+            amount_owed: string;
+            /** Format: decimal */
+            extra_amount?: string;
+        };
+        AdminGroupSummary: {
+            /** Format: uuid */
+            readonly id: string;
+            name: string;
+            category: components["schemas"]["CategoryEnum"];
+            default_currency: string;
+            readonly created_by: components["schemas"]["AdminUserSummary"];
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        /**
+         * @description Admin-facing counterpart to apps.support.serializers.IssueReportSerializer
+         *     — the difference that matters is staff_notes being writable/visible
+         *     here (the mobile serializer deliberately never exposes it — see
+         *     IssueReport.staff_notes's own docstring), and `reporter` being
+         *     included (the mobile serializer doesn't need it — that view already
+         *     scopes by reporter=request.user).
+         */
+        AdminIssueReport: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly reporter: components["schemas"]["AdminUserSummary"];
+            readonly category: string;
+            readonly description: string;
+            /** Format: uri */
+            readonly screenshot: string | null;
+            /** Format: email */
+            readonly contact_email: string | null;
+            status?: components["schemas"]["Status6f2Enum"];
+            staff_notes?: string;
+            /** Format: date-time */
+            resolved_at?: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        AdminLedgerEntry: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly debtor: components["schemas"]["AdminUserSummary"];
+            readonly creditor: components["schemas"]["AdminUserSummary"];
+            /** Format: decimal */
+            amount: string;
+            currency: string;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        AdminLoginRequestRequest: {
+            /** Format: email */
+            email: string;
+            password: string;
+        };
+        AdminRecurringExpense: {
+            /** Format: uuid */
+            readonly id: string;
+            context?: components["schemas"]["ScopeContextEnum"];
+            /** Format: uuid */
+            friendship?: string | null;
+            /** Format: uuid */
+            group?: string | null;
+            readonly created_by: components["schemas"]["AdminUserSummary"];
+            description: string;
+            readonly amount: string;
+            readonly currency: string;
+            readonly category_name: string;
+            frequency: components["schemas"]["FrequencyEnum"];
+            /** Format: date */
+            next_occurrence: string;
+            /** Format: date-time */
+            last_materialized_at?: string | null;
+            last_error?: string;
+            readonly health: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /**
+         * @description * `super_admin` - Super Admin
+         *     * `support` - Support
+         * @enum {string}
+         */
+        AdminRoleEnum: "super_admin" | "support";
+        AdminSettlement: {
+            /** Format: uuid */
+            readonly id: string;
+            context: components["schemas"]["ScopeContextEnum"];
+            /** Format: uuid */
+            friendship?: string | null;
+            /** Format: uuid */
+            group?: string | null;
+            readonly payer: components["schemas"]["AdminUserSummary"];
+            readonly payee: components["schemas"]["AdminUserSummary"];
+            readonly amount: string;
+            readonly currency: string;
+            method?: components["schemas"]["MethodEnum"];
+            /** Format: date */
+            date: string;
+            status?: components["schemas"]["StatusB77Enum"];
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        AdminSettlementDetail: {
+            /** Format: uuid */
+            readonly id: string;
+            context: components["schemas"]["ScopeContextEnum"];
+            /** Format: uuid */
+            friendship?: string | null;
+            /** Format: uuid */
+            group?: string | null;
+            readonly payer: components["schemas"]["AdminUserSummary"];
+            readonly payee: components["schemas"]["AdminUserSummary"];
+            readonly amount: string;
+            readonly currency: string;
+            method?: components["schemas"]["MethodEnum"];
+            /** Format: date */
+            date: string;
+            status?: components["schemas"]["StatusB77Enum"];
+            /** Format: date-time */
+            readonly created_at: string;
+            readonly recorded_by: components["schemas"]["AdminUserSummary"];
+            note?: string;
+            /** Format: uri */
+            receipt?: string | null;
+            /** Format: date-time */
+            responded_at?: string | null;
+            /** Format: date-time */
+            cleared_at?: string | null;
+            readonly ledger_entries: components["schemas"]["AdminLedgerEntry"][];
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        AdminUserList: {
+            /** Format: uuid */
+            readonly id: string;
+            full_name?: string;
+            phone_number: string;
+            email?: (string) | null;
+            country?: components["schemas"]["CountryEnum"];
+            is_active?: boolean;
+            is_staff?: boolean;
+            admin_role?: components["schemas"]["AdminRoleEnum"] | components["schemas"]["BlankEnum"];
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        /**
+         * @description Lightweight, read-only — for nesting (reporter on an issue, added_by
+         *     on an expense, etc.). See apps.expenses.serializers.UserSummarySerializer
+         *     for the mobile-facing analog; this one carries a couple more fields
+         *     (email, is_active) that only make sense in an admin context, so it's
+         *     a separate serializer rather than that one reused past its scope.
+         */
+        AdminUserSummary: {
+            /** Format: uuid */
+            readonly id: string;
+            full_name?: string;
+            phone_number: string;
+            email?: (string) | null;
+            /** Format: uri */
+            image?: string | null;
+            is_active?: boolean;
+        };
         /**
          * @description POST body for LedgerAdjustmentView — which currency's adjustment
          *     (from the GET preview) to actually apply.
@@ -2218,6 +2846,20 @@ export interface components {
             detail: string;
         };
         /**
+         * @description * `login` - Login
+         *     * `expense_created` - Expense created
+         *     * `group_created` - Group created
+         *     * `group_joined` - Group joined
+         *     * `friendship_started` - Friendship started
+         *     * `settlement_recorded` - Settlement recorded
+         *     * `settlement_completed` - Settlement completed
+         *     * `settlement_disputed` - Settlement disputed
+         *     * `reminder_sent` - Reminder sent
+         *     * `issue_reported` - Issue reported
+         * @enum {string}
+         */
+        EventTypeEnum: "login" | "expense_created" | "group_created" | "group_joined" | "friendship_started" | "settlement_recorded" | "settlement_completed" | "settlement_disputed" | "reminder_sent" | "issue_reported";
+        /**
          * @description * `personal` - Personal
          *     * `friendship` - Friendship
          *     * `group` - Group
@@ -2234,6 +2876,8 @@ export interface components {
          *     parses a JSON string into Python on `to_internal_value`.
          */
         ExpenseCreate: {
+            /** Format: uuid */
+            id?: string;
             description: string;
             /** Format: decimal */
             amount: string;
@@ -2261,6 +2905,8 @@ export interface components {
          *     parses a JSON string into Python on `to_internal_value`.
          */
         ExpenseCreateRequest: {
+            /** Format: uuid */
+            id?: string;
             description: string;
             /** Format: decimal */
             amount: string;
@@ -2277,6 +2923,50 @@ export interface components {
             payers: unknown;
             /** @description JSON-encoded string: a list with one entry per participant, shape depends on split_type. equal: [{"user_id": "..."}]. unequal: [{"user_id": "...", "amount_owed": "300.00"}] — amount_owed values must sum exactly to the expense "amount". adjustment: [{"user_id": "...", "extra_amount": "200.00"}, {"user_id": "..."}] — extra_amount defaults to 0, the remaining amount after all extras is split evenly across everyone. */
             splits: unknown;
+        };
+        /**
+         * @description ExpenseReadSerializer plus the three fields a delta/change-feed
+         *     consumer needs that no other caller does: `updated_at` (the cursor
+         *     field itself — see apps.sync.pagination.DeltaCursorPagination) and
+         *     `is_deleted`/`deleted_at` (how a soft-deleted row tells a client "this
+         *     was removed" instead of just disappearing, per
+         *     docs/architecture/offline-sync.md). Every other read path stays on
+         *     the plain ExpenseReadSerializer — those three fields are meaningless
+         *     noise for a normal list/detail view.
+         */
+        ExpenseDelta: {
+            /** Format: uuid */
+            readonly id: string;
+            context: components["schemas"]["ExpenseContextEnum"];
+            /** Format: uuid */
+            friendship?: string | null;
+            /** Format: uuid */
+            group?: string | null;
+            readonly added_by: components["schemas"]["UserSummary"];
+            description: string;
+            readonly amount: string;
+            readonly currency: string;
+            /** Format: date */
+            date: string;
+            readonly category: components["schemas"]["Category"];
+            note?: string;
+            /** Format: uri */
+            receipt?: string | null;
+            split_type: components["schemas"]["SplitTypeEnum"];
+            readonly payers: components["schemas"]["ExpensePayerRead"][];
+            readonly splits: components["schemas"]["ExpenseSplitRead"][];
+            readonly reactions: components["schemas"]["ReactionRead"][];
+            /** Format: date-time */
+            edited_at?: string | null;
+            /** Format: uuid */
+            recurring_source?: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+            is_deleted?: boolean;
+            /** Format: date-time */
+            deleted_at?: string | null;
         };
         ExpensePayerRead: {
             /** Format: uuid */
@@ -2540,25 +3230,6 @@ export interface components {
             /** Format: decimal */
             rate: string;
         };
-        GroupInvitation: {
-            /** Format: uuid */
-            readonly id: string;
-            readonly group: components["schemas"]["GroupSummary"];
-            readonly invited_by: components["schemas"]["FriendInfo"];
-            readonly status: components["schemas"]["GroupInvitationStatusEnum"];
-            /** Format: date-time */
-            readonly created_at: string;
-            /** Format: date-time */
-            readonly responded_at: string | null;
-        };
-        /**
-         * @description * `pending` - Pending
-         *     * `accepted` - Accepted
-         *     * `declined` - Declined
-         *     * `cancelled` - Cancelled
-         * @enum {string}
-         */
-        GroupInvitationStatusEnum: "pending" | "accepted" | "declined" | "cancelled";
         /**
          * @description {"id", "name"} only — apps.ledger.serializers.GroupSummarySerializer
          *     also carries "image", which these call sites' underlying dicts don't.
@@ -2569,16 +3240,9 @@ export interface components {
             name: string;
         };
         /**
-         * @description One entry per active member OR pending invitee — a group's participant
-         *     list is a merge of both, matching the app UI where a pending invite
-         *     shows inline in the member list with a "Pending" badge rather than
-         *     being a separate section. `role` is always populated, even for a
-         *     pending invitee: `accept_invitation()` unconditionally assigns `member`
-         *     on acceptance (there's no invite-as-admin path), so showing `"member"`
-         *     ahead of acceptance is a true statement about what they will become,
-         *     not a guess. Distinguish "confirmed" from "will become" via `status`,
-         *     not by `role` being null — an admin can still promote after they
-         *     accept, via the separate make-admin action.
+         * @description One entry per active member — adds are immediate (no consent
+         *     step, see apps/ledger/services.py::_add_member), so every entry here
+         *     is a real, currently-active GroupMembership.
          */
         GroupParticipant: {
             /** Format: uuid */
@@ -2587,14 +3251,7 @@ export interface components {
             phone_number: string;
             image: string | null;
             role: string;
-            status: components["schemas"]["GroupParticipantStatusEnum"];
         };
-        /**
-         * @description * `active` - active
-         *     * `pending` - pending
-         * @enum {string}
-         */
-        GroupParticipantStatusEnum: "active" | "pending";
         GroupRequest: {
             name: string;
             description?: string;
@@ -2726,7 +3383,7 @@ export interface components {
             /** Format: uri */
             screenshot?: string | null;
             contact_email?: (string) | null;
-            readonly status: components["schemas"]["IssueReportStatusEnum"];
+            readonly status: components["schemas"]["Status6f2Enum"];
             /** Format: date-time */
             readonly resolved_at: string | null;
             /** Format: date-time */
@@ -2739,14 +3396,6 @@ export interface components {
             screenshot?: string | null;
             contact_email?: (string) | null;
         };
-        /**
-         * @description * `open` - Open
-         *     * `in_progress` - In progress
-         *     * `resolved` - Resolved
-         *     * `closed` - Closed
-         * @enum {string}
-         */
-        IssueReportStatusEnum: "open" | "in_progress" | "resolved" | "closed";
         /**
          * @description One currency's worth of cross-ledger adjustment potential between
          *     the caller and one other person — consumes a plain dict from
@@ -2905,10 +3554,10 @@ export interface components {
          *     * `payment_dispute` - Payment dispute
          *     * `expense_added` - Expense added
          *     * `expense_edited` - Expense edited
-         *     * `group_invitation` - Group invitation
+         *     * `added_to_group` - Added to group
          * @enum {string}
          */
-        NotificationTypeEnum: "payment_settled" | "budget_alert" | "settlement_request" | "payment_confirmation" | "late_payment_reminder" | "payment_dispute" | "expense_added" | "expense_edited" | "group_invitation";
+        NotificationTypeEnum: "payment_settled" | "budget_alert" | "settlement_request" | "payment_confirmation" | "late_payment_reminder" | "payment_dispute" | "expense_added" | "expense_edited" | "added_to_group";
         /**
          * @description Response shape for NotificationUnreadCountView — schema-only, never
          *     instantiated with a model instance.
@@ -2925,6 +3574,126 @@ export interface components {
             refresh: string;
             is_new_user: boolean;
             user: components["schemas"]["User"];
+        };
+        PaginatedAdminActivityEventList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["AdminActivityEvent"][];
+        };
+        PaginatedAdminAuditLogList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["AdminAuditLog"][];
+        };
+        PaginatedAdminExpenseList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["AdminExpense"][];
+        };
+        PaginatedAdminGroupSummaryList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["AdminGroupSummary"][];
+        };
+        PaginatedAdminIssueReportList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["AdminIssueReport"][];
+        };
+        PaginatedAdminRecurringExpenseList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["AdminRecurringExpense"][];
+        };
+        PaginatedAdminSettlementList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["AdminSettlement"][];
+        };
+        PaginatedAdminUserListList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["AdminUserList"][];
         };
         PaginatedCategoryList: {
             /**
@@ -2952,6 +3721,19 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["Contact"][];
         };
+        PaginatedExpenseDeltaList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?since=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?since=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["ExpenseDelta"][];
+        };
         PaginatedExpenseReadList: {
             /**
              * Format: uri
@@ -2977,19 +3759,6 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["Friendship"][];
-        };
-        PaginatedGroupInvitationList: {
-            /**
-             * Format: uri
-             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
-             */
-            next?: string | null;
-            /**
-             * Format: uri
-             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
-             */
-            previous?: string | null;
-            results: components["schemas"]["GroupInvitation"][];
         };
         PaginatedGroupList: {
             /**
@@ -3055,6 +3824,13 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["SettlementRead"][];
+        };
+        PatchedAdminIssueReportUpdateRequest: {
+            status?: components["schemas"]["Status6f2Enum"];
+            staff_notes?: string;
+        };
+        PatchedAdminUserStatusUpdateRequest: {
+            is_active?: boolean;
         };
         /**
          * @description All fields optional (PATCH semantics). For a friendship/group expense,
@@ -3226,6 +4002,8 @@ export interface components {
          *     JSONField parse error that `payers=` / `splits=` produces can't happen.
          */
         PersonalExpenseCreate: {
+            /** Format: uuid */
+            id?: string;
             description: string;
             /** Format: decimal */
             amount: string;
@@ -3248,6 +4026,8 @@ export interface components {
          *     JSONField parse error that `payers=` / `splits=` produces can't happen.
          */
         PersonalExpenseCreateRequest: {
+            /** Format: uuid */
+            id?: string;
             description: string;
             /** Format: decimal */
             amount: string;
@@ -3551,7 +4331,7 @@ export interface components {
             note?: string;
             /** Format: uri */
             receipt?: string | null;
-            status?: components["schemas"]["SettlementReadStatusEnum"];
+            status?: components["schemas"]["StatusB77Enum"];
             /** Format: date-time */
             responded_at?: string | null;
             readonly needs_your_confirmation: boolean;
@@ -3562,19 +4342,27 @@ export interface components {
             readonly created_at: string;
         };
         /**
-         * @description * `pending` - Pending
-         *     * `confirmed` - Confirmed
-         *     * `disputed` - Disputed
-         * @enum {string}
-         */
-        SettlementReadStatusEnum: "pending" | "confirmed" | "disputed";
-        /**
          * @description * `equal` - Equal
          *     * `unequal` - Unequal
          *     * `adjustment` - Adjustment
          * @enum {string}
          */
         SplitTypeEnum: "equal" | "unequal" | "adjustment";
+        /**
+         * @description * `open` - Open
+         *     * `in_progress` - In progress
+         *     * `resolved` - Resolved
+         *     * `closed` - Closed
+         * @enum {string}
+         */
+        Status6f2Enum: "open" | "in_progress" | "resolved" | "closed";
+        /**
+         * @description * `pending` - Pending
+         *     * `confirmed` - Confirmed
+         *     * `disputed` - Disputed
+         * @enum {string}
+         */
+        StatusB77Enum: "pending" | "confirmed" | "disputed";
         TakeoverRequest: {
             takeover_token: string;
         };
@@ -3710,6 +4498,415 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    admin_activity_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedAdminActivityEventList"];
+                };
+            };
+        };
+    };
+    admin_activity_breakdown_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    admin_audit_log_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedAdminAuditLogList"];
+                };
+            };
+        };
+    };
+    admin_auth_login_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminLoginRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["AdminLoginRequestRequest"];
+                "multipart/form-data": components["schemas"]["AdminLoginRequestRequest"];
+            };
+        };
+        responses: {
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    admin_expenses_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedAdminExpenseList"];
+                };
+            };
+        };
+    };
+    admin_expenses_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminExpenseDetail"];
+                };
+            };
+        };
+    };
+    admin_groups_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedAdminGroupSummaryList"];
+                };
+            };
+        };
+    };
+    admin_groups_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    admin_issues_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedAdminIssueReportList"];
+                };
+            };
+        };
+    };
+    admin_issues_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminIssueReport"];
+                };
+            };
+        };
+    };
+    admin_issues_update_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedAdminIssueReportUpdateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedAdminIssueReportUpdateRequest"];
+                "multipart/form-data": components["schemas"]["PatchedAdminIssueReportUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminIssueReport"];
+                };
+            };
+        };
+    };
+    admin_overview_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    admin_recurring_expenses_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedAdminRecurringExpenseList"];
+                };
+            };
+        };
+    };
+    admin_settlements_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedAdminSettlementList"];
+                };
+            };
+        };
+    };
+    admin_settlements_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminSettlementDetail"];
+                };
+            };
+        };
+    };
+    admin_users_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedAdminUserListList"];
+                };
+            };
+        };
+    };
+    admin_users_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    admin_users_status_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedAdminUserStatusUpdateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedAdminUserStatusUpdateRequest"];
+                "multipart/form-data": components["schemas"]["PatchedAdminUserStatusUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     auth_logout_create: {
         parameters: {
             query?: never;
@@ -5494,28 +6691,6 @@ export interface operations {
             };
         };
     };
-    ledger_groups_invitations_cancel_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                group_id: string;
-                user_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Group"];
-                };
-            };
-        };
-    };
     ledger_groups_leave_create: {
         parameters: {
             query?: never;
@@ -5713,72 +6888,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GroupUpdate"];
-                };
-            };
-        };
-    };
-    ledger_invitations_list: {
-        parameters: {
-            query?: {
-                /** @description The pagination cursor value. */
-                cursor?: string;
-                /** @description Number of results to return per page. */
-                page_size?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PaginatedGroupInvitationList"];
-                };
-            };
-        };
-    };
-    ledger_invitations_accept_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                invitation_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GroupInvitation"];
-                };
-            };
-        };
-    };
-    ledger_invitations_decline_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                invitation_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GroupInvitation"];
                 };
             };
         };
@@ -6144,6 +7253,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IssueReport"];
+                };
+            };
+        };
+    };
+    sync_expenses_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                since?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedExpenseDeltaList"];
                 };
             };
         };

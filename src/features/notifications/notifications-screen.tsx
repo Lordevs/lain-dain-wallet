@@ -1,7 +1,6 @@
 import { memo, useCallback, useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { Check, Wallet, CheckCircle2, Clock, AlertTriangle, MoreVertical, Users } from 'lucide-react'
-import { toast } from 'sonner'
 import { ROUTES } from '@/constants/routes'
 import { Skeleton } from '@/components/ui/skeleton'
 import EmptyState from '@/components/shared/empty-state'
@@ -15,7 +14,6 @@ import {
   useMarkAllNotificationsReadMutation,
   useMarkNotificationReadMutation,
   useRequestSettlementMutation,
-  useRespondToGroupInvitationMutation,
 } from './api/use-notification-mutations'
 import { getNotificationCardContent, formatTimeAgo } from './lib/format'
 import NotificationCard, { type NotificationAction } from './components/notification-card'
@@ -44,7 +42,7 @@ function getNotificationIcon(type: Notification['type']) {
           <CheckCircle2 size={20} strokeWidth={2.2} className="fill-positive/10" />
         </div>
       )
-    case 'group_invitation':
+    case 'added_to_group':
       return (
         <div className="w-10 h-10 rounded-[14px] bg-[#E4F2EB] flex items-center justify-center text-positive border border-positive/10">
           <Users size={20} strokeWidth={2.2} />
@@ -96,14 +94,12 @@ const NotificationListItem = memo(function NotificationListItem({
   navigate,
   markRead,
   requestSettlement,
-  respondToInvitation,
   onDelete,
 }: {
   notification: Notification
   navigate: NavigateFn
   markRead: ReturnType<typeof useMarkNotificationReadMutation>['mutate']
   requestSettlement: ReturnType<typeof useRequestSettlementMutation>['mutate']
-  respondToInvitation: ReturnType<typeof useRespondToGroupInvitationMutation>['mutate']
   onDelete: (id: string, message?: string) => void
 }) {
   const handleIgnore = useCallback((id: string) => {
@@ -250,46 +246,10 @@ const NotificationListItem = memo(function NotificationListItem({
           { label: 'Ignore', variant: 'amber', onClick: () => handleIgnore(notification.id) },
         ]
       }
-      case 'group_invitation': {
-        const p = payloadOf(notification as Notification & { type: 'group_invitation' })
-        return [
-          {
-            label: 'Accept',
-            variant: 'green',
-            onClick: (e) => {
-              e.stopPropagation()
-              haptic.light()
-              respondToInvitation(
-                { invitationId: p.invitation_id, action: 'accept' },
-                {
-                  onSuccess: () => {
-                    toast.success(`You joined ${p.group_name}`)
-                    navigate({ to: ROUTES.GROUP_DETAILS, params: { id: p.group_id } })
-                  },
-                  onError: (error) => toast.error(error.message),
-                },
-              )
-            },
-          },
-          {
-            label: 'Decline',
-            variant: 'amber',
-            onClick: (e) => {
-              e.stopPropagation()
-              haptic.heavy()
-              respondToInvitation(
-                { invitationId: p.invitation_id, action: 'decline' },
-                {
-                  onSuccess: () => toast.success('Invitation declined'),
-                  onError: (error) => toast.error(error.message),
-                },
-              )
-            },
-          },
-        ]
-      }
+      case 'added_to_group':
+        return undefined
     }
-  }, [notification, navigate, markRead, handleIgnore, handleRemind, goToSettlement, respondToInvitation])
+  }, [notification, navigate, markRead, handleIgnore, handleRemind, goToSettlement])
 
   const handleCardClick = useCallback(() => {
     if (notification.type === 'expense_added') {
@@ -303,8 +263,9 @@ const NotificationListItem = memo(function NotificationListItem({
     } else if (notification.type === 'payment_confirmation' && notification.action_status === 'resolved') {
       const p = payloadOf(notification as Notification & { type: 'payment_confirmation' })
       navigate({ to: ROUTES.SETTLEMENT_DETAILS, params: { id: p.settlement_id } })
-    } else if (notification.type === 'group_invitation' && notification.action_status === 'resolved') {
-      const p = payloadOf(notification as Notification & { type: 'group_invitation' })
+    } else if (notification.type === 'added_to_group') {
+      const p = payloadOf(notification as Notification & { type: 'added_to_group' })
+      markRead(notification.id)
       navigate({ to: ROUTES.GROUP_DETAILS, params: { id: p.group_id } })
     }
   }, [notification, navigate, markRead])
@@ -335,7 +296,6 @@ export default function NotificationsScreen() {
   const markRead = useMarkNotificationReadMutation()
   const markAllRead = useMarkAllNotificationsReadMutation()
   const requestSettlement = useRequestSettlementMutation()
-  const respondToInvitation = useRespondToGroupInvitationMutation()
   const deleteNotification = useDeleteNotificationMutation()
   const clearAllNotifications = useClearAllNotificationsMutation()
 
@@ -417,7 +377,6 @@ export default function NotificationsScreen() {
                   navigate={navigate}
                   markRead={markRead.mutate}
                   requestSettlement={requestSettlement.mutate}
-                  respondToInvitation={respondToInvitation.mutate}
                   onDelete={handleDelete}
                 />
               ))}
@@ -438,7 +397,6 @@ export default function NotificationsScreen() {
                   navigate={navigate}
                   markRead={markRead.mutate}
                   requestSettlement={requestSettlement.mutate}
-                  respondToInvitation={respondToInvitation.mutate}
                   onDelete={handleDelete}
                 />
               ))}

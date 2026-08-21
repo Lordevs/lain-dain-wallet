@@ -139,27 +139,3 @@ export function useRequestSettlementMutation() {
   })
 }
 
-type GroupInvitation = components['schemas']['GroupInvitation']
-
-/** Accepts or declines a pending invitation from its actionable inbox card. */
-export function useRespondToGroupInvitationMutation() {
-  const queryClient = useQueryClient()
-  return useMutation<GroupInvitation, ApiError, { invitationId: string; action: 'accept' | 'decline' }>({
-    mutationFn: async ({ invitationId, action }) => {
-      const path = action === 'accept'
-        ? '/api/ledger/invitations/{invitation_id}/accept/' as const
-        : '/api/ledger/invitations/{invitation_id}/decline/' as const
-      const { data, error } = await apiClient.POST(path, {
-        params: { path: { invitation_id: invitationId } },
-      })
-      if (error) throw toApiError(error)
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] })
-      queryClient.invalidateQueries({ queryKey: ['groups', 'list'] })
-      queryClient.invalidateQueries({ queryKey: ['wallet'] })
-      queryClient.invalidateQueries({ queryKey: ['user-ledgers'] })
-    },
-  })
-}

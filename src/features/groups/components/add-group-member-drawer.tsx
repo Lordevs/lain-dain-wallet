@@ -10,7 +10,7 @@ import FormError from '@/components/shared/form-error'
 import CurrencyRateFields from './currency-rate-fields'
 import { useContactsQuery } from '@/features/contacts/api/use-contacts-query'
 import { useDeviceContactsSync } from '@/features/contacts/hooks/use-device-contacts-sync'
-import { useInviteMembersMutation } from '@/features/groups/api/use-group-actions-mutations'
+import { useAddMembersMutation } from '@/features/groups/api/use-group-actions-mutations'
 import { useSetGroupCurrencyRateMutation } from '@/features/groups/api/use-group-currency-rate-mutations'
 import { mapSyncedContactToContactInfo } from '@/features/contacts/lib/map-synced-contact'
 
@@ -44,7 +44,7 @@ export default function AddGroupMemberDrawer({
   // as every other contact-picker screen.
   useDeviceContactsSync()
   const contactsQuery = useContactsQuery(true, searchQuery)
-  const inviteMutation = useInviteMembersMutation(groupId)
+  const addMembersMutation = useAddMembersMutation(groupId)
   const setRateMutation = useSetGroupCurrencyRateMutation(groupId)
 
   // Filter out users who are already in the group
@@ -92,7 +92,7 @@ export default function AddGroupMemberDrawer({
     )
   }
 
-  const handleSendInvites = async () => {
+  const handleAddMembers = async () => {
     if (selectedUserIds.length === 0) return
     try {
       for (const currency of missingCurrencies) {
@@ -101,17 +101,17 @@ export default function AddGroupMemberDrawer({
           rate: rateValues[currency],
         })
       }
-      await inviteMutation.mutateAsync(selectedUserIds)
+      await addMembersMutation.mutateAsync(selectedUserIds)
       toast.success(
         selectedUserIds.length === 1
-          ? 'Invitation sent!'
-          : `${selectedUserIds.length} invitations sent!`
+          ? 'Member added!'
+          : `${selectedUserIds.length} members added!`
       )
       setSelectedUserIds([])
       setRateValues({})
       onClose()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to send invitations.')
+      toast.error(err instanceof Error ? err.message : 'Failed to add members.')
     }
   }
 
@@ -156,7 +156,7 @@ export default function AddGroupMemberDrawer({
             {missingCurrencies.length > 0 && (
               <div className="shrink-0 mb-4">
                 <h4 className="text-[11px] font-bold text-[#6B6B6B] uppercase tracking-[0.08em] mb-2">
-                  Rates required before invitation
+                  Rates required before adding
                 </h4>
                 <CurrencyRateFields
                   baseCurrency={groupCurrency}
@@ -213,22 +213,22 @@ export default function AddGroupMemberDrawer({
           {/* Bottom Action Bar */}
           <div className="px-6 py-5 shrink-0">
             <FormError
-              message={setRateMutation.error?.message ?? inviteMutation.error?.message}
+              message={setRateMutation.error?.message ?? addMembersMutation.error?.message}
               className="mb-3 justify-center"
             />
             <button
               type="button"
-              onClick={handleSendInvites}
+              onClick={handleAddMembers}
               disabled={
                 selectedUserIds.length === 0
                 || !ratesAreValid
-                || inviteMutation.isPending
+                || addMembersMutation.isPending
                 || setRateMutation.isPending
               }
               className="w-full h-14 rounded-full bg-positive text-white font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center outline-none border-0"
             >
-              {inviteMutation.isPending || setRateMutation.isPending
-                ? 'Sending Invitations…'
+              {addMembersMutation.isPending || setRateMutation.isPending
+                ? 'Adding…'
                 : selectedUserIds.length === 0
                   ? 'Select Members'
                   : `Add ${selectedUserIds.length} Member${selectedUserIds.length > 1 ? 's' : ''}`}

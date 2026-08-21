@@ -1,4 +1,4 @@
-import { ShieldCheck, UserMinus, Ban, Crown, XCircle } from 'lucide-react'
+import { ShieldCheck, UserMinus, Ban, Crown } from 'lucide-react'
 import { Drawer, DrawerContent } from '@/components/ui/drawer'
 import ContactAvatar from './contact-avatar'
 
@@ -12,9 +12,6 @@ export interface MemberOptionData {
   role?: 'owner' | 'admin' | 'member'
   isOwner?: boolean
   isAdmin: boolean
-  /** Still a pending invitee, not a real member yet — every action below
-   * except cancelling the invite is meaningless until they accept. */
-  isPending?: boolean
   owesText?: string // e.g. "Member · Owes you Rs. 2,000"
 }
 
@@ -27,7 +24,6 @@ interface MemberOptionsDrawerProps {
   onTransferOwnership?: (memberId: string) => void
   onRemove?: (memberId: string) => void
   onBlockReport?: (memberId: string) => void
-  onCancelInvitation?: (memberId: string) => void
 }
 
 export default function MemberOptionsDrawer({
@@ -39,7 +35,6 @@ export default function MemberOptionsDrawer({
   onTransferOwnership,
   onRemove,
   onBlockReport,
-  onCancelInvitation,
 }: MemberOptionsDrawerProps) {
   if (!member) return null
 
@@ -72,27 +67,8 @@ export default function MemberOptionsDrawer({
 
         {/* Action List Options */}
         <div className="flex flex-col divide-y divide-border-card/60">
-          {/* Pending invite: cancelling the invitation is the only action */}
-          {member.isPending && onCancelInvitation && (
-            <button
-              type="button"
-              onClick={() => {
-                onCancelInvitation(member.id)
-                onClose()
-              }}
-              className="flex items-center gap-4 px-6 py-4 hover:bg-muted/5 transition-colors cursor-pointer border-0 bg-transparent text-left w-full outline-none"
-            >
-              <div className="w-11 h-11 rounded-[14px] bg-[#FFF5F0] flex items-center justify-center text-orange-payable shrink-0">
-                <XCircle size={20} strokeWidth={2.5} />
-              </div>
-              <span className="font-bold text-[15px] text-orange-payable">
-                Cancel Invitation
-              </span>
-            </button>
-          )}
-
           {/* Transfer Ownership (Only for Group Owner) */}
-          {!member.isPending && isCurrentUserOwner && !member.isOwner && onTransferOwnership && (
+          {isCurrentUserOwner && !member.isOwner && onTransferOwnership && (
             <button
               type="button"
               onClick={() => {
@@ -111,7 +87,7 @@ export default function MemberOptionsDrawer({
           )}
 
           {/* Make / Remove Admin (Not applicable to the Owner) */}
-          {!member.isPending && onToggleAdmin && !member.isOwner && (
+          {onToggleAdmin && !member.isOwner && (
             <button
               type="button"
               onClick={() => {
@@ -130,7 +106,7 @@ export default function MemberOptionsDrawer({
           )}
 
           {/* Remove from Group */}
-          {!member.isPending && onRemove && !member.isOwner && (
+          {onRemove && !member.isOwner && (
             <button
               type="button"
               onClick={() => {
@@ -149,7 +125,7 @@ export default function MemberOptionsDrawer({
           )}
 
           {/* Block & Report */}
-          {!member.isPending && onBlockReport && !member.isOwner && (
+          {onBlockReport && !member.isOwner && (
             <button
               type="button"
               onClick={() => {
