@@ -148,9 +148,10 @@ function ExpenseItem({
       onClickCapture={longPress.onClickCapture}
       className={cn(
         'relative flex items-center justify-between p-4 bg-white hover:bg-muted/5 transition-all',
-        // Extra bottom room so the reaction badge sits inside this row's
-        // own box instead of spilling into the next row below it.
-        reactions && reactions.length > 0 && 'pb-7',
+        // Extra bottom room so the reaction badge/default-face icon sits
+        // inside this row's own box instead of spilling into the next
+        // row below it.
+        !!onReact && 'pb-7',
         onClick && 'cursor-pointer',
         className
       )}
@@ -215,7 +216,12 @@ function ExpenseItem({
         <ChevronRight size={16} className={cn('text-divider', !showChevron && 'invisible')} />
       </div>
 
-      {reactions && reactions.length > 0 && <ReactionBadge reactions={reactions} />}
+      {onReact && (
+        <ReactionBadge
+          reactions={reactions ?? []}
+          onOpenPicker={() => setPickerOpen(true)}
+        />
+      )}
     </div>
     </ReactionPicker>
   )
