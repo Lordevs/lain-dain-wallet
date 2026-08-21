@@ -148,8 +148,6 @@ export default function RecurringPaymentsScreen({
               {payments.map((p) => {
                 const Icon = iconForCategory(p.category?.icon)
                 const iconColor = p.category?.color ?? '#0B683A'
-                const mainPayer = p.payers?.[0]
-                const payerName = mainPayer ? (mainPayer.id === myId ? 'You' : mainPayer.full_name) : 'Ledger'
                 const amountNum = Number(p.amount) || 0
 
                 return (
@@ -170,11 +168,6 @@ export default function RecurringPaymentsScreen({
 
                         {/* Payer + Amount Row */}
                         <div className="flex items-center justify-between mt-1.5 pr-2">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="text-[13px] text-[#6B6B6B] font-semibold truncate leading-none">
-                              Paid by {payerName}
-                            </span>
-                          </div>
                           <span className="text-[15px] font-black text-[#1A1A1A] leading-none shrink-0">
                             {formatCurrency(amountNum, p.currency ?? 'PKR')}
                           </span>
