@@ -57,6 +57,13 @@ async function openDatabase(): Promise<SQLiteDBConnection> {
  * anywhere that needs to read/write the offline store; safe to call
  * concurrently, every caller awaits the same underlying connection. */
 export function getDatabase(): Promise<SQLiteDBConnection> {
-  if (!dbPromise) dbPromise = openDatabase()
+  if (!dbPromise) {
+    dbPromise = openDatabase().catch((error) => {
+      // A transient native-plugin/startup failure must not poison every
+      // later offline action for the lifetime of the WebView.
+      dbPromise = null
+      throw error
+    })
+  }
   return dbPromise
 }

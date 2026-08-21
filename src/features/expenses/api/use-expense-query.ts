@@ -1,7 +1,6 @@
-import { useQuery } from '@tanstack/react-query'
+import { onlineManager, useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
 import { toApiError } from '@/lib/api/errors'
-import { onlineManager } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/use-auth-store'
 import { getLocalExpense, upsertServerExpense } from '@/lib/sqlite/expenses-store'
 
@@ -13,9 +12,15 @@ export function useExpenseQuery(id: string | undefined) {
     queryKey: ['expense', id],
     queryFn: async () => {
       const ownerId = useAuthStore.getState().userProfile?.id
-      if (!onlineManager.isOnline() && ownerId) {
-        const local = await getLocalExpense(ownerId, id!)
-        if (local) return local
+      if (ownerId) {
+        try {
+          const local = await getLocalExpense(ownerId, id!)
+          if (local) return local
+        } catch (error) {
+          // Keep online reads available if native SQLite has a transient
+          // startup/plugin failure. Offline, surface the cache failure.
+          if (!onlineManager.isOnline()) throw error
+        }
       }
       const { data, error } = await apiClient.GET('/api/expenses/{id}/', {
         params: { path: { id: id! } },
@@ -30,5 +35,6 @@ export function useExpenseQuery(id: string | undefined) {
     },
     enabled: !!id,
     networkMode: 'always',
+    staleTime: 5 * 60_000,
   })
 }

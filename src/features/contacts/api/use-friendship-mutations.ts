@@ -1,8 +1,8 @@
-import { useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query'
+import { onlineManager, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { ApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
 import { queueMutation } from '@/lib/sync/mutation-outbox'
-import { upsertSnapshotRecord } from '@/lib/sqlite/resource-snapshot-store'
+import { getResourceSnapshot, upsertSnapshotRecord } from '@/lib/sqlite/resource-snapshot-store'
 import { useAuthStore } from '@/store/use-auth-store'
 
 export interface CreateFriendshipVariables {
@@ -24,20 +24,41 @@ export function useCreateFriendshipMutation() {
     mutationFn: async ({ userId, currency, exchangeRate }: CreateFriendshipVariables) => {
       const profile = useAuthStore.getState().userProfile
       if (!profile?.id) throw new ApiError('Sign in before starting a friendship.')
+      let existing: components['schemas']['Friendship'] | undefined
+      try {
+        existing = (await getResourceSnapshot<components['schemas']['Friendship']>(
+          profile.id, 'friendships',
+        )).find((item) => item.friend.id === userId)
+      } catch (error) {
+        // A broken/unavailable local cache must not prevent the online API
+        // flow. Offline, however, the local store is the only source of truth.
+        if (!onlineManager.isOnline()) throw error
+      }
+      if (existing) {
+        queryClient.setQueryData(['friendship', existing.id], existing)
+        return existing
+      }
       const contact = queryClient
         .getQueriesData<InfiniteData<components['schemas']['PaginatedContactList']>>({ queryKey: ['contacts'] })
         .flatMap(([, data]) => data?.pages.flatMap((page) => page.results) ?? [])
         .find((item) => item.lain_dain_user_id === userId)
-      if (!contact) throw new ApiError('Open contacts online once before starting this friendship offline.')
+      if (!contact && !onlineManager.isOnline()) {
+        throw new ApiError('Open contacts online once before starting this friendship offline.')
+      }
       const id = crypto.randomUUID()
       const optimistic: components['schemas']['Friendship'] = {
         id,
-        friend: { id: userId, full_name: contact.display_name, phone_number: contact.phone_number, image: null },
+        friend: {
+          id: userId,
+          full_name: contact?.display_name ?? 'Contact',
+          phone_number: contact?.phone_number ?? '',
+          image: null,
+        },
         created_via: 'manual', created_at: new Date().toISOString(), created: true,
         is_blocked: false, blocked_by_me: false, currency: currency ?? null,
         exchange_rate: exchangeRate ?? null,
         your_currency: profile.defaultCurrency ?? currency ?? '',
-        friend_currency: contact.lain_dain_user_currency ?? currency ?? '',
+        friend_currency: contact?.lain_dain_user_currency ?? currency ?? '',
         total_entries: 0, my_auto_remind_override: null,
       }
       const result = await queueMutation({
