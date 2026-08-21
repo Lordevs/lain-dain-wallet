@@ -1,4 +1,5 @@
 import { getDatabase } from './init'
+import { runInTransaction } from './transaction'
 
 export type OutboxStatus = 'pending' | 'syncing' | 'synced' | 'failed'
 
@@ -106,9 +107,7 @@ export async function getExpenseOutboxSummary(ownerId: string): Promise<OutboxSu
 }
 
 export async function retryFailedExpenseRows(ownerId: string): Promise<void> {
-  const db = await getDatabase()
-  await db.beginTransaction()
-  try {
+  await runInTransaction(async (db) => {
     await db.run(
       `UPDATE expense_outbox SET status = 'pending', last_error = NULL
        WHERE owner_id = ? AND status = 'failed'`,
@@ -121,9 +120,5 @@ export async function retryFailedExpenseRows(ownerId: string): Promise<void> {
        )`,
       [ownerId, ownerId],
     )
-    await db.commitTransaction()
-  } catch (error) {
-    await db.rollbackTransaction()
-    throw error
-  }
+  })
 }

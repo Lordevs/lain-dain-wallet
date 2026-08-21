@@ -11,7 +11,7 @@ import {
   getPendingOutboxRows, recoverInterruptedOutboxRows, type OutboxRow,
 } from '@/lib/sqlite/outbox-store'
 import { insertLocalExpense, markLocalExpenseSynced, markLocalExpenseFailed } from '@/lib/sqlite/expenses-store'
-import { getDatabase } from '@/lib/sqlite/init'
+import { runInTransaction } from '@/lib/sqlite/transaction'
 import { stageReceiptForOffline, readStagedReceipt, deleteStagedReceipt } from './receipt-staging'
 
 /**
@@ -135,16 +135,14 @@ export async function queueExpenseCreate(payload: QueuedExpensePayload): Promise
   const storedPayload = { ...payload, values: { ...payload.values, receipt: null } } as QueuedExpensePayload
   const payloadJson = JSON.stringify(storedPayload)
 
-  const db = await getDatabase()
-  await db.beginTransaction()
   try {
-    await insertLocalExpense(localRow)
-    await insertOutboxRow({
-      id, idempotencyKey: id, method: 'POST', payloadJson, localReceiptPath, createdAt: now, ownerId: myId,
+    await runInTransaction(async () => {
+      await insertLocalExpense(localRow)
+      await insertOutboxRow({
+        id, idempotencyKey: id, method: 'POST', payloadJson, localReceiptPath, createdAt: now, ownerId: myId,
+      })
     })
-    await db.commitTransaction()
   } catch (error) {
-    await db.rollbackTransaction()
     if (localReceiptPath) await deleteStagedReceipt(localReceiptPath)
     throw error
   }

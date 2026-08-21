@@ -1,4 +1,5 @@
 import { getDatabase } from './init'
+import { runInTransaction } from './transaction'
 
 export interface SnapshotRecord {
   id: string
@@ -11,9 +12,7 @@ export async function replaceResourceSnapshot(
   resource: string,
   records: SnapshotRecord[],
 ): Promise<void> {
-  const db = await getDatabase()
-  await db.beginTransaction()
-  try {
+  await runInTransaction(async (db) => {
     await db.run(
       `DELETE FROM resource_snapshots WHERE owner_id = ? AND resource = ?`,
       [ownerId, resource],
@@ -25,11 +24,7 @@ export async function replaceResourceSnapshot(
         [ownerId, resource, record.id, record.scopeId ?? null, JSON.stringify(record.data)],
       )
     }
-    await db.commitTransaction()
-  } catch (error) {
-    await db.rollbackTransaction()
-    throw error
-  }
+  })
 }
 
 export async function getResourceSnapshot<T>(
@@ -104,14 +99,12 @@ export async function transformSnapshotRecords<T>(
   resource: string,
   transform: (record: SnapshotRecord & { data: T }) => SnapshotRecord & { data: T },
 ): Promise<void> {
-  const db = await getDatabase()
-  const result = await db.query(
-    `SELECT record_id, scope_id, data_json FROM resource_snapshots
-     WHERE owner_id = ? AND resource = ?`,
-    [ownerId, resource],
-  )
-  await db.beginTransaction()
-  try {
+  await runInTransaction(async (db) => {
+    const result = await db.query(
+      `SELECT record_id, scope_id, data_json FROM resource_snapshots
+       WHERE owner_id = ? AND resource = ?`,
+      [ownerId, resource],
+    )
     for (const row of result.values ?? []) {
       const updated = transform({
         id: row.record_id as string,
@@ -124,9 +117,5 @@ export async function transformSnapshotRecords<T>(
         [updated.scopeId ?? null, JSON.stringify(updated.data), ownerId, resource, updated.id],
       )
     }
-    await db.commitTransaction()
-  } catch (error) {
-    await db.rollbackTransaction()
-    throw error
-  }
+  })
 }
