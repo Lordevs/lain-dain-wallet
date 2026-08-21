@@ -8,13 +8,7 @@ import FlowHeader from '@/components/shared/flow-header'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
-
-function getOrdinal(n: number) {
-  const s = ['th', 'st', 'nd', 'rd']
-  const v = n % 100
-  return n + (s[(v - 20) % 10] || s[v] || s[0])
-}
+import { cn, getOrdinal } from '@/lib/utils'
 
 export default function BudgetLimitScreen() {
   const settingsQuery = usePersonalExpenseSettingsQuery()

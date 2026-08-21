@@ -5,13 +5,7 @@ import { useUpdatePersonalExpenseSettingsMutation } from '@/features/expenses/ap
 import FlowHeader from '@/components/shared/flow-header'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
-
-function getOrdinal(n: number) {
-  const s = ['th', 'st', 'nd', 'rd']
-  const v = n % 100
-  return n + (s[(v - 20) % 10] || s[v] || s[0])
-}
+import { cn, getOrdinal } from '@/lib/utils'
 
 export default function DefaultPeriodScreen() {
   const settingsQuery = usePersonalExpenseSettingsQuery()
@@ -48,6 +42,14 @@ function DefaultPeriodForm({ initialResetDay }: { initialResetDay: number }) {
   const days = Array.from({ length: 31 }, (_, i) => i + 1)
   const prevDay = tempResetDay - 1 === 0 ? 31 : tempResetDay - 1
 
+  // "Example: 5th June -> 4th July" — the two month names are the actual
+  // current/next month, so the whole example stays truthful instead of
+  // permanently reading "June -> July" regardless of when it's viewed.
+  const now = new Date()
+  const currentMonthName = now.toLocaleDateString('en-US', { month: 'long' })
+  const nextMonthName = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+    .toLocaleDateString('en-US', { month: 'long' })
+
   return (
     <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen select-none overflow-hidden text-[#1A1A1A] text-left">
       <FlowHeader
@@ -64,8 +66,12 @@ function DefaultPeriodForm({ initialResetDay }: { initialResetDay: number }) {
         }
       />
 
-      {/* Main Scroll Container */}
-      <div className="flex-1 overflow-y-auto px-6 pb-24 flex flex-col gap-5 mt-2">
+      {/* Main Scroll Container — min-h-0 is required (not just flex-1) so
+          this actually shrinks to the header's remaining space and scrolls;
+          without it, some mobile browsers size it to its content instead
+          and the overflow-hidden root just clips whatever doesn't fit,
+          cutting the calendar/banner off instead of letting it scroll. */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-24 flex flex-col gap-5 mt-2">
         {/* Top Description */}
         <p className="text-[14px] text-[#6B6B6B] leading-relaxed px-1">
           Choose the day your monthly spending cycle starts.
@@ -110,7 +116,7 @@ function DefaultPeriodForm({ initialResetDay }: { initialResetDay: number }) {
           {/* Card Footer */}
           <div className="p-4 text-left">
             <p className="text-[13px] text-[#6B6B6B] font-medium leading-tight">
-              Your monthly personal expens calculation will start on the {getOrdinal(tempResetDay)} of every month
+              Your monthly personal expense calculation will start on the {getOrdinal(tempResetDay)} of every month.
             </p>
           </div>
         </div>
@@ -122,14 +128,14 @@ function DefaultPeriodForm({ initialResetDay }: { initialResetDay: number }) {
             How this works
           </h4>
           <p className="text-[13px] text-[#6B6B6B] font-normal leading-relaxed">
-            Choose the date your My Expenses month should start.For example, if your salary comes on the 7th, select 7.
+            Choose the date your My Expenses month should start. For example, if your salary arrives on the same day every month, pick that day.
           </p>
           <p className="text-[13px] text-[#6B6B6B] font-normal leading-relaxed">
-            Then My Expenses will track your spending from the {tempResetDay}st of every month to the {prevDay}th of next month.
+            My Expenses will then track your spending from the {getOrdinal(tempResetDay)} of every month to the {getOrdinal(prevDay)} of the next month.
           </p>
           <div className="text-[13px] text-[#6B6B6B] flex flex-col gap-0.5">
             <span>Example:</span>
-            <span className='text-positive font-semibold'>{tempResetDay} June &rarr; {prevDay} July</span>
+            <span className='text-positive font-semibold'>{getOrdinal(tempResetDay)} {currentMonthName} &rarr; {getOrdinal(prevDay)} {nextMonthName}</span>
           </div>
           <p className="text-[13px] text-[#6B6B6B] font-normal leading-relaxed">
             All expenses between these dates will appear in the same My Expenses month.

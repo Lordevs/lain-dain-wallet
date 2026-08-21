@@ -7,6 +7,7 @@ import { usePersonalExpenseSettingsQuery } from '@/features/expenses/api/use-per
 import { useUpdatePersonalExpenseSettingsMutation } from '@/features/expenses/api/use-update-personal-expense-settings-mutation'
 import { colorForName, initialsForName } from '@/lib/avatar-visuals'
 import FlowHeader from '@/components/shared/flow-header'
+import { Button } from '@/components/ui/button'
 import SearchBar from '@/components/shared/search-bar'
 import ContactListSkeleton from '@/components/shared/contact-list-skeleton'
 import { cn } from '@/lib/utils'
@@ -163,7 +164,7 @@ function HideLedgersForm({
       />
 
       {/* Main screen body */}
-      <div className="flex-1 overflow-y-auto px-6 pb-12 flex flex-col gap-6 mt-3">
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-28 flex flex-col gap-6 mt-3">
         {/* Info Banner */}
         {!searchQuery && (
           <div className="bg-[#E4F2EB] border-[1.5px] border-[#0B683A26] rounded-[14px] p-5 flex flex-col gap-2 shadow-[0px_4px_16px_rgba(0,0,0,0.01)] text-left">
@@ -283,6 +284,17 @@ function HideLedgersForm({
           <InfiniteScrollSentinel {...friendshipsPagination} />
           <InfiniteScrollSentinel {...groupsPagination} />
         </div>
+      </div>
+
+      {/* Fixed bottom Save button */}
+      <div className="safe-action-fixed z-10">
+        <Button
+          onClick={handleSave}
+          disabled={updateSettings.isPending}
+          className="w-full max-w-md h-14 rounded-full bg-positive hover:bg-positive/95 text-white font-bold text-base"
+        >
+          Save
+        </Button>
       </div>
     </div>
   )
