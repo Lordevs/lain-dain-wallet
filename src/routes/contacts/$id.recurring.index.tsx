@@ -1,12 +1,10 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import RecurringPaymentsScreen from '@/features/groups/recurring-payments-screen'
 import { useContactLedgers } from '@/features/contacts/hooks/use-contact-ledgers'
-import { ROUTES } from '@/constants/routes'
 
 export const Route = createFileRoute('/contacts/$id/recurring/')({
   component: function Component() {
     const { id } = Route.useParams()
-    const navigate = useNavigate()
     const ledgers = useContactLedgers(id)
 
     if (!ledgers.friendshipId) {
@@ -21,7 +19,10 @@ export const Route = createFileRoute('/contacts/$id/recurring/')({
       <RecurringPaymentsScreen
         friendshipId={ledgers.friendshipId}
         contactUserId={id}
-        onClose={() => navigate({ to: ROUTES.CONTACT_SETTINGS, params: { id } })}
+        // Pop, don't push — see groups/$id.recurring.index.tsx's comment
+        // for why a forward navigate() here caused an infinite back-button
+        // ping-pong with the Settings screen.
+        onClose={() => window.history.back()}
       />
     )
   },

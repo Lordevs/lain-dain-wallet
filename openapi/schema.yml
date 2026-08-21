@@ -1648,6 +1648,37 @@ paths:
                 items:
                   $ref: '#/components/schemas/PersonBalance'
           description: ''
+  /api/expenses/groups/{group_id}/categories/:
+    get:
+      operationId: expenses_groups_categories_list
+      description: |-
+        GET /api/expenses/groups/{group_id}/categories/ — the distinct set of
+        categories actually used by this group's expenses, ordered the same
+        way CategoryListCreateView orders the full list (each user's own
+        position ordering, falling back to name). Powers the group Expenses
+        screen's category filter pills, which show only categories with at
+        least one expense in this specific group instead of every category
+        that exists globally.
+      parameters:
+      - in: path
+        name: group_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - expenses
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+          description: ''
   /api/expenses/groups/{group_id}/clear-history/:
     post:
       operationId: expenses_groups_clear_history_create

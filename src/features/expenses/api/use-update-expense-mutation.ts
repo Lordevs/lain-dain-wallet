@@ -37,6 +37,7 @@ export function useUpdateExpenseMutation() {
       if (groupId) {
         queryClient.invalidateQueries({ queryKey: ['group-transactions', groupId] })
         queryClient.invalidateQueries({ queryKey: ['group-balance', groupId] })
+        queryClient.invalidateQueries({ queryKey: ['group-used-categories', groupId] })
       }
       // The full participant list is right here in the form values that
       // were just submitted (works uniformly for friendship or group

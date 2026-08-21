@@ -203,6 +203,7 @@ function invalidateQueriesFor(payload: QueuedExpensePayload): void {
 
   queryClient.invalidateQueries({ queryKey: ['group-transactions', payload.groupId] })
   queryClient.invalidateQueries({ queryKey: ['group-balance', payload.groupId] })
+  queryClient.invalidateQueries({ queryKey: ['group-used-categories', payload.groupId] })
   const myId = useAuthStore.getState().userProfile?.id
   for (const split of payload.values.splits) {
     if (split.user_id !== myId) {

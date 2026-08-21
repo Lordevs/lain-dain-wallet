@@ -1,21 +1,23 @@
 import type { ReactNode } from 'react'
 import { CreditCard } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useCategoriesQuery } from '@/features/expenses/api/use-categories-query'
+import { useGroupUsedCategoriesQuery } from '../api/use-group-used-categories-query'
 import { iconForCategory } from '@/features/expenses/lib/category-icons'
 import type { GroupTransactionFilter } from '../api/use-group-transactions-query'
 
 interface GroupCategoryFilterPillsProps {
+  groupId: string | undefined
   value: GroupTransactionFilter
   onChange: (value: GroupTransactionFilter) => void
 }
 
 /** Horizontal scrollable filter bar for the group Expenses list — "All" +
- * every real category (same global list expense-creation forms use, via
- * useCategoriesQuery) + a "Payment" pseudo-pill representing settlements,
- * which have no real Category row of their own. */
-export default function GroupCategoryFilterPills({ value, onChange }: GroupCategoryFilterPillsProps) {
-  const categories = useCategoriesQuery().data ?? []
+ * only the categories this group actually has expenses in (via
+ * useGroupUsedCategoriesQuery, not the full global category list) + a
+ * "Payment" pseudo-pill representing settlements, which have no real
+ * Category row of their own. */
+export default function GroupCategoryFilterPills({ groupId, value, onChange }: GroupCategoryFilterPillsProps) {
+  const categories = useGroupUsedCategoriesQuery(groupId).data ?? []
 
   return (
     <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">

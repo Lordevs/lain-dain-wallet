@@ -278,7 +278,7 @@ export default function GroupDetailScreen() {
               </Button>
             </GroupExpensesFilterDrawer>
           </div>
-          <GroupCategoryFilterPills value={categoryFilter} onChange={setCategoryFilter} />
+          <GroupCategoryFilterPills groupId={groupId} value={categoryFilter} onChange={setCategoryFilter} />
           {transactionsQuery.isLoading && <ExpenseListSkeleton />}
           {!transactionsQuery.isLoading && items.length === 0 && (
             <EmptyState
