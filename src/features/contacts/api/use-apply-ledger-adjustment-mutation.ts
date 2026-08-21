@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api/client'
-import { ApiError, toApiError } from '@/lib/api/errors'
+import { ApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
+import { queueMutation } from '@/lib/sync/mutation-outbox'
 
 type SettlementRead = components['schemas']['SettlementRead']
 
@@ -16,12 +16,11 @@ export function useApplyLedgerAdjustmentMutation(userId: string) {
 
   return useMutation<SettlementRead[], ApiError, { currency: string }>({
     mutationFn: async ({ currency }) => {
-      const { data, error } = await apiClient.POST('/api/expenses/with/{user_id}/adjustment/', {
-        params: { path: { user_id: userId } },
-        body: { currency },
+      const result = await queueMutation<SettlementRead[]>({
+        resource: 'ledger-adjustments', method: 'POST', path: `/api/expenses/with/${userId}/adjustment/`,
+        body: { currency }, optimisticResult: [],
       })
-      if (error) throw toApiError(error)
-      return data
+      return result.data
     },
     // This can touch the direct friendship AND every group shared with
     // userId at once, so a fixed id (like the update/delete-expense

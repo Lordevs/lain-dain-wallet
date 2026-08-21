@@ -1,7 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api/client'
-import { ApiError, toApiError } from '@/lib/api/errors'
+import { ApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
+import { queueMutation } from '@/lib/sync/mutation-outbox'
+import { getSnapshotRecord, upsertSnapshotRecord } from '@/lib/sqlite/resource-snapshot-store'
+import { useAuthStore } from '@/store/use-auth-store'
 
 type PersonalExpenseSettingsUpdate = components['schemas']['PatchedPersonalExpenseSettingsUpdateRequest']
 type PersonalExpenseSettings = components['schemas']['PersonalExpenseSettings']
@@ -15,11 +17,17 @@ export function useUpdatePersonalExpenseSettingsMutation() {
 
   return useMutation<PersonalExpenseSettings, ApiError, PersonalExpenseSettingsUpdate>({
     mutationFn: async (values) => {
-      const { data, error } = await apiClient.PATCH('/api/expenses/my-expenses/settings/', {
-        body: values,
+      const ownerId = useAuthStore.getState().userProfile?.id
+      if (!ownerId) throw new ApiError('Sign in before updating expense settings.')
+      const current = queryClient.getQueryData<PersonalExpenseSettings>(['personal-expense-settings'])
+        ?? await getSnapshotRecord<PersonalExpenseSettings>(ownerId, 'personal-settings', ownerId)
+      if (!current) throw new ApiError('Open expense settings online once before changing them offline.')
+      const result = await queueMutation({
+        resource: 'personal-settings', method: 'PATCH', path: '/api/expenses/my-expenses/settings/',
+        body: values, optimisticResult: { ...current, ...values } as PersonalExpenseSettings,
       })
-      if (error) throw toApiError(error)
-      return data
+      await upsertSnapshotRecord(ownerId, 'personal-settings', { id: ownerId, data: result.data })
+      return result.data
     },
     onSuccess: (data) => {
       queryClient.setQueryData(['personal-expense-settings'], data)

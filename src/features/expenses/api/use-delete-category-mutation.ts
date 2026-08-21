@@ -1,6 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api/client'
-import { ApiError, toApiError } from '@/lib/api/errors'
+import { ApiError } from '@/lib/api/errors'
+import type { components } from '@/lib/api/schema'
+import { queueMutation } from '@/lib/sync/mutation-outbox'
+import { deleteSnapshotRecord } from '@/lib/sqlite/resource-snapshot-store'
+import { useAuthStore } from '@/store/use-auth-store'
 
 /** DELETE /api/expenses/categories/{id}/ — only the caller's own custom
  * categories can be deleted (never a system one), and only if no expense
@@ -11,10 +14,12 @@ export function useDeleteCategoryMutation() {
 
   return useMutation<void, ApiError, string>({
     mutationFn: async (id: string) => {
-      const { error } = await apiClient.DELETE('/api/expenses/categories/{id}/', {
-        params: { path: { id } },
+      await queueMutation({
+        resource: 'categories', method: 'DELETE', path: `/api/expenses/categories/${id}/`, optimisticResult: undefined,
       })
-      if (error) throw toApiError(error)
+      const ownerId = useAuthStore.getState().userProfile?.id
+      if (ownerId) await deleteSnapshotRecord(ownerId, 'categories', id)
+      queryClient.setQueryData<components['schemas']['Category'][]>(['categories'], (old = []) => old.filter((item) => item.id !== id))
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] })

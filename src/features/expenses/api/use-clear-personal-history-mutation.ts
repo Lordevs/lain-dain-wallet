@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api/client'
-import { ApiError, toApiError } from '@/lib/api/errors'
+import { ApiError } from '@/lib/api/errors'
+import { queueMutation } from '@/lib/sync/mutation-outbox'
+import { clearLocalExpenseHistory } from '@/lib/sqlite/expenses-store'
+import { useAuthStore } from '@/store/use-auth-store'
 
 /** POST /api/expenses/personal/clear-history/ — "Clear All Personal
  * Expenses" Danger Zone action. Always targets the caller's own
@@ -10,8 +12,11 @@ export function useClearPersonalHistoryMutation() {
 
   return useMutation<void, ApiError, void>({
     mutationFn: async () => {
-      const { error } = await apiClient.POST('/api/expenses/personal/clear-history/')
-      if (error) throw toApiError(error)
+      await queueMutation({
+        resource: 'history', method: 'POST', path: '/api/expenses/personal/clear-history/', optimisticResult: undefined,
+      })
+      const ownerId = useAuthStore.getState().userProfile?.id
+      if (ownerId) await clearLocalExpenseHistory(ownerId, { context: 'personal' })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-expenses-summary'] })

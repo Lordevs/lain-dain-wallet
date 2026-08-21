@@ -9,6 +9,8 @@ interface OfflineSnapshot {
   profile: components['schemas']['User']
   groups: components['schemas']['Group'][]
   friendships: components['schemas']['Friendship'][]
+  categories: components['schemas']['Category'][]
+  personal_expense_settings: components['schemas']['PersonalExpenseSettings']
   settlements: components['schemas']['SettlementRead'][]
   recurring_expenses: components['schemas']['RecurringExpenseRead'][]
   notifications: components['schemas']['Notification'][]
@@ -37,6 +39,10 @@ export async function pullOfflineSnapshot(): Promise<void> {
       replaceResourceSnapshot(ownerId, 'profile', [{ id: ownerId, data: snapshot.profile }]),
       replaceResourceSnapshot(ownerId, 'groups', snapshot.groups.map((group) => ({ id: group.id, data: group }))),
       replaceResourceSnapshot(ownerId, 'friendships', snapshot.friendships.map((item) => ({ id: item.id, data: item }))),
+      replaceResourceSnapshot(ownerId, 'categories', snapshot.categories.map((item) => ({ id: item.id, data: item }))),
+      replaceResourceSnapshot(ownerId, 'personal-settings', [{
+        id: ownerId, data: snapshot.personal_expense_settings,
+      }]),
       replaceResourceSnapshot(ownerId, 'settlements', snapshot.settlements.map((item) => ({
         id: item.id, scopeId: item.group ?? item.friendship ?? null, data: item,
       }))),

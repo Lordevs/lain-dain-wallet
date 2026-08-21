@@ -1,7 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api/client'
-import { ApiError, toApiError } from '@/lib/api/errors'
+import { ApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
+import { queueMutation } from '@/lib/sync/mutation-outbox'
+import { markLocalExpenseDeleted } from '@/lib/sqlite/expenses-store'
+import { useAuthStore } from '@/store/use-auth-store'
 
 interface DeleteExpenseVariables {
   id: string
@@ -18,10 +20,12 @@ export function useDeleteExpenseMutation() {
 
   return useMutation<void, ApiError, DeleteExpenseVariables>({
     mutationFn: async ({ id }: DeleteExpenseVariables) => {
-      const { error } = await apiClient.DELETE('/api/expenses/{id}/', {
-        params: { path: { id } },
+      await queueMutation({
+        resource: 'expenses', method: 'DELETE', path: `/api/expenses/${id}/`, optimisticResult: undefined,
       })
-      if (error) throw toApiError(error)
+      const ownerId = useAuthStore.getState().userProfile?.id
+      if (ownerId) await markLocalExpenseDeleted(ownerId, id)
+      queryClient.removeQueries({ queryKey: ['expense', id] })
     },
     onSuccess: (_data, { friendshipId, groupId }) => {
       if (friendshipId) queryClient.invalidateQueries({ queryKey: ['friendship-transactions', friendshipId] })

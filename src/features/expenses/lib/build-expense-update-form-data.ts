@@ -21,21 +21,23 @@ export interface ExpenseUpdateFormValues {
  */
 export async function buildExpenseUpdateFormData(data: ExpenseUpdateFormValues): Promise<FormData> {
   const formData = new FormData()
-  formData.append('description', data.description)
-  formData.append('amount', data.amount)
-  formData.append('date', data.date)
-  formData.append('category_id', data.categoryId)
-  if (data.note) formData.append('note', data.note)
-  formData.append('split_type', data.splitType)
-  formData.append('payers', JSON.stringify(data.payers))
-  formData.append('splits', JSON.stringify(data.splits))
+  for (const [key, value] of expenseUpdateFields(data)) formData.append(key, value)
 
-  if (data.removeReceipt) {
-    formData.append('remove_receipt', 'true')
-  } else if (data.receipt) {
+  if (!data.removeReceipt && data.receipt) {
     const blob = await fetch(data.receipt).then((res) => res.blob())
     formData.append('receipt', blob, 'receipt.jpg')
   }
 
   return formData
+}
+
+export function expenseUpdateFields(data: ExpenseUpdateFormValues): Array<[string, string]> {
+  const fields: Array<[string, string]> = [
+    ['description', data.description], ['amount', data.amount], ['date', data.date],
+    ['category_id', data.categoryId], ['split_type', data.splitType],
+    ['payers', JSON.stringify(data.payers)], ['splits', JSON.stringify(data.splits)],
+  ]
+  if (data.note) fields.push(['note', data.note])
+  if (data.removeReceipt) fields.push(['remove_receipt', 'true'])
+  return fields
 }
