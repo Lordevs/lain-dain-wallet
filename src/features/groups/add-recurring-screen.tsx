@@ -118,13 +118,11 @@ export default function AddRecurringScreen({
           id: userProfile?.id ?? '',
           full_name: userProfile?.name ?? 'You',
           image: userProfile?.avatar ?? null,
-          status: 'active' as const,
         },
         {
           id: friendship.friend.id,
           full_name: friendship.friend.full_name,
           image: friendship.friend.image,
-          status: 'active' as const,
         },
       ]
     : (group?.members ?? [])
@@ -166,7 +164,6 @@ function AddRecurringForm({
     id: string
     full_name: string
     image?: string | null
-    status: string
   }>
   editingPayment: RecurringExpenseRead | null
   categories: Category[]
@@ -228,7 +225,6 @@ function AddRecurringForm({
   // Build real member list for PaidByDrawer and SplitExpenseDrawer
   const drawerMembers = useMemo(() => {
     return members
-      .filter((m) => m.status === 'active')
       .map((m) => {
         const isMe = m.id === myId
         const name = isMe ? 'You' : m.full_name
@@ -270,8 +266,7 @@ function AddRecurringForm({
     const payerUserId = paidBy === 'you' ? myId : paidBy
     const payers = [{ user_id: payerUserId, amount: String(parsedAmount) }]
 
-    const activeMembers = members.filter((m) => m.status === 'active')
-    const membersInGroup = activeMembers.map((m) => m.id)
+    const membersInGroup = members.map((m) => m.id)
 
     let splits: GroupRecurringFormValues['splits']
     if (splitData.type === 'equal') {

@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
-import { ChevronDown, ChevronUp, ListFilter } from 'lucide-react'
+import { ChevronDown, ChevronUp, ListFilter, MoreVertical } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import { formatCurrency } from '@/lib/currency'
 import { cn } from '@/lib/utils'
@@ -153,7 +153,9 @@ export default function GroupDetailScreen() {
 
   const groupInitials = initialsForName(group.name)
   const groupAvatarColor = colorForName(group.name)
-  const activeMembers = group.members.filter((m) => m.status === 'active')
+  // Every entry in group.members is already an active membership — adds
+  // are immediate now, no more pending/invited members to filter out.
+  const activeMembers = group.members
   const balances = balanceQuery.data ?? []
   const visibleBalances = showAllBalances ? balances : balances.slice(0, MAX_VISIBLE_BALANCES)
 
@@ -183,7 +185,15 @@ export default function GroupDetailScreen() {
             className="size-11 text-sm font-bold"
           />
         }
-        onTitleClick={() => navigate({ to: ROUTES.GROUP_SETTINGS, params: { id: groupId } })}
+        rightSlot={
+          <button
+            type="button"
+            onClick={() => navigate({ to: ROUTES.GROUP_SETTINGS, params: { id: groupId } })}
+            className="text-[#6B6B6B] cursor-pointer border-0 bg-transparent flex items-center justify-center p-2"
+          >
+            <MoreVertical size={20} />
+          </button>
+        }
       />
 
       {balances.length > 0 && (

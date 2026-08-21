@@ -78,8 +78,9 @@ export default function AddGroupExpenseScreen() {
     )
   }
 
-  const activeMembers = group.members.filter((m) => m.status === 'active')
-  const orderedMembers = [...activeMembers].sort((a, b) => (a.id === myId ? -1 : b.id === myId ? 1 : 0))
+  // Every entry in group.members is already an active membership — adds
+  // are immediate now, no more pending/invited members to filter out.
+  const orderedMembers = [...group.members].sort((a, b) => (a.id === myId ? -1 : b.id === myId ? 1 : 0))
   const members = orderedMembers.map((m) => ({
     id: m.id,
     name: m.id === myId ? 'You' : m.full_name,

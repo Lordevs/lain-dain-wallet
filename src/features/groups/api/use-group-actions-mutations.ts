@@ -114,7 +114,11 @@ export function useDeleteGroupMutation(groupId: string) {
   })
 }
 
-export function useInviteMembersMutation(groupId: string) {
+/** POST /api/ledger/groups/{id}/invitations/ — adds members immediately,
+ * no consent step (URL path kept as "invitations" for backward
+ * compatibility with this exact call site; see
+ * apps.ledger.services.add_members on the backend). */
+export function useAddMembersMutation(groupId: string) {
   const queryClient = useQueryClient()
   return useMutation<unknown, ApiError, string[]>({
     mutationFn: async (memberIds: string[]) => {
@@ -124,28 +128,6 @@ export function useInviteMembersMutation(groupId: string) {
           params: { path: { group_id: groupId } },
           body: { member_ids: memberIds },
         }
-      )
-      if (error) throw toApiError(error)
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['group', groupId] })
-    },
-    onError: (error) => {
-      toast.error(error.message)
-    },
-  })
-}
-
-/** Keyed by the invited user's id (not a separate invitation id) — that's
- * all the merged active/pending member list (GroupParticipant) exposes. */
-export function useCancelInvitationMutation(groupId: string) {
-  const queryClient = useQueryClient()
-  return useMutation<unknown, ApiError, string>({
-    mutationFn: async (userId: string) => {
-      const { data, error } = await apiClient.POST(
-        '/api/ledger/groups/{group_id}/invitations/{user_id}/cancel/',
-        { params: { path: { group_id: groupId, user_id: userId } } }
       )
       if (error) throw toApiError(error)
       return data

@@ -4,6 +4,480 @@ info:
   version: 0.1.0
   description: Backend API for the Lain Dain expense-sharing app.
 paths:
+  /api/admin/activity/:
+    get:
+      operationId: admin_activity_list
+      description: |-
+        GET /api/admin/activity/?event_type=&user_id= — the raw feature-
+        usage log. The "which features are used most" breakdown is a
+        separate, cheap aggregate (AdminActivityBreakdownView below) rather
+        than folded into this paginated list.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminActivityEventList'
+          description: ''
+  /api/admin/activity/breakdown/:
+    get:
+      operationId: admin_activity_breakdown_retrieve
+      description: |-
+        GET /api/admin/activity/breakdown/ — count per event_type, the
+        "which features are users using" view.
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/admin/audit-log/:
+    get:
+      operationId: admin_audit_log_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminAuditLogList'
+          description: ''
+  /api/admin/auth/login/:
+    post:
+      operationId: admin_auth_login_create
+      description: |-
+        POST /api/admin/auth/login/ — the staff/password counterpart to
+        VerifyOTPView (apps.accounts.views), same token-issuance shape
+        (RefreshToken.for_user -> {access, refresh}), reusing the existing
+        generic /api/auth/token/refresh/ endpoint as-is for refresh — that
+        one doesn't care which flow originally issued the token.
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLoginRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminLoginRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminLoginRequestRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: ''
+  /api/admin/expenses/:
+    get:
+      operationId: admin_expenses_list
+      description: GET /api/admin/expenses/?context=&category_id=&date_from=&date_to=
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminExpenseList'
+          description: ''
+  /api/admin/expenses/{id}/:
+    get:
+      operationId: admin_expenses_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminExpenseDetail'
+          description: ''
+  /api/admin/groups/:
+    get:
+      operationId: admin_groups_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminGroupSummaryList'
+          description: ''
+  /api/admin/groups/{id}/:
+    get:
+      operationId: admin_groups_retrieve
+      description: |-
+        GET /api/admin/groups/{id}/ — compound response, same "built by
+        hand" reasoning as AdminUserDetailView. `unsettled_pairs` counts
+        nonzero PairwiseBalance rows rather than trying to collapse a
+        multi-person group's balances into one figure, which is ambiguous
+        for anything but a 1:1 ledger.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/admin/issues/:
+    get:
+      operationId: admin_issues_list
+      description: |-
+        GET /api/admin/issues/?status=&category=&search= — the endpoint
+        that was entirely missing before this app: apps.support only ever
+        exposed reporter-scoped list/create/retrieve (see IssueReportListCreateView),
+        nothing that showed every report across every user.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminIssueReportList'
+          description: ''
+  /api/admin/issues/{id}/:
+    get:
+      operationId: admin_issues_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminIssueReport'
+          description: ''
+  /api/admin/issues/{id}/update/:
+    patch:
+      operationId: admin_issues_update_partial_update
+      description: |-
+        PATCH /api/admin/issues/{id}/ — updates status/staff_notes via
+        services.update_issue_report, which also writes the AdminAuditLog
+        entry.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminIssueReportUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminIssueReportUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminIssueReportUpdateRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminIssueReport'
+          description: ''
+  /api/admin/overview/:
+    get:
+      operationId: admin_overview_retrieve
+      description: |-
+        GET /api/admin/overview/ — the numbers page 1 of the admin panel
+        is built around. DAU/WAU/MAU are distinct-user counts over
+        ActivityEvent windows, not a separately maintained field — see that
+        model's own docstring for why.
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/admin/recurring-expenses/:
+    get:
+      operationId: admin_recurring_expenses_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminRecurringExpenseList'
+          description: ''
+  /api/admin/settlements/:
+    get:
+      operationId: admin_settlements_list
+      description: GET /api/admin/settlements/?status=&method=&date_from=&date_to=
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminSettlementList'
+          description: ''
+  /api/admin/settlements/{id}/:
+    get:
+      operationId: admin_settlements_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSettlementDetail'
+          description: ''
+  /api/admin/users/:
+    get:
+      operationId: admin_users_list
+      description: |-
+        GET /api/admin/users/?search=&is_active=&admin_role= — search
+        matches name/phone/email, same shape as apps.contacts.views.
+        ContactListView's own `search` param.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminUserListList'
+          description: ''
+  /api/admin/users/{id}/:
+    get:
+      operationId: admin_users_retrieve
+      description: |-
+        GET /api/admin/users/{id}/ — a compound response assembled by hand
+        (same pattern as apps.ledger.serializers.UserLedgersResponse's own
+        "documentation-only... the view builds this dict by hand" case),
+        since the pieces come from genuinely different sources: the User row
+        itself, GroupMembership, IssueReport, ActivityEvent, and
+        apps.expenses.services.wallet_summary (reused exactly as-is — it
+        already takes any `user`, not just the request's own authenticated
+        user, so calling it on behalf of an admin viewing someone else's
+        account is exactly what it's built for).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/admin/users/{id}/status/:
+    patch:
+      operationId: admin_users_status_partial_update
+      description: |-
+        PATCH /api/admin/users/{id}/status/ — reversible moderation, see
+        services.set_user_active_status for why this is deliberately NOT
+        apps.accounts.services.anonymize_user.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminUserStatusUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminUserStatusUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminUserStatusUpdateRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
   /api/auth/logout/:
     post:
       operationId: auth_logout_create
@@ -322,8 +796,7 @@ paths:
       operationId: expenses_retrieve
       description: |-
         GET/PATCH/DELETE /api/expenses/{id}/ — not nested under a
-        group/friendship path, matching how GroupInvitation detail actions
-        address by invitation_id alone. Visibility is the OR of all three
+        group/friendship path, addressed by id alone. Visibility is the OR of all three
         "can view" scopes; edit/delete permission (narrower than view) is
         enforced in the service layer, not the queryset — a visible-but-
         unauthorized actor gets 403, a true outsider gets 404, matching the
@@ -354,8 +827,7 @@ paths:
       operationId: expenses_update
       description: |-
         GET/PATCH/DELETE /api/expenses/{id}/ — not nested under a
-        group/friendship path, matching how GroupInvitation detail actions
-        address by invitation_id alone. Visibility is the OR of all three
+        group/friendship path, addressed by id alone. Visibility is the OR of all three
         "can view" scopes; edit/delete permission (narrower than view) is
         enforced in the service layer, not the queryset — a visible-but-
         unauthorized actor gets 403, a true outsider gets 404, matching the
@@ -434,8 +906,7 @@ paths:
       operationId: expenses_partial_update
       description: |-
         GET/PATCH/DELETE /api/expenses/{id}/ — not nested under a
-        group/friendship path, matching how GroupInvitation detail actions
-        address by invitation_id alone. Visibility is the OR of all three
+        group/friendship path, addressed by id alone. Visibility is the OR of all three
         "can view" scopes; edit/delete permission (narrower than view) is
         enforced in the service layer, not the queryset — a visible-but-
         unauthorized actor gets 403, a true outsider gets 404, matching the
@@ -514,8 +985,7 @@ paths:
       operationId: expenses_destroy
       description: |-
         GET/PATCH/DELETE /api/expenses/{id}/ — not nested under a
-        group/friendship path, matching how GroupInvitation detail actions
-        address by invitation_id alone. Visibility is the OR of all three
+        group/friendship path, addressed by id alone. Visibility is the OR of all three
         "can view" scopes; edit/delete permission (narrower than view) is
         enforced in the service layer, not the queryset — a visible-but-
         unauthorized actor gets 403, a true outsider gets 404, matching the
@@ -683,6 +1153,15 @@ paths:
   /api/expenses/friendships/{friendship_id}/:
     get:
       operationId: expenses_friendships_list
+      description: |-
+        Wrap a mutating handler so a client retrying the same logical request
+        (submitted while offline, retried on reconnect — possibly several
+        times) gets the original response replayed verbatim instead of the
+        mutation re-executing. See docs/architecture/offline-sync.md.
+
+        Usage: call self.idempotent_mutation(request, perform) from a view's
+        create()/update()/destroy(), where `perform` is a zero-arg callable
+        that actually runs the mutation and returns the Response to cache.
       parameters:
       - name: cursor
         required: false
@@ -721,6 +1200,15 @@ paths:
           description: ''
     post:
       operationId: expenses_friendships_create
+      description: |-
+        Wrap a mutating handler so a client retrying the same logical request
+        (submitted while offline, retried on reconnect — possibly several
+        times) gets the original response replayed verbatim instead of the
+        mutation re-executing. See docs/architecture/offline-sync.md.
+
+        Usage: call self.idempotent_mutation(request, perform) from a view's
+        create()/update()/destroy(), where `perform` is a zero-arg callable
+        that actually runs the mutation and returns the Response to cache.
       parameters:
       - in: path
         name: friendship_id
@@ -852,7 +1340,7 @@ paths:
       description: |-
         Shared by the friendship and group variants below — same pattern as
         _ExpenseListCreateBase. Multipart-only: `receipt` is a file. Create/
-        update permission depends on scope (group: admin/owner only;
+        update permission depends on scope (group: any active admin/owner;
         friendship: either party — see
         services._require_recurring_manage_permission); list/view stays
         open to any currently-active participant either way.
@@ -891,7 +1379,7 @@ paths:
       description: |-
         Shared by the friendship and group variants below — same pattern as
         _ExpenseListCreateBase. Multipart-only: `receipt` is a file. Create/
-        update permission depends on scope (group: admin/owner only;
+        update permission depends on scope (group: any active admin/owner;
         friendship: either party — see
         services._require_recurring_manage_permission); list/view stays
         open to any currently-active participant either way.
@@ -993,6 +1481,15 @@ paths:
   /api/expenses/groups/{group_id}/:
     get:
       operationId: expenses_groups_list
+      description: |-
+        Wrap a mutating handler so a client retrying the same logical request
+        (submitted while offline, retried on reconnect — possibly several
+        times) gets the original response replayed verbatim instead of the
+        mutation re-executing. See docs/architecture/offline-sync.md.
+
+        Usage: call self.idempotent_mutation(request, perform) from a view's
+        create()/update()/destroy(), where `perform` is a zero-arg callable
+        that actually runs the mutation and returns the Response to cache.
       parameters:
       - in: query
         name: category_id
@@ -1036,6 +1533,15 @@ paths:
           description: ''
     post:
       operationId: expenses_groups_create
+      description: |-
+        Wrap a mutating handler so a client retrying the same logical request
+        (submitted while offline, retried on reconnect — possibly several
+        times) gets the original response replayed verbatim instead of the
+        mutation re-executing. See docs/architecture/offline-sync.md.
+
+        Usage: call self.idempotent_mutation(request, perform) from a view's
+        create()/update()/destroy(), where `perform` is a zero-arg callable
+        that actually runs the mutation and returns the Response to cache.
       parameters:
       - in: path
         name: group_id
@@ -1173,7 +1679,7 @@ paths:
       description: |-
         Shared by the friendship and group variants below — same pattern as
         _ExpenseListCreateBase. Multipart-only: `receipt` is a file. Create/
-        update permission depends on scope (group: admin/owner only;
+        update permission depends on scope (group: any active admin/owner;
         friendship: either party — see
         services._require_recurring_manage_permission); list/view stays
         open to any currently-active participant either way.
@@ -1212,7 +1718,7 @@ paths:
       description: |-
         Shared by the friendship and group variants below — same pattern as
         _ExpenseListCreateBase. Multipart-only: `receipt` is a file. Create/
-        update permission depends on scope (group: admin/owner only;
+        update permission depends on scope (group: any active admin/owner;
         friendship: either party — see
         services._require_recurring_manage_permission); list/view stays
         open to any currently-active participant either way.
@@ -1509,6 +2015,15 @@ paths:
   /api/expenses/personal/:
     get:
       operationId: expenses_personal_list
+      description: |-
+        Wrap a mutating handler so a client retrying the same logical request
+        (submitted while offline, retried on reconnect — possibly several
+        times) gets the original response replayed verbatim instead of the
+        mutation re-executing. See docs/architecture/offline-sync.md.
+
+        Usage: call self.idempotent_mutation(request, perform) from a view's
+        create()/update()/destroy(), where `perform` is a zero-arg callable
+        that actually runs the mutation and returns the Response to cache.
       parameters:
       - name: cursor
         required: false
@@ -1541,6 +2056,15 @@ paths:
           description: ''
     post:
       operationId: expenses_personal_create
+      description: |-
+        Wrap a mutating handler so a client retrying the same logical request
+        (submitted while offline, retried on reconnect — possibly several
+        times) gets the original response replayed verbatim instead of the
+        mutation re-executing. See docs/architecture/offline-sync.md.
+
+        Usage: call self.idempotent_mutation(request, perform) from a view's
+        create()/update()/destroy(), where `perform` is a zero-arg callable
+        that actually runs the mutation and returns the Response to cache.
       tags:
       - expenses
       requestBody:
@@ -1621,8 +2145,8 @@ paths:
       operationId: expenses_recurring_retrieve
       description: |-
         GET/PATCH/DELETE /api/expenses/recurring/{id}/ — not nested under a
-        friendship/group path, matching how ExpenseDetailView/GroupInvitation
-        detail actions address by id alone. Visible to any currently-active
+        friendship/group path, matching how ExpenseDetailView addresses by id
+        alone. Visible to any currently-active
         participant of either scope (broad); edit/delete permission
         (narrower — depends on scope, see
         services._require_recurring_manage_permission) is enforced in the
@@ -1650,8 +2174,8 @@ paths:
       operationId: expenses_recurring_update
       description: |-
         GET/PATCH/DELETE /api/expenses/recurring/{id}/ — not nested under a
-        friendship/group path, matching how ExpenseDetailView/GroupInvitation
-        detail actions address by id alone. Visible to any currently-active
+        friendship/group path, matching how ExpenseDetailView addresses by id
+        alone. Visible to any currently-active
         participant of either scope (broad); edit/delete permission
         (narrower — depends on scope, see
         services._require_recurring_manage_permission) is enforced in the
@@ -1687,8 +2211,8 @@ paths:
       operationId: expenses_recurring_partial_update
       description: |-
         GET/PATCH/DELETE /api/expenses/recurring/{id}/ — not nested under a
-        friendship/group path, matching how ExpenseDetailView/GroupInvitation
-        detail actions address by id alone. Visible to any currently-active
+        friendship/group path, matching how ExpenseDetailView addresses by id
+        alone. Visible to any currently-active
         participant of either scope (broad); edit/delete permission
         (narrower — depends on scope, see
         services._require_recurring_manage_permission) is enforced in the
@@ -1724,8 +2248,8 @@ paths:
       operationId: expenses_recurring_destroy
       description: |-
         GET/PATCH/DELETE /api/expenses/recurring/{id}/ — not nested under a
-        friendship/group path, matching how ExpenseDetailView/GroupInvitation
-        detail actions address by id alone. Visible to any currently-active
+        friendship/group path, matching how ExpenseDetailView addresses by id
+        alone. Visible to any currently-active
         participant of either scope (broad); edit/delete permission
         (narrower — depends on scope, see
         services._require_recurring_manage_permission) is enforced in the
@@ -1901,9 +2425,9 @@ paths:
       operationId: expenses_wallet_list
       description: |-
         GET /api/expenses/wallet/?tab=receivables|payables&type=all|people|group&sort=newest|oldest|highest|lowest
-        — every person with a nonzero balance plus every active group (zero-
-        balance groups are included so they remain reachable before their
-        first expense), combined and sorted. Not paginated: bounded by how many people/
+        — every direct person ledger plus every active group, combined and sorted.
+        Receivable/payable tabs prioritize that direction instead of filtering
+        out the other rows. Not paginated: bounded by how many people/
         groups someone has a relationship/membership with, not by
         transaction volume, so it stays small regardless of how long the
         account's been active — unlike Expense history, which does need
@@ -2357,7 +2881,7 @@ paths:
     post:
       operationId: ledger_groups_currency_rates_create
       description: |-
-        POST /api/ledger/groups/{id}/currency-rates/ — admin-only. Sets or
+        POST /api/ledger/groups/{id}/currency-rates/ — owner-only. Sets or
         edits the rate for one foreign currency in this group; always a new
         CurrencyRate row, never a mutation, so already-recorded expenses/
         settlements keep converting at whatever rate was active when they
@@ -2397,7 +2921,7 @@ paths:
       operationId: ledger_groups_currency_rates_destroy
       description: |-
         DELETE /api/ledger/groups/{id}/currency-rates/{currency}/ —
-        admin-only. Blocked while any active member still uses this
+        owner-only. Blocked while any active member still uses this
         currency — see services.remove_group_currency_rate.
       parameters:
       - in: path
@@ -2426,9 +2950,11 @@ paths:
     post:
       operationId: ledger_groups_invitations_create
       description: |-
-        POST /api/ledger/groups/{id}/invitations/ — admin-only. Invites
-        existing users; each becomes a pending GroupInvitation, not an
-        immediate member — see apps/ledger/services.py for why.
+        POST /api/ledger/groups/{id}/invitations/ — admin-only. Adds
+        existing users to the group immediately — no consent step, see
+        apps/ledger/services.py::add_members. URL path kept as
+        "invitations" for backward compatibility with the existing frontend
+        call site rather than a purely cosmetic rename.
       parameters:
       - in: path
         name: group_id
@@ -2450,41 +2976,6 @@ paths:
             schema:
               $ref: '#/components/schemas/InviteMembersRequest'
         required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Group'
-          description: ''
-  /api/ledger/groups/{group_id}/invitations/{user_id}/cancel/:
-    post:
-      operationId: ledger_groups_invitations_cancel_create
-      description: |-
-        POST /api/ledger/groups/{group_id}/invitations/{user_id}/cancel/ —
-        admin withdraws a pending invitation before the invitee responds.
-        Keyed by the invited user's id, not the GroupInvitation's own id —
-        GroupParticipantSerializer (the group's merged active/pending member
-        list, what the admin UI actually has on hand) only ever exposes the
-        user id, never a separate invitation id. Safe to look up this way
-        since (group, invited_user) is unique — see services._invite_one.
-      parameters:
-      - in: path
-        name: group_id
-        schema:
-          type: string
-          format: uuid
-        required: true
-      - in: path
-        name: user_id
-        schema:
-          type: string
-          format: uuid
-        required: true
-      tags:
-      - ledger
       security:
       - jwtAuth: []
       responses:
@@ -2636,7 +3127,7 @@ paths:
       operationId: ledger_groups_retrieve
       description: |-
         GET retrieves. PATCH updates name/description/image/
-        smart_settle_enabled (admin-only — currency/category are
+        smart_settle_enabled (any active admin/owner — currency/category are
         deliberately not editable here, see services.update_group). DELETE
         dissolves the group — owner-only, requires every member's balance to
         already be zero — see apps.expenses.services.delete_group (lives
@@ -2665,7 +3156,7 @@ paths:
       operationId: ledger_groups_update
       description: |-
         GET retrieves. PATCH updates name/description/image/
-        smart_settle_enabled (admin-only — currency/category are
+        smart_settle_enabled (any active admin/owner — currency/category are
         deliberately not editable here, see services.update_group). DELETE
         dissolves the group — owner-only, requires every member's balance to
         already be zero — see apps.expenses.services.delete_group (lives
@@ -2703,7 +3194,7 @@ paths:
       operationId: ledger_groups_partial_update
       description: |-
         GET retrieves. PATCH updates name/description/image/
-        smart_settle_enabled (admin-only — currency/category are
+        smart_settle_enabled (any active admin/owner — currency/category are
         deliberately not editable here, see services.update_group). DELETE
         dissolves the group — owner-only, requires every member's balance to
         already be zero — see apps.expenses.services.delete_group (lives
@@ -2740,7 +3231,7 @@ paths:
       operationId: ledger_groups_destroy
       description: |-
         GET retrieves. PATCH updates name/description/image/
-        smart_settle_enabled (admin-only — currency/category are
+        smart_settle_enabled (any active admin/owner — currency/category are
         deliberately not editable here, see services.update_group). DELETE
         dissolves the group — owner-only, requires every member's balance to
         already be zero — see apps.expenses.services.delete_group (lives
@@ -2761,84 +3252,6 @@ paths:
       responses:
         '204':
           description: No response body
-  /api/ledger/invitations/:
-    get:
-      operationId: ledger_invitations_list
-      description: |-
-        GET /api/ledger/invitations/ — invitations sent TO the current user,
-        pending ones first for the badge/notification-style UI.
-      parameters:
-      - name: cursor
-        required: false
-        in: query
-        description: The pagination cursor value.
-        schema:
-          type: string
-      - name: page_size
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
-      tags:
-      - ledger
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedGroupInvitationList'
-          description: ''
-  /api/ledger/invitations/{invitation_id}/accept/:
-    post:
-      operationId: ledger_invitations_accept_create
-      description: |-
-        POST /api/ledger/invitations/{id}/accept/ — creates the membership
-        and Friendships with current active members. See services.accept_invitation.
-      parameters:
-      - in: path
-        name: invitation_id
-        schema:
-          type: string
-          format: uuid
-        required: true
-      tags:
-      - ledger
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GroupInvitation'
-          description: ''
-  /api/ledger/invitations/{invitation_id}/decline/:
-    post:
-      operationId: ledger_invitations_decline_create
-      description: |-
-        POST /api/ledger/invitations/{id}/decline/ — no membership, no
-        Friendship; the invitation just stops being pending.
-      parameters:
-      - in: path
-        name: invitation_id
-        schema:
-          type: string
-          format: uuid
-        required: true
-      tags:
-      - ledger
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GroupInvitation'
-          description: ''
   /api/notifications/:
     get:
       operationId: notifications_list
@@ -2896,8 +3309,11 @@ paths:
     post:
       operationId: notifications_read_create
       description: |-
-        POST /api/notifications/{id}/read/ — idempotent; re-marking an
-        already-read notification is a no-op, not an error.
+        POST /api/notifications/{id}/read/.
+
+        Informational rows leave the inbox as soon as they are read. Pending
+        actions only record read_at and remain visible until ignored or their
+        domain action completes.
       parameters:
       - in: path
         name: id
@@ -3128,7 +3544,7 @@ paths:
   /api/notifications/mark-all-read/:
     post:
       operationId: notifications_mark_all_read_create
-      description: POST /api/notifications/mark-all-read/
+      description: Read all informational rows; pending actions remain in the inbox.
       tags:
       - notifications
       security:
@@ -3252,8 +3668,68 @@ paths:
               schema:
                 $ref: '#/components/schemas/IssueReport'
           description: ''
+  /api/sync/expenses/:
+    get:
+      operationId: sync_expenses_list
+      description: |-
+        GET /api/sync/expenses/?since=<cursor> — every Expense (created,
+        updated, or soft-deleted) the caller can see, changed since the given
+        cursor. See docs/architecture/offline-sync.md. Mounted under
+        apps.sync.urls, not here — apps.sync owns the generic sync surface,
+        this view just supplies the resource-specific queryset/serializer, so
+        the dependency points from apps.sync to apps.expenses (via urls.py's
+        import) and never the other way, same direction
+        IdempotentMutationMixin already established.
+
+        Uses all_objects, not the soft-delete-filtering default manager —
+        deliberately, so a deleted row still appears in the feed with
+        is_deleted=True; a client needs to be told "remove this," which a row
+        that just vanished from every other queryset never could.
+
+        Visibility mirrors ExpenseDetailView's queryset above (any active
+        participant of the friendship/group, or the expense's own owner for
+        personal context) — the actual "can this user see this expense" rule
+        used throughout this app's own list/detail views — not
+        services._my_expenses_queryset's narrower "has a split in it" shape,
+        which is specific to the My Expenses personal-aggregation feature and
+        would silently under-sync real expenses a user can otherwise see in
+        their own group/friendship expense lists. Also deliberately does NOT
+        exclude PersonalExpenseSettings' hidden_groups/hidden_friendships —
+        that's a display preference for one aggregate screen, not an access
+        boundary; a hidden group's own detail screen still needs its
+        expenses once that screen is reading from the local synced store.
+      parameters:
+      - name: since
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      tags:
+      - sync
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedExpenseDeltaList'
+          description: ''
 components:
   schemas:
+    ActionEnum:
+      enum:
+      - admin_login
+      - user_deactivated
+      - user_reactivated
+      - issue_updated
+      type: string
+      description: |-
+        * `admin_login` - Admin login
+        * `user_deactivated` - User deactivated
+        * `user_reactivated` - User reactivated
+        * `issue_updated` - Issue updated
     ActionStatusEnum:
       enum:
       - none
@@ -3266,6 +3742,660 @@ components:
         * `pending` - Pending
         * `resolved` - Resolved
         * `cancelled` - Cancelled
+    AdminActivityEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/AdminUserSummary'
+          readOnly: true
+        event_type:
+          $ref: '#/components/schemas/EventTypeEnum'
+        metadata: {}
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - event_type
+      - id
+      - user
+    AdminAuditLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        actor:
+          allOf:
+          - $ref: '#/components/schemas/AdminUserSummary'
+          readOnly: true
+        action:
+          $ref: '#/components/schemas/ActionEnum'
+        target_user:
+          allOf:
+          - $ref: '#/components/schemas/AdminUserSummary'
+          readOnly: true
+        metadata: {}
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - action
+      - actor
+      - created_at
+      - id
+      - target_user
+    AdminExpense:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        context:
+          $ref: '#/components/schemas/ExpenseContextEnum'
+        friendship:
+          type: string
+          format: uuid
+          nullable: true
+        group:
+          type: string
+          format: uuid
+          nullable: true
+        added_by:
+          allOf:
+          - $ref: '#/components/schemas/AdminUserSummary'
+          readOnly: true
+        description:
+          type: string
+          maxLength: 255
+        amount:
+          type: string
+          readOnly: true
+        currency:
+          type: string
+          readOnly: true
+        date:
+          type: string
+          format: date
+        category_name:
+          type: string
+          readOnly: true
+        split_type:
+          $ref: '#/components/schemas/SplitTypeEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - added_by
+      - amount
+      - category_name
+      - context
+      - created_at
+      - currency
+      - date
+      - description
+      - id
+      - split_type
+    AdminExpenseDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        context:
+          $ref: '#/components/schemas/ExpenseContextEnum'
+        friendship:
+          type: string
+          format: uuid
+          nullable: true
+        group:
+          type: string
+          format: uuid
+          nullable: true
+        added_by:
+          allOf:
+          - $ref: '#/components/schemas/AdminUserSummary'
+          readOnly: true
+        description:
+          type: string
+          maxLength: 255
+        amount:
+          type: string
+          readOnly: true
+        currency:
+          type: string
+          readOnly: true
+        date:
+          type: string
+          format: date
+        category_name:
+          type: string
+          readOnly: true
+        split_type:
+          $ref: '#/components/schemas/SplitTypeEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        note:
+          type: string
+        receipt:
+          type: string
+          format: uri
+          nullable: true
+        edited_at:
+          type: string
+          format: date-time
+          nullable: true
+        recurring_source:
+          type: string
+          format: uuid
+          nullable: true
+        payers:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminExpensePayer'
+          readOnly: true
+        splits:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminExpenseSplit'
+          readOnly: true
+        ledger_entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminLedgerEntry'
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - added_by
+      - amount
+      - category_name
+      - context
+      - created_at
+      - currency
+      - date
+      - description
+      - id
+      - ledger_entries
+      - payers
+      - split_type
+      - splits
+      - updated_at
+    AdminExpensePayer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/AdminUserSummary'
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+      required:
+      - amount
+      - id
+      - user
+    AdminExpenseSplit:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/AdminUserSummary'
+          readOnly: true
+        amount_owed:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        extra_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+      required:
+      - amount_owed
+      - id
+      - user
+    AdminGroupSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 150
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+        default_currency:
+          type: string
+          maxLength: 3
+        created_by:
+          allOf:
+          - $ref: '#/components/schemas/AdminUserSummary'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - category
+      - created_at
+      - created_by
+      - default_currency
+      - id
+      - name
+    AdminIssueReport:
+      type: object
+      description: |-
+        Admin-facing counterpart to apps.support.serializers.IssueReportSerializer
+        — the difference that matters is staff_notes being writable/visible
+        here (the mobile serializer deliberately never exposes it — see
+        IssueReport.staff_notes's own docstring), and `reporter` being
+        included (the mobile serializer doesn't need it — that view already
+        scopes by reporter=request.user).
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        reporter:
+          allOf:
+          - $ref: '#/components/schemas/AdminUserSummary'
+          readOnly: true
+        category:
+          type: string
+          readOnly: true
+        description:
+          type: string
+          readOnly: true
+        screenshot:
+          type: string
+          format: uri
+          nullable: true
+          readOnly: true
+        contact_email:
+          type: string
+          format: email
+          readOnly: true
+          nullable: true
+        status:
+          $ref: '#/components/schemas/Status6f2Enum'
+        staff_notes:
+          type: string
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - category
+      - contact_email
+      - created_at
+      - description
+      - id
+      - reporter
+      - screenshot
+      - updated_at
+    AdminLedgerEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        debtor:
+          allOf:
+          - $ref: '#/components/schemas/AdminUserSummary'
+          readOnly: true
+        creditor:
+          allOf:
+          - $ref: '#/components/schemas/AdminUserSummary'
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        currency:
+          type: string
+          maxLength: 3
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - created_at
+      - creditor
+      - currency
+      - debtor
+      - id
+    AdminLoginRequestRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - email
+      - password
+    AdminRecurringExpense:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        context:
+          $ref: '#/components/schemas/ScopeContextEnum'
+        friendship:
+          type: string
+          format: uuid
+          nullable: true
+        group:
+          type: string
+          format: uuid
+          nullable: true
+        created_by:
+          allOf:
+          - $ref: '#/components/schemas/AdminUserSummary'
+          readOnly: true
+        description:
+          type: string
+          maxLength: 255
+        amount:
+          type: string
+          readOnly: true
+        currency:
+          type: string
+          readOnly: true
+        category_name:
+          type: string
+          readOnly: true
+        frequency:
+          $ref: '#/components/schemas/FrequencyEnum'
+        next_occurrence:
+          type: string
+          format: date
+        last_materialized_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_error:
+          type: string
+        health:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - category_name
+      - created_at
+      - created_by
+      - currency
+      - description
+      - frequency
+      - health
+      - id
+      - next_occurrence
+      - updated_at
+    AdminRoleEnum:
+      enum:
+      - super_admin
+      - support
+      type: string
+      description: |-
+        * `super_admin` - Super Admin
+        * `support` - Support
+    AdminSettlement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        context:
+          $ref: '#/components/schemas/ScopeContextEnum'
+        friendship:
+          type: string
+          format: uuid
+          nullable: true
+        group:
+          type: string
+          format: uuid
+          nullable: true
+        payer:
+          allOf:
+          - $ref: '#/components/schemas/AdminUserSummary'
+          readOnly: true
+        payee:
+          allOf:
+          - $ref: '#/components/schemas/AdminUserSummary'
+          readOnly: true
+        amount:
+          type: string
+          readOnly: true
+        currency:
+          type: string
+          readOnly: true
+        method:
+          $ref: '#/components/schemas/MethodEnum'
+        date:
+          type: string
+          format: date
+        status:
+          $ref: '#/components/schemas/StatusB77Enum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - context
+      - created_at
+      - currency
+      - date
+      - id
+      - payee
+      - payer
+    AdminSettlementDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        context:
+          $ref: '#/components/schemas/ScopeContextEnum'
+        friendship:
+          type: string
+          format: uuid
+          nullable: true
+        group:
+          type: string
+          format: uuid
+          nullable: true
+        payer:
+          allOf:
+          - $ref: '#/components/schemas/AdminUserSummary'
+          readOnly: true
+        payee:
+          allOf:
+          - $ref: '#/components/schemas/AdminUserSummary'
+          readOnly: true
+        amount:
+          type: string
+          readOnly: true
+        currency:
+          type: string
+          readOnly: true
+        method:
+          $ref: '#/components/schemas/MethodEnum'
+        date:
+          type: string
+          format: date
+        status:
+          $ref: '#/components/schemas/StatusB77Enum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        recorded_by:
+          allOf:
+          - $ref: '#/components/schemas/AdminUserSummary'
+          readOnly: true
+        note:
+          type: string
+        receipt:
+          type: string
+          format: uri
+          nullable: true
+        responded_at:
+          type: string
+          format: date-time
+          nullable: true
+        cleared_at:
+          type: string
+          format: date-time
+          nullable: true
+        ledger_entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminLedgerEntry'
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - context
+      - created_at
+      - currency
+      - date
+      - id
+      - ledger_entries
+      - payee
+      - payer
+      - recorded_by
+      - updated_at
+    AdminUserList:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        full_name:
+          type: string
+          maxLength: 150
+        phone_number:
+          type: string
+          maxLength: 128
+        email:
+          nullable: true
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        country:
+          $ref: '#/components/schemas/CountryEnum'
+        is_active:
+          type: boolean
+        is_staff:
+          type: boolean
+        admin_role:
+          oneOf:
+          - $ref: '#/components/schemas/AdminRoleEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - phone_number
+    AdminUserSummary:
+      type: object
+      description: |-
+        Lightweight, read-only — for nesting (reporter on an issue, added_by
+        on an expense, etc.). See apps.expenses.serializers.UserSummarySerializer
+        for the mobile-facing analog; this one carries a couple more fields
+        (email, is_active) that only make sense in an admin context, so it's
+        a separate serializer rather than that one reused past its scope.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        full_name:
+          type: string
+          maxLength: 150
+        phone_number:
+          type: string
+          maxLength: 128
+        email:
+          nullable: true
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        image:
+          type: string
+          format: uri
+          nullable: true
+        is_active:
+          type: boolean
+      required:
+      - id
+      - phone_number
     ApplyLedgerAdjustmentRequestRequest:
       type: object
       description: |-
@@ -4105,6 +5235,30 @@ components:
           type: string
       required:
       - detail
+    EventTypeEnum:
+      enum:
+      - login
+      - expense_created
+      - group_created
+      - group_joined
+      - friendship_started
+      - settlement_recorded
+      - settlement_completed
+      - settlement_disputed
+      - reminder_sent
+      - issue_reported
+      type: string
+      description: |-
+        * `login` - Login
+        * `expense_created` - Expense created
+        * `group_created` - Group created
+        * `group_joined` - Group joined
+        * `friendship_started` - Friendship started
+        * `settlement_recorded` - Settlement recorded
+        * `settlement_completed` - Settlement completed
+        * `settlement_disputed` - Settlement disputed
+        * `reminder_sent` - Reminder sent
+        * `issue_reported` - Issue reported
     ExpenseContextEnum:
       enum:
       - personal
@@ -4126,6 +5280,9 @@ components:
         declared as JSONField (not CharField) since that's what correctly
         parses a JSON string into Python on `to_internal_value`.
       properties:
+        id:
+          type: string
+          format: uuid
         description:
           type: string
           maxLength: 255
@@ -4179,6 +5336,9 @@ components:
         declared as JSONField (not CharField) since that's what correctly
         parses a JSON string into Python on `to_internal_value`.
       properties:
+        id:
+          type: string
+          format: uuid
         description:
           type: string
           minLength: 1
@@ -4222,6 +5382,112 @@ components:
       - payers
       - split_type
       - splits
+    ExpenseDelta:
+      type: object
+      description: |-
+        ExpenseReadSerializer plus the three fields a delta/change-feed
+        consumer needs that no other caller does: `updated_at` (the cursor
+        field itself — see apps.sync.pagination.DeltaCursorPagination) and
+        `is_deleted`/`deleted_at` (how a soft-deleted row tells a client "this
+        was removed" instead of just disappearing, per
+        docs/architecture/offline-sync.md). Every other read path stays on
+        the plain ExpenseReadSerializer — those three fields are meaningless
+        noise for a normal list/detail view.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        context:
+          $ref: '#/components/schemas/ExpenseContextEnum'
+        friendship:
+          type: string
+          format: uuid
+          nullable: true
+        group:
+          type: string
+          format: uuid
+          nullable: true
+        added_by:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          readOnly: true
+        description:
+          type: string
+          maxLength: 255
+        amount:
+          type: string
+          readOnly: true
+        currency:
+          type: string
+          readOnly: true
+        date:
+          type: string
+          format: date
+        category:
+          allOf:
+          - $ref: '#/components/schemas/Category'
+          readOnly: true
+        note:
+          type: string
+        receipt:
+          type: string
+          format: uri
+          nullable: true
+        split_type:
+          $ref: '#/components/schemas/SplitTypeEnum'
+        payers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpensePayerRead'
+          readOnly: true
+        splits:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpenseSplitRead'
+          readOnly: true
+        reactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReactionRead'
+          readOnly: true
+        edited_at:
+          type: string
+          format: date-time
+          nullable: true
+        recurring_source:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - added_by
+      - amount
+      - category
+      - context
+      - created_at
+      - currency
+      - date
+      - description
+      - id
+      - payers
+      - reactions
+      - split_type
+      - splits
+      - updated_at
     ExpensePayerRead:
       type: object
       properties:
@@ -4780,53 +6046,6 @@ components:
       required:
       - currency
       - rate
-    GroupInvitation:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          readOnly: true
-        group:
-          allOf:
-          - $ref: '#/components/schemas/GroupSummary'
-          readOnly: true
-        invited_by:
-          allOf:
-          - $ref: '#/components/schemas/FriendInfo'
-          readOnly: true
-        status:
-          allOf:
-          - $ref: '#/components/schemas/GroupInvitationStatusEnum'
-          readOnly: true
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-        responded_at:
-          type: string
-          format: date-time
-          readOnly: true
-          nullable: true
-      required:
-      - created_at
-      - group
-      - id
-      - invited_by
-      - responded_at
-      - status
-    GroupInvitationStatusEnum:
-      enum:
-      - pending
-      - accepted
-      - declined
-      - cancelled
-      type: string
-      description: |-
-        * `pending` - Pending
-        * `accepted` - Accepted
-        * `declined` - Declined
-        * `cancelled` - Cancelled
     GroupName:
       type: object
       description: |-
@@ -4844,16 +6063,9 @@ components:
     GroupParticipant:
       type: object
       description: |-
-        One entry per active member OR pending invitee — a group's participant
-        list is a merge of both, matching the app UI where a pending invite
-        shows inline in the member list with a "Pending" badge rather than
-        being a separate section. `role` is always populated, even for a
-        pending invitee: `accept_invitation()` unconditionally assigns `member`
-        on acceptance (there's no invite-as-admin path), so showing `"member"`
-        ahead of acceptance is a true statement about what they will become,
-        not a guess. Distinguish "confirmed" from "will become" via `status`,
-        not by `role` being null — an admin can still promote after they
-        accept, via the separate make-admin action.
+        One entry per active member — adds are immediate (no consent
+        step, see apps/ledger/services.py::_add_member), so every entry here
+        is a real, currently-active GroupMembership.
       properties:
         id:
           type: string
@@ -4867,23 +6079,12 @@ components:
           nullable: true
         role:
           type: string
-        status:
-          $ref: '#/components/schemas/GroupParticipantStatusEnum'
       required:
       - full_name
       - id
       - image
       - phone_number
       - role
-      - status
-    GroupParticipantStatusEnum:
-      enum:
-      - active
-      - pending
-      type: string
-      description: |-
-        * `active` - active
-        * `pending` - pending
     GroupRequest:
       type: object
       properties:
@@ -5124,7 +6325,7 @@ components:
             maxLength: 0
         status:
           allOf:
-          - $ref: '#/components/schemas/IssueReportStatusEnum'
+          - $ref: '#/components/schemas/Status6f2Enum'
           readOnly: true
         resolved_at:
           type: string
@@ -5168,18 +6369,6 @@ components:
       required:
       - category
       - description
-    IssueReportStatusEnum:
-      enum:
-      - open
-      - in_progress
-      - resolved
-      - closed
-      type: string
-      description: |-
-        * `open` - Open
-        * `in_progress` - In progress
-        * `resolved` - Resolved
-        * `closed` - Closed
     LedgerAdjustment:
       type: object
       description: |-
@@ -5516,7 +6705,7 @@ components:
       - payment_dispute
       - expense_added
       - expense_edited
-      - group_invitation
+      - added_to_group
       type: string
       description: |-
         * `payment_settled` - Payment settled
@@ -5527,7 +6716,7 @@ components:
         * `payment_dispute` - Payment dispute
         * `expense_added` - Expense added
         * `expense_edited` - Expense edited
-        * `group_invitation` - Group invitation
+        * `added_to_group` - Added to group
     NotificationUnreadCount:
       type: object
       description: |-
@@ -5564,6 +6753,190 @@ components:
       - is_new_user
       - refresh
       - user
+    PaginatedAdminActivityEventList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminActivityEvent'
+    PaginatedAdminAuditLogList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminAuditLog'
+    PaginatedAdminExpenseList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminExpense'
+    PaginatedAdminGroupSummaryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminGroupSummary'
+    PaginatedAdminIssueReportList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminIssueReport'
+    PaginatedAdminRecurringExpenseList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminRecurringExpense'
+    PaginatedAdminSettlementList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminSettlement'
+    PaginatedAdminUserListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminUserList'
     PaginatedCategoryList:
       type: object
       required:
@@ -5602,6 +6975,25 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Contact'
+    PaginatedExpenseDeltaList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?since=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?since=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpenseDelta'
     PaginatedExpenseReadList:
       type: object
       required:
@@ -5640,25 +7032,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Friendship'
-    PaginatedGroupInvitationList:
-      type: object
-      required:
-      - results
-      properties:
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/GroupInvitation'
     PaginatedGroupList:
       type: object
       required:
@@ -5754,6 +7127,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SettlementRead'
+    PatchedAdminIssueReportUpdateRequest:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status6f2Enum'
+        staff_notes:
+          type: string
+    PatchedAdminUserStatusUpdateRequest:
+      type: object
+      properties:
+        is_active:
+          type: boolean
     PatchedExpenseUpdateRequest:
       type: object
       description: |-
@@ -6037,6 +7422,9 @@ components:
         API contract makes the restriction visible and the empty-string
         JSONField parse error that `payers=` / `splits=` produces can't happen.
       properties:
+        id:
+          type: string
+          format: uuid
         description:
           type: string
           maxLength: 255
@@ -6072,6 +7460,9 @@ components:
         API contract makes the restriction visible and the empty-string
         JSONField parse error that `payers=` / `splits=` produces can't happen.
       properties:
+        id:
+          type: string
+          format: uuid
         description:
           type: string
           minLength: 1
@@ -6638,7 +8029,7 @@ components:
           format: uri
           nullable: true
         status:
-          $ref: '#/components/schemas/SettlementReadStatusEnum'
+          $ref: '#/components/schemas/StatusB77Enum'
         responded_at:
           type: string
           format: date-time
@@ -6675,16 +8066,6 @@ components:
       - payer
       - reactions
       - recorded_by
-    SettlementReadStatusEnum:
-      enum:
-      - pending
-      - confirmed
-      - disputed
-      type: string
-      description: |-
-        * `pending` - Pending
-        * `confirmed` - Confirmed
-        * `disputed` - Disputed
     SplitTypeEnum:
       enum:
       - equal
@@ -6695,6 +8076,28 @@ components:
         * `equal` - Equal
         * `unequal` - Unequal
         * `adjustment` - Adjustment
+    Status6f2Enum:
+      enum:
+      - open
+      - in_progress
+      - resolved
+      - closed
+      type: string
+      description: |-
+        * `open` - Open
+        * `in_progress` - In progress
+        * `resolved` - Resolved
+        * `closed` - Closed
+    StatusB77Enum:
+      enum:
+      - pending
+      - confirmed
+      - disputed
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `confirmed` - Confirmed
+        * `disputed` - Disputed
     TakeoverRequest:
       type: object
       properties:

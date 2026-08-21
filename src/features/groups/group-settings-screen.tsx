@@ -36,7 +36,6 @@ export default function GroupSettingsScreen() {
     handleToggleAdmin,
     handleTransferOwnership,
     handleRemoveMember,
-    handleCancelInvitation,
     handleBlockReport,
     handleLeaveGroup,
     handleDeleteGroup,
@@ -194,11 +193,6 @@ export default function GroupSettingsScreen() {
                     {m.role === 'admin' && (
                       <span className="bg-[#ECF6F0] text-positive text-[11px] font-bold px-3 py-1 rounded-full">
                         Admin
-                      </span>
-                    )}
-                    {m.isPending && (
-                      <span className="bg-[#FFF3E0] text-[#C96A1B] text-[11px] font-bold px-3 py-1 rounded-full">
-                        Pending
                       </span>
                     )}
                     {isAdmin && (
@@ -379,7 +373,6 @@ export default function GroupSettingsScreen() {
         onTransferOwnership={handleTransferOwnership}
         onRemove={handleRemoveMember}
         onBlockReport={handleBlockReport}
-        onCancelInvitation={handleCancelInvitation}
       />
 
 

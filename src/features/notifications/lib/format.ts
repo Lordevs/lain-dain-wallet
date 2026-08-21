@@ -111,17 +111,12 @@ export function getNotificationCardContent(notification: Notification): Notifica
         theme: 'orange',
       }
     }
-    case 'group_invitation': {
-      const p = payloadOf(notification as Notification & { type: 'group_invitation' })
-      const isPending = notification.action_status === 'pending'
+    case 'added_to_group': {
+      const p = payloadOf(notification as Notification & { type: 'added_to_group' })
       return {
-        tag: isPending ? 'Group invitation' : 'Invitation updated',
-        title: `${p.invited_by.full_name} invited you to ${p.group_name}`,
-        subtitle: isPending
-          ? 'Accept to join this group.'
-          : notification.action_status === 'cancelled'
-            ? 'This invitation was cancelled.'
-            : 'This invitation has been answered.',
+        tag: 'Added to group',
+        title: `${p.added_by.full_name} added you to ${p.group_name}`,
+        subtitle: formatTimeAgo(notification.created_at),
         theme: 'green',
       }
     }
