@@ -206,9 +206,10 @@ export default function GroupDetailScreen() {
         <Suspense fallback={null}>
           <GroupBalanceCarousel
             isReceivable={netAmount >= 0}
-            formattedNetAmount={formatCurrency(Math.abs(netAmount), group.default_currency)}
-            formattedReceivable={formatCurrency(totalReceivable, group.default_currency)}
-            formattedPayable={formatCurrency(totalPayable, group.default_currency)}
+            netAmount={netAmount}
+            receivable={totalReceivable}
+            payable={totalPayable}
+            currency={group.default_currency}
             hasReceivable={totalReceivable > 0}
             onRemind={() => navigate({ to: ROUTES.GROUP_REMINDER, params: { id: groupId } })}
           />
