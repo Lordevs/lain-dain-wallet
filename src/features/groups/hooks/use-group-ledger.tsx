@@ -48,7 +48,6 @@ export function useGroupLedger(id: string) {
       const displaySubtitle = record.category === 'payment' ? (
         <div className="flex flex-col text-left">
           <span className="text-[#6B6B6B] text-[12px] font-normal">You paid {firstName}</span>
-          <span className="text-[12px] text-[#9A9590] mt-0.5 font-normal">Balance adjusted</span>
         </div>
       ) : record.subtitle
 

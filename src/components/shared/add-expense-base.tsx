@@ -472,6 +472,15 @@ export default function AddExpenseBase({
             onSelect={(value, payerAmounts) => {
               setPaidBy(value)
               setMultiplePayerAmounts(payerAmounts)
+              // Adjustment split has no single baseline once more than one
+              // person paid — fall back to Equal rather than keep an
+              // invalid split type the user never actively chose.
+              const newPayerCount = payerAmounts
+                ? Object.values(payerAmounts).filter((v) => v > 0).length
+                : 1
+              if (value === 'multiple' && newPayerCount > 1 && splitData.type === 'adjustment') {
+                setSplitData((prev) => ({ ...prev, type: 'equal' }))
+              }
             }}
             contactName={contact?.name}
             contactInitials={contact?.initials}
