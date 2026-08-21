@@ -80,3 +80,50 @@ export async function markOutboxRowPending(id: string): Promise<void> {
   const db = await getDatabase()
   await db.run(`UPDATE expense_outbox SET status = 'pending' WHERE id = ?`, [id])
 }
+
+export interface OutboxSummary {
+  pending: number
+  failed: number
+  firstError: string | null
+}
+
+export async function getExpenseOutboxSummary(ownerId: string): Promise<OutboxSummary> {
+  const db = await getDatabase()
+  const result = await db.query(
+    `SELECT
+       SUM(CASE WHEN status IN ('pending', 'syncing') THEN 1 ELSE 0 END) AS pending,
+       SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed,
+       MIN(CASE WHEN status = 'failed' THEN last_error END) AS first_error
+     FROM expense_outbox WHERE owner_id = ?`,
+    [ownerId],
+  )
+  const row = result.values?.[0] ?? {}
+  return {
+    pending: Number(row.pending ?? 0),
+    failed: Number(row.failed ?? 0),
+    firstError: (row.first_error as string | null | undefined) ?? null,
+  }
+}
+
+export async function retryFailedExpenseRows(ownerId: string): Promise<void> {
+  const db = await getDatabase()
+  await db.beginTransaction()
+  try {
+    await db.run(
+      `UPDATE expense_outbox SET status = 'pending', last_error = NULL
+       WHERE owner_id = ? AND status = 'failed'`,
+      [ownerId],
+    )
+    await db.run(
+      `UPDATE expenses SET sync_status = 'pending'
+       WHERE owner_id = ? AND id IN (
+         SELECT id FROM expense_outbox WHERE owner_id = ? AND status = 'pending'
+       )`,
+      [ownerId, ownerId],
+    )
+    await db.commitTransaction()
+  } catch (error) {
+    await db.rollbackTransaction()
+    throw error
+  }
+}
