@@ -43,6 +43,7 @@ import { Route as PersonalCategoryBudgetsIndexRouteImport } from './routes/perso
 import { Route as GroupsIdIndexRouteImport } from './routes/groups/$id.index'
 import { Route as ContactsIdIndexRouteImport } from './routes/contacts/$id.index'
 import { Route as TransactionsIdEditRouteImport } from './routes/transactions/$id.edit'
+import { Route as PersonalReportsCategoryBreakdownRouteImport } from './routes/personal/reports.category-breakdown'
 import { Route as PersonalCategoryBudgetsCatIdRouteImport } from './routes/personal/category-budgets.$catId'
 import { Route as GroupsIdSettingsRouteImport } from './routes/groups/$id.settings'
 import { Route as GroupsIdReminderRouteImport } from './routes/groups/$id.reminder'
@@ -237,6 +238,12 @@ const TransactionsIdEditRoute = TransactionsIdEditRouteImport.update({
   path: '/edit',
   getParentRoute: () => TransactionsIdRoute,
 } as any)
+const PersonalReportsCategoryBreakdownRoute =
+  PersonalReportsCategoryBreakdownRouteImport.update({
+    id: '/category-breakdown',
+    path: '/category-breakdown',
+    getParentRoute: () => PersonalReportsRoute,
+  } as any)
 const PersonalCategoryBudgetsCatIdRoute =
   PersonalCategoryBudgetsCatIdRouteImport.update({
     id: '/category-budgets/$catId',
@@ -368,7 +375,7 @@ export interface FileRoutesByFullPath {
   '/personal/categories': typeof PersonalCategoriesRoute
   '/personal/default-period': typeof PersonalDefaultPeriodRoute
   '/personal/hide-ledgers': typeof PersonalHideLedgersRoute
-  '/personal/reports': typeof PersonalReportsRoute
+  '/personal/reports': typeof PersonalReportsRouteWithChildren
   '/personal/settings': typeof PersonalSettingsRoute
   '/settings/delete-account': typeof SettingsDeleteAccountRoute
   '/settings/logout': typeof SettingsLogoutRoute
@@ -394,6 +401,7 @@ export interface FileRoutesByFullPath {
   '/groups/$id/reminder': typeof GroupsIdReminderRoute
   '/groups/$id/settings': typeof GroupsIdSettingsRouteWithChildren
   '/personal/category-budgets/$catId': typeof PersonalCategoryBudgetsCatIdRoute
+  '/personal/reports/category-breakdown': typeof PersonalReportsCategoryBreakdownRoute
   '/transactions/$id/edit': typeof TransactionsIdEditRoute
   '/contacts/$id/': typeof ContactsIdIndexRoute
   '/groups/$id/': typeof GroupsIdIndexRoute
@@ -422,7 +430,7 @@ export interface FileRoutesByTo {
   '/personal/categories': typeof PersonalCategoriesRoute
   '/personal/default-period': typeof PersonalDefaultPeriodRoute
   '/personal/hide-ledgers': typeof PersonalHideLedgersRoute
-  '/personal/reports': typeof PersonalReportsRoute
+  '/personal/reports': typeof PersonalReportsRouteWithChildren
   '/personal/settings': typeof PersonalSettingsRoute
   '/settings/delete-account': typeof SettingsDeleteAccountRoute
   '/settings/logout': typeof SettingsLogoutRoute
@@ -444,6 +452,7 @@ export interface FileRoutesByTo {
   '/groups/$id/add-expense': typeof GroupsIdAddExpenseRoute
   '/groups/$id/reminder': typeof GroupsIdReminderRoute
   '/personal/category-budgets/$catId': typeof PersonalCategoryBudgetsCatIdRoute
+  '/personal/reports/category-breakdown': typeof PersonalReportsCategoryBreakdownRoute
   '/transactions/$id/edit': typeof TransactionsIdEditRoute
   '/contacts/$id': typeof ContactsIdIndexRoute
   '/groups/$id': typeof GroupsIdIndexRoute
@@ -477,7 +486,7 @@ export interface FileRoutesById {
   '/personal/categories': typeof PersonalCategoriesRoute
   '/personal/default-period': typeof PersonalDefaultPeriodRoute
   '/personal/hide-ledgers': typeof PersonalHideLedgersRoute
-  '/personal/reports': typeof PersonalReportsRoute
+  '/personal/reports': typeof PersonalReportsRouteWithChildren
   '/personal/settings': typeof PersonalSettingsRoute
   '/settings/delete-account': typeof SettingsDeleteAccountRoute
   '/settings/logout': typeof SettingsLogoutRoute
@@ -503,6 +512,7 @@ export interface FileRoutesById {
   '/groups/$id/reminder': typeof GroupsIdReminderRoute
   '/groups/$id/settings': typeof GroupsIdSettingsRouteWithChildren
   '/personal/category-budgets/$catId': typeof PersonalCategoryBudgetsCatIdRoute
+  '/personal/reports/category-breakdown': typeof PersonalReportsCategoryBreakdownRoute
   '/transactions/$id/edit': typeof TransactionsIdEditRoute
   '/contacts/$id/': typeof ContactsIdIndexRoute
   '/groups/$id/': typeof GroupsIdIndexRoute
@@ -563,6 +573,7 @@ export interface FileRouteTypes {
     | '/groups/$id/reminder'
     | '/groups/$id/settings'
     | '/personal/category-budgets/$catId'
+    | '/personal/reports/category-breakdown'
     | '/transactions/$id/edit'
     | '/contacts/$id/'
     | '/groups/$id/'
@@ -613,6 +624,7 @@ export interface FileRouteTypes {
     | '/groups/$id/add-expense'
     | '/groups/$id/reminder'
     | '/personal/category-budgets/$catId'
+    | '/personal/reports/category-breakdown'
     | '/transactions/$id/edit'
     | '/contacts/$id'
     | '/groups/$id'
@@ -671,6 +683,7 @@ export interface FileRouteTypes {
     | '/groups/$id/reminder'
     | '/groups/$id/settings'
     | '/personal/category-budgets/$catId'
+    | '/personal/reports/category-breakdown'
     | '/transactions/$id/edit'
     | '/contacts/$id/'
     | '/groups/$id/'
@@ -952,6 +965,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TransactionsIdEditRouteImport
       parentRoute: typeof TransactionsIdRoute
     }
+    '/personal/reports/category-breakdown': {
+      id: '/personal/reports/category-breakdown'
+      path: '/category-breakdown'
+      fullPath: '/personal/reports/category-breakdown'
+      preLoaderRoute: typeof PersonalReportsCategoryBreakdownRouteImport
+      parentRoute: typeof PersonalReportsRoute
+    }
     '/personal/category-budgets/$catId': {
       id: '/personal/category-budgets/$catId'
       path: '/category-budgets/$catId'
@@ -1121,13 +1141,25 @@ const NotificationsRouteWithChildren = NotificationsRoute._addFileChildren(
   NotificationsRouteChildren,
 )
 
+interface PersonalReportsRouteChildren {
+  PersonalReportsCategoryBreakdownRoute: typeof PersonalReportsCategoryBreakdownRoute
+}
+
+const PersonalReportsRouteChildren: PersonalReportsRouteChildren = {
+  PersonalReportsCategoryBreakdownRoute: PersonalReportsCategoryBreakdownRoute,
+}
+
+const PersonalReportsRouteWithChildren = PersonalReportsRoute._addFileChildren(
+  PersonalReportsRouteChildren,
+)
+
 interface PersonalRouteChildren {
   PersonalAddExpenseRoute: typeof PersonalAddExpenseRoute
   PersonalBudgetLimitRoute: typeof PersonalBudgetLimitRoute
   PersonalCategoriesRoute: typeof PersonalCategoriesRoute
   PersonalDefaultPeriodRoute: typeof PersonalDefaultPeriodRoute
   PersonalHideLedgersRoute: typeof PersonalHideLedgersRoute
-  PersonalReportsRoute: typeof PersonalReportsRoute
+  PersonalReportsRoute: typeof PersonalReportsRouteWithChildren
   PersonalSettingsRoute: typeof PersonalSettingsRoute
   PersonalIndexRoute: typeof PersonalIndexRoute
   PersonalCategoryBudgetsCatIdRoute: typeof PersonalCategoryBudgetsCatIdRoute
@@ -1140,7 +1172,7 @@ const PersonalRouteChildren: PersonalRouteChildren = {
   PersonalCategoriesRoute: PersonalCategoriesRoute,
   PersonalDefaultPeriodRoute: PersonalDefaultPeriodRoute,
   PersonalHideLedgersRoute: PersonalHideLedgersRoute,
-  PersonalReportsRoute: PersonalReportsRoute,
+  PersonalReportsRoute: PersonalReportsRouteWithChildren,
   PersonalSettingsRoute: PersonalSettingsRoute,
   PersonalIndexRoute: PersonalIndexRoute,
   PersonalCategoryBudgetsCatIdRoute: PersonalCategoryBudgetsCatIdRoute,

@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import { useMyExpensesReportQuery } from '@/features/expenses/api/use-my-expenses-report-query'
+import { ROUTES } from '@/constants/routes'
 import ExpenseSummaryCard from './components/expense-summary-card'
 import CategoryBreakdownCard from './components/category-breakdown-card'
 import MonthlySpendingCard from './components/monthly-spending-card'
@@ -13,6 +15,7 @@ import { recentPeriods, periodKey, parsePeriodKey, periodLabel, type Period } fr
 export default function ReportsScreen() {
   // undefined = the period containing today (the backend's own default).
   const [period, setPeriod] = useState<Period | undefined>(undefined)
+  const navigate = useNavigate()
 
   const reportQuery = useMyExpensesReportQuery(period?.year, period?.month)
 
@@ -43,13 +46,12 @@ export default function ReportsScreen() {
         {reportQuery.isLoading && (
           <>
             <ExpenseSummaryCard.Skeleton />
-            <div className="bg-white rounded-[24px] border-[0.8px] border-[#EBEBEB] p-6 mx-6 mt-4 flex items-center gap-4">
-              <Skeleton className="size-37.5 rounded-full shrink-0" />
-              <div className="flex-1 flex flex-col gap-3">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <Skeleton key={i} className="h-4 w-full" />
-                ))}
+            <div className="bg-white rounded-[24px] border-[0.8px] border-[#EBEBEB] p-6 mx-6 mt-4 flex flex-col items-center gap-6">
+              <div className="w-full flex items-center justify-between">
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-7 w-24 rounded-full" />
               </div>
+              <Skeleton className="size-37.5 rounded-full shrink-0" />
             </div>
             <Skeleton className="h-55 rounded-[24px] mx-4 mt-4 mb-24" />
           </>
@@ -63,7 +65,10 @@ export default function ReportsScreen() {
             {/* Card 2: Category Breakdown */}
             <CategoryBreakdownCard
               categories={toCategoryBreakdownItems(reportQuery.data.by_category)}
-              currency={reportQuery.data.currency}
+              onViewDetails={() => navigate({
+                to: ROUTES.PERSONAL_CATEGORY_BREAKDOWN,
+                search: { year: activePeriod.year, month: activePeriod.month },
+              })}
             />
 
             {/* Card 3: Monthly Spending Bar Chart */}
