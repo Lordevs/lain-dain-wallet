@@ -1,9 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { apiClient } from '@/lib/api/client'
-import { ApiError, toApiError } from '@/lib/api/errors'
-import type { components } from '@/lib/api/schema'
+import { ApiError } from '@/lib/api/errors'
 import { useAuthStore } from '@/store/use-auth-store'
-import { appendSettlementFields, type SettlementCoreValues } from '../lib/append-settlement-fields'
+import { queueMutation } from '@/lib/sync/mutation-outbox'
+import { settlementFields, type SettlementCoreValues } from '../lib/append-settlement-fields'
 
 export interface GroupSettlementEntry {
   user_id: string
@@ -25,16 +24,19 @@ export function useCreateGroupSettlementMutation(groupId: string) {
 
   return useMutation<unknown, ApiError, GroupSettlementFormValues>({
     mutationFn: async (values) => {
-      const formData = new FormData()
-      formData.append('entries', JSON.stringify(values.entries))
-      await appendSettlementFields(formData, values)
-
-      const { data, error } = await apiClient.POST('/api/expenses/groups/{group_id}/settlements/', {
-        params: { path: { group_id: groupId } },
-        body: formData as unknown as components['schemas']['GroupSettlementCreateRequest'],
+      const result = await queueMutation<unknown>({
+        resource: 'settlement',
+        method: 'POST',
+        path: `/api/expenses/groups/${groupId}/settlements/`,
+        multipart: {
+          fields: [['entries', JSON.stringify(values.entries)], ...settlementFields(values)],
+          file: values.receipt ? {
+            field: 'receipt', sourceUri: values.receipt, filename: 'receipt.jpg', mimeType: 'image/jpeg',
+          } : undefined,
+        },
+        optimisticResult: undefined,
       })
-      if (error) throw toApiError(error)
-      return data
+      return result.data
     },
     onSuccess: (_data, values) => {
       queryClient.invalidateQueries({ queryKey: ['group-transactions', groupId] })
