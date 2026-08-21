@@ -2,21 +2,24 @@ import { useState, useRef, useEffect } from 'react'
 import { Bell, ArrowUp, ArrowDown } from 'lucide-react'
 import { motion, type PanInfo } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import CompactAmount from '@/components/shared/compact-amount'
 
 interface GroupBalanceCarouselProps {
   isReceivable: boolean
-  formattedNetAmount: string
-  formattedReceivable: string
-  formattedPayable: string
+  netAmount: number
+  receivable: number
+  payable: number
+  currency: string
   hasReceivable: boolean
   onRemind: () => void
 }
 
 export default function GroupBalanceCarousel({
   isReceivable,
-  formattedNetAmount,
-  formattedReceivable,
-  formattedPayable,
+  netAmount,
+  receivable,
+  payable,
+  currency,
   hasReceivable,
   onRemind,
 }: GroupBalanceCarouselProps) {
@@ -80,7 +83,7 @@ export default function GroupBalanceCarousel({
               Net Balance
             </span>
             <span className={cn('text-3xl font-extrabold mt-2 leading-none tracking-tight', isReceivable ? 'text-positive' : 'text-[#C96A1B]')}>
-              {formattedNetAmount}
+              <CompactAmount amount={Math.abs(netAmount)} currency={currency} drawerTitle="Net Balance" />
             </span>
           </div>
 
@@ -139,7 +142,7 @@ export default function GroupBalanceCarousel({
                 You will receive
               </span>
               <span className="text-xl font-extrabold text-positive mt-2.5 leading-none tracking-tight">
-                {formattedReceivable}
+                <CompactAmount amount={receivable} currency={currency} drawerTitle="You Will Receive" />
               </span>
               <div className="mt-3.5 flex items-center justify-start">
                 <div className="w-8 h-8 rounded-full bg-[#E4F2EB] flex items-center justify-center text-positive">
@@ -154,7 +157,7 @@ export default function GroupBalanceCarousel({
                 You will pay
               </span>
               <span className="text-xl font-extrabold text-[#C96A1B] mt-2.5 leading-none tracking-tight">
-                {formattedPayable}
+                <CompactAmount amount={payable} currency={currency} drawerTitle="You Will Pay" />
               </span>
               <div className="mt-3.5 flex items-center justify-start">
                 <div className="w-8 h-8 rounded-full bg-[#FFF8E1] flex items-center justify-center text-[#C96A1B]">
