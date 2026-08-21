@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { ChevronRight, Download, AlertCircle, Trash2 } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import { formatCurrency } from '@/lib/currency'
+import { getOrdinal } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
 import { Switch } from '@/components/ui/switch'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -12,12 +13,6 @@ import { usePersonalExpenseSettingsQuery } from '@/features/expenses/api/use-per
 import { useUpdatePersonalExpenseSettingsMutation } from '@/features/expenses/api/use-update-personal-expense-settings-mutation'
 import { useCategoryBudgetsQuery } from '@/features/expenses/api/use-category-budgets-query'
 import { useClearPersonalHistoryMutation } from '@/features/expenses/api/use-clear-personal-history-mutation'
-
-function getOrdinal(n: number) {
-  const s = ['th', 'st', 'nd', 'rd']
-  const v = n % 100
-  return n + (s[(v - 20) % 10] || s[v] || s[0])
-}
 
 export default function PersonalSettingsScreen() {
   const navigate = useNavigate()

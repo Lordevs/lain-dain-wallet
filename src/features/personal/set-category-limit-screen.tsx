@@ -12,16 +12,10 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Slider } from '@/components/ui/slider'
 import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
+import { cn, getOrdinal } from '@/lib/utils'
 import type { components } from '@/lib/api/schema'
 
 type CategoryBudgetItem = components['schemas']['CategoryBudgetItem']
-
-function getOrdinal(n: number) {
-  const s = ['th', 'st', 'nd', 'rd']
-  const v = n % 100
-  return n + (s[(v - 20) % 10] || s[v] || s[0])
-}
 
 export default function SetCategoryLimitScreen() {
   const { catId } = useParams({ from: '/personal/category-budgets/$catId' })
