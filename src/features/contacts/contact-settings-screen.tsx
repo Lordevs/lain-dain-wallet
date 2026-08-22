@@ -216,12 +216,23 @@ export default function ContactSettingsScreen() {
           <p className="text-[14px] text-[#6F6C69] mt-1">Personal · 1-to-1 Ledger</p>
         </div>
 
-        <div className="min-h-16 rounded-[18px] bg-[#E5F2ED] border border-[#B9DBCF] flex items-center justify-center gap-2 px-5 text-center">
-          <span className="text-[14px] font-semibold text-[#686D69]">{balanceLabel}</span>
-          <strong className="text-[21px] font-extrabold text-positive">
-            {formatCurrency(balanceAmount, balance?.currency ?? ledgerCurrency)}
-          </strong>
-        </div>
+        {balanceQuery.data === undefined ? (
+          // Offline with nothing cached — this balance is a server-computed
+          // aggregate with no offline fallback; showing "You are settled"
+          // here would be a real lie, not just a stale number.
+          <div className="min-h-16 rounded-[18px] bg-white border border-[#EBEBEB] flex items-center justify-center gap-2 px-5 text-center">
+            <span className="text-[13px] text-muted-foreground">
+              You're offline — balance isn't available right now.
+            </span>
+          </div>
+        ) : (
+          <div className="min-h-16 rounded-[18px] bg-[#E5F2ED] border border-[#B9DBCF] flex items-center justify-center gap-2 px-5 text-center">
+            <span className="text-[14px] font-semibold text-[#686D69]">{balanceLabel}</span>
+            <strong className="text-[21px] font-extrabold text-positive">
+              {formatCurrency(balanceAmount, balance?.currency ?? ledgerCurrency)}
+            </strong>
+          </div>
+        )}
 
         <Section title="Ledger actions">
           <SettingsRow

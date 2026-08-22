@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { WifiOff } from 'lucide-react'
 import { useMyExpensesReportQuery } from '@/features/expenses/api/use-my-expenses-report-query'
 import { ROUTES } from '@/constants/routes'
 import ExpenseSummaryCard from './components/expense-summary-card'
@@ -79,6 +80,20 @@ export default function ReportsScreen() {
               })}
             />
           </>
+        )}
+
+        {/* Offline with nothing cached — this report is a server-computed
+            aggregate with no offline fallback, so without this branch the
+            screen would render completely blank (neither the loading nor
+            the data block above ever matches). */}
+        {!reportQuery.isLoading && !reportQuery.data && (
+          <div className="mx-6 mt-6 flex flex-col items-center gap-3 rounded-[24px] border-[0.8px] border-[#EBEBEB] bg-white p-8 text-center">
+            <WifiOff size={24} className="text-muted-foreground" />
+            <p className="text-sm font-semibold text-foreground">You're offline</p>
+            <p className="text-xs text-muted-foreground">
+              Reports aren't available until you're back online.
+            </p>
+          </div>
         )}
       </div>
     </div>

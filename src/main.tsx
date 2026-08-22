@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister'
+import type { PersistedClient } from '@tanstack/query-persist-client-core'
 import { routeTree } from './routeTree.gen'
 import ErrorFallback from './components/layout/error-fallback'
 import { preferencesStorage } from './lib/query-persister-storage'
@@ -15,6 +16,47 @@ import './index.css'
 
 const router = createRouter({ routeTree, defaultErrorComponent: ErrorFallback })
 
+// Infinite/paginated queries (My Expenses, Friendships, Groups, group/
+// friendship transactions, Notifications — the app-wide 'infinite' query
+// key convention) used to be excluded from persistence entirely, since a
+// scrolled timeline's full page buffer could be large and every write
+// pushes the *entire* dehydrated cache across the Capacitor bridge. That
+// meant none of those screens had anything to restore from on a cold
+// start — which on a Capacitor app (OS-suspended/evicted WebView after
+// backgrounding for camera/SMS/multitasking) happens far more often than
+// a plain page refresh, making it look like the app never caches anything.
+// Trimming each infinite query down to just its first page before
+// serializing keeps the persisted blob's size bounded regardless of how
+// far anyone scrolled, while still giving every list screen *something*
+// to show instantly instead of a skeleton on the very next cold start.
+const MAX_INFINITE_PAGES_PERSISTED = 1
+
+function trimInfiniteQueriesForPersist(client: PersistedClient): PersistedClient {
+  return {
+    ...client,
+    clientState: {
+      ...client.clientState,
+      queries: client.clientState.queries.map((query) => {
+        if (query.queryType !== 'infinite') return query
+        const data = query.state.data as { pages: unknown[]; pageParams: unknown[] } | undefined
+        if (!data || !Array.isArray(data.pages) || data.pages.length <= MAX_INFINITE_PAGES_PERSISTED) {
+          return query
+        }
+        return {
+          ...query,
+          state: {
+            ...query.state,
+            data: {
+              pages: data.pages.slice(0, MAX_INFINITE_PAGES_PERSISTED),
+              pageParams: data.pageParams.slice(0, MAX_INFINITE_PAGES_PERSISTED),
+            },
+          },
+        }
+      }),
+    },
+  }
+}
+
 const persister = createAsyncStoragePersister({
   storage: preferencesStorage,
   key: 'lain-dain-query-cache',
@@ -23,6 +65,7 @@ const persister = createAsyncStoragePersister({
   // (UserDefaults/SharedPreferences), which isn't designed for frequent
   // large writes the way localStorage is.
   throttleTime: 5000,
+  serialize: (client) => JSON.stringify(trimInfiniteQueriesForPersist(client)),
 })
 
 // @capacitor/network, not the browser's navigator.onLine — see
@@ -66,23 +109,16 @@ bootstrapAuth()
             persister,
             maxAge: CACHE_MAX_AGE,
             dehydrateOptions: {
-              // Infinite/paginated queries (query key includes 'infinite'
-              // or 'infinite-v2', the app-wide convention for them) are
-              // excluded from persistence — their page buffers can grow
-              // large (a scrolled group timeline, for instance), and
-              // createAsyncStoragePersister writes the *entire* dehydrated
-              // cache across the Capacitor bridge on every change.
-              // Persisting only the bounded, non-paginated queries keeps
-              // that write small regardless of how far someone has
-              // scrolled this session. The `status === 'success'` check
-              // mirrors TanStack's own default (not imported directly —
-              // @tanstack/react-query-persist-client resolves a different
-              // copy of @tanstack/query-core than @tanstack/react-query
-              // does, so their Query types aren't assignable to each
-              // other; reimplementing this one-line check sidesteps it).
-              shouldDehydrateQuery: (query) =>
-                query.state.status === 'success'
-                && !query.queryKey.some((key) => typeof key === 'string' && key.startsWith('infinite')),
+              // Infinite queries ARE persisted now too (trimmed to their
+              // first page by the persister's own `serialize`, see
+              // trimInfiniteQueriesForPersist above) — only genuinely
+              // unsuccessful queries are excluded. This one-line check
+              // mirrors TanStack's own default rather than importing it
+              // directly (@tanstack/react-query-persist-client resolves a
+              // different copy of @tanstack/query-core than
+              // @tanstack/react-query does, so their Query types aren't
+              // assignable to each other).
+              shouldDehydrateQuery: (query) => query.state.status === 'success',
             },
           }}
         >

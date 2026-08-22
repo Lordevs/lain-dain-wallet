@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
-import { ChevronDown, ChevronUp, ListFilter, MoreVertical } from 'lucide-react'
+import { ChevronDown, ChevronUp, ListFilter, MoreVertical, WifiOff } from 'lucide-react'
+import { useNetworkStatus } from '@/hooks/use-network-status'
 import { ROUTES } from '@/constants/routes'
 import { formatCurrency } from '@/lib/currency'
 import { cn } from '@/lib/utils'
@@ -47,6 +48,7 @@ export default function GroupDetailScreen() {
   const [sortBy, setSortBy] = useState<GroupSortBy>('newest')
   const [categoryFilter, setCategoryFilter] = useState<GroupTransactionFilter>('all')
 
+  const isOnline = useNetworkStatus()
   const groupQuery = useGroupQuery(groupId)
   const balanceQuery = useGroupBalanceQuery(groupId)
   const transactionsQuery = useGroupTransactionsQuery(groupId, sortBy, categoryFilter)
@@ -164,6 +166,10 @@ export default function GroupDetailScreen() {
   const activeMembers = group.members
   const balances = balanceQuery.data ?? []
   const visibleBalances = showAllBalances ? balances : balances.slice(0, MAX_VISIBLE_BALANCES)
+  // Offline with nothing cached — this is a server-computed aggregate
+  // with no offline fallback, so without this the carousel/list just
+  // silently vanish, making an unsettled group look settled-up.
+  const offlineNoBalanceData = !isOnline && balanceQuery.data === undefined
 
   // Single-currency assumption, matching every other amount already shown
   // on this screen (per-member rows format with their own b.currency, but
@@ -217,6 +223,15 @@ export default function GroupDetailScreen() {
       )}
 
       <div className="flex-1 overflow-y-auto px-6 pb-12 flex flex-col gap-6">
+        {offlineNoBalanceData && (
+          <div className="flex items-center gap-3 rounded-[20px] border-[0.8px] border-[#EBEBEB] bg-white p-4 mt-1">
+            <WifiOff size={18} className="shrink-0 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">
+              You're offline — this group's balances aren't available until you're back online.
+            </p>
+          </div>
+        )}
+
         {/* Balances Section */}
         {balances.length > 0 && (
           <div className="flex flex-col text-left">

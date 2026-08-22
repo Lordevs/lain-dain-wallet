@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { MoreVertical } from 'lucide-react'
+import { MoreVertical, WifiOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ROUTES } from '@/constants/routes'
 import { useMyExpensesSummaryQuery } from '@/features/expenses/api/use-my-expenses-summary-query'
@@ -70,8 +70,19 @@ export default function PersonalScreen() {
         {/* Card 1: Spent Stat Card */}
         {summaryQuery.data ? (
           <ExpenseSummaryCard summary={toExpenseSummary(summaryQuery.data)} />
-        ) : (
+        ) : summaryQuery.isLoading ? (
           <ExpenseSummaryCard.Skeleton />
+        ) : (
+          // Offline with nothing cached — this query has no offline
+          // fallback (it's a server-computed aggregate), so without this
+          // branch the skeleton above would show forever instead of
+          // resolving into anything.
+          <div className="mx-6 mt-3 flex items-center gap-3 rounded-[20px] border-[0.8px] border-[#EBEBEB] bg-white p-4 shadow-[0px_2px_5px_0px_#0000000D]">
+            <WifiOff size={18} className="shrink-0 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">
+              You're offline — this month's summary isn't available until you're back online.
+            </p>
+          </div>
         )}
 
         {/* Card 2: View Reports */}

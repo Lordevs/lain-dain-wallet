@@ -49,7 +49,9 @@ export async function pullExpenseChanges(): Promise<void> {
       if (!page.next_cursor && !page.next) hasMore = false
     }
 
-    queryClient.invalidateQueries({ queryKey: ['my-expenses'] })
+    queryClient.invalidateQueries({ queryKey: ['my-expenses-summary'] })
+    queryClient.invalidateQueries({ queryKey: ['my-expenses-list'] })
+    queryClient.invalidateQueries({ queryKey: ['my-expenses-report'] })
     queryClient.invalidateQueries({ queryKey: ['friendship-transactions'] })
     queryClient.invalidateQueries({ queryKey: ['group-transactions'] })
     queryClient.invalidateQueries({ queryKey: ['wallet'] })

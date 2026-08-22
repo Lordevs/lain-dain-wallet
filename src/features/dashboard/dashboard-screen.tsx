@@ -15,6 +15,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useWalletListQuery } from './api/use-wallet-list-query'
 import { useWalletSummaryQuery } from './api/use-wallet-summary-query'
 import { mapWalletRow } from './lib/map-wallet-row'
+import { useNetworkStatus } from '@/hooks/use-network-status'
+import { WifiOff } from 'lucide-react'
 
 
 /**
@@ -31,6 +33,7 @@ export default function DashboardScreen() {
   const [filterType, setFilterType] = useState<'all' | 'people' | 'groups'>('all')
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest')
 
+  const isOnline = useNetworkStatus()
   const summaryQuery = useWalletSummaryQuery()
   // Both tabs are fetched unconditionally (not just the active one) so
   // switching tabs is instant — the list is small/bounded either way (see
@@ -63,6 +66,12 @@ export default function DashboardScreen() {
   }, [receivables, payables])
   const isLoading = receivablesQuery.isLoading || payablesQuery.isLoading
   const isWalletEmpty = !isLoading && allContacts.length === 0
+  // Offline with nothing cached: neither wallet query has any data at all
+  // (not "0 results", genuinely undefined) — distinguished from a real
+  // empty account so we don't tell a returning user with real ledgers
+  // "let's get started" just because they're offline right now.
+  const offlineNoWalletData = !isOnline && receivablesQuery.data === undefined && payablesQuery.data === undefined
+  const offlineNoSummaryData = !isOnline && summaryQuery.data === undefined
 
   const handleSearchFocus = () => {
     navigate({
@@ -202,6 +211,13 @@ export default function DashboardScreen() {
                 </div>
               ))}
             </div>
+          ) : offlineNoSummaryData ? (
+            <div className="mx-6 mt-3 flex shrink-0 items-center gap-3 rounded-lg border-[1.08px] border-border-card bg-white p-4 shadow-[0px_2.69px_10.76px_0px_#0000000D]">
+              <WifiOff size={18} className="shrink-0 text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">
+                You're offline — balances aren't available until you're back online.
+              </p>
+            </div>
           ) : (
             <BalanceSummaryCard summary={balanceSummary} />
           )}
@@ -245,6 +261,12 @@ export default function DashboardScreen() {
                   onSelect={handleContactSelect}
                 />
               ))
+            ) : offlineNoWalletData ? (
+              <EmptyState
+                title="You're offline"
+                description="Your ledgers aren't cached yet — connect once to load them, then they'll be available offline too."
+                className="w-full max-w-md py-4"
+              />
             ) : allContacts.length === 0 ? (
               <EmptyState
                 title="Welcome! Let’s get started with your Lain Dain"
