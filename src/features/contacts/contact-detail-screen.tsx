@@ -130,8 +130,8 @@ export default function ContactDetailScreen() {
         id: t.data.id,
         name: isAdjustment ? 'Balance adjusted' : isConfirmed ? 'Payment settled' : isPending ? 'Payment pending' : 'Payment disputed',
         subtitle: isAdjustment
-          ? `${adjustmentSummary}\nNo payment made`
-          : isConfirmed ? `${paymentSummary}\nBalance settled` : paymentSummary,
+          ? `${adjustmentSummary}`
+          : isConfirmed ? `${paymentSummary}` : paymentSummary,
         amount: Number(t.data.amount),
         currency: t.data.currency,
         category: isAdjustment ? 'adjustment' as const : isConfirmed ? 'payment' as const : 'other' as const,
