@@ -193,7 +193,7 @@ export default function ContactSettingsScreen() {
       <FlowHeader
         title="Ledger Settings"
         backVariant="circle"
-        onBack={() => navigate({ to: ROUTES.CONTACT_DETAILS, params: { id: userId } })}
+        onBack={() => window.history.back()}
       />
 
       <main className="px-6 pt-3 space-y-7">

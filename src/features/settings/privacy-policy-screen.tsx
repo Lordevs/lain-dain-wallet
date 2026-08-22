@@ -1,7 +1,4 @@
-import { useNavigate } from '@tanstack/react-router'
 import FlowHeader from '@/components/shared/flow-header'
-import { ROUTES } from '@/constants/routes'
-import { useAuthStore } from '@/store/use-auth-store'
 
 const sections = [
   {
@@ -43,14 +40,11 @@ const sections = [
 ]
 
 export default function PrivacyPolicyScreen() {
-  const navigate = useNavigate()
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-
   return (
     <div className="flex min-h-screen flex-1 flex-col bg-[#FEFAF1] pb-10 text-left">
       <FlowHeader
         title="Privacy Policy"
-        onBack={() => navigate({ to: isAuthenticated ? ROUTES.SETTINGS : ROUTES.AUTH, replace: true })}
+        onBack={() => window.history.back()}
       />
 
       <main className="mx-auto w-full max-w-2xl px-6 pb-10">

@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { App } from '@capacitor/app'
 import { useRouter } from '@tanstack/react-router'
-import { parentPath } from '@/lib/navigation-hierarchy'
+import { navigateBackInHierarchy } from '@/lib/navigation-hierarchy'
 import { syncOfflineData } from '@/lib/sync/triggers'
 
 /**
@@ -23,15 +23,7 @@ export function useCapacitorSetup() {
       return true
     }
 
-    if (router.state.location.state.__TSR_index > 0) {
-      router.history.back()
-      return true
-    }
-
-    const parent = parentPath(router.state.location.pathname)
-    if (!parent) return false
-    void router.navigate({ to: parent, replace: true } as never)
-    return true
+    return navigateBackInHierarchy(router)
   }, [router])
 
   useEffect(() => {

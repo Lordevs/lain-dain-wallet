@@ -1,3 +1,5 @@
+import type { useRouter } from '@tanstack/react-router'
+
 /**
  * Resolve the structural parent of a screen. Back navigation must follow
  * product hierarchy, not whichever screens happen to be in browser history.
@@ -38,4 +40,30 @@ export function parentPath(pathname: string): string | null {
   if (path === '/notifications' || path === '/settle-up') return '/'
   if (path === '/privacy-policy') return '/settings'
   return null
+}
+
+/**
+ * Shared "go back" resolution used by every back-navigation entry point
+ * (FlowHeader's default onBack via useHierarchyBack, the Android hardware
+ * back button, and the edge-swipe gesture — see use-capacitor-setup.ts).
+ * Previously duplicated across two hooks, which is exactly how one of them
+ * drifted out of sync with the hierarchy-based convention.
+ *
+ * Pops real in-app history when there is any (`__TSR_index !== 0`);
+ * otherwise (a direct entry/deep link with nothing behind it) falls back
+ * to the structural parent via a `replace` navigation, so it never grows
+ * the stack. Returns false only when there's truly nothing to do (no
+ * history to pop and no structural parent) — callers use that to decide
+ * their own last-resort behavior (e.g. exiting the app).
+ */
+export function navigateBackInHierarchy(router: ReturnType<typeof useRouter>): boolean {
+  if (router.state.location.state.__TSR_index !== 0) {
+    router.history.back()
+    return true
+  }
+
+  const parent = parentPath(router.state.location.pathname)
+  if (!parent) return false
+  void router.navigate({ to: parent, replace: true } as never)
+  return true
 }
