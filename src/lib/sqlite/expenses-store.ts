@@ -1,5 +1,7 @@
 import { getDatabase } from './init'
+import type { SQLiteDBConnection } from '@capacitor-community/sqlite'
 import type { components } from '@/lib/api/schema'
+import { runInTransaction } from './transaction'
 
 export type ExpenseSyncStatus = 'pending' | 'syncing' | 'synced' | 'failed'
 
@@ -28,7 +30,7 @@ export interface LocalExpenseInsert {
  * apps/expenses/models.py's Expense.amount docstring), so there's
  * nothing honest to fill in here until the real create response comes
  * back and setExpenseSynced() resolves it. */
-export async function insertLocalExpense(row: LocalExpenseInsert): Promise<void> {
+export async function insertLocalExpense(row: LocalExpenseInsert, transaction = true): Promise<void> {
   const db = await getDatabase()
   await db.run(
     `INSERT INTO expenses (
@@ -41,6 +43,7 @@ export async function insertLocalExpense(row: LocalExpenseInsert): Promise<void>
       row.categoryId, row.note, row.localReceiptPath, row.splitType, row.payersJson, row.splitsJson,
       row.createdAt, row.createdAt, row.ownerId, row.serverExpense ? JSON.stringify(row.serverExpense) : null,
     ],
+    transaction,
   )
 }
 
@@ -113,11 +116,11 @@ export async function updateLocalExpenseReactions(
   )
 }
 
-export async function upsertServerExpense(
+async function writeServerExpense(
+  db: SQLiteDBConnection,
   ownerId: string,
   expense: components['schemas']['ExpenseDelta'],
 ): Promise<void> {
-  const db = await getDatabase()
   await db.run(
     `INSERT INTO expenses (
       id, context, friendship_id, group_id, added_by_id, description, amount, currency, date,
@@ -140,7 +143,28 @@ export async function upsertServerExpense(
       expense.created_at, expense.updated_at, expense.is_deleted ? 1 : 0, ownerId,
       JSON.stringify(expense),
     ],
+    false,
   )
+}
+
+export async function upsertServerExpense(
+  ownerId: string,
+  expense: components['schemas']['ExpenseDelta'],
+): Promise<void> {
+  await upsertServerExpenses(ownerId, [expense])
+}
+
+/** Persist one API page atomically and without starting a transaction for
+ * every row. This is used by ledger feeds, where concurrent per-row writes
+ * previously caused the whole successful API query to reject. */
+export async function upsertServerExpenses(
+  ownerId: string,
+  expenses: components['schemas']['ExpenseDelta'][],
+): Promise<void> {
+  if (expenses.length === 0) return
+  await runInTransaction(async (db) => {
+    for (const expense of expenses) await writeServerExpense(db, ownerId, expense)
+  })
 }
 
 interface StoredExpenseRow { server_json: string | null }

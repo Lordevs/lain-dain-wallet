@@ -27,9 +27,14 @@ export function useExpenseQuery(id: string | undefined) {
       })
       if (error) throw toApiError(error)
       if (ownerId) {
-        await upsertServerExpense(ownerId, {
-          ...data, updated_at: data.edited_at ?? data.created_at, is_deleted: false, deleted_at: null,
-        })
+        try {
+          await upsertServerExpense(ownerId, {
+            ...data, updated_at: data.edited_at ?? data.created_at, is_deleted: false, deleted_at: null,
+          })
+        } catch (cacheError) {
+          // Display the backend response even if local persistence fails.
+          console.error('Failed to cache expense details', cacheError)
+        }
       }
       return data
     },

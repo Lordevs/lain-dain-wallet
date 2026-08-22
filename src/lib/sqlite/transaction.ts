@@ -17,7 +17,15 @@ export function runInTransaction<T>(
       await db.commitTransaction()
       return result
     } catch (error) {
-      await db.rollbackTransaction()
+      // Preserve the original operation error. Some adapters automatically
+      // end a transaction after a statement failure, in which case a blind
+      // rollback would throw "no transaction is active" and mask the cause.
+      try {
+        const active = await db.isTransactionActive()
+        if (active.result) await db.rollbackTransaction()
+      } catch {
+        // The operation error below is the actionable failure.
+      }
       throw error
     }
   })

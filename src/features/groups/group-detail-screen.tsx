@@ -281,7 +281,19 @@ export default function GroupDetailScreen() {
           </div>
           <GroupCategoryFilterPills groupId={groupId} value={categoryFilter} onChange={setCategoryFilter} />
           {transactionsQuery.isLoading && <ExpenseListSkeleton />}
-          {!transactionsQuery.isLoading && items.length === 0 && (
+          {transactionsQuery.isError && (
+            <div className="flex flex-col items-center gap-3 py-8 text-center">
+              <p className="text-sm text-muted-foreground">Couldn’t load transactions.</p>
+              <button
+                type="button"
+                onClick={() => void transactionsQuery.refetch()}
+                className="border-0 bg-transparent text-sm font-bold text-primary cursor-pointer"
+              >
+                Try again
+              </button>
+            </div>
+          )}
+          {!transactionsQuery.isLoading && !transactionsQuery.isError && items.length === 0 && (
             <EmptyState
               title="No transactions yet"
               description="Add an expense to start tracking this group's spending."

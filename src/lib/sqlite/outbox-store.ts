@@ -24,12 +24,13 @@ export async function insertOutboxRow(row: {
   localReceiptPath: string | null
   createdAt: string
   ownerId: string
-}): Promise<void> {
+}, transaction = true): Promise<void> {
   const db = await getDatabase()
   await db.run(
     `INSERT INTO expense_outbox (id, idempotency_key, method, payload_json, local_receipt_path, status, attempt_count, created_at, owner_id)
      VALUES (?, ?, ?, ?, ?, 'pending', 0, ?, ?)`,
     [row.id, row.idempotencyKey, row.method, row.payloadJson, row.localReceiptPath, row.createdAt, row.ownerId],
+    transaction,
   )
 }
 
@@ -112,6 +113,7 @@ export async function retryFailedExpenseRows(ownerId: string): Promise<void> {
       `UPDATE expense_outbox SET status = 'pending', last_error = NULL
        WHERE owner_id = ? AND status = 'failed'`,
       [ownerId],
+      false,
     )
     await db.run(
       `UPDATE expenses SET sync_status = 'pending'
@@ -119,6 +121,7 @@ export async function retryFailedExpenseRows(ownerId: string): Promise<void> {
          SELECT id FROM expense_outbox WHERE owner_id = ? AND status = 'pending'
        )`,
       [ownerId, ownerId],
+      false,
     )
   })
 }

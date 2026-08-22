@@ -5,7 +5,7 @@ import { toApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
 import { onlineManager } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/use-auth-store'
-import { getLocalExpenses, upsertServerExpense } from '@/lib/sqlite/expenses-store'
+import { getLocalExpenses, upsertServerExpenses } from '@/lib/sqlite/expenses-store'
 
 export type GroupTransaction =
   | { kind: 'expense'; date: string; data: components['schemas']['ExpenseRead'] }
@@ -94,9 +94,14 @@ async function fetchExpenses(
   })
   if (error) throw toApiError(error)
   if (ownerId) {
-    await Promise.all(data.results.map((expense) => upsertServerExpense(ownerId, {
-      ...expense, updated_at: expense.edited_at ?? expense.created_at, is_deleted: false, deleted_at: null,
-    })))
+    try {
+      await upsertServerExpenses(ownerId, data.results.map((expense) => ({
+        ...expense, updated_at: expense.edited_at ?? expense.created_at, is_deleted: false, deleted_at: null,
+      })))
+    } catch (cacheError) {
+      // A local persistence failure must not hide a valid online response.
+      console.error('Failed to cache group expenses', cacheError)
+    }
   }
 
   return {

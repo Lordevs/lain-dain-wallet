@@ -185,7 +185,7 @@ function AddRecurringForm({
     editPaymentId ?? '',
   )
 
-  const { amount, formattedAmount, handleAmountChange, isTooLong: isAmountTooLong } = useFormattedAmountInput(
+  const { amount, formattedAmount, handleAmountChange: updateAmount, isTooLong: isAmountTooLong } = useFormattedAmountInput(
     editingPayment ? String(editingPayment.amount) : ''
   )
   const [description, setDescription] = useState(editingPayment?.description ?? '')
@@ -195,13 +195,22 @@ function AddRecurringForm({
   )
   const [dateValue, setDateValue] = useState(editingPayment?.next_occurrence ?? 'Today')
   const [paidBy, setPaidBy] = useState(() => {
+    if ((editingPayment?.payers?.length ?? 0) > 1) return 'multiple'
     const rawPayer = editingPayment?.payers?.[0]?.id
     return !rawPayer || rawPayer === myId ? 'you' : rawPayer
   })
+  const [multiplePayerAmounts, setMultiplePayerAmounts] = useState<Record<string, number>>(() =>
+    Object.fromEntries((editingPayment?.payers ?? []).map((payer) => [
+      payer.id === myId ? 'you' : payer.id,
+      Number(payer.amount),
+    ])),
+  )
   const [splitData, setSplitData] = useState<SplitData>(() => {
     const initialSplits = editingPayment?.splits?.map((s) => (s.id === myId ? 'you' : s.id)) ?? []
+    const hasMultiplePayers = (editingPayment?.payers?.length ?? 0) > 1
+    const initialType = (editingPayment?.split_type as 'equal' | 'unequal' | 'adjustment') || 'equal'
     return {
-      type: (editingPayment?.split_type as 'equal' | 'unequal' | 'adjustment') || 'equal',
+      type: hasMultiplePayers && initialType === 'adjustment' ? 'equal' : initialType,
       selectedMembers: initialSplits.length > 0 ? initialSplits : ['you'],
       unequalAmounts: {},
       adjustmentAmounts: {},
@@ -221,6 +230,15 @@ function AddRecurringForm({
   const [showReceiptOverlay, setShowReceiptOverlay] = useState(false)
   const [showNoteOverlay, setShowNoteOverlay] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
+
+  const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    updateAmount(event)
+    if (paidBy === 'multiple') {
+      setMultiplePayerAmounts(Object.fromEntries(
+        members.map((member) => [member.id === myId ? 'you' : member.id, 0]),
+      ))
+    }
+  }
 
   // Build real member list for PaidByDrawer and SplitExpenseDrawer
   const drawerMembers = useMemo(() => {
@@ -245,10 +263,14 @@ function AddRecurringForm({
 
   // Resolve payer display name
   const payerName = useMemo(() => {
+    if (paidBy === 'multiple') {
+      const payerCount = Object.values(multiplePayerAmounts).filter((payerAmount) => payerAmount > 0).length
+      return `${payerCount} ${payerCount === 1 ? 'person' : 'people'}`
+    }
     if (paidBy === 'you' || paidBy === myId) return 'You'
     const found = members.find((m) => m.id === paidBy)
     return found?.full_name ?? 'Member'
-  }, [paidBy, myId, members])
+  }, [paidBy, multiplePayerAmounts, myId, members])
 
   const activeMutation = scope === 'friendship'
     ? (editPaymentId ? updateFriendshipMutation : createFriendshipMutation)
@@ -263,8 +285,14 @@ function AddRecurringForm({
       categories.find((c) => c.icon === selectedCategory || c.id === selectedCategory) ?? categories[0]
     const categoryId = matchedCategory?.id ?? ''
 
-    const payerUserId = paidBy === 'you' ? myId : paidBy
-    const payers = [{ user_id: payerUserId, amount: String(parsedAmount) }]
+    const payers = paidBy === 'multiple'
+      ? Object.entries(multiplePayerAmounts)
+          .filter(([, payerAmount]) => payerAmount > 0)
+          .map(([id, payerAmount]) => ({
+            user_id: id === 'you' ? myId : id,
+            amount: String(payerAmount),
+          }))
+      : [{ user_id: paidBy === 'you' ? myId : paidBy, amount: String(parsedAmount) }]
 
     const membersInGroup = members.map((m) => m.id)
 
@@ -333,7 +361,14 @@ function AddRecurringForm({
   const parsedAmount = Number(amount) || 0
   const isAmountValid = parsedAmount > 0
   const isDescriptionValid = description.trim().length > 0
-  const isFormValid = isAmountValid && isDescriptionValid && !isAmountTooLong && !activeMutation.isPending
+  const multiplePayerTotal = Object.values(multiplePayerAmounts)
+    .reduce((sum, payerAmount) => sum + payerAmount, 0)
+  const hasValidPayerAllocation = paidBy !== 'multiple' || multiplePayerTotal === parsedAmount
+  const isFormValid = isAmountValid
+    && isDescriptionValid
+    && !isAmountTooLong
+    && hasValidPayerAllocation
+    && !activeMutation.isPending
 
   return (
     <form
@@ -548,9 +583,19 @@ function AddRecurringForm({
         isOpen={showPaidBy}
         onClose={() => setShowPaidBy(false)}
         selectedValue={paidBy}
-        onSelect={setPaidBy}
+        onSelect={(value, payerAmounts) => {
+          setPaidBy(value)
+          setMultiplePayerAmounts(payerAmounts ?? {})
+          const payerCount = payerAmounts
+            ? Object.values(payerAmounts).filter((payerAmount) => payerAmount > 0).length
+            : 1
+          if (value === 'multiple' && payerCount > 1 && splitData.type === 'adjustment') {
+            setSplitData((previous) => ({ ...previous, type: 'equal' }))
+          }
+        }}
         members={drawerMembers}
         amount={Number(amount) || 0}
+        initialPayerAmounts={multiplePayerAmounts}
       />
 
       <SplitExpenseDrawer
@@ -571,6 +616,7 @@ function AddRecurringForm({
             : { ...splitData, selectedMembers: defaultSelectedMembers }
         }
         members={drawerMembers}
+        multiplePayerAmounts={paidBy === 'multiple' ? multiplePayerAmounts : undefined}
         isRecurring={true}
         frequency={frequency}
         startsOn={dateValue}

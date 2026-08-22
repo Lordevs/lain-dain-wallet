@@ -137,10 +137,10 @@ export async function queueExpenseCreate(payload: QueuedExpensePayload): Promise
 
   try {
     await runInTransaction(async () => {
-      await insertLocalExpense(localRow)
+      await insertLocalExpense(localRow, false)
       await insertOutboxRow({
         id, idempotencyKey: id, method: 'POST', payloadJson, localReceiptPath, createdAt: now, ownerId: myId,
-      })
+      }, false)
     })
   } catch (error) {
     if (localReceiptPath) await deleteStagedReceipt(localReceiptPath)

@@ -92,7 +92,7 @@ export default function AddExpenseBase({
   onBack,
 }: AddExpenseBaseProps) {
   // State management
-  const { amount, handleAmountChange, formattedAmount, isTooLong: isAmountTooLong } = useFormattedAmountInput(initialData?.amount || '')
+  const { amount, handleAmountChange: updateAmount, formattedAmount, isTooLong: isAmountTooLong } = useFormattedAmountInput(initialData?.amount || '')
   const [description, setDescription] = useState(initialData?.description || '')
   const [selectedCategory, setSelectedCategory] = useState(initialData?.category || '')
   const [dateValue, setDateValue] = useState(initialData?.dateValue || 'Today')
@@ -127,6 +127,15 @@ export default function AddExpenseBase({
     adjustmentAmounts: { you: 0, contact: 0 },
   })
   const [showSplit, setShowSplit] = useState(false)
+
+  const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    updateAmount(event)
+    if (paidBy === 'multiple') {
+      setMultiplePayerAmounts(Object.fromEntries(
+        allMembers.map((member) => [member.id, 0]),
+      ))
+    }
+  }
 
   const userProfile = useAuthStore((state) => state.userProfile)
   const youInitials = getInitials(userProfile?.name || 'You')
@@ -215,7 +224,15 @@ export default function AddExpenseBase({
     )
   }
 
-  const isFormInvalid = !amount || Number(amount) <= 0 || !description.trim() || !selectedCategory || isAmountTooLong
+  const multiplePayerTotal = Object.values(multiplePayerAmounts ?? {})
+    .reduce((sum, payerAmount) => sum + payerAmount, 0)
+  const hasValidPayerAllocation = paidBy !== 'multiple' || multiplePayerTotal === Number(amount)
+  const isFormInvalid = !amount
+    || Number(amount) <= 0
+    || !description.trim()
+    || !selectedCategory
+    || isAmountTooLong
+    || !hasValidPayerAllocation
 
   return (
     <form

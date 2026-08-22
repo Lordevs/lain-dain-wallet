@@ -16,12 +16,14 @@ export async function replaceResourceSnapshot(
     await db.run(
       `DELETE FROM resource_snapshots WHERE owner_id = ? AND resource = ?`,
       [ownerId, resource],
+      false,
     )
     for (const record of records) {
       await db.run(
         `INSERT INTO resource_snapshots(owner_id, resource, record_id, scope_id, data_json)
          VALUES (?, ?, ?, ?, ?)`,
         [ownerId, resource, record.id, record.scopeId ?? null, JSON.stringify(record.data)],
+        false,
       )
     }
   })
@@ -115,6 +117,7 @@ export async function transformSnapshotRecords<T>(
         `UPDATE resource_snapshots SET scope_id = ?, data_json = ?
          WHERE owner_id = ? AND resource = ? AND record_id = ?`,
         [updated.scopeId ?? null, JSON.stringify(updated.data), ownerId, resource, updated.id],
+        false,
       )
     }
   })

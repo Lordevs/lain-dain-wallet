@@ -116,7 +116,7 @@ export default function AppHeader() {
             )}
           </Avatar>
           <span
-            className={`absolute right-0.5 top-0.5 size-3 rounded-full ring-2 ring-white ${isOnline ? 'bg-positive' : 'bg-[#8A8A8A]'}`}
+            className={`absolute right-0.5 bottom-0.5 size-2 rounded-full ring ring-white ${isOnline ? 'bg-positive' : 'bg-[#8A8A8A]'}`}
             aria-label={isOnline ? 'Online' : 'Offline'}
             title={isOnline ? 'Online' : 'Offline'}
           />

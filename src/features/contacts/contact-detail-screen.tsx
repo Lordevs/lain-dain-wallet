@@ -294,7 +294,19 @@ export default function ContactDetailScreen() {
       {/* Transaction history grouped by Today, Yesterday, Earlier */}
       <div className="flex min-h-0 flex-1 touch-pan-y flex-col gap-6 overflow-y-auto overscroll-y-contain px-6 pb-4">
         {transactions.isLoading && <ExpenseListSkeleton />}
-        {!transactions.isLoading && items.length === 0 && (
+        {transactions.isError && (
+          <div className="flex flex-col items-center gap-3 py-8 text-center">
+            <p className="text-sm text-muted-foreground">Couldn’t load transactions.</p>
+            <button
+              type="button"
+              onClick={() => void transactions.refetch()}
+              className="border-0 bg-transparent text-sm font-bold text-primary cursor-pointer"
+            >
+              Try again
+            </button>
+          </div>
+        )}
+        {!transactions.isLoading && !transactions.isError && items.length === 0 && (
           <EmptyState
             title="No transactions yet"
             description={isBlocked

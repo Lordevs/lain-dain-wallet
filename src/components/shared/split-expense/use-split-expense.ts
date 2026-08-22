@@ -95,10 +95,10 @@ export function useSplitExpense({
     ]
   }, [membersProp, contactName, contactInitials, contactAvatarColor, youInitials])
 
-  const payerCount = multiplePayerAmounts
-    ? Object.values(multiplePayerAmounts).filter((v) => v > 0).length
-    : 1
-  const allowAdjustment = payerCount <= 1
+  // Presence means the form is in multiple-payer mode. Keep Adjustment
+  // unavailable even while contributions are temporarily zero after the
+  // expense amount changes.
+  const allowAdjustment = multiplePayerAmounts === undefined
 
   const initial = getInitialSplitState(members, initialSplitData, amount, allowAdjustment)
   const [splitType, setSplitType] = useState<'equal' | 'unequal' | 'adjustment'>(initial.splitType)
