@@ -1,9 +1,10 @@
 /**
  * Local SQLite schema — the offline source of truth for synced resources
- * (see docs/architecture/offline-sync.md in the backend repo). Phase 3 of
- * the offline-sync rollout: this schema exists and is created on boot, but
- * nothing reads or writes through it yet (that's Phase 4/5) — it's dark-
- * launched, deliberately inert infrastructure.
+ * (see docs/architecture/offline-sync.md in the backend repo). Actively
+ * read/written by both offline-write systems: the expense-specific outbox
+ * (src/lib/sync/expense-outbox.ts, expenses-store.ts) and the generic
+ * mutation outbox + resource snapshots (src/lib/sync/mutation-outbox.ts,
+ * offline-snapshot.ts, mutation-outbox-store.ts, resource-snapshot-store.ts).
  *
  * Versioned via @capacitor-community/sqlite's own upgrade-statement
  * mechanism (addUpgradeStatement), not a hand-rolled migration runner —

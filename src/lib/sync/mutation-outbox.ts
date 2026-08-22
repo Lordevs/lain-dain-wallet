@@ -160,6 +160,16 @@ async function removeSyncedMutation(row: MutationOutboxRow): Promise<void> {
 
 let draining = false
 
+// A transient failure (network blip, a real 5xx) normally just reverts a
+// row to 'pending' for the next trigger to retry — but with no cap, a
+// mutation that fails the same way every time (e.g. a persistent server
+// error) would retry forever on every reconnect/foreground, silently,
+// with nothing ever telling the user it's stuck. Past this many attempts
+// it's marked 'failed' instead — same terminal state a permanent
+// (validation/permission) error already gets, surfaced the same way in
+// useSyncStatus, and still retryable manually from there.
+const MAX_TRANSIENT_ATTEMPTS = 8
+
 function isPrerequisiteCreate(row: MutationOutboxRow): boolean {
   if (row.method !== 'POST') return false
   return row.path === '/api/ledger/groups/'
@@ -183,6 +193,10 @@ async function drainMutations(predicate: (row: MutationOutboxRow) => boolean): P
       } catch (error) {
         if (error instanceof ApiError && !isTransientApiError(error)) {
           await setMutationStatus(row.id, 'failed', error.message)
+          continue
+        }
+        if (row.attempt_count + 1 >= MAX_TRANSIENT_ATTEMPTS) {
+          await setMutationStatus(row.id, 'failed', 'Giving up after repeated attempts — tap retry to try again.')
           continue
         }
         await setMutationStatus(row.id, 'pending')

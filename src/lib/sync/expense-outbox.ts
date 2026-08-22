@@ -309,6 +309,12 @@ export async function drainExpenseOutbox(): Promise<void> {
   }
 }
 
+// Same reasoning as mutation-outbox.ts's identical constant — an
+// endlessly-transient-failing create (a persistent server error, say)
+// would otherwise retry forever on every reconnect/foreground with
+// nothing ever telling the user it's stuck.
+const MAX_TRANSIENT_ATTEMPTS = 8
+
 async function drainOneRow(row: OutboxRow): Promise<void> {
   await markOutboxRowSyncing(row.id)
   try {
@@ -322,6 +328,11 @@ async function drainOneRow(row: OutboxRow): Promise<void> {
   } catch (err) {
     if (err instanceof ApiError && !isTransientApiError(err)) {
       await markOutboxRowFailed(row.id, err.message)
+      await markLocalExpenseFailed(row.id)
+      return
+    }
+    if (row.attempt_count + 1 >= MAX_TRANSIENT_ATTEMPTS) {
+      await markOutboxRowFailed(row.id, 'Giving up after repeated attempts — tap retry to try again.')
       await markLocalExpenseFailed(row.id)
       return
     }
