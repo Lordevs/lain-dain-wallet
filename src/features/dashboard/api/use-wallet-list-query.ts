@@ -1,6 +1,9 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, onlineManager } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
 import { toApiError } from '@/lib/api/errors'
+import { useAuthStore } from '@/store/use-auth-store'
+import { buildLocalWalletInput } from '@/lib/wallet-local-input'
+import { computeLocalWalletList } from '@/lib/wallet-local'
 import type { components } from '@/lib/api/schema'
 
 type WalletRow = components['schemas']['WalletRow']
@@ -19,6 +22,16 @@ export function useWalletListQuery(tab: 'receivables' | 'payables') {
   return useQuery({
     queryKey: ['wallet', 'list', tab],
     queryFn: async (): Promise<WalletRow[]> => {
+      // Offline fallback — same shape as useWalletSummaryQuery's. The tab
+      // only re-prioritizes live rows, it never filters them (see this
+      // hook's docstring; the dashboard filters/sorts client-side over the
+      // full list either way), so the locally computed list is returned
+      // whole for both tabs.
+      const ownerId = useAuthStore.getState().userProfile?.id
+      if (!onlineManager.isOnline() && ownerId) {
+        const input = await buildLocalWalletInput(ownerId)
+        if (input) return computeLocalWalletList(input)
+      }
       // tab/type/sort aren't declared as formal OpenApiParameters on the
       // backend (undocumented but functional — see WalletListView), so
       // the generated query type doesn't include them; the cast below is
@@ -32,5 +45,6 @@ export function useWalletListQuery(tab: 'receivables' | 'payables') {
     // Balances shift on every expense/settlement write — hold nothing
     // stale here, unlike the global 30s default.
     staleTime: 0,
+    networkMode: 'always',
   })
 }

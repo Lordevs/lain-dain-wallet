@@ -57,6 +57,42 @@ function trimInfiniteQueriesForPersist(client: PersistedClient): PersistedClient
   }
 }
 
+// Page trimming alone doesn't bound the blob: 30-day gcTime means every
+// per-entity query ever mounted ('expense', 'group', 'friendship',
+// 'settlement', …) accumulates in the same serialized blob indefinitely.
+// Past this cap, keep only the most recently *updated* queries (newest-
+// first greedy fill) — the least recently updated entries fall off first,
+// which is exactly the staleness order a cold start cares about. Nothing
+// evicted here is durable data: SQLite (expenses table + resource
+// snapshots) remains the offline source of truth, so an evicted entry just
+// means a skeleton-then-local-refetch on some future cold start, never
+// lost information. (Per-entry sizes are each entry's own JSON length —
+// an approximation that slightly undercounts wrapper overhead, harmless
+// for a soft cap.)
+const MAX_PERSISTED_CACHE_BYTES = 4 * 1024 * 1024
+
+function boundPersistedCacheSize(client: PersistedClient): PersistedClient {
+  const sized = client.clientState.queries
+    .map((query) => ({ query, bytes: JSON.stringify(query).length }))
+    .sort((a, b) => b.query.state.dataUpdatedAt - a.query.state.dataUpdatedAt)
+  const kept: Array<{ query: (typeof sized)[number]['query']; bytes: number }> = []
+  let total = 0
+  for (const entry of sized) {
+    if (total + entry.bytes > MAX_PERSISTED_CACHE_BYTES) break
+    kept.push(entry)
+    total += entry.bytes
+  }
+  return {
+    ...client,
+    clientState: {
+      ...client.clientState,
+      // Mutations are always kept — there are only ever a handful, and
+      // they're the one part of the dehydrated state with side effects.
+      queries: kept.map((entry) => entry.query),
+    },
+  }
+}
+
 const persister = createAsyncStoragePersister({
   storage: preferencesStorage,
   key: 'lain-dain-query-cache',
@@ -65,7 +101,7 @@ const persister = createAsyncStoragePersister({
   // (UserDefaults/SharedPreferences), which isn't designed for frequent
   // large writes the way localStorage is.
   throttleTime: 5000,
-  serialize: (client) => JSON.stringify(trimInfiniteQueriesForPersist(client)),
+  serialize: (client) => JSON.stringify(boundPersistedCacheSize(trimInfiniteQueriesForPersist(client))),
 })
 
 // @capacitor/network, not the browser's navigator.onLine — see

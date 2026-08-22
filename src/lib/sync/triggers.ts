@@ -1,6 +1,7 @@
 import { onlineManager } from '@tanstack/react-query'
 import { drainExpenseOutbox } from './expense-outbox'
 import { pullExpenseChanges } from './expense-pull'
+import { pullSettlementChanges } from './settlement-pull'
 import { useAuthStore } from '@/store/use-auth-store'
 import { drainMutationOutbox, drainMutationPrerequisites } from './mutation-outbox'
 import { pullOfflineSnapshot } from './offline-snapshot'
@@ -10,6 +11,7 @@ export async function syncOfflineData(): Promise<void> {
   await drainExpenseOutbox()
   await drainMutationOutbox()
   await pullExpenseChanges()
+  await pullSettlementChanges()
   await pullOfflineSnapshot()
 }
 

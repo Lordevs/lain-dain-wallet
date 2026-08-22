@@ -3,7 +3,10 @@ import { apiClient } from '@/lib/api/client'
 import { toApiError } from '@/lib/api/errors'
 import { onlineManager } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/use-auth-store'
-import { getSnapshotRecord, upsertSnapshotRecord } from '@/lib/sqlite/resource-snapshot-store'
+import { getSnapshotRecord, getResourceSnapshot, upsertSnapshotRecord } from '@/lib/sqlite/resource-snapshot-store'
+import { getLocalExpenses } from '@/lib/sqlite/expenses-store'
+import { computeLocalBudgetsOverview } from '@/lib/my-expenses-local'
+import type { SnapshotCategoryBudget } from '@/lib/sync/offline-snapshot'
 import type { components } from '@/lib/api/schema'
 
 // `year`/`month` are real, functional query params (see apps/expenses/
@@ -29,6 +32,33 @@ export function useCategoryBudgetsQuery(year?: number, month?: number) {
           ownerId, 'category-budgets', snapshotId,
         )
         if (local) return local
+        // No cached overview for this exact period — synthesize one from
+        // the offline snapshot's raw pieces (limits + visible categories +
+        // local expense history), so a never-viewed period still renders
+        // offline instead of dead-ending. Same assembly pattern as the
+        // my-expenses hooks' fallbacks.
+        const [allExpenses, settings, groups, categories, limits, profile] = await Promise.all([
+          getLocalExpenses(ownerId),
+          getSnapshotRecord<components['schemas']['PersonalExpenseSettings']>(ownerId, 'personal-settings', ownerId),
+          getResourceSnapshot<components['schemas']['Group']>(ownerId, 'groups'),
+          getResourceSnapshot<components['schemas']['Category']>(ownerId, 'categories'),
+          getResourceSnapshot<SnapshotCategoryBudget>(ownerId, 'budget-limits'),
+          getSnapshotRecord<components['schemas']['User']>(ownerId, 'profile', ownerId),
+        ])
+        if (settings && profile?.default_currency && categories.length > 0) {
+          return computeLocalBudgetsOverview({
+            allExpenses,
+            settings,
+            groupsById: new Map(groups.map((group) => [group.id, group])),
+            meId: ownerId,
+            viewerCurrency: profile.default_currency,
+            todayIso: new Date().toISOString().slice(0, 10),
+            year,
+            month,
+            limits: limits.map((budget) => ({ categoryId: budget.category.id, limitAmount: budget.limit_amount })),
+            categories,
+          })
+        }
       }
       const query: YearMonthQuery = year && month ? { year, month } : {}
       const { data, error } = await apiClient.GET('/api/expenses/my-expenses/category-budgets/', {

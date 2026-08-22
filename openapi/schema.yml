@@ -614,6 +614,15 @@ paths:
   /api/auth/profile/:
     get:
       operationId: auth_profile_retrieve
+      description: |-
+        Wrap a mutating handler so a client retrying the same logical request
+        (submitted while offline, retried on reconnect — possibly several
+        times) gets the original response replayed verbatim instead of the
+        mutation re-executing. See docs/architecture/offline-sync.md.
+
+        Usage: call self.idempotent_mutation(request, perform) from a view's
+        create()/update()/destroy(), where `perform` is a zero-arg callable
+        that actually runs the mutation and returns the Response to cache.
       tags:
       - auth
       security:
@@ -627,6 +636,15 @@ paths:
           description: ''
     put:
       operationId: auth_profile_update
+      description: |-
+        Wrap a mutating handler so a client retrying the same logical request
+        (submitted while offline, retried on reconnect — possibly several
+        times) gets the original response replayed verbatim instead of the
+        mutation re-executing. See docs/architecture/offline-sync.md.
+
+        Usage: call self.idempotent_mutation(request, perform) from a view's
+        create()/update()/destroy(), where `perform` is a zero-arg callable
+        that actually runs the mutation and returns the Response to cache.
       tags:
       - auth
       requestBody:
@@ -648,6 +666,15 @@ paths:
           description: ''
     patch:
       operationId: auth_profile_partial_update
+      description: |-
+        Wrap a mutating handler so a client retrying the same logical request
+        (submitted while offline, retried on reconnect — possibly several
+        times) gets the original response replayed verbatim instead of the
+        mutation re-executing. See docs/architecture/offline-sync.md.
+
+        Usage: call self.idempotent_mutation(request, perform) from a view's
+        create()/update()/destroy(), where `perform` is a zero-arg callable
+        that actually runs the mutation and returns the Response to cache.
       tags:
       - auth
       requestBody:
@@ -1051,6 +1078,15 @@ paths:
   /api/expenses/categories/:
     get:
       operationId: expenses_categories_list
+      description: |-
+        Wrap a mutating handler so a client retrying the same logical request
+        (submitted while offline, retried on reconnect — possibly several
+        times) gets the original response replayed verbatim instead of the
+        mutation re-executing. See docs/architecture/offline-sync.md.
+
+        Usage: call self.idempotent_mutation(request, perform) from a view's
+        create()/update()/destroy(), where `perform` is a zero-arg callable
+        that actually runs the mutation and returns the Response to cache.
       parameters:
       - name: cursor
         required: false
@@ -1077,19 +1113,28 @@ paths:
           description: ''
     post:
       operationId: expenses_categories_create
+      description: |-
+        Wrap a mutating handler so a client retrying the same logical request
+        (submitted while offline, retried on reconnect — possibly several
+        times) gets the original response replayed verbatim instead of the
+        mutation re-executing. See docs/architecture/offline-sync.md.
+
+        Usage: call self.idempotent_mutation(request, perform) from a view's
+        create()/update()/destroy(), where `perform` is a zero-arg callable
+        that actually runs the mutation and returns the Response to cache.
       tags:
       - expenses
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CategoryRequest'
+              $ref: '#/components/schemas/CategoryCreateRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/CategoryRequest'
+              $ref: '#/components/schemas/CategoryCreateRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/CategoryRequest'
+              $ref: '#/components/schemas/CategoryCreateRequest'
         required: true
       security:
       - jwtAuth: []
@@ -1098,11 +1143,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Category'
+                $ref: '#/components/schemas/CategoryCreate'
           description: ''
   /api/expenses/categories/{id}/:
     delete:
       operationId: expenses_categories_destroy
+      description: |-
+        Wrap a mutating handler so a client retrying the same logical request
+        (submitted while offline, retried on reconnect — possibly several
+        times) gets the original response replayed verbatim instead of the
+        mutation re-executing. See docs/architecture/offline-sync.md.
+
+        Usage: call self.idempotent_mutation(request, perform) from a view's
+        create()/update()/destroy(), where `perform` is a zero-arg callable
+        that actually runs the mutation and returns the Response to cache.
       parameters:
       - in: path
         name: id
@@ -1413,6 +1467,15 @@ paths:
   /api/expenses/friendships/{friendship_id}/settlements/:
     get:
       operationId: expenses_friendships_settlements_list
+      description: |-
+        Wrap a mutating handler so a client retrying the same logical request
+        (submitted while offline, retried on reconnect — possibly several
+        times) gets the original response replayed verbatim instead of the
+        mutation re-executing. See docs/architecture/offline-sync.md.
+
+        Usage: call self.idempotent_mutation(request, perform) from a view's
+        create()/update()/destroy(), where `perform` is a zero-arg callable
+        that actually runs the mutation and returns the Response to cache.
       parameters:
       - name: cursor
         required: false
@@ -1451,6 +1514,15 @@ paths:
           description: ''
     post:
       operationId: expenses_friendships_settlements_create
+      description: |-
+        Wrap a mutating handler so a client retrying the same logical request
+        (submitted while offline, retried on reconnect — possibly several
+        times) gets the original response replayed verbatim instead of the
+        mutation re-executing. See docs/architecture/offline-sync.md.
+
+        Usage: call self.idempotent_mutation(request, perform) from a view's
+        create()/update()/destroy(), where `perform` is a zero-arg callable
+        that actually runs the mutation and returns the Response to cache.
       parameters:
       - in: path
         name: friendship_id
@@ -1783,6 +1855,15 @@ paths:
   /api/expenses/groups/{group_id}/settlements/:
     get:
       operationId: expenses_groups_settlements_list
+      description: |-
+        Wrap a mutating handler so a client retrying the same logical request
+        (submitted while offline, retried on reconnect — possibly several
+        times) gets the original response replayed verbatim instead of the
+        mutation re-executing. See docs/architecture/offline-sync.md.
+
+        Usage: call self.idempotent_mutation(request, perform) from a view's
+        create()/update()/destroy(), where `perform` is a zero-arg callable
+        that actually runs the mutation and returns the Response to cache.
       parameters:
       - name: cursor
         required: false
@@ -1821,6 +1902,15 @@ paths:
           description: ''
     post:
       operationId: expenses_groups_settlements_create
+      description: |-
+        Wrap a mutating handler so a client retrying the same logical request
+        (submitted while offline, retried on reconnect — possibly several
+        times) gets the original response replayed verbatim instead of the
+        mutation re-executing. See docs/architecture/offline-sync.md.
+
+        Usage: call self.idempotent_mutation(request, perform) from a view's
+        create()/update()/destroy(), where `perform` is a zero-arg callable
+        that actually runs the mutation and returns the Response to cache.
       parameters:
       - in: path
         name: group_id
@@ -2326,6 +2416,15 @@ paths:
   /api/expenses/settlements/{id}/cancel/:
     post:
       operationId: expenses_settlements_cancel_create
+      description: |-
+        Wrap a mutating handler so a client retrying the same logical request
+        (submitted while offline, retried on reconnect — possibly several
+        times) gets the original response replayed verbatim instead of the
+        mutation re-executing. See docs/architecture/offline-sync.md.
+
+        Usage: call self.idempotent_mutation(request, perform) from a view's
+        create()/update()/destroy(), where `perform` is a zero-arg callable
+        that actually runs the mutation and returns the Response to cache.
       parameters:
       - in: path
         name: id
@@ -2343,6 +2442,15 @@ paths:
   /api/expenses/settlements/{id}/confirm/:
     post:
       operationId: expenses_settlements_confirm_create
+      description: |-
+        Wrap a mutating handler so a client retrying the same logical request
+        (submitted while offline, retried on reconnect — possibly several
+        times) gets the original response replayed verbatim instead of the
+        mutation re-executing. See docs/architecture/offline-sync.md.
+
+        Usage: call self.idempotent_mutation(request, perform) from a view's
+        create()/update()/destroy(), where `perform` is a zero-arg callable
+        that actually runs the mutation and returns the Response to cache.
       parameters:
       - in: path
         name: id
@@ -2364,6 +2472,15 @@ paths:
   /api/expenses/settlements/{id}/dispute/:
     post:
       operationId: expenses_settlements_dispute_create
+      description: |-
+        Wrap a mutating handler so a client retrying the same logical request
+        (submitted while offline, retried on reconnect — possibly several
+        times) gets the original response replayed verbatim instead of the
+        mutation re-executing. See docs/architecture/offline-sync.md.
+
+        Usage: call self.idempotent_mutation(request, perform) from a view's
+        create()/update()/destroy(), where `perform` is a zero-arg callable
+        that actually runs the mutation and returns the Response to cache.
       parameters:
       - in: path
         name: id
@@ -2859,6 +2976,15 @@ paths:
   /api/ledger/groups/:
     get:
       operationId: ledger_groups_list
+      description: |-
+        Wrap a mutating handler so a client retrying the same logical request
+        (submitted while offline, retried on reconnect — possibly several
+        times) gets the original response replayed verbatim instead of the
+        mutation re-executing. See docs/architecture/offline-sync.md.
+
+        Usage: call self.idempotent_mutation(request, perform) from a view's
+        create()/update()/destroy(), where `perform` is a zero-arg callable
+        that actually runs the mutation and returns the Response to cache.
       parameters:
       - name: cursor
         required: false
@@ -2890,16 +3016,25 @@ paths:
           description: ''
     post:
       operationId: ledger_groups_create
+      description: |-
+        Wrap a mutating handler so a client retrying the same logical request
+        (submitted while offline, retried on reconnect — possibly several
+        times) gets the original response replayed verbatim instead of the
+        mutation re-executing. See docs/architecture/offline-sync.md.
+
+        Usage: call self.idempotent_mutation(request, perform) from a view's
+        create()/update()/destroy(), where `perform` is a zero-arg callable
+        that actually runs the mutation and returns the Response to cache.
       tags:
       - ledger
       requestBody:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/GroupRequest'
+              $ref: '#/components/schemas/GroupCreateRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/GroupRequest'
+              $ref: '#/components/schemas/GroupCreateRequest'
         required: true
       security:
       - jwtAuth: []
@@ -2908,7 +3043,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Group'
+                $ref: '#/components/schemas/GroupCreate'
           description: ''
   /api/ledger/groups/{group_id}/currency-rates/:
     post:
@@ -3749,6 +3884,62 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedExpenseDeltaList'
           description: ''
+  /api/sync/settlements/:
+    get:
+      operationId: sync_settlements_list
+      description: |-
+        GET /api/sync/settlements/?since=<cursor> — every Settlement the
+        caller can see, changed since the given cursor. See
+        docs/architecture/offline-sync.md and ExpenseDeltaView's own
+        docstring for the same reasoning (this exists so the client can
+        locally recompute balances offline the same way it locally caches
+        expenses — see ExpenseDeltaView's docstring for why apps.sync
+        imports this rather than the reverse).
+
+        No is_deleted/deleted_at, unlike ExpenseDeltaSerializer — see
+        SettlementDeltaSerializer's own docstring for why that's safe here.
+
+        Deliberately NOT filtered by cleared_at — "cleared" only hides a
+        settlement from the user-visible ledger *history*, it never reverses
+        the settlement's already-applied effect on the balance (see
+        Settlement.cleared_at's own docstring), so a client recomputing a
+        balance from scratch needs every confirmed settlement regardless of
+        whether it's since been cleared.
+      parameters:
+      - name: since
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      tags:
+      - sync
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSettlementDeltaList'
+          description: ''
+  /api/sync/snapshot/:
+    get:
+      operationId: sync_snapshot_retrieve
+      description: |-
+        Bounded reconciliation snapshot for offline resources.
+
+        Expense history has its own paginated delta feed. These resources are
+        naturally small per user, so replacing their local snapshot on each
+        reconnect is simpler and, importantly, makes hard removals observable
+        without introducing tombstones into every existing domain model.
+      tags:
+      - sync
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
 components:
   schemas:
     ActionEnum:
@@ -4572,6 +4763,78 @@ components:
       - resets_on
       - total_budget
       - total_spent
+    CategoryCreate:
+      type: object
+      description: |-
+        POST-only: same fields as CategorySerializer, but `id` is writable
+        and optional — offline clients generate this UUID before queueing so
+        subsequent local work can refer to the category while its create
+        request is still pending. Kept off the base (read) serializer so the
+        OpenAPI schema still reports `id` as always-present on every actual
+        response (a Category's PK is never blank) instead of leaking this
+        create-time optionality into every consumer of the read shape.
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 100
+        icon:
+          type: string
+          maxLength: 50
+        color:
+          type: string
+          maxLength: 7
+        is_system:
+          type: boolean
+          readOnly: true
+        owner:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - color
+      - created_at
+      - icon
+      - is_system
+      - name
+      - owner
+    CategoryCreateRequest:
+      type: object
+      description: |-
+        POST-only: same fields as CategorySerializer, but `id` is writable
+        and optional — offline clients generate this UUID before queueing so
+        subsequent local work can refer to the category while its create
+        request is still pending. Kept off the base (read) serializer so the
+        OpenAPI schema still reports `id` as always-present on every actual
+        response (a Category's PK is never blank) instead of leaking this
+        create-time optionality into every consumer of the read shape.
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        icon:
+          type: string
+          minLength: 1
+          maxLength: 50
+        color:
+          type: string
+          minLength: 1
+          maxLength: 7
+      required:
+      - color
+      - icon
+      - name
     CategoryEnum:
       enum:
       - friends
@@ -4603,25 +4866,6 @@ components:
           maxItems: 200
       required:
       - category_ids
-    CategoryRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-        icon:
-          type: string
-          minLength: 1
-          maxLength: 50
-        color:
-          type: string
-          minLength: 1
-          maxLength: 7
-      required:
-      - color
-      - icon
-      - name
     Contact:
       type: object
       properties:
@@ -5959,6 +6203,9 @@ components:
     FriendshipStartRequest:
       type: object
       properties:
+        id:
+          type: string
+          format: uuid
         user_id:
           type: string
           format: uuid
@@ -6035,6 +6282,113 @@ components:
       - id
       - members
       - name
+    GroupCreate:
+      type: object
+      description: |-
+        POST-only: same fields as GroupSerializer, but `id` is writable and
+        optional — offline clients generate this UUID before queueing so
+        subsequent local work can refer to the group while its create request
+        is still pending. Kept off the base (read) serializer so the OpenAPI
+        schema still reports `id` as always-present on every actual response
+        (a Group's PK is never blank) instead of leaking this create-time
+        optionality into every consumer of the read shape.
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 150
+        description:
+          type: string
+          maxLength: 500
+        image:
+          type: string
+          format: uri
+          nullable: true
+        default_currency:
+          type: string
+          maxLength: 3
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+        smart_settle_enabled:
+          type: boolean
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupParticipant'
+          readOnly: true
+        currency_rates:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupCurrencyRate'
+          readOnly: true
+        created_by:
+          type: string
+          format: uuid
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - category
+      - created_at
+      - created_by
+      - currency_rates
+      - default_currency
+      - members
+      - name
+    GroupCreateRequest:
+      type: object
+      description: |-
+        POST-only: same fields as GroupSerializer, but `id` is writable and
+        optional — offline clients generate this UUID before queueing so
+        subsequent local work can refer to the group while its create request
+        is still pending. Kept off the base (read) serializer so the OpenAPI
+        schema still reports `id` as always-present on every actual response
+        (a Group's PK is never blank) instead of leaking this create-time
+        optionality into every consumer of the read shape.
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        description:
+          type: string
+          maxLength: 500
+        image:
+          type: string
+          format: binary
+          nullable: true
+        default_currency:
+          type: string
+          minLength: 1
+          maxLength: 3
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+        smart_settle_enabled:
+          type: boolean
+        member_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          writeOnly: true
+          maxItems: 200
+          minItems: 1
+        currency_rate_inputs:
+          type: string
+          writeOnly: true
+          description: 'JSON object mapping currency to rate, e.g. {"PKR": "270"}.'
+      required:
+      - category
+      - default_currency
+      - member_ids
+      - name
     GroupCurrencyRate:
       type: object
       properties:
@@ -6107,45 +6461,6 @@ components:
       - image
       - phone_number
       - role
-    GroupRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 150
-        description:
-          type: string
-          maxLength: 500
-        image:
-          type: string
-          format: binary
-          nullable: true
-        default_currency:
-          type: string
-          minLength: 1
-          maxLength: 3
-        category:
-          $ref: '#/components/schemas/CategoryEnum'
-        smart_settle_enabled:
-          type: boolean
-        member_ids:
-          type: array
-          items:
-            type: string
-            format: uuid
-          writeOnly: true
-          maxItems: 200
-          minItems: 1
-        currency_rate_inputs:
-          type: string
-          writeOnly: true
-          description: 'JSON object mapping currency to rate, e.g. {"PKR": "270"}.'
-      required:
-      - category
-      - default_currency
-      - member_ids
-      - name
     GroupSettlementCreate:
       type: object
       description: |-
@@ -7132,6 +7447,25 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RecurringExpenseRead'
+    PaginatedSettlementDeltaList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?since=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?since=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SettlementDelta'
     PaginatedSettlementReadList:
       type: object
       required:
@@ -8004,6 +8338,104 @@ components:
       description: |-
         * `friendship` - friendship
         * `group` - group
+    SettlementDelta:
+      type: object
+      description: |-
+        SettlementReadSerializer plus `updated_at` (the cursor field — see
+        apps.sync.pagination.DeltaCursorPagination) for the offline-sync
+        delta feed. Unlike ExpenseDeltaSerializer, no is_deleted/deleted_at:
+        Settlement isn't a SoftDeleteModel — a cancelled-while-pending
+        settlement is hard-deleted, but that's always a PENDING one that
+        never touched the ledger (services.cancel_settlement), so a client
+        that misses it in the feed loses nothing balance-affecting; nothing
+        else ever deletes a Settlement row.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        context:
+          $ref: '#/components/schemas/ScopeContextEnum'
+        friendship:
+          type: string
+          format: uuid
+          nullable: true
+        group:
+          type: string
+          format: uuid
+          nullable: true
+        payer:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          readOnly: true
+        payee:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          readOnly: true
+        recorded_by:
+          allOf:
+          - $ref: '#/components/schemas/UserSummary'
+          readOnly: true
+        amount:
+          type: string
+          readOnly: true
+        currency:
+          type: string
+          readOnly: true
+        method:
+          $ref: '#/components/schemas/MethodEnum'
+        date:
+          type: string
+          format: date
+        note:
+          type: string
+        receipt:
+          type: string
+          format: uri
+          nullable: true
+        status:
+          $ref: '#/components/schemas/StatusB77Enum'
+        responded_at:
+          type: string
+          format: date-time
+          nullable: true
+        needs_your_confirmation:
+          type: boolean
+          readOnly: true
+        can_dispute:
+          type: boolean
+          readOnly: true
+        can_cancel:
+          type: boolean
+          readOnly: true
+        reactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReactionRead'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - can_cancel
+      - can_dispute
+      - context
+      - created_at
+      - currency
+      - date
+      - id
+      - needs_your_confirmation
+      - payee
+      - payer
+      - reactions
+      - recorded_by
+      - updated_at
     SettlementRead:
       type: object
       properties:

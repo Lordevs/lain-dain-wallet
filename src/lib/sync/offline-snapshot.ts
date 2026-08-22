@@ -5,6 +5,16 @@ import type { components } from '@/lib/api/schema'
 import { useAuthStore } from '@/store/use-auth-store'
 import { replaceResourceSnapshot } from '@/lib/sqlite/resource-snapshot-store'
 
+/** One raw CategoryBudget row (apps.expenses.CategoryBudget via the
+ * backend's CategoryBudgetSerializer). Not a generated schema type — the
+ * snapshot endpoint's response isn't OpenAPI-typed; kept in sync with the
+ * serializer by hand. */
+export interface SnapshotCategoryBudget {
+  id: string
+  category: components['schemas']['Category']
+  limit_amount: string
+}
+
 interface OfflineSnapshot {
   profile: components['schemas']['User']
   groups: components['schemas']['Group'][]
@@ -14,6 +24,7 @@ interface OfflineSnapshot {
   settlements: components['schemas']['SettlementRead'][]
   recurring_expenses: components['schemas']['RecurringExpenseRead'][]
   notifications: components['schemas']['Notification'][]
+  category_budgets: SnapshotCategoryBudget[]
 }
 
 let pulling = false
@@ -50,6 +61,12 @@ export async function pullOfflineSnapshot(): Promise<void> {
         id: item.id, scopeId: item.group ?? item.friendship ?? null, data: item,
       }))),
       replaceResourceSnapshot(ownerId, 'notifications', snapshot.notifications.map((item) => ({ id: item.id, data: item }))),
+      // Raw budget-limit rows, scoped by category — distinct resource key
+      // from 'category-budgets', which stores the per-period *overview*
+      // responses the budgets query hook caches itself.
+      replaceResourceSnapshot(ownerId, 'budget-limits', snapshot.category_budgets.map((budget) => ({
+        id: budget.id, scopeId: budget.category.id, data: budget,
+      }))),
     ])
   } finally {
     pulling = false

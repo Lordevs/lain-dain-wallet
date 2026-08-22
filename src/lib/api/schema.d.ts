@@ -434,12 +434,42 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * @description Wrap a mutating handler so a client retrying the same logical request
+         *     (submitted while offline, retried on reconnect — possibly several
+         *     times) gets the original response replayed verbatim instead of the
+         *     mutation re-executing. See docs/architecture/offline-sync.md.
+         *
+         *     Usage: call self.idempotent_mutation(request, perform) from a view's
+         *     create()/update()/destroy(), where `perform` is a zero-arg callable
+         *     that actually runs the mutation and returns the Response to cache.
+         */
         get: operations["auth_profile_retrieve"];
+        /**
+         * @description Wrap a mutating handler so a client retrying the same logical request
+         *     (submitted while offline, retried on reconnect — possibly several
+         *     times) gets the original response replayed verbatim instead of the
+         *     mutation re-executing. See docs/architecture/offline-sync.md.
+         *
+         *     Usage: call self.idempotent_mutation(request, perform) from a view's
+         *     create()/update()/destroy(), where `perform` is a zero-arg callable
+         *     that actually runs the mutation and returns the Response to cache.
+         */
         put: operations["auth_profile_update"];
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
+        /**
+         * @description Wrap a mutating handler so a client retrying the same logical request
+         *     (submitted while offline, retried on reconnect — possibly several
+         *     times) gets the original response replayed verbatim instead of the
+         *     mutation re-executing. See docs/architecture/offline-sync.md.
+         *
+         *     Usage: call self.idempotent_mutation(request, perform) from a view's
+         *     create()/update()/destroy(), where `perform` is a zero-arg callable
+         *     that actually runs the mutation and returns the Response to cache.
+         */
         patch: operations["auth_profile_partial_update"];
         trace?: never;
     };
@@ -643,8 +673,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * @description Wrap a mutating handler so a client retrying the same logical request
+         *     (submitted while offline, retried on reconnect — possibly several
+         *     times) gets the original response replayed verbatim instead of the
+         *     mutation re-executing. See docs/architecture/offline-sync.md.
+         *
+         *     Usage: call self.idempotent_mutation(request, perform) from a view's
+         *     create()/update()/destroy(), where `perform` is a zero-arg callable
+         *     that actually runs the mutation and returns the Response to cache.
+         */
         get: operations["expenses_categories_list"];
         put?: never;
+        /**
+         * @description Wrap a mutating handler so a client retrying the same logical request
+         *     (submitted while offline, retried on reconnect — possibly several
+         *     times) gets the original response replayed verbatim instead of the
+         *     mutation re-executing. See docs/architecture/offline-sync.md.
+         *
+         *     Usage: call self.idempotent_mutation(request, perform) from a view's
+         *     create()/update()/destroy(), where `perform` is a zero-arg callable
+         *     that actually runs the mutation and returns the Response to cache.
+         */
         post: operations["expenses_categories_create"];
         delete?: never;
         options?: never;
@@ -662,6 +712,16 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
+        /**
+         * @description Wrap a mutating handler so a client retrying the same logical request
+         *     (submitted while offline, retried on reconnect — possibly several
+         *     times) gets the original response replayed verbatim instead of the
+         *     mutation re-executing. See docs/architecture/offline-sync.md.
+         *
+         *     Usage: call self.idempotent_mutation(request, perform) from a view's
+         *     create()/update()/destroy(), where `perform` is a zero-arg callable
+         *     that actually runs the mutation and returns the Response to cache.
+         */
         delete: operations["expenses_categories_destroy"];
         options?: never;
         head?: never;
@@ -817,8 +877,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * @description Wrap a mutating handler so a client retrying the same logical request
+         *     (submitted while offline, retried on reconnect — possibly several
+         *     times) gets the original response replayed verbatim instead of the
+         *     mutation re-executing. See docs/architecture/offline-sync.md.
+         *
+         *     Usage: call self.idempotent_mutation(request, perform) from a view's
+         *     create()/update()/destroy(), where `perform` is a zero-arg callable
+         *     that actually runs the mutation and returns the Response to cache.
+         */
         get: operations["expenses_friendships_settlements_list"];
         put?: never;
+        /**
+         * @description Wrap a mutating handler so a client retrying the same logical request
+         *     (submitted while offline, retried on reconnect — possibly several
+         *     times) gets the original response replayed verbatim instead of the
+         *     mutation re-executing. See docs/architecture/offline-sync.md.
+         *
+         *     Usage: call self.idempotent_mutation(request, perform) from a view's
+         *     create()/update()/destroy(), where `perform` is a zero-arg callable
+         *     that actually runs the mutation and returns the Response to cache.
+         */
         post: operations["expenses_friendships_settlements_create"];
         delete?: never;
         options?: never;
@@ -984,8 +1064,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * @description Wrap a mutating handler so a client retrying the same logical request
+         *     (submitted while offline, retried on reconnect — possibly several
+         *     times) gets the original response replayed verbatim instead of the
+         *     mutation re-executing. See docs/architecture/offline-sync.md.
+         *
+         *     Usage: call self.idempotent_mutation(request, perform) from a view's
+         *     create()/update()/destroy(), where `perform` is a zero-arg callable
+         *     that actually runs the mutation and returns the Response to cache.
+         */
         get: operations["expenses_groups_settlements_list"];
         put?: never;
+        /**
+         * @description Wrap a mutating handler so a client retrying the same logical request
+         *     (submitted while offline, retried on reconnect — possibly several
+         *     times) gets the original response replayed verbatim instead of the
+         *     mutation re-executing. See docs/architecture/offline-sync.md.
+         *
+         *     Usage: call self.idempotent_mutation(request, perform) from a view's
+         *     create()/update()/destroy(), where `perform` is a zero-arg callable
+         *     that actually runs the mutation and returns the Response to cache.
+         */
         post: operations["expenses_groups_settlements_create"];
         delete?: never;
         options?: never;
@@ -1277,6 +1377,16 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /**
+         * @description Wrap a mutating handler so a client retrying the same logical request
+         *     (submitted while offline, retried on reconnect — possibly several
+         *     times) gets the original response replayed verbatim instead of the
+         *     mutation re-executing. See docs/architecture/offline-sync.md.
+         *
+         *     Usage: call self.idempotent_mutation(request, perform) from a view's
+         *     create()/update()/destroy(), where `perform` is a zero-arg callable
+         *     that actually runs the mutation and returns the Response to cache.
+         */
         post: operations["expenses_settlements_cancel_create"];
         delete?: never;
         options?: never;
@@ -1293,6 +1403,16 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /**
+         * @description Wrap a mutating handler so a client retrying the same logical request
+         *     (submitted while offline, retried on reconnect — possibly several
+         *     times) gets the original response replayed verbatim instead of the
+         *     mutation re-executing. See docs/architecture/offline-sync.md.
+         *
+         *     Usage: call self.idempotent_mutation(request, perform) from a view's
+         *     create()/update()/destroy(), where `perform` is a zero-arg callable
+         *     that actually runs the mutation and returns the Response to cache.
+         */
         post: operations["expenses_settlements_confirm_create"];
         delete?: never;
         options?: never;
@@ -1309,6 +1429,16 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /**
+         * @description Wrap a mutating handler so a client retrying the same logical request
+         *     (submitted while offline, retried on reconnect — possibly several
+         *     times) gets the original response replayed verbatim instead of the
+         *     mutation re-executing. See docs/architecture/offline-sync.md.
+         *
+         *     Usage: call self.idempotent_mutation(request, perform) from a view's
+         *     create()/update()/destroy(), where `perform` is a zero-arg callable
+         *     that actually runs the mutation and returns the Response to cache.
+         */
         post: operations["expenses_settlements_dispute_create"];
         delete?: never;
         options?: never;
@@ -1644,8 +1774,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * @description Wrap a mutating handler so a client retrying the same logical request
+         *     (submitted while offline, retried on reconnect — possibly several
+         *     times) gets the original response replayed verbatim instead of the
+         *     mutation re-executing. See docs/architecture/offline-sync.md.
+         *
+         *     Usage: call self.idempotent_mutation(request, perform) from a view's
+         *     create()/update()/destroy(), where `perform` is a zero-arg callable
+         *     that actually runs the mutation and returns the Response to cache.
+         */
         get: operations["ledger_groups_list"];
         put?: never;
+        /**
+         * @description Wrap a mutating handler so a client retrying the same logical request
+         *     (submitted while offline, retried on reconnect — possibly several
+         *     times) gets the original response replayed verbatim instead of the
+         *     mutation re-executing. See docs/architecture/offline-sync.md.
+         *
+         *     Usage: call self.idempotent_mutation(request, perform) from a view's
+         *     create()/update()/destroy(), where `perform` is a zero-arg callable
+         *     that actually runs the mutation and returns the Response to cache.
+         */
         post: operations["ledger_groups_create"];
         delete?: never;
         options?: never;
@@ -2204,6 +2354,65 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sync/settlements/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description GET /api/sync/settlements/?since=<cursor> — every Settlement the
+         *     caller can see, changed since the given cursor. See
+         *     docs/architecture/offline-sync.md and ExpenseDeltaView's own
+         *     docstring for the same reasoning (this exists so the client can
+         *     locally recompute balances offline the same way it locally caches
+         *     expenses — see ExpenseDeltaView's docstring for why apps.sync
+         *     imports this rather than the reverse).
+         *
+         *     No is_deleted/deleted_at, unlike ExpenseDeltaSerializer — see
+         *     SettlementDeltaSerializer's own docstring for why that's safe here.
+         *
+         *     Deliberately NOT filtered by cleared_at — "cleared" only hides a
+         *     settlement from the user-visible ledger *history*, it never reverses
+         *     the settlement's already-applied effect on the balance (see
+         *     Settlement.cleared_at's own docstring), so a client recomputing a
+         *     balance from scratch needs every confirmed settlement regardless of
+         *     whether it's since been cleared.
+         */
+        get: operations["sync_settlements_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sync/snapshot/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Bounded reconciliation snapshot for offline resources.
+         *
+         *     Expense history has its own paginated delta feed. These resources are
+         *     naturally small per user, so replacing their local snapshot on each
+         *     reconnect is simpler and, importantly, makes hard removals observable
+         *     without introducing tombstones into every existing domain model.
+         */
+        get: operations["sync_snapshot_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2537,6 +2746,43 @@ export interface components {
             categories: components["schemas"]["CategoryBudgetItem"][];
         };
         /**
+         * @description POST-only: same fields as CategorySerializer, but `id` is writable
+         *     and optional — offline clients generate this UUID before queueing so
+         *     subsequent local work can refer to the category while its create
+         *     request is still pending. Kept off the base (read) serializer so the
+         *     OpenAPI schema still reports `id` as always-present on every actual
+         *     response (a Category's PK is never blank) instead of leaking this
+         *     create-time optionality into every consumer of the read shape.
+         */
+        CategoryCreate: {
+            /** Format: uuid */
+            id?: string;
+            name: string;
+            icon: string;
+            color: string;
+            readonly is_system: boolean;
+            /** Format: uuid */
+            readonly owner: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        /**
+         * @description POST-only: same fields as CategorySerializer, but `id` is writable
+         *     and optional — offline clients generate this UUID before queueing so
+         *     subsequent local work can refer to the category while its create
+         *     request is still pending. Kept off the base (read) serializer so the
+         *     OpenAPI schema still reports `id` as always-present on every actual
+         *     response (a Category's PK is never blank) instead of leaking this
+         *     create-time optionality into every consumer of the read shape.
+         */
+        CategoryCreateRequest: {
+            /** Format: uuid */
+            id?: string;
+            name: string;
+            icon: string;
+            color: string;
+        };
+        /**
          * @description * `friends` - Friends
          *     * `family` - Family
          *     * `colleague` - Colleague
@@ -2550,11 +2796,6 @@ export interface components {
         CategoryEnum: "friends" | "family" | "colleague" | "roommate" | "classmate" | "travel" | "business" | "other";
         CategoryReorderRequest: {
             category_ids: string[];
-        };
-        CategoryRequest: {
-            name: string;
-            icon: string;
-            color: string;
         };
         Contact: {
             /** Format: uuid */
@@ -3206,6 +3447,8 @@ export interface components {
         };
         FriendshipStartRequest: {
             /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
             user_id: string;
             currency?: string | null;
             /** Format: decimal */
@@ -3234,6 +3477,55 @@ export interface components {
             readonly created_by: string;
             /** Format: date-time */
             readonly created_at: string;
+        };
+        /**
+         * @description POST-only: same fields as GroupSerializer, but `id` is writable and
+         *     optional — offline clients generate this UUID before queueing so
+         *     subsequent local work can refer to the group while its create request
+         *     is still pending. Kept off the base (read) serializer so the OpenAPI
+         *     schema still reports `id` as always-present on every actual response
+         *     (a Group's PK is never blank) instead of leaking this create-time
+         *     optionality into every consumer of the read shape.
+         */
+        GroupCreate: {
+            /** Format: uuid */
+            id?: string;
+            name: string;
+            description?: string;
+            /** Format: uri */
+            image?: string | null;
+            default_currency: string;
+            category: components["schemas"]["CategoryEnum"];
+            smart_settle_enabled?: boolean;
+            readonly members: components["schemas"]["GroupParticipant"][];
+            readonly currency_rates: components["schemas"]["GroupCurrencyRate"][];
+            /** Format: uuid */
+            readonly created_by: string;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        /**
+         * @description POST-only: same fields as GroupSerializer, but `id` is writable and
+         *     optional — offline clients generate this UUID before queueing so
+         *     subsequent local work can refer to the group while its create request
+         *     is still pending. Kept off the base (read) serializer so the OpenAPI
+         *     schema still reports `id` as always-present on every actual response
+         *     (a Group's PK is never blank) instead of leaking this create-time
+         *     optionality into every consumer of the read shape.
+         */
+        GroupCreateRequest: {
+            /** Format: uuid */
+            id?: string;
+            name: string;
+            description?: string;
+            /** Format: binary */
+            image?: string | null;
+            default_currency: string;
+            category: components["schemas"]["CategoryEnum"];
+            smart_settle_enabled?: boolean;
+            member_ids: string[];
+            /** @description JSON object mapping currency to rate, e.g. {"PKR": "270"}. */
+            currency_rate_inputs?: string;
         };
         GroupCurrencyRate: {
             readonly currency: string;
@@ -3268,18 +3560,6 @@ export interface components {
             phone_number: string;
             image: string | null;
             role: string;
-        };
-        GroupRequest: {
-            name: string;
-            description?: string;
-            /** Format: binary */
-            image?: string | null;
-            default_currency: string;
-            category: components["schemas"]["CategoryEnum"];
-            smart_settle_enabled?: boolean;
-            member_ids: string[];
-            /** @description JSON object mapping currency to rate, e.g. {"PKR": "270"}. */
-            currency_rate_inputs?: string;
         };
         /**
          * @description For a group's "Settle Up" screen — one Confirm tap can pay/receive
@@ -3830,6 +4110,19 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["RecurringExpenseRead"][];
         };
+        PaginatedSettlementDeltaList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?since=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?since=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["SettlementDelta"][];
+        };
         PaginatedSettlementReadList: {
             /**
              * Format: uri
@@ -4325,6 +4618,47 @@ export interface components {
          * @enum {string}
          */
         ScopeEnum: "friendship" | "group";
+        /**
+         * @description SettlementReadSerializer plus `updated_at` (the cursor field — see
+         *     apps.sync.pagination.DeltaCursorPagination) for the offline-sync
+         *     delta feed. Unlike ExpenseDeltaSerializer, no is_deleted/deleted_at:
+         *     Settlement isn't a SoftDeleteModel — a cancelled-while-pending
+         *     settlement is hard-deleted, but that's always a PENDING one that
+         *     never touched the ledger (services.cancel_settlement), so a client
+         *     that misses it in the feed loses nothing balance-affecting; nothing
+         *     else ever deletes a Settlement row.
+         */
+        SettlementDelta: {
+            /** Format: uuid */
+            readonly id: string;
+            context: components["schemas"]["ScopeContextEnum"];
+            /** Format: uuid */
+            friendship?: string | null;
+            /** Format: uuid */
+            group?: string | null;
+            readonly payer: components["schemas"]["UserSummary"];
+            readonly payee: components["schemas"]["UserSummary"];
+            readonly recorded_by: components["schemas"]["UserSummary"];
+            readonly amount: string;
+            readonly currency: string;
+            method?: components["schemas"]["MethodEnum"];
+            /** Format: date */
+            date: string;
+            note?: string;
+            /** Format: uri */
+            receipt?: string | null;
+            status?: components["schemas"]["StatusB77Enum"];
+            /** Format: date-time */
+            responded_at?: string | null;
+            readonly needs_your_confirmation: boolean;
+            readonly can_dispute: boolean;
+            readonly can_cancel: boolean;
+            readonly reactions: components["schemas"]["ReactionRead"][];
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
         SettlementRead: {
             /** Format: uuid */
             readonly id: string;
@@ -5363,9 +5697,9 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CategoryRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["CategoryRequest"];
-                "multipart/form-data": components["schemas"]["CategoryRequest"];
+                "application/json": components["schemas"]["CategoryCreateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["CategoryCreateRequest"];
+                "multipart/form-data": components["schemas"]["CategoryCreateRequest"];
             };
         };
         responses: {
@@ -5374,7 +5708,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Category"];
+                    "application/json": components["schemas"]["CategoryCreate"];
                 };
             };
         };
@@ -6634,8 +6968,8 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "multipart/form-data": components["schemas"]["GroupRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["GroupRequest"];
+                "multipart/form-data": components["schemas"]["GroupCreateRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["GroupCreateRequest"];
             };
         };
         responses: {
@@ -6644,7 +6978,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Group"];
+                    "application/json": components["schemas"]["GroupCreate"];
                 };
             };
         };
@@ -7310,6 +7644,46 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PaginatedExpenseDeltaList"];
                 };
+            };
+        };
+    };
+    sync_settlements_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                since?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedSettlementDeltaList"];
+                };
+            };
+        };
+    };
+    sync_snapshot_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
