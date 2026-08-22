@@ -120,8 +120,9 @@ export function useCapacitorSetup() {
           console.log('[App] Returned to foreground')
           // Retry anything still queued in an offline outbox — see
           // src/lib/sync/triggers.ts for the reconnect-triggered sibling
-          // of this. void: drainExpenseOutbox never rejects (see its own
-          // doc comment), nothing here needs to await it.
+          // of this. void: syncOfflineData never rejects (its channel
+          // runner swallows even unexpected stage errors), and nothing
+          // here needs to await it.
           void syncOfflineData()
         }
       })

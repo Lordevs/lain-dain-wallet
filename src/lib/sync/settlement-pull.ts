@@ -29,10 +29,10 @@ let isPulling = false
  * only ever holds the current *uncleared* subset for the existing
  * settlement-detail/action screens; this one is append/update-only via
  * delta pull and keeps every settlement ever seen, cleared or not. */
-export async function pullSettlementChanges(): Promise<void> {
-  if (isPulling || !onlineManager.isOnline()) return
+export async function pullSettlementChanges(): Promise<boolean> {
+  if (isPulling || !onlineManager.isOnline()) return true
   const ownerId = useAuthStore.getState().userProfile?.id
-  if (!ownerId) return
+  if (!ownerId) return true
 
   isPulling = true
   try {
@@ -43,7 +43,9 @@ export async function pullSettlementChanges(): Promise<void> {
       const { data, error } = await apiClient.GET('/api/sync/settlements/', {
         params: { query: cursor ? { since: cursor } : {} },
       })
-      if (error || !data) return
+      // Same contract as pullExpenseChanges — any failed page fetch is a
+      // transient failure for backoff accounting.
+      if (error || !data) return false
       const page = data as unknown as SettlementDeltaPage
       for (const settlement of page.results) {
         await upsertSnapshotRecord(ownerId, 'settlement-ledger', {
@@ -61,6 +63,7 @@ export async function pullSettlementChanges(): Promise<void> {
       await setSyncCursor(resource, nextCursor)
       cursor = nextCursor
     }
+    return true
   } finally {
     isPulling = false
   }

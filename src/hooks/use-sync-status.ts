@@ -37,7 +37,7 @@ export function useSyncStatus() {
     setIsRetrying(true)
     try {
       await Promise.all([retryFailedExpenseRows(ownerId), retryFailedMutations(ownerId)])
-      await syncOfflineData()
+      await syncOfflineData({ force: true })
       await queryClient.invalidateQueries({ queryKey: ['offline-sync-status', ownerId] })
     } finally {
       setIsRetrying(false)

@@ -29,10 +29,14 @@ interface OfflineSnapshot {
 
 let pulling = false
 
-export async function pullOfflineSnapshot(): Promise<void> {
-  if (pulling || !onlineManager.isOnline()) return
+/** Returns whether the snapshot was fetched and fully replaced (or the
+ * call was a benign skip — held mutex/offline/signed out — which reports
+ * `true` like every other stage); a failed fetch reports `false` for
+ * backoff accounting. Never rejects. */
+export async function pullOfflineSnapshot(): Promise<boolean> {
+  if (pulling || !onlineManager.isOnline()) return true
   const ownerId = useAuthStore.getState().userProfile?.id
-  if (!ownerId) return
+  if (!ownerId) return true
   pulling = true
   try {
     let token = useAuthStore.getState().accessToken
@@ -44,7 +48,7 @@ export async function pullOfflineSnapshot(): Promise<void> {
       token = await refreshAccessToken()
       if (token) response = await send()
     }
-    if (!response.ok) return
+    if (!response.ok) return false
     const snapshot = await response.json() as OfflineSnapshot
     await Promise.all([
       replaceResourceSnapshot(ownerId, 'profile', [{ id: ownerId, data: snapshot.profile }]),
@@ -68,6 +72,7 @@ export async function pullOfflineSnapshot(): Promise<void> {
         id: budget.id, scopeId: budget.category.id, data: budget,
       }))),
     ])
+    return true
   } finally {
     pulling = false
   }

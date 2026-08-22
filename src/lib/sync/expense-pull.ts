@@ -14,11 +14,15 @@ interface ExpenseDeltaPage {
 let isPulling = false
 
 /** Pulls every unseen expense change and advances the cursor only after
- * the complete page has been durably written to SQLite. */
-export async function pullExpenseChanges(): Promise<void> {
-  if (isPulling || !onlineManager.isOnline()) return
+ * the complete page has been durably written to SQLite. Returns whether
+ * the feed reached its watermark without a failed page fetch — skips (a
+ * held mutex or being called offline/signed out) also report `true`, so
+ * only real network/server failures reach backoff accounting. Never
+ * rejects; see triggers.ts's runSyncChannel for how this is consumed. */
+export async function pullExpenseChanges(): Promise<boolean> {
+  if (isPulling || !onlineManager.isOnline()) return true
   const ownerId = useAuthStore.getState().userProfile?.id
-  if (!ownerId) return
+  if (!ownerId) return true
 
   isPulling = true
   try {
@@ -29,7 +33,11 @@ export async function pullExpenseChanges(): Promise<void> {
       const { data, error } = await apiClient.GET('/api/sync/expenses/', {
         params: { query: cursor ? { since: cursor } : {} },
       })
-      if (error || !data) return
+      // Any failed page fetch backs off the whole channel: pull endpoints
+      // are authenticated GETs this client is already authorized for, so a
+      // persistent error here means something is wrong enough that pacing
+      // retries is right regardless of the specific status.
+      if (error || !data) return false
       const page = data as unknown as ExpenseDeltaPage
       for (const expense of page.results) {
         await upsertServerExpense(ownerId, expense)
@@ -55,6 +63,7 @@ export async function pullExpenseChanges(): Promise<void> {
     queryClient.invalidateQueries({ queryKey: ['friendship-transactions'] })
     queryClient.invalidateQueries({ queryKey: ['group-transactions'] })
     queryClient.invalidateQueries({ queryKey: ['wallet'] })
+    return true
   } finally {
     isPulling = false
   }

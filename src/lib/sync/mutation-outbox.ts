@@ -177,10 +177,15 @@ function isPrerequisiteCreate(row: MutationOutboxRow): boolean {
     || row.path === '/api/expenses/categories/'
 }
 
+/** Shared by both entry points below. Returns whether the pass finished
+ * without a transient failure — with one deliberate exception: an early
+ * skip (mutex already held, offline, signed out) also reports `true`,
+ * because backoff accounting must only count attempts that actually hit
+ * the network, never concurrent-invocation no-ops. */
 async function drainMutations(predicate: (row: MutationOutboxRow) => boolean): Promise<boolean> {
-  if (draining || !onlineManager.isOnline()) return false
+  if (draining || !onlineManager.isOnline()) return true
   const ownerId = useAuthStore.getState().userProfile?.id
-  if (!ownerId) return false
+  if (!ownerId) return true
   let completed = true
   draining = true
   try {
@@ -214,6 +219,6 @@ export async function drainMutationPrerequisites(): Promise<boolean> {
   return drainMutations(isPrerequisiteCreate)
 }
 
-export async function drainMutationOutbox(): Promise<void> {
-  await drainMutations(() => true)
+export async function drainMutationOutbox(): Promise<boolean> {
+  return drainMutations(() => true)
 }

@@ -283,12 +283,20 @@ let isDraining = false
  * permission) error is marked 'failed' and skipped, not retried forever;
  * everything else stops the drain early (network's down again, or
  * something unexpected) so remaining rows keep their place in line for
- * the next trigger. */
-export async function drainExpenseOutbox(): Promise<void> {
-  if (isDraining || !onlineManager.isOnline()) return
+ * the next trigger.
+ *
+ * Returns whether this pass finished without hitting a transient failure
+ * — the signal syncOfflineData's backoff accounting uses (a held mutex or
+ * an upfront skip reports `true`: nothing was attempted, so there's
+ * nothing to penalize). Never rejects, so every call site (a reconnect
+ * listener, an app-foreground listener, ...) can fire it without needing
+ * its own .catch(). */
+export async function drainExpenseOutbox(): Promise<boolean> {
+  if (isDraining || !onlineManager.isOnline()) return true
   const ownerId = useAuthStore.getState().userProfile?.id
-  if (!ownerId) return
+  if (!ownerId) return true
   isDraining = true
+  let completed = true
   try {
     await recoverInterruptedOutboxRows(ownerId)
     const rows = await getPendingOutboxRows(ownerId)
@@ -297,16 +305,17 @@ export async function drainExpenseOutbox(): Promise<void> {
         await drainOneRow(row)
       } catch {
         // Transient failure — drainOneRow already reverted the row to
-        // pending. Stop this pass (see drainOneRow's own comment) without
-        // rejecting drainExpenseOutbox itself, so every call site (a
-        // reconnect listener, an app-foreground listener, ...) can fire
-        // it without needing its own .catch().
+        // pending. Stop this pass (see drainOneRow's own comment) and
+        // report it, so the caller's backoff paces the retry instead of
+        // the next trigger burning another attempt immediately.
+        completed = false
         break
       }
     }
   } finally {
     isDraining = false
   }
+  return completed
 }
 
 // Same reasoning as mutation-outbox.ts's identical constant — an
