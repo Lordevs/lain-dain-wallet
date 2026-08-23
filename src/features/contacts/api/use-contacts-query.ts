@@ -1,6 +1,8 @@
-import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query'
+import { useInfiniteQuery, keepPreviousData, onlineManager } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
 import { toApiError } from '@/lib/api/errors'
+import { useAuthStore } from '@/store/use-auth-store'
+import { getResourceSnapshot, upsertSnapshotRecord } from '@/lib/sqlite/resource-snapshot-store'
 import type { components } from '@/lib/api/schema'
 
 type Contact = components['schemas']['Contact']
@@ -21,7 +23,25 @@ async function fetchContactsPage(
   search: string | undefined,
   onLainDain: boolean,
 ): Promise<PaginatedContactList> {
-  const query: ContactsQueryParams = { on_lain_dain: onLainDain ? 'true' : 'false' }
+  const ownerId = useAuthStore.getState().userProfile?.id
+  const scopeId = onLainDain ? 'true' : 'false'
+  if (!onlineManager.isOnline() && ownerId) {
+    // No dedicated pull mechanism for contacts (unlike expenses/groups/
+    // friendships) — this accumulates whatever's been fetched from the
+    // real endpoint below across past online sessions, same "only what
+    // you've actually scrolled to is available offline" degradation as
+    // the expense list. Matches the backend's own search semantics
+    // (apps/contacts/views.py: case-folded substring on display_name or
+    // phone_number) so results don't shift once back online.
+    const all = await getResourceSnapshot<Contact>(ownerId, 'contacts', scopeId)
+    const needle = search?.trim().toLowerCase()
+    const results = needle
+      ? all.filter((c) => c.display_name.toLowerCase().includes(needle) || c.phone_number.toLowerCase().includes(needle))
+      : all
+    return { results, next: null, previous: null }
+  }
+
+  const query: ContactsQueryParams = { on_lain_dain: scopeId }
   if (cursor) query.cursor = cursor
   if (search) query.search = search
 
@@ -32,6 +52,16 @@ async function fetchContactsPage(
     params: { query: query as Record<string, string> },
   })
   if (error) throw toApiError(error)
+  if (ownerId) {
+    try {
+      await Promise.all(data.results.map((contact) =>
+        upsertSnapshotRecord(ownerId, 'contacts', { id: contact.id, scopeId, data: contact }),
+      ))
+    } catch (cacheError) {
+      // A local persistence failure must not hide a valid online response.
+      console.error('Failed to cache contacts', cacheError)
+    }
+  }
   return data
 }
 
@@ -70,6 +100,7 @@ export function useContactsQuery(onLainDain: boolean, search?: string) {
     // this, every keystroke would flash the list empty instead of keeping
     // the previous results visible until the new ones land.
     placeholderData: keepPreviousData,
+    networkMode: 'always',
   })
 
   const contacts: Contact[] = query.data?.pages.flatMap((page) => page.results) ?? []

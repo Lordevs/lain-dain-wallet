@@ -241,6 +241,49 @@ export function computeLocalUserLedgers(
   }
 }
 
+/** Local replica of apps/expenses/services.py's `compute_ledger_adjustment`
+ * — for every currency shared with this one person (per scope, same
+ * unconverted `ledgers` computeLocalUserLedgers already produces), how
+ * much of what's owed in each direction nets off without money changing
+ * hands. Only currencies with a nonzero amount owed in BOTH directions
+ * are returned. */
+export function computeLocalLedgerAdjustment(
+  input: LocalWalletInput,
+  otherUserId: string,
+): components['schemas']['LedgerAdjustment'][] {
+  const local = computeLocalUserLedgers(input, otherUserId)
+  if (!local) return []
+
+  const byCurrency = new Map<string, components['schemas']['UserLedgerItem'][]>()
+  for (const ledger of local.ledgers) {
+    if (Number(ledger.net_amount) === 0) continue
+    const list = byCurrency.get(ledger.currency) ?? []
+    list.push(ledger)
+    byCurrency.set(ledger.currency, list)
+  }
+
+  const results: components['schemas']['LedgerAdjustment'][] = []
+  for (const [currency, ledgers] of byCurrency) {
+    let owedToYouCents = 0
+    let youOweCents = 0
+    for (const ledger of ledgers) {
+      const cents = Math.round(Number(ledger.net_amount) * 100)
+      if (ledger.direction === 'owed_to_you') owedToYouCents += cents
+      else if (ledger.direction === 'you_owe') youOweCents += cents
+    }
+    const adjustableCents = Math.min(owedToYouCents, youOweCents)
+    if (adjustableCents <= 0) continue
+    results.push({
+      currency,
+      adjustable_amount: toAmount(adjustableCents),
+      you_owe_total: toAmount(youOweCents),
+      owed_to_you_total: toAmount(owedToYouCents),
+      ledgers,
+    })
+  }
+  return results
+}
+
 export function computeLocalWalletSummary(input: LocalWalletInput): WalletSummary {
   const people = computeLocalWalletPeople(input)
   let receivableCents = 0

@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient, onlineManager } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
 import { ApiError, toApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
@@ -33,22 +33,50 @@ function invalidateForSettlement(queryClient: ReturnType<typeof useQueryClient>,
   queryClient.invalidateQueries({ queryKey: ['notifications'] })
 }
 
+/** Same intent as invalidateForSettlement, for the rare case there's no
+ * local copy of the settlement to read friendship/group/other-party from
+ * (queued offline with nothing cached — see the two mutations below) — a
+ * broader net across every scope-scoped query instead of a targeted one. */
+function invalidateBroadlyForSettlement(queryClient: ReturnType<typeof useQueryClient>, id: string) {
+  queryClient.invalidateQueries({ queryKey: ['settlement', id] })
+  queryClient.invalidateQueries({ queryKey: ['friendship-transactions'] })
+  queryClient.invalidateQueries({ queryKey: ['group-transactions'] })
+  queryClient.invalidateQueries({ queryKey: ['group-balance'] })
+  queryClient.invalidateQueries({ queryKey: ['user-ledgers'] })
+  queryClient.invalidateQueries({ queryKey: ['wallet'] })
+  queryClient.invalidateQueries({ queryKey: ['notifications'] })
+}
+
 /** POST /api/expenses/settlements/{id}/confirm/ — only the party who
  * isn't recorded_by can confirm a pending settlement; applies the ledger
  * update immediately on success. */
 export function useConfirmSettlementMutation() {
   const queryClient = useQueryClient()
-  return useMutation<SettlementRead, ApiError, string>({
+  return useMutation<SettlementRead | undefined, ApiError, string>({
     mutationFn: async (id: string) => {
       const ownerId = useAuthStore.getState().userProfile?.id
       const cached = queryClient.getQueryData<SettlementRead>(['settlement', id])
         ?? (ownerId ? await getSnapshotRecord<SettlementRead>(ownerId, 'settlements', id) : null)
-      if (!cached) {
+      // Skipping the queue only when genuinely online — not just whenever
+      // there's no cached copy, which used to mean confirming a
+      // never-viewed settlement while offline threw instead of queueing.
+      if (!cached && onlineManager.isOnline()) {
         const { data, error } = await apiClient.POST('/api/expenses/settlements/{id}/confirm/', {
           params: { path: { id } },
         })
         if (error) throw toApiError(error)
         return data
+      }
+      if (!cached) {
+        // Offline with nothing cached to build a typed optimistic
+        // SettlementRead from (payer/payee/amount/etc. all unknown) —
+        // still queue the actual mutation so the confirmation isn't lost;
+        // onSuccess falls back to a broad invalidation for this case.
+        await queueMutation({
+          resource: 'settlements', method: 'POST',
+          path: `/api/expenses/settlements/${id}/confirm/`, optimisticResult: undefined,
+        })
+        return undefined
       }
       const updated = (await queueMutation({
         resource: 'settlements', method: 'POST',
@@ -60,7 +88,10 @@ export function useConfirmSettlementMutation() {
       })
       return updated
     },
-    onSuccess: (data) => invalidateForSettlement(queryClient, data),
+    onSuccess: (data, id) => {
+      if (data) invalidateForSettlement(queryClient, data)
+      else invalidateBroadlyForSettlement(queryClient, id)
+    },
   })
 }
 
@@ -70,17 +101,31 @@ export function useConfirmSettlementMutation() {
  * is posted server-side. Terminal — no un-dispute path. */
 export function useDisputeSettlementMutation() {
   const queryClient = useQueryClient()
-  return useMutation<SettlementRead, ApiError, string>({
+  return useMutation<SettlementRead | undefined, ApiError, string>({
     mutationFn: async (id: string) => {
       const ownerId = useAuthStore.getState().userProfile?.id
       const cached = queryClient.getQueryData<SettlementRead>(['settlement', id])
         ?? (ownerId ? await getSnapshotRecord<SettlementRead>(ownerId, 'settlements', id) : null)
-      if (!cached) {
+      // Skipping the queue only when genuinely online — not just whenever
+      // there's no cached copy, which used to mean disputing a
+      // never-viewed settlement while offline threw instead of queueing.
+      if (!cached && onlineManager.isOnline()) {
         const { data, error } = await apiClient.POST('/api/expenses/settlements/{id}/dispute/', {
           params: { path: { id } },
         })
         if (error) throw toApiError(error)
         return data
+      }
+      if (!cached) {
+        // Offline with nothing cached to build a typed optimistic
+        // SettlementRead from (payer/payee/amount/etc. all unknown) —
+        // still queue the actual mutation so the dispute isn't lost;
+        // onSuccess falls back to a broad invalidation for this case.
+        await queueMutation({
+          resource: 'settlements', method: 'POST',
+          path: `/api/expenses/settlements/${id}/dispute/`, optimisticResult: undefined,
+        })
+        return undefined
       }
       const updated = (await queueMutation({
         resource: 'settlements', method: 'POST',
@@ -92,7 +137,10 @@ export function useDisputeSettlementMutation() {
       })
       return updated
     },
-    onSuccess: (data) => invalidateForSettlement(queryClient, data),
+    onSuccess: (data, id) => {
+      if (data) invalidateForSettlement(queryClient, data)
+      else invalidateBroadlyForSettlement(queryClient, id)
+    },
   })
 }
 

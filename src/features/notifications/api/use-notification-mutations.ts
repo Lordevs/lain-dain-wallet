@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query'
+import { useMutation, useQueryClient, onlineManager, type InfiniteData } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
 import { ApiError, toApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
@@ -23,7 +23,7 @@ const UNREAD_COUNT_KEY = ['notifications', 'unread-count']
  * or explicitly ignored. */
 export function useMarkNotificationReadMutation() {
   const queryClient = useQueryClient()
-  return useMutation<Notification, ApiError, string>({
+  return useMutation<Notification | undefined, ApiError, string>({
     mutationFn: async (id: string) => {
       const cached = queryClient.getQueryData<InfiniteData<PaginatedNotificationList>>(NOTIFICATIONS_LIST_KEY)
         ?.pages.flatMap((page) => page.results).find((item) => item.id === id)
@@ -31,12 +31,29 @@ export function useMarkNotificationReadMutation() {
       const local = cached ?? (ownerId
         ? await getSnapshotRecord<Notification>(ownerId, 'notifications', id)
         : null)
-      if (!local) {
+      // Skipping the queue only when genuinely online (nothing to persist
+      // for durability) — not just whenever there's no cached copy, which
+      // used to mean an offline tap on a notification the client never
+      // cached (a push-triggered deep link, say) threw instead of queueing.
+      if (!local && onlineManager.isOnline()) {
         const { data, error } = await apiClient.POST('/api/notifications/{id}/read/', {
           params: { path: { id } },
         })
         if (error) throw toApiError(error)
         return data
+      }
+      if (!local) {
+        // Offline with nothing cached to build a typed optimistic
+        // Notification from — still queue the actual mutation (so the
+        // action isn't lost), just without patching any local cache;
+        // onSuccess below falls back to broad invalidation for this case,
+        // same "we don't have the full object" pattern already used by
+        // useCancelSettlementMutation.
+        await queueMutation({
+          resource: 'notifications', method: 'POST', path: `/api/notifications/${id}/read/`,
+          optimisticResult: undefined,
+        })
+        return undefined
       }
       const updated = (await queueMutation({
         resource: 'notifications', method: 'POST', path: `/api/notifications/${id}/read/`,
@@ -54,6 +71,11 @@ export function useMarkNotificationReadMutation() {
     // page in place with the server's own response instead, and only
     // invalidate the one query that actually needs new data.
     onSuccess: (updated) => {
+      if (!updated) {
+        queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_LIST_KEY })
+        queryClient.invalidateQueries({ queryKey: UNREAD_COUNT_KEY })
+        return
+      }
       queryClient.setQueryData<InfiniteData<PaginatedNotificationList>>(NOTIFICATIONS_LIST_KEY, (old) => {
         if (!old) return old
         return {
