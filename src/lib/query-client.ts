@@ -9,6 +9,21 @@ import { QueryClient } from '@tanstack/react-query'
 // the entire account cache, so this does not cross user boundaries.
 export const CACHE_MAX_AGE = 1000 * 60 * 60 * 24 * 30
 
+// NOT the same value as CACHE_MAX_AGE, on purpose — gcTime feeds directly
+// into a real `setTimeout(cb, gcTime)` call (query-core's Query.scheduleGc)
+// every time a query loses its last observer, i.e. on every navigation
+// away from a screen. setTimeout's delay is a 32-bit signed int
+// (2_147_483_647ms, ~24.855 days); CACHE_MAX_AGE's 30 days overflows that
+// and every browser silently clamps an out-of-range delay to ~0 — so with
+// gcTime: CACHE_MAX_AGE, every query was being garbage-collected from the
+// live cache almost immediately after its last observer unmounted, not
+// after 30 days. That's what made every screen look like it re-fetched
+// from scratch on every revisit, online or offline, confirmed by
+// instrumenting query-core's scheduleGc directly. Comfortably under the
+// setTimeout ceiling here; the persister's own maxAge (a plain timestamp
+// comparison, not a timer) can safely stay at the full 30 days above.
+export const GC_TIME = 1000 * 60 * 60 * 24 * 21
+
 // A plain module-level singleton, not just something handed to
 // PersistQueryClientProvider in main.tsx — logout needs to clear it from
 // outside the React tree too (src/lib/api/client.ts's 401 handler isn't a
@@ -18,7 +33,7 @@ export const CACHE_MAX_AGE = 1000 * 60 * 60 * 24 * 30
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      gcTime: CACHE_MAX_AGE,
+      gcTime: GC_TIME,
       // Without this, v5's default of 0 means every mount/remount, window
       // refocus, and invalidateQueries call refetches immediately, even
       // when the data is almost certainly still fine — this was the

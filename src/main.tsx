@@ -150,10 +150,10 @@ bootstrapAuth()
               // trimInfiniteQueriesForPersist above) — only genuinely
               // unsuccessful queries are excluded. This one-line check
               // mirrors TanStack's own default rather than importing it
-              // directly (@tanstack/react-query-persist-client resolves a
-              // different copy of @tanstack/query-core than
-              // @tanstack/react-query does, so their Query types aren't
-              // assignable to each other).
+              // directly — kept that way even after aligning every
+              // @tanstack/query-* package on one shared query-core version
+              // (see package.json) fixed the duplicate-package issue that
+              // used to make their Query types unassignable to each other.
               shouldDehydrateQuery: (query) => query.state.status === 'success',
             },
           }}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { createRootRoute, Navigate, Outlet, redirect } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/router-devtools'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { SplashScreen } from '@capacitor/splash-screen'
 import { useAuthStore } from '@/store/use-auth-store'
 import { ROUTES } from '@/constants/routes'
@@ -76,6 +77,7 @@ function RootComponent() {
         </div>
       )}
       {import.meta.env.DEV && <TanStackRouterDevtools />}
+      {import.meta.env.DEV && <ReactQueryDevtools buttonPosition="bottom-right" />}
     </>
   )
 }
