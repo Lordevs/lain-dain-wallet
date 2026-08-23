@@ -76,13 +76,15 @@ export default function LogoutPanel({
           {/* User profile details display card */}
           <div className="w-full bg-white border-[0.8px] border-[#EBEBEB] rounded-[20px] p-[18px] flex items-center gap-4 mt-9 text-left shadow-[0px_2px_8px_0px_#0000000D]">
             <Avatar className="w-12 h-12 select-none">
-              {userProfile?.avatar ? (
+              {/* AvatarFallback is a sibling, not an else-branch — Radix
+                  shows it automatically whenever AvatarImage is absent OR
+                  fails to load (e.g. offline), instead of a blank circle. */}
+              {userProfile?.avatar && (
                 <AvatarImage src={userProfile.avatar} alt="Profile" className="object-cover" />
-              ) : (
-                <AvatarFallback className="bg-[linear-gradient(140deg,#0B683A_3.67%,#14A558_96.33%)] text-white font-bold text-[17px] tracking-tight">
-                  {initials || 'MH'}
-                </AvatarFallback>
               )}
+              <AvatarFallback className="bg-[linear-gradient(140deg,#0B683A_3.67%,#14A558_96.33%)] text-white font-bold text-[17px] tracking-tight">
+                {initials || 'MH'}
+              </AvatarFallback>
             </Avatar>
             <div>
               <h4 className="text-[15.5px] font-bold text-[#1A1A1A] leading-tight">

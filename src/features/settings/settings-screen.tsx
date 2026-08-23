@@ -63,13 +63,15 @@ export default function SettingsScreen() {
         <div className="flex flex-col items-center mb-8">
           <div className="relative">
             <Avatar className="w-22 h-22 select-none shadow-[0px_6px_20px_0px_#0B683A52]">
-              {userProfile?.avatar ? (
+              {/* AvatarFallback is a sibling, not an else-branch — Radix
+                  shows it automatically whenever AvatarImage is absent OR
+                  fails to load (e.g. offline), instead of a blank circle. */}
+              {userProfile?.avatar && (
                 <AvatarImage src={userProfile.avatar} alt="Profile" className="object-cover" />
-              ) : (
-                <AvatarFallback className="bg-primary text-white font-bold text-[28px] tracking-tight">
-                  {initials || 'MH'}
-                </AvatarFallback>
               )}
+              <AvatarFallback className="bg-primary text-white font-bold text-[28px] tracking-tight">
+                {initials || 'MH'}
+              </AvatarFallback>
             </Avatar>
           </div>
 

@@ -107,13 +107,16 @@ export default function AppHeader() {
           aria-label="Settings"
         >
           <Avatar className="w-11 h-11">
-            {userProfile?.avatar ? (
+            {/* AvatarFallback is a sibling, not an else-branch — Radix
+                shows it automatically whenever AvatarImage is absent OR
+                fails to load (e.g. offline, no network to fetch the
+                remote URL), instead of leaving a blank circle. */}
+            {userProfile?.avatar && (
               <AvatarImage src={userProfile.avatar} alt="Profile" className="object-cover" />
-            ) : (
-              <AvatarFallback className="bg-[linear-gradient(140deg,#0B683A_3.67%,#14A558_96.33%)] shadow-[0px_2.69px_10.76px_0px_#0B683A4D] text-primary-foreground font-bold text-sm">
-                {initials}
-              </AvatarFallback>
             )}
+            <AvatarFallback className="bg-[linear-gradient(140deg,#0B683A_3.67%,#14A558_96.33%)] shadow-[0px_2.69px_10.76px_0px_#0B683A4D] text-primary-foreground font-bold text-sm">
+              {initials}
+            </AvatarFallback>
           </Avatar>
           <span
             className={`absolute right-0.5 bottom-0.5 size-2 rounded-full ring ring-white ${isOnline ? 'bg-positive' : 'bg-[#8A8A8A]'}`}

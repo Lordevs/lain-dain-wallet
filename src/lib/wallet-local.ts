@@ -17,12 +17,6 @@
 // the same reason given in my-expenses-local.ts's header — left
 // unconverted (added at face value) rather than risk the wrong direction.
 //
-// `breakdown` (the itemized per-scope/per-member expansion the live
-// wallet list rows carry) is left empty here — an accepted, documented
-// degradation (less breakdown detail, not wrong data), matching this
-// project's existing "acceptable to degrade to less detail offline"
-// precedent for other minor hooks.
-
 import type { components } from '@/lib/api/schema'
 import { computeSimplifiedBalances, computeUnsimplifiedBalances, resolveUserSummaries } from '@/lib/ledger-math'
 
@@ -62,6 +56,7 @@ export function computeLocalWalletGroups(input: LocalWalletInput): WalletRow[] {
     const balances = group.smart_settle_enabled
       ? computeSimplifiedBalances(expenses, settlements, meId)
       : computeUnsimplifiedBalances(expenses, settlements, meId)
+    const usersById = resolveUserSummaries(expenses, settlements)
 
     // A group's own rows should already share one currency (its own
     // default_currency); summing defensively per-currency and picking
@@ -80,6 +75,17 @@ export function computeLocalWalletGroups(input: LocalWalletInput): WalletRow[] {
       .sort()
       .at(-1)!
 
+    // One row per co-member with a nonzero balance in this group — mirrors
+    // wallet_groups' own breakdown (who within the group I owe/am owed
+    // by), which mapWalletRow (dashboard's own presentation layer) reads
+    // to render the "Name +/-Amount · Name +/-Amount" line under each
+    // card. Left empty before, which silently dropped that line offline.
+    const breakdown: components['schemas']['WalletBreakdownItem'][] = balances.flatMap((b) => {
+      const other_user = usersById.get(b.otherUserId)
+      if (!other_user) return []
+      return [{ group: null, friendship_id: null, other_user, net_amount: toAmount(b.netCents), currency: b.currency }]
+    })
+
     return {
       row_type: 'group',
       other_user: null,
@@ -87,8 +93,11 @@ export function computeLocalWalletGroups(input: LocalWalletInput): WalletRow[] {
       net_amount: toAmount(netCents),
       currency,
       latest_activity: latest,
+      // wallet_groups never sets balance_count server-side either (only
+      // wallet_people does) — the serializer's get_balance_count reads it
+      // via dict.get, defaulting to null for a group row.
       balance_count: null,
-      breakdown: [],
+      breakdown,
     }
   })
 }
@@ -98,6 +107,17 @@ export function computeLocalWalletPeople(input: LocalWalletInput): WalletRow[] {
   const totalsByPerson = new Map<string, number>()
   const latestByPerson = new Map<string, string>()
   const usersById = new Map<string, UserSummary>()
+  // One row per shared scope contributing to a person's total — mirrors
+  // wallet_people's own breakdown (ledgers_with, unconverted, one entry
+  // per shared group plus the direct friendship), which mapWalletRow
+  // reads for the "Group +/-Amount · Personal +/-Amount" line under each
+  // card. Left empty before, which silently dropped that line offline.
+  const breakdownByPerson = new Map<string, components['schemas']['WalletBreakdownItem'][]>()
+  const addBreakdown = (userId: string, item: components['schemas']['WalletBreakdownItem']) => {
+    const list = breakdownByPerson.get(userId) ?? []
+    list.push(item)
+    breakdownByPerson.set(userId, list)
+  }
 
   const bumpLatest = (userId: string, iso: string) => {
     if (!latestByPerson.has(userId) || iso > latestByPerson.get(userId)!) latestByPerson.set(userId, iso)
@@ -113,6 +133,12 @@ export function computeLocalWalletPeople(input: LocalWalletInput): WalletRow[] {
     for (const b of balances) {
       const converted = convertCents(b.netCents, b.currency, viewerCurrency, group)
       totalsByPerson.set(b.otherUserId, (totalsByPerson.get(b.otherUserId) ?? 0) + converted)
+      if (b.netCents !== 0) {
+        addBreakdown(b.otherUserId, {
+          group: { id: group.id, name: group.name }, friendship_id: null, other_user: null,
+          net_amount: toAmount(b.netCents), currency: b.currency,
+        })
+      }
     }
     const latest = [...expenses.map((e) => e.date), ...settlements.map((s) => s.date)]
     for (const iso of latest) {
@@ -130,6 +156,12 @@ export function computeLocalWalletPeople(input: LocalWalletInput): WalletRow[] {
       // No group to convert through here — see file header on why
       // friendship-scoped foreign-currency amounts pass through unconverted.
       totalsByPerson.set(b.otherUserId, (totalsByPerson.get(b.otherUserId) ?? 0) + b.netCents)
+      if (b.netCents !== 0) {
+        addBreakdown(b.otherUserId, {
+          group: null, friendship_id: friendship.id, other_user: null,
+          net_amount: toAmount(b.netCents), currency: b.currency,
+        })
+      }
     }
     if (!totalsByPerson.has(friendship.friend.id)) totalsByPerson.set(friendship.friend.id, 0)
     bumpLatest(friendship.friend.id, friendship.created_at)
@@ -141,6 +173,7 @@ export function computeLocalWalletPeople(input: LocalWalletInput): WalletRow[] {
   return [...totalsByPerson.entries()].flatMap(([userId, cents]) => {
     const other_user = usersById.get(userId)
     if (!other_user) return []
+    const breakdown = breakdownByPerson.get(userId) ?? []
     return [{
       row_type: 'person',
       other_user,
@@ -148,8 +181,8 @@ export function computeLocalWalletPeople(input: LocalWalletInput): WalletRow[] {
       net_amount: toAmount(cents),
       currency: viewerCurrency,
       latest_activity: latestByPerson.get(userId) ?? new Date(0).toISOString(),
-      balance_count: null,
-      breakdown: [],
+      balance_count: breakdown.length,
+      breakdown,
     }]
   })
 }

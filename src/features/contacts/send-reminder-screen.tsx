@@ -99,16 +99,16 @@ export default function SendReminderScreen() {
       <div className="flex-1 flex flex-col items-center justify-center py-10 px-6">
         {/* Avatar */}
         <div className="size-28 rounded-full bg-[#E4F2EB] flex items-center justify-center shadow-[0px_4px_12px_rgba(11,104,58,0.08)] border border-positive/10 shrink-0 overflow-hidden">
-          {avatarImage ? (
-            <img src={avatarImage} alt={name} className="size-full object-cover" />
-          ) : (
-            <ContactAvatar
-              initials={initials}
-              avatarColor="bg-[#E4F2EB] text-positive"
-              size="lg"
-              className="size-full text-2xl font-extrabold"
-            />
-          )}
+          {/* ContactAvatar already falls back to initials whenever the
+              image is absent OR fails to load (e.g. offline) — a bare
+              <img> here left a blank circle instead. */}
+          <ContactAvatar
+            src={avatarImage}
+            initials={initials}
+            avatarColor="bg-[#E4F2EB] text-positive"
+            size="lg"
+            className="size-full text-2xl font-extrabold"
+          />
         </div>
 
         {/* Uppercase Name */}

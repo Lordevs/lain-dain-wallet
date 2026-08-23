@@ -95,13 +95,16 @@ export default function EditProfilePanel({
           <div className="flex flex-col items-center">
             <div className="relative">
               <Avatar className="size-[clamp(72px,11vh,88px)] select-none shadow-[0px_6px_20px_0px_#0B683A52]">
-                {avatar ? (
+                {/* AvatarFallback is a sibling, not an else-branch — Radix
+                    shows it automatically whenever AvatarImage is absent
+                    OR fails to load (e.g. offline), instead of a blank
+                    circle. */}
+                {avatar && (
                   <AvatarImage src={avatar} alt="Profile Picture" className="object-cover" />
-                ) : (
-                  <AvatarFallback className="bg-[linear-gradient(140deg,#0B683A_3.67%,#14A558_96.33%)] text-white font-bold text-[28px] tracking-tight">
-                    {initials || <User size={32} />}
-                  </AvatarFallback>
                 )}
+                <AvatarFallback className="bg-[linear-gradient(140deg,#0B683A_3.67%,#14A558_96.33%)] text-white font-bold text-[28px] tracking-tight">
+                  {initials || <User size={32} />}
+                </AvatarFallback>
               </Avatar>
 
               {/* Pencil Icon Button */}

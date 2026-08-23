@@ -15,6 +15,10 @@ import { useGroupSettings } from './hooks/use-group-settings'
 export default function GroupSettingsScreen() {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false)
   const [isCurrencyRatesOpen, setIsCurrencyRatesOpen] = useState(false)
+  // A raw <img> below has no built-in fallback-on-load-error, so a
+  // remote group photo that can't be fetched (offline, no network) left
+  // a blank circle instead of the decorative fallback illustration.
+  const [groupPhotoFailed, setGroupPhotoFailed] = useState(false)
 
   const {
     group,
@@ -79,8 +83,14 @@ export default function GroupSettingsScreen() {
         <div className="flex flex-col items-center text-center mt-3">
           {/* Custom SVG Group Avatar / Uploaded Group Cover Photo */}
           <div className="w-24 h-24 rounded-full overflow-hidden bg-white shadow-sm border border-[#EFE7DD] flex items-center justify-center shrink-0 mb-4 relative">
-            {groupPhoto ? (
-              <img src={groupPhoto} alt="Group Cover" className="w-full h-full object-cover" />
+            {groupPhoto && !groupPhotoFailed ? (
+              <img
+                key={groupPhoto}
+                src={groupPhoto}
+                alt="Group Cover"
+                className="w-full h-full object-cover"
+                onError={() => setGroupPhotoFailed(true)}
+              />
             ) : (
               <svg viewBox="0 0 100 100" className="w-full h-full">
                 {/* Sky background */}

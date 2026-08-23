@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Contact } from '@/types'
@@ -24,6 +24,12 @@ function ContactLedgerCard({ contact, onSelect }: ContactLedgerCardProps) {
 
   const isReceivable = netAmount > 0
   const isSettled = netAmount === 0
+  // A raw <img>, not the Radix Avatar/AvatarFallback composition used
+  // elsewhere — has no built-in fallback-on-load-error, so a remote
+  // avatar/group photo that can't be fetched (offline, no network) left a
+  // blank circle instead of falling back to initials. Reset per contact
+  // (via the key= below) so switching rows doesn't carry a stale failure.
+  const [imageFailed, setImageFailed] = useState(false)
 
   return (
     <button
@@ -39,8 +45,14 @@ function ContactLedgerCard({ contact, onSelect }: ContactLedgerCardProps) {
             'w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold text-foreground overflow-hidden',
             avatarColor
           )}>
-            {avatar ? (
-              <img src={avatar} alt={name} className="w-full h-full object-cover" />
+            {avatar && !imageFailed ? (
+              <img
+                key={avatar}
+                src={avatar}
+                alt={name}
+                className="w-full h-full object-cover"
+                onError={() => setImageFailed(true)}
+              />
             ) : type === 'group'
               ? <span className="text-[13px] font-extrabold text-foreground">{initials}</span>
               : <span className="text-[13px] font-extrabold text-foreground/80">{initials}</span>
