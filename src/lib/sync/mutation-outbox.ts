@@ -16,6 +16,7 @@ import {
   stageFileForOffline,
   type StagedFile,
 } from '@/lib/sync/receipt-staging'
+import { createOutboxDrainer } from './outbox-engine'
 
 interface MultipartFileInput {
   field: string
@@ -158,18 +159,6 @@ async function removeSyncedMutation(row: MutationOutboxRow): Promise<void> {
   if (body?.kind === 'multipart' && body.file) await deleteStagedFile(body.file.path)
 }
 
-let draining = false
-
-// A transient failure (network blip, a real 5xx) normally just reverts a
-// row to 'pending' for the next trigger to retry — but with no cap, a
-// mutation that fails the same way every time (e.g. a persistent server
-// error) would retry forever on every reconnect/foreground, silently,
-// with nothing ever telling the user it's stuck. Past this many attempts
-// it's marked 'failed' instead — same terminal state a permanent
-// (validation/permission) error already gets, surfaced the same way in
-// useSyncStatus, and still retryable manually from there.
-const MAX_TRANSIENT_ATTEMPTS = 8
-
 function isPrerequisiteCreate(row: MutationOutboxRow): boolean {
   if (row.method !== 'POST') return false
   return row.path === '/api/ledger/groups/'
@@ -177,48 +166,21 @@ function isPrerequisiteCreate(row: MutationOutboxRow): boolean {
     || row.path === '/api/expenses/categories/'
 }
 
-/** Shared by both entry points below. Returns whether the pass finished
- * without a transient failure — with one deliberate exception: an early
- * skip (mutex already held, offline, signed out) also reports `true`,
- * because backoff accounting must only count attempts that actually hit
- * the network, never concurrent-invocation no-ops. */
-async function drainMutations(predicate: (row: MutationOutboxRow) => boolean): Promise<boolean> {
-  if (draining || !onlineManager.isOnline()) return true
-  const ownerId = useAuthStore.getState().userProfile?.id
-  if (!ownerId) return true
-  let completed = true
-  draining = true
-  try {
-    const rows = (await getPendingMutations(ownerId)).filter(predicate)
-    for (const row of rows) {
-      await setMutationStatus(row.id, 'syncing')
-      try {
-        await submitMutation(row)
-        await removeSyncedMutation(row)
-      } catch (error) {
-        if (error instanceof ApiError && !isTransientApiError(error)) {
-          await setMutationStatus(row.id, 'failed', error.message)
-          continue
-        }
-        if (row.attempt_count + 1 >= MAX_TRANSIENT_ATTEMPTS) {
-          await setMutationStatus(row.id, 'failed', 'Giving up after repeated attempts — tap retry to try again.')
-          continue
-        }
-        await setMutationStatus(row.id, 'pending')
-        completed = false
-        break
-      }
-    }
-  } finally {
-    draining = false
-  }
-  return completed
-}
+const drain = createOutboxDrainer<MutationOutboxRow>({
+  getPendingRows: getPendingMutations,
+  markSyncing: (row) => setMutationStatus(row.id, 'syncing'),
+  markPending: (row) => setMutationStatus(row.id, 'pending'),
+  markFailed: (row, message) => setMutationStatus(row.id, 'failed', message),
+  submitOne: async (row) => {
+    await submitMutation(row)
+    await removeSyncedMutation(row)
+  },
+})
 
 export async function drainMutationPrerequisites(): Promise<boolean> {
-  return drainMutations(isPrerequisiteCreate)
+  return drain(isPrerequisiteCreate)
 }
 
 export async function drainMutationOutbox(): Promise<boolean> {
-  return drainMutations(() => true)
+  return drain()
 }

@@ -13,6 +13,7 @@ import {
 import { insertLocalExpense, markLocalExpenseSynced, markLocalExpenseFailed } from '@/lib/sqlite/expenses-store'
 import { runInTransaction } from '@/lib/sqlite/transaction'
 import { stageReceiptForOffline, readStagedReceipt, deleteStagedReceipt } from './receipt-staging'
+import { createOutboxDrainer } from './outbox-engine'
 
 /**
  * Offline-safe expense creation — see docs/architecture/offline-sync.md.
@@ -272,61 +273,20 @@ function invalidateQueriesFor(payload: QueuedExpensePayload): void {
   queryClient.invalidateQueries({ queryKey: ['wallet'] })
 }
 
-// Re-entrancy guard — a reconnect event and an app-foreground event
-// firing close together (or a second call before the first finishes)
-// must not drain the same rows twice in parallel.
-let isDraining = false
-
-/** Drains every pending row in order, oldest first. Safe to call
- * whenever connectivity might have changed — a no-op if offline or
- * already draining. A row that fails with a permanent (validation/
- * permission) error is marked 'failed' and skipped, not retried forever;
- * everything else stops the drain early (network's down again, or
- * something unexpected) so remaining rows keep their place in line for
- * the next trigger.
- *
- * Returns whether this pass finished without hitting a transient failure
- * — the signal syncOfflineData's backoff accounting uses (a held mutex or
- * an upfront skip reports `true`: nothing was attempted, so there's
- * nothing to penalize). Never rejects, so every call site (a reconnect
- * listener, an app-foreground listener, ...) can fire it without needing
- * its own .catch(). */
-export async function drainExpenseOutbox(): Promise<boolean> {
-  if (isDraining || !onlineManager.isOnline()) return true
-  const ownerId = useAuthStore.getState().userProfile?.id
-  if (!ownerId) return true
-  isDraining = true
-  let completed = true
-  try {
-    await recoverInterruptedOutboxRows(ownerId)
-    const rows = await getPendingOutboxRows(ownerId)
-    for (const row of rows) {
-      try {
-        await drainOneRow(row)
-      } catch {
-        // Transient failure — drainOneRow already reverted the row to
-        // pending. Stop this pass (see drainOneRow's own comment) and
-        // report it, so the caller's backoff paces the retry instead of
-        // the next trigger burning another attempt immediately.
-        completed = false
-        break
-      }
-    }
-  } finally {
-    isDraining = false
-  }
-  return completed
+async function getPendingRows(ownerId: string): Promise<OutboxRow[]> {
+  await recoverInterruptedOutboxRows(ownerId)
+  return getPendingOutboxRows(ownerId)
 }
 
-// Same reasoning as mutation-outbox.ts's identical constant — an
-// endlessly-transient-failing create (a persistent server error, say)
-// would otherwise retry forever on every reconnect/foreground with
-// nothing ever telling the user it's stuck.
-const MAX_TRANSIENT_ATTEMPTS = 8
-
-async function drainOneRow(row: OutboxRow): Promise<void> {
-  await markOutboxRowSyncing(row.id)
-  try {
+const drain = createOutboxDrainer<OutboxRow>({
+  getPendingRows,
+  markSyncing: (row) => markOutboxRowSyncing(row.id),
+  markPending: (row) => markOutboxRowPending(row.id),
+  markFailed: async (row, message) => {
+    await markOutboxRowFailed(row.id, message)
+    await markLocalExpenseFailed(row.id)
+  },
+  submitOne: async (row) => {
     const payload: QueuedExpensePayload = JSON.parse(row.payload_json)
     const response = await submitOutboxPayload({
       idempotencyKey: row.idempotency_key,
@@ -334,22 +294,14 @@ async function drainOneRow(row: OutboxRow): Promise<void> {
       localReceiptPath: row.local_receipt_path,
     })
     await finalizeSyncedRow(row.id, payload, response, row.local_receipt_path)
-  } catch (err) {
-    if (err instanceof ApiError && !isTransientApiError(err)) {
-      await markOutboxRowFailed(row.id, err.message)
-      await markLocalExpenseFailed(row.id)
-      return
-    }
-    if (row.attempt_count + 1 >= MAX_TRANSIENT_ATTEMPTS) {
-      await markOutboxRowFailed(row.id, 'Giving up after repeated attempts — tap retry to try again.')
-      await markLocalExpenseFailed(row.id)
-      return
-    }
-    // Transient failure — revert to pending and stop this drain pass;
-    // whatever just failed (network dropped again mid-drain) will likely
-    // affect the rest of the queue too, and the next trigger retries
-    // from here in the same created_at order.
-    await markOutboxRowPending(row.id)
-    throw err
-  }
+  },
+})
+
+/** Drains every pending row in order, oldest first. Safe to call
+ * whenever connectivity might have changed — a no-op if offline or
+ * already draining. See outbox-engine.ts's createOutboxDrainer for the
+ * shared retry/backoff/attempt-cap control flow this and
+ * mutation-outbox.ts's drain both run on. */
+export async function drainExpenseOutbox(): Promise<boolean> {
+  return drain()
 }
