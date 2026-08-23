@@ -30,6 +30,12 @@ export function useSyncStatus() {
     },
     enabled: !!ownerId,
     refetchInterval: 2_000,
+    // queryFn is 100% local SQLite reads, no network involved — without
+    // this, TanStack's default networkMode ('online') pauses the query
+    // whenever the device is offline, so the one banner meant to show
+    // "N changes queued, will sync when back online" goes blank at
+    // exactly the moment offline users need it most.
+    networkMode: 'always',
   })
 
   const retry = async () => {

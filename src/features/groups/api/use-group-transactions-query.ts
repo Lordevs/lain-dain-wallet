@@ -6,6 +6,7 @@ import type { components } from '@/lib/api/schema'
 import { onlineManager } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/use-auth-store'
 import { getLocalExpenses, upsertServerExpenses } from '@/lib/sqlite/expenses-store'
+import { getResourceSnapshot } from '@/lib/sqlite/resource-snapshot-store'
 
 export type GroupTransaction =
   | { kind: 'expense'; date: string; data: components['schemas']['ExpenseRead'] }
@@ -115,7 +116,21 @@ async function fetchSettlements(
   cursor: string | undefined,
   sort: GroupSortBy,
 ): Promise<{ items: GroupTransaction[]; nextCursor: string | null }> {
-  if (!onlineManager.isOnline()) return { items: [], nextCursor: null }
+  if (!onlineManager.isOnline()) {
+    // No real pagination offline — settlement-pull.ts already replicates
+    // full history into 'settlement-ledger', scoped by friendship/group id
+    // (see ledger-math.ts's own header for why), so this returns everything
+    // in one page rather than leaving settlements out of the timeline.
+    const ownerId = useAuthStore.getState().userProfile?.id
+    if (!ownerId) return { items: [], nextCursor: null }
+    const settlements = await getResourceSnapshot<components['schemas']['SettlementRead']>(
+      ownerId, 'settlement-ledger', groupId,
+    )
+    const items = settlements
+      .map((settlement) => ({ kind: 'settlement' as const, date: settlement.date, data: settlement }))
+      .sort(makeComparator(sort))
+    return { items, nextCursor: null }
+  }
   const { data, error } = await apiClient.GET('/api/expenses/groups/{group_id}/settlements/', {
     params: {
       path: { group_id: groupId },

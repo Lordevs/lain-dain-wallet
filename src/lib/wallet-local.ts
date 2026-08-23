@@ -159,6 +159,88 @@ export function computeLocalWalletList(input: LocalWalletInput): WalletRow[] {
     .sort((a, b) => b.latest_activity.localeCompare(a.latest_activity))
 }
 
+function directionFor(netCents: number): components['schemas']['DirectionEnum'] {
+  if (netCents > 0) return 'owed_to_you'
+  if (netCents < 0) return 'you_owe'
+  return 'settled'
+}
+
+/** Local replica of apps/expenses/services.py's `combined_balances` +
+ * `ledgers_with`, both consumed together by GET /api/expenses/with/{id}/
+ * (UserLedgersResponse) — "my relationship with this ONE other person,"
+ * both as one combined number per currency (`overall`, converted into my
+ * own currency the same way computeLocalWalletPeople is) and itemized per
+ * shared scope (`ledgers`, unconverted, one row per shared group plus the
+ * direct friendship). */
+export function computeLocalUserLedgers(
+  input: LocalWalletInput,
+  otherUserId: string,
+): components['schemas']['UserLedgersResponse'] | null {
+  const { groups, friendships, expensesByScopeId, settlementsByScopeId, meId, viewerCurrency } = input
+  const ledgers: components['schemas']['UserLedgerItem'][] = []
+  let overallCents = 0
+  let otherUser: UserSummary | undefined
+
+  for (const group of groups) {
+    const member = group.members.find((m) => m.id === otherUserId)
+    if (!member) continue
+    const expenses = expensesByScopeId.get(group.id) ?? []
+    const settlements = (settlementsByScopeId.get(group.id) ?? []).filter((s) => s.status === 'confirmed')
+    const balances = group.smart_settle_enabled
+      ? computeSimplifiedBalances(expenses, settlements, meId)
+      : computeUnsimplifiedBalances(expenses, settlements, meId)
+    const mine = balances.find((b) => b.otherUserId === otherUserId)
+    const netCents = mine?.netCents ?? 0
+    otherUser = { id: member.id, full_name: member.full_name, phone_number: member.phone_number, image: member.image }
+    overallCents += convertCents(netCents, mine?.currency ?? group.default_currency, viewerCurrency, group)
+    ledgers.push({
+      scope: 'group',
+      friendship_id: null,
+      group_id: group.id,
+      label: group.name,
+      image: group.image ?? null,
+      currency: mine?.currency ?? group.default_currency,
+      net_amount: toAmount(netCents),
+      direction: directionFor(netCents),
+    })
+  }
+
+  const friendship = friendships.find((f) => f.friend.id === otherUserId)
+  if (friendship) {
+    const expenses = expensesByScopeId.get(friendship.id) ?? []
+    const settlements = (settlementsByScopeId.get(friendship.id) ?? []).filter((s) => s.status === 'confirmed')
+    const balances = computeUnsimplifiedBalances(expenses, settlements, meId)
+    const mine = balances.find((b) => b.otherUserId === otherUserId)
+    const netCents = mine?.netCents ?? 0
+    otherUser = friendship.friend
+    // No group to convert through — see file header on why
+    // friendship-scoped foreign-currency amounts pass through unconverted.
+    overallCents += netCents
+    ledgers.push({
+      scope: 'friendship',
+      friendship_id: friendship.id,
+      group_id: null,
+      label: friendship.friend.full_name,
+      image: friendship.friend.image,
+      currency: mine?.currency ?? viewerCurrency,
+      net_amount: toAmount(netCents),
+      direction: directionFor(netCents),
+    })
+  }
+
+  if (!otherUser) return null
+  return {
+    other_user: otherUser,
+    overall: overallCents === 0 ? [] : [{
+      other_user: otherUser,
+      currency: viewerCurrency,
+      net_amount: toAmount(Math.abs(overallCents)),
+      direction: directionFor(overallCents),
+    }],
+    ledgers,
+  }
+}
+
 export function computeLocalWalletSummary(input: LocalWalletInput): WalletSummary {
   const people = computeLocalWalletPeople(input)
   let receivableCents = 0
