@@ -19,7 +19,16 @@ run_pnpm() {
     return
   fi
 
-  echo "Xcode Cloud image does not provide pnpm or Corepack." >&2
+  if command -v brew >/dev/null 2>&1; then
+    # Xcode Cloud includes Homebrew for installing build-time tools. Installing
+    # pnpm also installs its Node.js dependency when the image lacks Node.
+    export HOMEBREW_NO_AUTO_UPDATE=1
+    brew install pnpm
+    pnpm "$@"
+    return
+  fi
+
+  echo "Xcode Cloud image does not provide pnpm, Corepack, or Homebrew." >&2
   exit 1
 }
 
