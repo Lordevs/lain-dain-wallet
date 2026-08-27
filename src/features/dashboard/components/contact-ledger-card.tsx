@@ -3,6 +3,7 @@ import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Contact } from '@/types'
 import { Status, StatusIndicator } from '@/components/kibo-ui/status'
+import CompactAmount from '@/components/shared/compact-amount'
 import { formatCurrency } from '@/lib/currency'
 
 interface ContactLedgerCardProps {
@@ -85,7 +86,13 @@ function ContactLedgerCard({ contact, onSelect }: ContactLedgerCardProps) {
             'text-[15px] font-extrabold',
             isSettled ? 'text-muted-foreground' : isReceivable ? 'text-primary' : 'text-orange-payable'
           )}>
-            {formatCurrency(netAmount, currency ?? 'PKR')}
+            {netAmount < 0 && '-'}
+            <CompactAmount
+              amount={Math.abs(netAmount)}
+              currency={currency ?? 'PKR'}
+              drawerTitle={`${name} Balance`}
+              className="max-w-full"
+            />
           </span>
           <ChevronRight size={16} className="text-muted-foreground" />
         </div>

@@ -179,15 +179,15 @@ function ExpenseItem({
             {icon}
           </div>
         )}
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className={cn(
-            "font-bold text-[15px] leading-tight",
+            "font-bold text-[14px] leading-tight",
             category === 'payment' ? "text-positive" : category === 'adjustment' ? "text-[#6C4FCE]" : "text-foreground"
           )}>
             {name}
           </p>
           {subtitle && (
-            <div className="text-[13px] text-muted-foreground mt-1 font-normal leading-normal whitespace-pre-line">
+            <div className="text-[12px] text-muted-foreground mt-1 font-normal leading-normal whitespace-pre-line">
               {subtitle}
             </div>
           )}
@@ -195,7 +195,7 @@ function ExpenseItem({
       </div>
 
       {/* Right side amount + chevron */}
-      <div className="min-w-0 max-w-[48%] flex items-center gap-2">
+      <div className="w-[44%] min-w-0 shrink-0 flex items-center justify-end gap-1.5">
         <div className="min-w-0 flex flex-col items-end text-right">
           <span className={cn('text-base font-bold max-w-full', colorClass)}>
             {amount < 0 && <span>-</span>}
@@ -204,6 +204,7 @@ function ExpenseItem({
               currency={currency}
               drawerTitle="Exact Amount"
               className="max-w-full"
+              compactThreshold={7}
             />
           </span>
           {rightSubtitle && (

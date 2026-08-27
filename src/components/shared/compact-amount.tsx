@@ -11,6 +11,8 @@ interface CompactAmountProps {
   drawerTitle?: string
   /** Places the currency symbol above the numeric value for narrow cards. */
   stackCurrency?: boolean
+  /** Shorter threshold for dense list rows. */
+  compactThreshold?: number
 }
 
 /**
@@ -21,11 +23,11 @@ interface CompactAmountProps {
  * (Personal screen / View Reports) so BalanceSummaryCard's three columns
  * can each opt in independently.
  */
-export default function CompactAmount({ amount, currency, className, drawerTitle = 'Exact Amount', stackCurrency = false }: CompactAmountProps) {
+export default function CompactAmount({ amount, currency, className, drawerTitle = 'Exact Amount', stackCurrency = false, compactThreshold = 12 }: CompactAmountProps) {
   const [exactAmountOpen, setExactAmountOpen] = useState(false)
 
   const formatted = formatCurrency(amount, currency)
-  const isLargeAmount = formatted.length > 12
+  const isLargeAmount = formatted.length > compactThreshold
   const display = isLargeAmount ? formatCompact(amount, currency) : formatted
   const currencySymbol = getCurrency(currency).symbol
   const numericDisplay = isLargeAmount

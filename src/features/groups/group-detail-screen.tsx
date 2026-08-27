@@ -36,6 +36,26 @@ const GroupBalanceCarousel = lazy(() => import('./components/group-balance-carou
 
 const MAX_VISIBLE_BALANCES = 3
 
+function formatTransactionDate(dateISO: string): string {
+  const date = new Date(dateISO)
+  if (Number.isNaN(date.getTime())) return dateISO
+
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const transactionDay = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  const dayDifference = Math.round((today.getTime() - transactionDay.getTime()) / 86_400_000)
+
+  if (dayDifference === 0 || dayDifference === 1) {
+    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  }
+
+  if (dayDifference >= 0 && dayDifference < 7) {
+    return `${date.toLocaleDateString('en-US', { weekday: 'short' })}, ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+  }
+
+  return date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
 /**
  * GroupDetailScreen — real ledger view for one group: per-member
  * balances plus the merged expense/settlement transaction history.
@@ -67,7 +87,11 @@ export default function GroupDetailScreen() {
           currency: t.data.currency,
           categoryIcon: t.data.category.icon,
           categoryColor: t.data.category.color,
-          rightSubtitle: new Date(t.data.created_at).toLocaleDateString(),
+          rightSubtitle: new Date(t.data.created_at).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          }),
           showChevron: true,
           amountColor: 'default' as const,
           kind: 'expense' as const,
@@ -91,10 +115,7 @@ export default function GroupDetailScreen() {
         amount: Number(t.data.amount),
         currency: t.data.currency,
         category: isAdjustment ? 'adjustment' as const : isConfirmed ? 'payment' as const : 'other' as const,
-        rightSubtitle: new Date(t.data.created_at).toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: '2-digit',
-        }),
+        rightSubtitle: formatTransactionDate(t.data.created_at),
         showChevron: !isConfirmed,
         amountColor: isConfirmed ? 'green' as const : isPending ? 'orange' as const : 'black' as const,
         className: isAdjustment

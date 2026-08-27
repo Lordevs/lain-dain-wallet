@@ -64,7 +64,7 @@ function formatRightSubtitle(dateISO: string, category: 'Today' | 'Yesterday' | 
     return `${dayName}, ${timeStr}`
   }
 
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 interface ExpenseListItemWithDate extends ExpenseListData {
