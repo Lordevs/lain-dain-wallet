@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ otherwise shows the launcher icon in its system splash
+         before Capacitor's configured splash screen appears. Keep this phase
+         blank so the launcher icon is not shown or scaled unexpectedly. -->
+    <style name="AppTheme.NoActionBarLaunch" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowSplashScreenBackground">#FEFAF1</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@null</item>
+        <item name="android:windowBackground">#FEFAF1</item>
+    </style>
+</resources>

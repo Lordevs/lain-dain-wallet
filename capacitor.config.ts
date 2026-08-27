@@ -53,7 +53,8 @@ const config: CapacitorConfig = {
       launchAutoHide: true,
       backgroundColor: '#FEFAF1',
       androidSplashResourceName: 'splash',
-      androidScaleType: 'CENTER_CROP',
+      // Keep the logo's aspect ratio on phones with different screen shapes.
+      androidScaleType: 'FIT_CENTER',
       showSpinner: false,
     },
   },
