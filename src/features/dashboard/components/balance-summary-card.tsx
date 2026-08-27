@@ -23,7 +23,7 @@ export default function BalanceSummaryCard({ summary }: BalanceSummaryCardProps)
             You will receive
           </p>
           <p className="flex items-center justify-center text-[15px] sm:text-[18px] font-extrabold text-primary leading-none">
-            <CompactAmount amount={totalReceivable} currency={currency} drawerTitle="You Will Receive" />
+            <CompactAmount amount={totalReceivable} currency={currency} drawerTitle="You Will Receive" stackCurrency />
           </p>
           <div className="w-10 h-10 rounded-full bg-positive-soft-bg flex items-center justify-center mx-auto">
             <ArrowDown size={20} className="text-primary" strokeWidth={4} />
@@ -36,7 +36,7 @@ export default function BalanceSummaryCard({ summary }: BalanceSummaryCardProps)
             You will pay
           </p>
           <p className="flex items-center justify-center text-[15px] sm:text-[18px] font-extrabold text-orange-payable leading-none">
-            <CompactAmount amount={totalPayable} currency={currency} drawerTitle="You Will Pay" />
+            <CompactAmount amount={totalPayable} currency={currency} drawerTitle="You Will Pay" stackCurrency />
           </p>
           <div className="w-10 h-10 rounded-full bg-orange-soft-bg flex items-center justify-center mx-auto">
             <ArrowUp size={20} className="text-orange-payable" strokeWidth={4} />
@@ -52,7 +52,7 @@ export default function BalanceSummaryCard({ summary }: BalanceSummaryCardProps)
             "flex items-center justify-center text-[15px] sm:text-[18px] font-extrabold leading-none",
             netBalance > 0 ? "text-positive" : netBalance < 0 ? "text-orange-payable" : "text-foreground"
           )}>
-            <CompactAmount amount={netBalance} currency={currency} drawerTitle="Net Balance" />
+            <CompactAmount amount={netBalance} currency={currency} drawerTitle="Net Balance" stackCurrency />
           </p>
           <div className="w-10 h-10 rounded-full bg-[#FFF8E1] flex items-center justify-center mx-auto">
             <Wallet size={20} className="text-secondary" strokeWidth={3} />
