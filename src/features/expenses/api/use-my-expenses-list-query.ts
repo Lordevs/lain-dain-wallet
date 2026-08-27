@@ -16,6 +16,7 @@ interface MyExpensesListQuery {
   month?: number
   page_size?: number
   cursor?: string
+  category_id?: string
 }
 
 function cursorFromUrl(url: string | null | undefined): string | undefined {
@@ -25,15 +26,16 @@ function cursorFromUrl(url: string | null | undefined): string | undefined {
 
 /** The combined "My Expenses" feed for one period — personal expenses
  * plus any friendship/group expense the caller has a split in. */
-export function useMyExpensesListQuery(year?: number, month?: number) {
+export function useMyExpensesListQuery(year?: number, month?: number, categoryId?: string) {
   const query = useInfiniteQuery({
-    queryKey: ['my-expenses-list', year, month, 'infinite'],
+    queryKey: ['my-expenses-list', year, month, categoryId, 'infinite'],
     queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
       const ownerId = useAuthStore.getState().userProfile?.id
       if (!onlineManager.isOnline() && ownerId) {
         const rows = (await getLocalExpenses(ownerId)).filter((expense) => {
           const inPeriod = !year || !month || (Number(expense.date.slice(0, 4)) === year && Number(expense.date.slice(5, 7)) === month)
-          return inPeriod && (expense.context === 'personal' || expense.splits.some((split) => split.id === ownerId))
+          return inPeriod && (!categoryId || expense.category.id === categoryId)
+            && (expense.context === 'personal' || expense.splits.some((split) => split.id === ownerId))
         })
         const results: components['schemas']['MyExpenseItem'][] = rows.map((expense) => ({
           id: expense.id,
@@ -57,6 +59,7 @@ export function useMyExpensesListQuery(year?: number, month?: number) {
         page_size: PAGE_SIZE,
         ...(pageParam ? { cursor: pageParam } : {}),
         ...(year && month ? { year, month } : {}),
+        ...(categoryId ? { category_id: categoryId } : {}),
       }
       const { data, error } = await apiClient.GET('/api/expenses/my-expenses/', {
         params: { query: requestQuery as Record<string, never> },

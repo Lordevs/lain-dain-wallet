@@ -114,13 +114,14 @@ function PaidByDrawerContent({
 
   const defaultId = members[0]?.id ?? 'you'
 
-  // Amount inputs for multiple payers - seeded once from the initial selection/amount
+  // New multiple-payer selections start blank so the user explicitly assigns
+  // each contribution. Existing edit forms still restore saved amounts.
   const [payerAmounts, setPayerAmounts] = useState<Record<string, string>>(() => {
     const initialAmounts: Record<string, string> = {}
     members.forEach((m) => {
       if (selectedValue === 'multiple') {
-        const share = initialPayerAmounts?.[m.id] ?? Math.round(amount / members.length)
-        initialAmounts[m.id] = share.toString()
+        const savedAmount = initialPayerAmounts?.[m.id]
+        initialAmounts[m.id] = savedAmount === undefined ? '' : savedAmount.toString()
       } else {
         initialAmounts[m.id] = m.id === selectedValue ? amount.toString() : ''
       }

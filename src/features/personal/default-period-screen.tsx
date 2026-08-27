@@ -78,7 +78,7 @@ function DefaultPeriodForm({ initialResetDay }: { initialResetDay: number }) {
         </p>
 
         {/* Calendar Selection Card */}
-        <div className="bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] overflow-hidden flex flex-col text-left">
+        <div className="shrink-0 bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] overflow-hidden flex flex-col text-left">
           {/* Card Header */}
           <div className="p-4">
             <h3 className="text-[17px] font-bold text-[#1A1A1A] leading-tight">
@@ -122,7 +122,7 @@ function DefaultPeriodForm({ initialResetDay }: { initialResetDay: number }) {
         </div>
 
         {/* How this works Banner */}
-        <div className="bg-[#E4F2EB] border-[1.5px] border-[#0B683A26] rounded-[14px] p-5 text-left flex flex-col gap-2.5 shadow-[0px_4px_16px_rgba(0,0,0,0.01)]">
+        <div className="shrink-0 bg-[#E4F2EB] border-[1.5px] border-[#0B683A26] rounded-[14px] p-5 text-left flex flex-col gap-2.5 shadow-[0px_4px_16px_rgba(0,0,0,0.01)]">
           <h4 className="text-[14px] font-bold text-positive flex items-center gap-2">
             <Info size={16} strokeWidth={2.5} className="shrink-0" />
             How this works

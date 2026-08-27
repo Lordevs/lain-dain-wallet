@@ -15,6 +15,9 @@ import InfiniteScrollSentinel from '@/components/shared/infinite-scroll-sentinel
 import { toExpenseSummary } from './lib/map-my-expenses-summary'
 import { toExpenseListItem } from './lib/map-my-expense-item'
 import { recentPeriods, periodKey, parsePeriodKey, periodLabel, type Period } from './lib/period'
+import { useMyExpensesReportQuery } from '@/features/expenses/api/use-my-expenses-report-query'
+import { toCategoryBreakdownItems } from './lib/map-my-expenses-report'
+import { iconForCategory } from '@/features/expenses/lib/category-icons'
 
 /**
  * PersonalScreen — the "My Expenses" home: this period's spend, a link
@@ -28,9 +31,15 @@ export default function PersonalScreen() {
   // undefined = the period containing today (the backend's own default) —
   // only set once the user actually picks a different one.
   const [period, setPeriod] = useState<Period | undefined>(undefined)
+  const [categoryId, setCategoryId] = useState<string | undefined>(undefined)
 
   const summaryQuery = useMyExpensesSummaryQuery(period?.year, period?.month)
-  const listQuery = useMyExpensesListQuery(period?.year, period?.month)
+  const listQuery = useMyExpensesListQuery(period?.year, period?.month, categoryId)
+  const reportQuery = useMyExpensesReportQuery(period?.year, period?.month)
+  const categories = useMemo(
+    () => toCategoryBreakdownItems(reportQuery.data?.by_category ?? []),
+    [reportQuery.data],
+  )
 
   const periodOptions = useMemo(
     () => recentPeriods().map((p) => ({ value: periodKey(p), label: periodLabel(p) })),
@@ -96,6 +105,14 @@ export default function PersonalScreen() {
             options={periodOptions}
             onChange={(key) => setPeriod(parsePeriodKey(key))}
           />
+        </div>
+
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none px-6 pb-1">
+          <button type="button" onClick={() => setCategoryId(undefined)} className={`shrink-0 rounded-full border-[1.5px] px-3.5 py-2 text-[13px] font-semibold ${!categoryId ? 'border-[#0B683A4D] bg-[#E4F2EB] text-primary' : 'border-[#E8E5DE] bg-white text-[#1A1A1A]'}`}>All</button>
+          {categories.map((category) => {
+            const Icon = iconForCategory(reportQuery.data?.by_category.find((item) => item.category.id === category.id)?.category.icon ?? 'other')
+            return <button key={category.id} type="button" onClick={() => setCategoryId(category.id)} className={`flex shrink-0 items-center gap-1.5 rounded-full border-[1.5px] px-3.5 py-2 text-[13px] font-semibold ${categoryId === category.id ? 'border-[#0B683A4D] bg-[#E4F2EB] text-primary' : 'border-[#E8E5DE] bg-white text-[#1A1A1A]'}`}><Icon size={14} style={{ color: category.color }} strokeWidth={2} />{category.label}</button>
+          })}
         </div>
 
       </div>
