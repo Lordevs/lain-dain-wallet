@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { Info } from 'lucide-react'
+import { Check } from 'lucide-react'
 import FlowHeader from '@/components/shared/flow-header'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useContactLedgers } from '@/features/contacts/hooks/use-contact-ledgers'
@@ -68,9 +69,21 @@ function AdjustBalancesBody({
 }) {
   const applyAdjustment = useApplyLedgerAdjustmentMutation(userId)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const ledgerKey = (row: LedgerAdjustment['ledgers'][number]) =>
+    `${row.scope}:${row.friendship_id ?? row.group_id}`
+  const allRows = match.ledgers.filter((row) => Number(row.net_amount) !== 0)
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(
+    () => new Set(allRows.map(ledgerKey)),
+  )
+  const selectedRows = allRows.filter((row) => selectedKeys.has(ledgerKey(row)))
+  const selectedYouOwe = selectedRows.filter((row) => row.direction === 'you_owe')
+  const selectedOwedToYou = selectedRows.filter((row) => row.direction === 'owed_to_you')
+  const selectedAmount = Math.min(
+    selectedYouOwe.reduce((sum, row) => sum + Math.abs(Number(row.net_amount)), 0),
+    selectedOwedToYou.reduce((sum, row) => sum + Math.abs(Number(row.net_amount)), 0),
+  )
 
   const firstName = otherName.split(' ')[0]
-  const adjustableAmount = Number(match.adjustable_amount)
   const youOweTotal = Number(match.you_owe_total)
   const owedToYouTotal = Number(match.owed_to_you_total)
 
@@ -88,7 +101,7 @@ function AdjustBalancesBody({
     if (isSubmitting) return
     setIsSubmitting(true)
     try {
-      await applyAdjustment.mutateAsync({ currency: match.currency })
+      await applyAdjustment.mutateAsync({ currency: match.currency, ledgerKeys: [...selectedKeys] })
       toast.success('Balances adjusted')
       navigate({ to: ROUTES.CONTACT_BREAKDOWN, params: { id: userId }, replace: true })
     } catch (err) {
@@ -113,10 +126,12 @@ function AdjustBalancesBody({
             <div className="p-5 flex flex-col gap-3">
               <span className="text-[12px] font-bold text-[#C96A1B] uppercase tracking-wide">You owe {firstName}</span>
               {youOweRows.map((row) => (
-                <div key={`${row.scope}-${row.friendship_id ?? row.group_id}`} className="flex items-center justify-between">
-                  <span className="text-[14px] font-semibold text-[#1A1A1A]">{row.label}</span>
-                  <span className="text-[14px] font-bold text-[#C96A1B]">{formatCurrency(Number(row.net_amount), row.currency)}</span>
-                </div>
+                <LedgerRow row={row} selected={selectedKeys.has(ledgerKey(row))} onToggle={() => setSelectedKeys((current) => {
+                  const next = new Set(current)
+                  const key = ledgerKey(row)
+                  next.has(key) ? next.delete(key) : next.add(key)
+                  return next
+                })} />
               ))}
             </div>
           )}
@@ -127,10 +142,12 @@ function AdjustBalancesBody({
             <div className="p-5 flex flex-col gap-3">
               <span className="text-[12px] font-bold text-positive uppercase tracking-wide">{firstName} owes you</span>
               {owedToYouRows.map((row) => (
-                <div key={`${row.scope}-${row.friendship_id ?? row.group_id}`} className="flex items-center justify-between">
-                  <span className="text-[14px] font-semibold text-[#1A1A1A]">{row.label}</span>
-                  <span className="text-[14px] font-bold text-positive">{formatCurrency(Number(row.net_amount), row.currency)}</span>
-                </div>
+                <LedgerRow row={row} selected={selectedKeys.has(ledgerKey(row))} onToggle={() => setSelectedKeys((current) => {
+                  const next = new Set(current)
+                  const key = ledgerKey(row)
+                  next.has(key) ? next.delete(key) : next.add(key)
+                  return next
+                })} />
               ))}
             </div>
           )}
@@ -139,7 +156,7 @@ function AdjustBalancesBody({
         <div className="bg-[#E4F2EB] border-[1.5px] border-[#0B683A26] rounded-[16px] p-4 flex items-center gap-2.5">
           <Info size={16} className="text-positive shrink-0" />
           <span className="text-[13px] font-semibold text-positive">
-            We can adjust {formatCurrency(adjustableAmount, match.currency)} so no money needs to be paid.
+            We can adjust {formatCurrency(selectedAmount, match.currency)} so no money needs to be paid.
           </span>
         </div>
       </div>
@@ -148,10 +165,10 @@ function AdjustBalancesBody({
         <button
           type="button"
           onClick={handleAdjust}
-          disabled={isSubmitting}
+          disabled={isSubmitting || selectedAmount <= 0}
           className="w-full h-14 rounded-full bg-positive text-white font-extrabold text-base cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center outline-none border-0 disabled:opacity-50"
         >
-          {isSubmitting ? 'Adjusting...' : `Adjust ${formatCurrency(adjustableAmount, match.currency)}`}
+          {isSubmitting ? 'Adjusting...' : `Adjust ${formatCurrency(selectedAmount, match.currency)}`}
         </button>
         <button
           type="button"
@@ -164,4 +181,17 @@ function AdjustBalancesBody({
       </div>
     </div>
   )
+}
+
+function LedgerRow({ row, selected, onToggle }: { row: LedgerAdjustment['ledgers'][number]; selected: boolean; onToggle: () => void }) {
+  const positive = row.direction === 'owed_to_you'
+  return <button type="button" onClick={onToggle} className="w-full flex items-center justify-between text-left border-0 bg-transparent cursor-pointer py-1">
+    <span className="flex items-center gap-2">
+      <span className={`size-5 rounded-full border flex items-center justify-center shrink-0 ${selected ? 'bg-positive border-positive text-white' : 'border-[#BDBDBD]'}`}>
+        {selected && <Check size={13} strokeWidth={3} />}
+      </span>
+      <span className="text-[14px] font-semibold text-[#1A1A1A]">{row.label}</span>
+    </span>
+    <span className={`text-[14px] font-bold ${positive ? 'text-positive' : 'text-[#C96A1B]'}`}>{formatCurrency(Number(row.net_amount), row.currency)}</span>
+  </button>
 }

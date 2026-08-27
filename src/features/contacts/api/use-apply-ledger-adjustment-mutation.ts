@@ -14,11 +14,11 @@ type SettlementRead = components['schemas']['SettlementRead']
 export function useApplyLedgerAdjustmentMutation(userId: string) {
   const queryClient = useQueryClient()
 
-  return useMutation<SettlementRead[], ApiError, { currency: string }>({
-    mutationFn: async ({ currency }) => {
+  return useMutation<SettlementRead[], ApiError, { currency: string; ledgerKeys: string[] }>({
+    mutationFn: async ({ currency, ledgerKeys }) => {
       const result = await queueMutation<SettlementRead[]>({
         resource: 'ledger-adjustments', method: 'POST', path: `/api/expenses/with/${userId}/adjustment/`,
-        body: { currency }, optimisticResult: [],
+        body: { currency, ledger_keys: ledgerKeys }, optimisticResult: [],
       })
       return result.data
     },

@@ -64,6 +64,7 @@ export default function CategoryPieChart({ categories, hoveredIndex, onHoverInde
       labelY: labelCoords.y,
       cat,
       idx,
+      showLabel: cat.percentage >= 5 || categories.length === 1,
     }
   })
 
@@ -90,7 +91,7 @@ export default function CategoryPieChart({ categories, hoveredIndex, onHoverInde
                 strokeWidth="1.5"
                 className="cursor-pointer"
               />
-              {slice.cat.percentage > 0 && (
+              {slice.showLabel && slice.cat.percentage > 0 && (
                 <text
                   x={slice.labelX}
                   y={slice.labelY}
