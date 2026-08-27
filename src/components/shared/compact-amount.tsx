@@ -39,7 +39,7 @@ export default function CompactAmount({ amount, currency, className, drawerTitle
       <span className={cn('inline-flex items-center gap-1.5 min-w-0', className)}>
         {stackCurrency ? (
           <span className="flex min-w-0 flex-col leading-none">
-            <span className="text-[0.55em] leading-none">{currencySymbol}</span>
+            <span className="text-[10px] leading-none">{currencySymbol}</span>
             <span className="truncate">{numericDisplay}</span>
           </span>
         ) : <span className="truncate">{display}</span>}
