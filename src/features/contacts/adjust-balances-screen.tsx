@@ -72,23 +72,24 @@ function AdjustBalancesBody({
   const ledgerKey = (row: LedgerAdjustment['ledgers'][number]) =>
     `${row.scope}:${row.friendship_id ?? row.group_id}`
   const allRows = match.ledgers.filter((row) => Number(row.net_amount) !== 0)
-  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(
-    () => new Set(allRows.map(ledgerKey)),
-  )
-  const selectedRows = allRows.filter((row) => selectedKeys.has(ledgerKey(row)))
-  const selectedYouOwe = selectedRows.filter((row) => row.direction === 'you_owe')
-  const selectedOwedToYou = selectedRows.filter((row) => row.direction === 'owed_to_you')
-  const selectedAmount = Math.min(
-    selectedYouOwe.reduce((sum, row) => sum + Math.abs(Number(row.net_amount)), 0),
-    selectedOwedToYou.reduce((sum, row) => sum + Math.abs(Number(row.net_amount)), 0),
-  )
-
   const firstName = otherName.split(' ')[0]
   const youOweTotal = Number(match.you_owe_total)
   const owedToYouTotal = Number(match.owed_to_you_total)
 
   const youOweRows = match.ledgers.filter((l) => l.direction === 'you_owe')
   const owedToYouRows = match.ledgers.filter((l) => l.direction === 'owed_to_you')
+  const [selectedYouOweKey, setSelectedYouOweKey] = useState(() => youOweRows[0] ? ledgerKey(youOweRows[0]) : '')
+  const [selectedOwedToYouKey, setSelectedOwedToYouKey] = useState(() => owedToYouRows[0] ? ledgerKey(owedToYouRows[0]) : '')
+  const selectedRows = allRows.filter((row) => {
+    const key = ledgerKey(row)
+    return key === selectedYouOweKey || key === selectedOwedToYouKey
+  })
+  const selectedYouOwe = selectedRows.filter((row) => row.direction === 'you_owe')
+  const selectedOwedToYou = selectedRows.filter((row) => row.direction === 'owed_to_you')
+  const selectedAmount = Math.min(
+    Math.abs(Number(selectedYouOwe[0]?.net_amount ?? 0)),
+    Math.abs(Number(selectedOwedToYou[0]?.net_amount ?? 0)),
+  )
 
   const subtitle =
     owedToYouTotal > youOweTotal
@@ -101,7 +102,7 @@ function AdjustBalancesBody({
     if (isSubmitting) return
     setIsSubmitting(true)
     try {
-      await applyAdjustment.mutateAsync({ currency: match.currency, ledgerKeys: [...selectedKeys] })
+      await applyAdjustment.mutateAsync({ currency: match.currency, ledgerKeys: [selectedYouOweKey, selectedOwedToYouKey] })
       toast.success('Balances adjusted')
       navigate({ to: ROUTES.CONTACT_BREAKDOWN, params: { id: userId }, replace: true })
     } catch (err) {
@@ -126,12 +127,7 @@ function AdjustBalancesBody({
             <div className="p-5 flex flex-col gap-3">
               <span className="text-[12px] font-bold text-[#C96A1B] uppercase tracking-wide">You owe {firstName}</span>
               {youOweRows.map((row) => (
-                <LedgerRow row={row} selected={selectedKeys.has(ledgerKey(row))} onToggle={() => setSelectedKeys((current) => {
-                  const next = new Set(current)
-                  const key = ledgerKey(row)
-                  next.has(key) ? next.delete(key) : next.add(key)
-                  return next
-                })} />
+                <LedgerRow row={row} selected={selectedYouOweKey === ledgerKey(row)} onToggle={() => setSelectedYouOweKey(ledgerKey(row))} />
               ))}
             </div>
           )}
@@ -142,12 +138,7 @@ function AdjustBalancesBody({
             <div className="p-5 flex flex-col gap-3">
               <span className="text-[12px] font-bold text-positive uppercase tracking-wide">{firstName} owes you</span>
               {owedToYouRows.map((row) => (
-                <LedgerRow row={row} selected={selectedKeys.has(ledgerKey(row))} onToggle={() => setSelectedKeys((current) => {
-                  const next = new Set(current)
-                  const key = ledgerKey(row)
-                  next.has(key) ? next.delete(key) : next.add(key)
-                  return next
-                })} />
+                <LedgerRow row={row} selected={selectedOwedToYouKey === ledgerKey(row)} onToggle={() => setSelectedOwedToYouKey(ledgerKey(row))} />
               ))}
             </div>
           )}
