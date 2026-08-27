@@ -2,8 +2,8 @@ import { useCallback } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
 import { Users, Smile } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
-import { formatCurrency } from '@/lib/currency'
 import { cn } from '@/lib/utils'
+import CompactAmount from '@/components/shared/compact-amount'
 import ExpenseList, { type ExpenseListData } from '@/components/shared/expense-list'
 import ContactAvatar from '@/components/shared/contact-avatar'
 import FlowHeader from '@/components/shared/flow-header'
@@ -90,7 +90,7 @@ export default function LedgerBreakdownScreen() {
   const overallAmount = primaryBalance ? Number(primaryBalance.net_amount) : 0
   const isPositive = primaryBalance?.direction === 'owed_to_you'
   const isNegative = primaryBalance?.direction === 'you_owe'
-  const formattedOverall = formatCurrency(overallAmount, primaryBalance?.currency ?? 'PKR')
+  const overallCurrency = primaryBalance?.currency ?? 'PKR'
 
   const overallAmountColorClass = isPositive
     ? 'text-positive'
@@ -157,9 +157,12 @@ export default function LedgerBreakdownScreen() {
         <div className="bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-6 flex items-center justify-between">
           <div className="flex flex-col text-left">
             <div className="flex items-baseline gap-2">
-              <span className={cn('text-[36px] font-black leading-none tracking-tight', overallAmountColorClass)}>
-                {formattedOverall}
-              </span>
+              <CompactAmount
+                amount={Math.abs(overallAmount)}
+                currency={overallCurrency}
+                drawerTitle="Overall Balance"
+                className={cn('max-w-full text-[36px] font-black leading-none tracking-tight tabular-nums', overallAmountColorClass)}
+              />
               <span className="text-[#6B6B6B] text-base font-semibold">overall</span>
             </div>
             <span className="text-[#6B6B6B] text-xs font-medium mt-2">

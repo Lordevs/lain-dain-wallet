@@ -1,6 +1,6 @@
 import { createElement, memo, useState } from 'react'
 import { Coffee, Fuel, ShoppingCart, Truck, Handshake, Layers, ChevronRight, RefreshCw } from 'lucide-react'
-import { formatCurrency } from '@/lib/currency'
+import CompactAmount from './compact-amount'
 import { cn } from '@/lib/utils'
 import { iconForCategory } from '@/features/expenses/lib/category-icons'
 import { useLongPress } from '@/hooks/use-long-press'
@@ -129,8 +129,6 @@ function ExpenseItem({
       )
     )
 
-  const formattedAmount = formatCurrency(Math.abs(amount), currency)
-  const displayAmount = `${amount < 0 ? '-' : ''}${formattedAmount}`
 
   return (
     <ReactionPicker
@@ -157,7 +155,7 @@ function ExpenseItem({
       )}
     >
       {/* Left side details */}
-      <div className="flex items-center gap-3">
+      <div className="min-w-0 flex items-center gap-3">
         {leftSlot ? (
           leftSlot
         ) : categoryIcon ? (
@@ -181,7 +179,7 @@ function ExpenseItem({
             {icon}
           </div>
         )}
-        <div>
+        <div className="min-w-0">
           <p className={cn(
             "font-bold text-[15px] leading-tight",
             category === 'payment' ? "text-positive" : category === 'adjustment' ? "text-[#6C4FCE]" : "text-foreground"
@@ -197,10 +195,16 @@ function ExpenseItem({
       </div>
 
       {/* Right side amount + chevron */}
-      <div className="flex items-center gap-2">
-        <div className="flex flex-col items-end text-right">
-          <span className={cn('text-base font-bold', colorClass)}>
-            {displayAmount}
+      <div className="min-w-0 max-w-[48%] flex items-center gap-2">
+        <div className="min-w-0 flex flex-col items-end text-right">
+          <span className={cn('text-base font-bold max-w-full', colorClass)}>
+            {amount < 0 && <span>-</span>}
+            <CompactAmount
+              amount={Math.abs(amount)}
+              currency={currency}
+              drawerTitle="Exact Amount"
+              className="max-w-full"
+            />
           </span>
           {rightSubtitle && (
             <span className="text-[11px] text-muted-foreground mt-1 font-normal leading-none">
