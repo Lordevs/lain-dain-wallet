@@ -60,8 +60,8 @@ function makeComparator(sort: GroupSortBy) {
   const byAmount = sort === 'highest' || sort === 'lowest'
 
   return (a: GroupTransaction, b: GroupTransaction): number => {
-    const av = byAmount ? Number(a.data.amount) : a.date
-    const bv = byAmount ? Number(b.data.amount) : b.date
+    const av = byAmount ? Number(a.data.amount) : a.data.created_at
+    const bv = byAmount ? Number(b.data.amount) : b.data.created_at
     const primary = ascending ? (av < bv ? -1 : av > bv ? 1 : 0) : (av > bv ? -1 : av < bv ? 1 : 0)
     if (primary !== 0) return primary
 

@@ -67,7 +67,7 @@ export default function GroupDetailScreen() {
           currency: t.data.currency,
           categoryIcon: t.data.category.icon,
           categoryColor: t.data.category.color,
-          rightSubtitle: new Date(t.data.date).toLocaleDateString(),
+          rightSubtitle: new Date(t.data.created_at).toLocaleDateString(),
           showChevron: true,
           amountColor: 'default' as const,
           kind: 'expense' as const,

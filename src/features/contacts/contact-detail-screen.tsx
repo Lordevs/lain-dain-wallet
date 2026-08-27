@@ -90,7 +90,10 @@ export default function ContactDetailScreen() {
     if (!transactions.data) return []
     return transactions.data.map((t) => {
       const rawDateStr = t.kind === 'expense' ? (t.data.created_at || t.data.date) : (t.data.created_at || t.data.date)
-      const dateCat = getDateCategory(t.data.date)
+      // Activity belongs to the moment the record was created. `date` is the
+      // user-selected settlement/expense date and may be backdated; using it
+      // here made a 12:30 AM adjustment appear under Yesterday.
+      const dateCat = getDateCategory(rawDateStr)
       const rightSub = formatRightSubtitle(rawDateStr, dateCat)
 
       if (t.kind === 'expense') {
@@ -111,7 +114,7 @@ export default function ContactDetailScreen() {
           showChevron: true,
           amountColor: 'default' as const,
           kind: 'expense' as const,
-          dateISO: t.data.date,
+          dateISO: rawDateStr,
           reactions: t.data.reactions ?? [],
         }
       }
@@ -142,7 +145,7 @@ export default function ContactDetailScreen() {
           ? 'bg-[#EDE7F6] hover:bg-[#EDE7F6]/90'
           : isConfirmed ? 'bg-[#DCEFE4] hover:bg-[#DCEFE4]/90' : undefined,
         kind: 'settlement' as const,
-        dateISO: t.data.date,
+        dateISO: rawDateStr,
         reactions: t.data.reactions ?? [],
       }
     })

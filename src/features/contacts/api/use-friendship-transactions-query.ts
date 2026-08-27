@@ -41,9 +41,9 @@ function cursorFromUrl(url: string | null | undefined): string | null {
 }
 
 function compareTransactions(a: FriendshipTransaction, b: FriendshipTransaction): number {
-  // Newest first by the user-editable `date` — a backdated or future-dated
-  // expense sorts by the date the user picked, not by when it was inserted.
-  const byDate = b.data.date.localeCompare(a.data.date)
+  // The ledger is an activity feed. Sort by creation time so a just-created
+  // adjustment is at the top even when its user-facing date is backdated.
+  const byDate = b.data.created_at.localeCompare(a.data.created_at)
   if (byDate !== 0) return byDate
 
   // Match both backend cursors' exact secondary ordering: ("-date", "-id").
