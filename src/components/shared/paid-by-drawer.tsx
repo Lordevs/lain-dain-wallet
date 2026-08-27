@@ -266,6 +266,7 @@ function PaidByDrawerContent({
                 type="button"
                 onClick={() => {
                   setTempValue('multiple')
+                  setPayerAmounts(Object.fromEntries(members.map((member) => [member.id, ''])))
                   setView('multiple')
                 }}
                 className={cn(

@@ -1,8 +1,6 @@
 import type { ReactNode } from 'react'
-import { CreditCard } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useGroupUsedCategoriesQuery } from '../api/use-group-used-categories-query'
-import { useGroupTransactionsQuery } from '../api/use-group-transactions-query'
 import { iconForCategory } from '@/features/expenses/lib/category-icons'
 import type { GroupTransactionFilter } from '../api/use-group-transactions-query'
 
@@ -14,17 +12,9 @@ interface GroupCategoryFilterPillsProps {
 
 /** Horizontal scrollable filter bar for the group Expenses list — "All" +
  * only the categories this group actually has expenses in (via
- * useGroupUsedCategoriesQuery, not the full global category list) + a
- * "Payment" pseudo-pill representing settlements, which have no real
- * Category row of their own. */
+ * useGroupUsedCategoriesQuery, not the full global category list). */
 export default function GroupCategoryFilterPills({ groupId, value, onChange }: GroupCategoryFilterPillsProps) {
   const categories = useGroupUsedCategoriesQuery(groupId).data ?? []
-  const transactions = useGroupTransactionsQuery(groupId, 'newest', 'all')
-  // Adjustments are settlement records internally, but they are not payments
-  // from the user's perspective and must not create a misleading Payment tab.
-  const hasPayments = transactions.data?.some(
-    (transaction) => transaction.kind === 'settlement' && transaction.data.method !== 'adjustment',
-  ) ?? false
 
   return (
     <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
@@ -41,14 +31,6 @@ export default function GroupCategoryFilterPills({ groupId, value, onChange }: G
           />
         )
       })}
-      {hasPayments && (
-        <Pill
-          label="Payment"
-          icon={<CreditCard size={14} strokeWidth={2} />}
-          isSelected={value === 'payment'}
-          onClick={() => onChange('payment')}
-        />
-      )}
     </div>
   )
 }

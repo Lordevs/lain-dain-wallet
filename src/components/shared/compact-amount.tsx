@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Info, X } from 'lucide-react'
-import { formatCurrency, formatCompact } from '@/lib/currency'
+import { formatCurrency, formatCompact, formatCompactNumber, getCurrency } from '@/lib/currency'
 import { Drawer, DrawerContent, DrawerHeader, DrawerClose } from '@/components/ui/drawer'
 import { cn } from '@/lib/utils'
 
@@ -9,6 +9,8 @@ interface CompactAmountProps {
   currency: string
   className?: string
   drawerTitle?: string
+  /** Places the currency symbol above the numeric value for narrow cards. */
+  stackCurrency?: boolean
 }
 
 /**
@@ -19,17 +21,26 @@ interface CompactAmountProps {
  * (Personal screen / View Reports) so BalanceSummaryCard's three columns
  * can each opt in independently.
  */
-export default function CompactAmount({ amount, currency, className, drawerTitle = 'Exact Amount' }: CompactAmountProps) {
+export default function CompactAmount({ amount, currency, className, drawerTitle = 'Exact Amount', stackCurrency = false }: CompactAmountProps) {
   const [exactAmountOpen, setExactAmountOpen] = useState(false)
 
   const formatted = formatCurrency(amount, currency)
   const isLargeAmount = formatted.length > 12
   const display = isLargeAmount ? formatCompact(amount, currency) : formatted
+  const currencySymbol = getCurrency(currency).symbol
+  const numericDisplay = isLargeAmount
+    ? formatCompactNumber(amount)
+    : formatted.replace(/^[^\d‑-]+/, '')
 
   return (
     <>
       <span className={cn('inline-flex items-center gap-1.5 min-w-0', className)}>
-        <span className="truncate">{display}</span>
+        {stackCurrency ? (
+          <span className="flex min-w-0 flex-col leading-none">
+            <span className="text-[0.55em] leading-none">{currencySymbol}</span>
+            <span className="truncate">{numericDisplay}</span>
+          </span>
+        ) : <span className="truncate">{display}</span>}
         {isLargeAmount && (
           <button
             type="button"

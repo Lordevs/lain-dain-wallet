@@ -206,7 +206,7 @@ function AddRecurringForm({
     const initialType = (editingPayment?.split_type as 'equal' | 'unequal' | 'adjustment') || 'equal'
     return {
       type: hasMultiplePayers && initialType === 'adjustment' ? 'equal' : initialType,
-      selectedMembers: initialSplits.length > 0 ? initialSplits : ['you'],
+      selectedMembers: initialSplits.length > 0 ? initialSplits : drawerMembers.map((member) => member.id),
       unequalAmounts: {},
       adjustmentAmounts: {},
     }

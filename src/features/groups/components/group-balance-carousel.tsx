@@ -83,7 +83,7 @@ export default function GroupBalanceCarousel({
               Net Balance
             </span>
             <span className={cn('text-3xl font-extrabold mt-2 leading-none tracking-tight', isReceivable ? 'text-positive' : 'text-[#C96A1B]')}>
-              <CompactAmount amount={Math.abs(netAmount)} currency={currency} drawerTitle="Net Balance" />
+              <CompactAmount amount={Math.abs(netAmount)} currency={currency} drawerTitle="Net Balance" stackCurrency />
             </span>
           </div>
 
