@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, ClipboardList, ChevronRight } from 'lucide-react'
+import { TrendingUp, TrendingDown } from 'lucide-react'
 import { formatCurrency } from '@/lib/currency'
 import coinWalletSvg from '@/assets/coin-wallet.svg'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -58,17 +58,15 @@ export default function ExpenseSummaryCard({ summary, label = 'You spent this mo
             </span>
           </div>
         )}
+      </div>
+      <div className="flex shrink-0 flex-col items-center gap-1">
+        <img src={coinWalletSvg} alt="" className="h-15 w-28" />
         {onViewReports && (
-          <button type="button" onClick={onViewReports} className="mt-3 flex w-full items-center gap-2 border-0 bg-transparent p-0 text-left cursor-pointer">
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#E4F2EB]">
-              <ClipboardList size={16} className="text-positive" strokeWidth={2} />
-            </span>
-            <span className="min-w-0 flex-1 text-xs font-bold text-[#1A1A1A]">View Reports</span>
-            <ChevronRight size={16} className="shrink-0 text-[#6B6B6B]" />
+          <button type="button" onClick={onViewReports} className="border-0 bg-transparent p-0 text-xs font-bold text-[#1A1A1A] underline underline-offset-2 cursor-pointer">
+            View Reports
           </button>
         )}
       </div>
-      <img src={coinWalletSvg} alt="" className="h-15 w-28 shrink-0" />
     </div>
   )
 }
