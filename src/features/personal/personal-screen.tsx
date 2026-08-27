@@ -6,7 +6,6 @@ import { ROUTES } from '@/constants/routes'
 import { useMyExpensesSummaryQuery } from '@/features/expenses/api/use-my-expenses-summary-query'
 import { useMyExpensesListQuery } from '@/features/expenses/api/use-my-expenses-list-query'
 import ExpenseSummaryCard from './components/expense-summary-card'
-import ViewReportsCard from './components/view-reports-card'
 import ExpenseList from '@/components/shared/expense-list'
 import ExpenseListSkeleton from '@/components/shared/expense-list-skeleton'
 import MonthFilterDropdown from './components/month-filter-drawer'
@@ -78,7 +77,7 @@ export default function PersonalScreen() {
       <div className="flex shrink-0 flex-col">
         {/* Card 1: Spent Stat Card */}
         {summaryQuery.data ? (
-          <ExpenseSummaryCard summary={toExpenseSummary(summaryQuery.data)} />
+          <ExpenseSummaryCard summary={toExpenseSummary(summaryQuery.data)} onViewReports={() => navigate({ to: ROUTES.PERSONAL_REPORTS })} />
         ) : summaryQuery.isLoading ? (
           <ExpenseSummaryCard.Skeleton />
         ) : (
@@ -93,9 +92,6 @@ export default function PersonalScreen() {
             </p>
           </div>
         )}
-
-        {/* Card 2: View Reports */}
-        <ViewReportsCard onClick={() => navigate({ to: ROUTES.PERSONAL_REPORTS })} />
 
         {/* Section Header: Period Filter */}
         <div className="flex items-center justify-between px-6 mt-6 mb-3">

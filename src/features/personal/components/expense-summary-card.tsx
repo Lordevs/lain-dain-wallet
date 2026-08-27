@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown } from 'lucide-react'
+import { TrendingUp, TrendingDown, ClipboardList, ChevronRight } from 'lucide-react'
 import { formatCurrency } from '@/lib/currency'
 import coinWalletSvg from '@/assets/coin-wallet.svg'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -12,13 +12,14 @@ interface ExpenseSummaryCardProps {
    * label (e.g. a custom period range) can override it. */
   label?: string
   className?: string
+  onViewReports?: () => void
 }
 
 /**
  * ExpenseSummaryCard — Displays monthly expenses overall statistics.
  * Formats currency dynamically and renders inline spent badges with trend symbols.
  */
-export default function ExpenseSummaryCard({ summary, label = 'You spent this month', className }: ExpenseSummaryCardProps) {
+export default function ExpenseSummaryCard({ summary, label = 'You spent this month', className, onViewReports }: ExpenseSummaryCardProps) {
   const { totalSpent, currency, comparison } = summary
   const format = (amount: number) => formatCurrency(amount, currency)
 
@@ -56,6 +57,15 @@ export default function ExpenseSummaryCard({ summary, label = 'You spent this mo
               {comparison.previousPeriodLabel}
             </span>
           </div>
+        )}
+        {onViewReports && (
+          <button type="button" onClick={onViewReports} className="mt-3 flex w-full items-center gap-2 border-0 bg-transparent p-0 text-left cursor-pointer">
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#E4F2EB]">
+              <ClipboardList size={16} className="text-positive" strokeWidth={2} />
+            </span>
+            <span className="min-w-0 flex-1 text-xs font-bold text-[#1A1A1A]">View Reports</span>
+            <ChevronRight size={16} className="shrink-0 text-[#6B6B6B]" />
+          </button>
         )}
       </div>
       <img src={coinWalletSvg} alt="" className="h-15 w-28 shrink-0" />

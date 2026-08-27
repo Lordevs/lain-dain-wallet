@@ -40,7 +40,6 @@ interface AddRecurringScreenProps {
   contactUserId?: string
   editPaymentId?: string
   onClose?: () => void
-  onSuccess?: () => void
 }
 
 function parseDateToIso(dateStr: string): string {
@@ -67,7 +66,6 @@ export default function AddRecurringScreen({
   contactUserId,
   editPaymentId,
   onClose = () => window.history.back(),
-  onSuccess = () => window.history.back(),
 }: AddRecurringScreenProps) {
   const userProfile = useAuthStore((state) => state.userProfile)
   const isFriendship = !!friendshipId
@@ -140,7 +138,6 @@ export default function AddRecurringScreen({
       editingPayment={editingPayment}
       categories={categoriesQuery.data ?? []}
       onClose={onClose}
-      onSuccess={onSuccess}
     />
   )
 }
@@ -154,7 +151,6 @@ function AddRecurringForm({
   editingPayment,
   categories,
   onClose,
-  onSuccess,
 }: {
   ledgerId: string
   scope: 'group' | 'friendship'
@@ -168,7 +164,6 @@ function AddRecurringForm({
   editingPayment: RecurringExpenseRead | null
   categories: Category[]
   onClose: () => void
-  onSuccess: () => void
 }) {
   const navigate = useNavigate()
   const userProfile = useAuthStore((state) => state.userProfile)
@@ -338,14 +333,10 @@ function AddRecurringForm({
   }
 
   const handleSuccessComplete = () => {
-    if (window.history.length > 1) {
-      onSuccess()
+    if (scope === 'friendship' && contactUserId) {
+      navigate({ to: ROUTES.CONTACT_RECURRING, params: { id: contactUserId }, replace: true })
     } else {
-      if (scope === 'friendship' && contactUserId) {
-        navigate({ to: ROUTES.CONTACT_RECURRING, params: { id: contactUserId } })
-      } else {
-        navigate({ to: ROUTES.GROUP_RECURRING, params: { id: ledgerId } })
-      }
+      navigate({ to: ROUTES.GROUP_RECURRING, params: { id: ledgerId }, replace: true })
     }
   }
 
