@@ -11,23 +11,20 @@ interface CompactAmountProps {
   drawerTitle?: string
   /** Places the currency symbol above the numeric value for narrow cards. */
   stackCurrency?: boolean
-  /** Shorter threshold for dense list rows. */
-  compactThreshold?: number
 }
 
 /**
  * CompactAmount — renders a currency amount, switching to an abbreviated
- * "20K"/"1.5M"/"5.05B" form with an info icon once the full formatted
- * string would run past ~12 characters; tapping the icon opens a bottom
- * drawer showing the exact amount. Extracted from expense-summary-card.tsx
- * (Personal screen / View Reports) so BalanceSummaryCard's three columns
- * can each opt in independently.
+ * "20K"/"1.5M"/"5.05B" form with an info icon from 1,000 onward; tapping
+ * the icon opens a bottom drawer showing the exact amount. Extracted from
+ * expense-summary-card.tsx (Personal screen / View Reports) so
+ * BalanceSummaryCard's three columns can each opt in independently.
  */
-export default function CompactAmount({ amount, currency, className, drawerTitle = 'Exact Amount', stackCurrency = false, compactThreshold = 12 }: CompactAmountProps) {
+export default function CompactAmount({ amount, currency, className, drawerTitle = 'Exact Amount', stackCurrency = false }: CompactAmountProps) {
   const [exactAmountOpen, setExactAmountOpen] = useState(false)
 
   const formatted = formatCurrency(amount, currency)
-  const isLargeAmount = formatted.length > compactThreshold
+  const isLargeAmount = Math.abs(amount) >= 1_000
   const display = isLargeAmount ? formatCompact(amount, currency) : formatted
   const currencySymbol = getCurrency(currency).symbol
   const numericDisplay = isLargeAmount

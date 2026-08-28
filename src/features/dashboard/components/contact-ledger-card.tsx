@@ -4,7 +4,6 @@ import { cn } from '@/lib/utils'
 import type { Contact } from '@/types'
 import { Status, StatusIndicator } from '@/components/kibo-ui/status'
 import CompactAmount from '@/components/shared/compact-amount'
-import { formatCurrency } from '@/lib/currency'
 
 interface ContactLedgerCardProps {
   contact: Contact
@@ -112,10 +111,15 @@ function ContactLedgerCard({ contact, onSelect }: ContactLedgerCardProps) {
               {i > 0 && <span className="text-muted-faint/60 select-none">·</span>}
               <span className="text-foreground/70">{tag.name}</span>{' '}
               <span className={cn(
-                'font-bold',
+                'inline-flex items-center gap-0.5 font-bold',
                 tag.amount > 0 ? 'text-primary' : 'text-orange-payable'
               )}>
-                {tag.amount > 0 ? '\u002B' : ''}{formatCurrency(tag.amount, tag.currency ?? currency ?? 'PKR')}
+                {tag.amount > 0 ? '\u002B' : ''}
+                <CompactAmount
+                  amount={Math.abs(tag.amount)}
+                  currency={tag.currency ?? currency ?? 'PKR'}
+                  drawerTitle={`${tag.name} Balance`}
+                />
               </span>
             </span>
           ))}

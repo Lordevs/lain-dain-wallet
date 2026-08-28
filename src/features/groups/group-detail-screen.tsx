@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
 import { ChevronDown, ChevronUp, ListFilter, MoreVertical, WifiOff } from 'lucide-react'
 import { useNetworkStatus } from '@/hooks/use-network-status'
@@ -27,12 +27,7 @@ import { useToggleReactionMutation } from '@/features/groups/api/use-reaction-mu
 import { useAuthStore } from '@/store/use-auth-store'
 import GroupCategoryFilterPills from './components/group-category-filter-pills'
 import GroupExpensesFilterDrawer from './components/group-expenses-filter-drawer'
-
-// Only mounted once the group actually has balances (see balances.length
-// check below) — lazy-loading keeps framer-motion's chunk (unused
-// anywhere else on this screen) out of the initial fetch entirely for a
-// fully-settled group, and off the critical path otherwise.
-const GroupBalanceCarousel = lazy(() => import('./components/group-balance-carousel'))
+import GroupBalanceCarousel from './components/group-balance-carousel'
 
 const MAX_VISIBLE_BALANCES = 3
 
@@ -234,17 +229,15 @@ export default function GroupDetailScreen() {
       />
 
       {balances.length > 0 && (
-        <Suspense fallback={null}>
-          <GroupBalanceCarousel
-            isReceivable={netAmount >= 0}
-            netAmount={netAmount}
-            receivable={totalReceivable}
-            payable={totalPayable}
-            currency={group.default_currency}
-            hasReceivable={totalReceivable > 0}
-            onRemind={() => navigate({ to: ROUTES.GROUP_REMINDER, params: { id: groupId } })}
-          />
-        </Suspense>
+        <GroupBalanceCarousel
+          isReceivable={netAmount >= 0}
+          netAmount={netAmount}
+          receivable={totalReceivable}
+          payable={totalPayable}
+          currency={group.default_currency}
+          hasReceivable={totalReceivable > 0}
+          onRemind={() => navigate({ to: ROUTES.GROUP_REMINDER, params: { id: groupId } })}
+        />
       )}
 
       <div className="flex flex-col gap-6 px-6 pb-12">
@@ -292,7 +285,6 @@ export default function GroupDetailScreen() {
                         amount={Math.abs(Number(b.net_amount))}
                         currency={b.currency}
                         drawerTitle="Exact Balance"
-                        compactThreshold={7}
                         className={cn(
                           'text-[13px] font-black',
                           isReceivable ? 'text-positive' : 'text-[#C96A1B]',

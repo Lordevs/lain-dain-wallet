@@ -208,7 +208,6 @@ function ExpenseItem({
               currency={currency}
               drawerTitle="Exact Amount"
               className="max-w-full"
-              compactThreshold={7}
             />
           </span>
           {rightSubtitle && (

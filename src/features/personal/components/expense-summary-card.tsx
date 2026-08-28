@@ -1,5 +1,4 @@
 import { TrendingUp, TrendingDown } from 'lucide-react'
-import { formatCurrency } from '@/lib/currency'
 import coinWalletSvg from '@/assets/coin-wallet.svg'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
@@ -21,12 +20,10 @@ interface ExpenseSummaryCardProps {
  */
 export default function ExpenseSummaryCard({ summary, label = 'You spent this month', className, onViewReports }: ExpenseSummaryCardProps) {
   const { totalSpent, currency, comparison } = summary
-  const format = (amount: number) => formatCurrency(amount, currency)
 
-  // Same >12-char threshold CompactAmount uses internally — only needed
-  // here to pick the (slightly smaller) font size for the compacted form,
-  // since CompactAmount itself doesn't expose that decision back up.
-  const isLargeAmount = format(totalSpent).length > 12
+  // Match CompactAmount's 1,000-and-above compacting rule so the visual
+  // scale also steps down when the displayed amount switches to K/M/B/T.
+  const isLargeAmount = Math.abs(totalSpent) >= 1_000
 
   return (
     <div className={cn("bg-white rounded-[20px] border-[0.8px] border-[#EBEBEB] shadow-[0px_2px_5px_0px_#0000000D] p-4 mx-6 mt-3 flex justify-between items-center", className)}>
@@ -46,15 +43,22 @@ export default function ExpenseSummaryCard({ summary, label = 'You spent this mo
           />
         </div>
         {comparison && (
-          <div className="mt-3 flex max-w-full items-start gap-1 rounded-xl bg-[#FFF9E6] px-2.5 py-1">
+          <div className="mt-3 flex max-w-full items-start gap-1 rounded-xl bg-[#FFF9E6] w-fit px-2.5 py-1">
             {comparison.direction === 'up' ? (
               <TrendingUp size={12} className="text-tertiary" strokeWidth={2.5} />
             ) : (
               <TrendingDown size={12} className="text-positive" strokeWidth={2.5} />
             )}
-            <span className="min-w-0 text-[10px] font-semibold leading-snug text-tertiary">
-              {format(comparison.amount)} {comparison.direction === 'up' ? 'more' : 'less'} than{' '}
-              {comparison.previousPeriodLabel}
+            <span className="flex min-w-0 items-center gap-1 text-[10px] font-semibold leading-snug text-tertiary">
+              <CompactAmount
+                amount={comparison.amount}
+                currency={currency}
+                drawerTitle="Previous Period Difference"
+                className="shrink-0"
+              />
+              <span>
+                {comparison.direction === 'up' ? 'more' : 'less'} than {comparison.previousPeriodLabel}
+              </span>
             </span>
           </div>
         )}

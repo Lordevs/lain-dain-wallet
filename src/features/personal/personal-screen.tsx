@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { MoreVertical, WifiOff } from 'lucide-react'
+import { MoreVertical, Plus, WifiOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ROUTES } from '@/constants/routes'
 import { useMyExpensesSummaryQuery } from '@/features/expenses/api/use-my-expenses-summary-query'
@@ -138,10 +138,10 @@ export default function PersonalScreen() {
       <Button
         type="button"
         onClick={() => navigate({ to: ROUTES.PERSONAL_ADD_EXPENSE })}
-        className="absolute bottom-0 left-2 right-2 z-40 h-12 rounded-full bg-primary text-[clamp(14px,4vw,16px)] font-bold text-white shadow-lg transition-transform active:scale-[0.99] cursor-pointer"
+        className="fixed bottom-[calc(5.5rem+var(--safe-bottom))] right-[max(1.25rem,var(--safe-right))] z-40 w-14 h-14 rounded-full bg-secondary text-white flex items-center justify-center shadow-xs hover:bg-secondary/90 active:scale-95 transition-all p-0 shrink-0 cursor-pointer"
         aria-label="Add expense"
       >
-        Add Expense
+       <Plus className="size-6! text-foreground" strokeWidth={2.5} />
       </Button>
     </div>
   )

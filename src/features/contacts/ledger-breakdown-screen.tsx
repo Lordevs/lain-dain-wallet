@@ -161,7 +161,7 @@ export default function LedgerBreakdownScreen() {
                 amount={Math.abs(overallAmount)}
                 currency={overallCurrency}
                 drawerTitle="Overall Balance"
-                className={cn('max-w-full text-[36px] font-black leading-none tracking-tight tabular-nums', overallAmountColorClass)}
+                className={cn('max-w-full text-[28px] font-black leading-none tracking-tight tabular-nums', overallAmountColorClass)}
               />
               <span className="text-[#6B6B6B] text-base font-semibold">overall</span>
             </div>

@@ -26,17 +26,21 @@ export default function GroupBalanceCarousel({
   const [activeCardIndex, setActiveCardIndex] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Track carousel card metrics dynamically to support accurate pixel snapping
-  const [cardWidth, setCardWidth] = useState(0)
   const [slideDistance, setSlideDistance] = useState(0)
 
   useEffect(() => {
-    if (containerRef.current) {
-      // Use full container width since padding is removed
-      const measuredWidth = containerRef.current.clientWidth
-      setCardWidth(measuredWidth)
-      setSlideDistance(measuredWidth + 16) // card width + flex gap (16px)
+    const container = containerRef.current
+    if (!container) return
+
+    const updateSlideDistance = () => {
+      setSlideDistance(container.getBoundingClientRect().width + 16)
     }
+
+    updateSlideDistance()
+    const observer = new ResizeObserver(updateSlideDistance)
+    observer.observe(container)
+
+    return () => observer.disconnect()
   }, [])
 
   const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
@@ -60,10 +64,10 @@ export default function GroupBalanceCarousel({
   }
 
   return (
-    <div ref={containerRef} className="mx-6 mb-6 mt-4 relative overflow-hidden select-none">
+    <div ref={containerRef} className="mx-6 mb-6 mt-4 min-h-[148px] relative overflow-hidden select-none">
       {/* Sliding track container */}
       <motion.div
-        className="flex gap-4 cursor-grab active:cursor-grabbing w-max"
+        className="flex w-full gap-4 cursor-grab active:cursor-grabbing"
         animate={{ x: activeCardIndex === 0 ? 0 : -slideDistance }}
         transition={{ ease: "easeOut", duration: 0.15 }}
         drag="x"
@@ -75,8 +79,7 @@ export default function GroupBalanceCarousel({
         {/* Card 1 */}
         <div
           onClick={() => handleDotClick(1)}
-          style={{ width: cardWidth || 'auto' }}
-          className="shrink-0 bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-6 flex items-center justify-between min-h-[148px] relative text-left select-none touch-pan-y"
+          className="w-full min-w-full shrink-0 bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-6 flex items-center justify-between min-h-[148px] relative text-left select-none touch-pan-y"
         >
           <div className="flex flex-col text-left">
             <span className="text-[#6B6B6B] text-[13px] font-semibold">
@@ -131,8 +134,7 @@ export default function GroupBalanceCarousel({
         {/* Card 2 */}
         <div
           onClick={() => handleDotClick(0)}
-          style={{ width: cardWidth || 'auto' }}
-          className="shrink-0 bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-6 flex items-center justify-between min-h-[148px] relative text-left select-none touch-pan-y"
+          className="w-full min-w-full shrink-0 bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-6 flex items-center justify-between min-h-[148px] relative text-left select-none touch-pan-y"
         >
           {/* Two Column Layout Split by Light Vertical Line */}
           <div className="flex-1 flex items-stretch divide-x divide-[#EFE7DD] h-full">
@@ -146,7 +148,6 @@ export default function GroupBalanceCarousel({
                   amount={receivable}
                   currency={currency}
                   drawerTitle="You Will Receive"
-                  compactThreshold={7}
                 />
               </span>
               <div className="mt-3.5 flex items-center justify-start">
@@ -166,7 +167,6 @@ export default function GroupBalanceCarousel({
                   amount={payable}
                   currency={currency}
                   drawerTitle="You Will Pay"
-                  compactThreshold={7}
                 />
               </span>
               <div className="mt-3.5 flex items-center justify-start">
