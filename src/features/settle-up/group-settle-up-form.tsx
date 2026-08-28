@@ -37,7 +37,9 @@ function outstandingOf(balance: PersonBalance): number {
 function buildDefaultAmounts(balances: PersonBalance[]): Record<string, string> {
   const map: Record<string, string> = {}
   balances.forEach((b) => {
-    map[b.other_user.id] = String(outstandingOf(b))
+    // Allocations are intentional user input. Start both Pay and Receive
+    // forms empty so opening the form never silently assigns a full balance.
+    map[b.other_user.id] = ''
   })
   return map
 }

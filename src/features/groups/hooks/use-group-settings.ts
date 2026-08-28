@@ -41,7 +41,7 @@ export interface DrawerConfig {
 }
 
 function buildOwesText(member: Omit<GroupMember, 'owesText'>): string {
-  const roleLabel = member.role === 'owner' ? 'Owner' : member.role === 'admin' ? 'Admin' : 'Member'
+  const roleLabel = member.role === 'member' ? 'Member' : 'Admin'
   if (member.id === 'you') return `${roleLabel} · Group creator`
   if (member.balance > 0) return `${roleLabel} · Owes you Rs. ${member.balance.toLocaleString('en-US')}`
   if (member.balance < 0) return `${roleLabel} · You owe Rs. ${Math.abs(member.balance).toLocaleString('en-US')}`

@@ -38,11 +38,7 @@ export default function MemberOptionsDrawer({
 }: MemberOptionsDrawerProps) {
   if (!member) return null
 
-  const roleLabel = member.isOwner
-    ? 'Owner'
-    : member.isAdmin
-    ? 'Admin'
-    : 'Member'
+  const roleLabel = member.isAdmin ? 'Admin' : 'Member'
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>

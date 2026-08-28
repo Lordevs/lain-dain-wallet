@@ -159,15 +159,11 @@ export default function GroupSettingsScreen() {
                 }}
                 subtitle={
                   <span className="text-[#6B6B6B] text-[12px]">
-                    {you.role === 'owner' ? 'Owner' : you.role === 'admin' ? 'Admin' : 'Member'}
+                    {you.role === 'member' ? 'Member' : 'Admin'}
                   </span>
                 }
                 rightSlot={
-                  you.role === 'owner' ? (
-                    <span className="bg-[#FEF3C7] text-[#D97706] text-[11px] font-bold px-3 py-1 rounded-full">
-                      Owner
-                    </span>
-                  ) : you.role === 'admin' ? (
+                  you.role !== 'member' ? (
                     <span className="bg-[#ECF6F0] text-positive text-[11px] font-bold px-3 py-1 rounded-full">
                       Admin
                     </span>
@@ -190,17 +186,12 @@ export default function GroupSettingsScreen() {
                 }}
                 subtitle={
                   <span className="text-[#6B6B6B] text-[12px]">
-                    {m.role === 'owner' ? 'Owner' : m.role === 'admin' ? 'Admin' : 'Member'}
+                    {m.role === 'member' ? 'Member' : 'Admin'}
                   </span>
                 }
                 rightSlot={
                   <div className="flex items-center gap-2">
-                    {m.role === 'owner' && (
-                      <span className="bg-[#FEF3C7] text-[#D97706] text-[11px] font-bold px-3 py-1 rounded-full">
-                        Owner
-                      </span>
-                    )}
-                    {m.role === 'admin' && (
+                    {m.role !== 'member' && (
                       <span className="bg-[#ECF6F0] text-positive text-[11px] font-bold px-3 py-1 rounded-full">
                         Admin
                       </span>
