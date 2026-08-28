@@ -1,4 +1,4 @@
-import { ShieldCheck, UserMinus, Ban, Crown } from 'lucide-react'
+import { ShieldCheck, UserMinus, Ban } from 'lucide-react'
 import { Drawer, DrawerContent } from '@/components/ui/drawer'
 import ContactAvatar from './contact-avatar'
 
@@ -30,9 +30,7 @@ export default function MemberOptionsDrawer({
   isOpen,
   onClose,
   member,
-  isCurrentUserOwner,
   onToggleAdmin,
-  onTransferOwnership,
   onRemove,
   onBlockReport,
 }: MemberOptionsDrawerProps) {
@@ -63,25 +61,6 @@ export default function MemberOptionsDrawer({
 
         {/* Action List Options */}
         <div className="flex flex-col divide-y divide-border-card/60">
-          {/* Transfer Ownership (Only for Group Owner) */}
-          {isCurrentUserOwner && !member.isOwner && onTransferOwnership && (
-            <button
-              type="button"
-              onClick={() => {
-                onTransferOwnership(member.id)
-                onClose()
-              }}
-              className="flex items-center gap-4 px-6 py-4 hover:bg-muted/5 transition-colors cursor-pointer border-0 bg-transparent text-left w-full outline-none"
-            >
-              <div className="w-11 h-11 rounded-[14px] bg-[#E3F2FD] flex items-center justify-center text-[#1976D2] shrink-0">
-                <Crown size={20} strokeWidth={2.5} />
-              </div>
-              <span className="font-bold text-[15px] text-foreground">
-                Make Group Owner
-              </span>
-            </button>
-          )}
-
           {/* Make / Remove Admin (Not applicable to the Owner) */}
           {onToggleAdmin && !member.isOwner && (
             <button
