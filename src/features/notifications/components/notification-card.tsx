@@ -90,7 +90,13 @@ function NotificationCard({
               <button
                 key={index}
                 type="button"
-                onClick={action.onClick}
+                onClick={(event) => {
+                  // Action buttons live inside a clickable notification card.
+                  // Never let an action (especially Ignore) also trigger the
+                  // card's detail navigation.
+                  event.stopPropagation()
+                  action.onClick(event)
+                }}
                 className={cn(
                   "flex-1 h-[44px] rounded-full font-bold text-[13px] border-0 cursor-pointer outline-none transition-all active:scale-[0.98] flex items-center justify-center",
                   btnBg
