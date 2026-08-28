@@ -60,6 +60,8 @@ export function useCreateFriendshipRecurringMutation(friendshipId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['friendship-recurring', friendshipId] })
+      queryClient.invalidateQueries({ queryKey: ['friendship-transactions', friendshipId] })
+      queryClient.invalidateQueries({ queryKey: ['friendship-balance', friendshipId] })
     },
     onError: (error) => toast.error(error.message),
   })
@@ -79,6 +81,8 @@ export function useUpdateFriendshipRecurringMutation(friendshipId: string, recur
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['friendship-recurring', friendshipId] })
+      queryClient.invalidateQueries({ queryKey: ['friendship-transactions', friendshipId] })
+      queryClient.invalidateQueries({ queryKey: ['friendship-balance', friendshipId] })
     },
     onError: (error) => toast.error(error.message),
   })
@@ -116,6 +120,8 @@ export function useCreateGroupRecurringMutation(groupId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['group-recurring', groupId] })
+      queryClient.invalidateQueries({ queryKey: ['group-transactions', groupId] })
+      queryClient.invalidateQueries({ queryKey: ['group-balance', groupId] })
     },
     onError: (error) => {
       toast.error(error.message)
@@ -138,6 +144,8 @@ export function useUpdateGroupRecurringMutation(groupId: string, recurringId: st
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['group-recurring', groupId] })
+      queryClient.invalidateQueries({ queryKey: ['group-transactions', groupId] })
+      queryClient.invalidateQueries({ queryKey: ['group-balance', groupId] })
     },
     onError: (error) => {
       toast.error(error.message)
