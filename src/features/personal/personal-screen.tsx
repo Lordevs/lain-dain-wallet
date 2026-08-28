@@ -59,22 +59,21 @@ export default function PersonalScreen() {
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[#FEFAF1]">
-      {/* Top Header */}
-      <FlowHeader
-        title="My Expenses"
-        backVariant='minimal'
-        rightSlot={
-          <button
-            onClick={() => navigate({ to: ROUTES.PERSONAL_SETTINGS })}
-            className="text-[#6B6B6B] cursor-pointer border-0 bg-transparent flex items-center justify-center p-2 hover:opacity-80 transition-opacity"
-          >
-            <MoreVertical size={20} />
-          </button>
-        }
-      />
+      <div className="flex min-h-0 flex-1 touch-pan-y flex-col overflow-y-auto overscroll-y-contain">
+        {/* Top Header */}
+        <FlowHeader
+          title="My Expenses"
+          backVariant='minimal'
+          rightSlot={
+            <button
+              onClick={() => navigate({ to: ROUTES.PERSONAL_SETTINGS })}
+              className="text-[#6B6B6B] cursor-pointer border-0 bg-transparent flex items-center justify-center p-2 hover:opacity-80 transition-opacity"
+            >
+              <MoreVertical size={20} />
+            </button>
+          }
+        />
 
-      {/* Fixed summary and controls */}
-      <div className="flex shrink-0 flex-col">
         {/* Card 1: Spent Stat Card */}
         {summaryQuery.data ? (
           <ExpenseSummaryCard summary={toExpenseSummary(summaryQuery.data)} onViewReports={() => navigate({ to: ROUTES.PERSONAL_REPORTS })} />
@@ -93,47 +92,47 @@ export default function PersonalScreen() {
           </div>
         )}
 
-        {/* Section Header: Period Filter */}
-        <div className="flex items-center justify-between px-6 mt-6 mb-3">
-          <span className="text-sm font-medium text-[#6B6B6B]">{periodLabel(activePeriod)}</span>
-          <MonthFilterDropdown
-            value={periodKey(activePeriod)}
-            options={periodOptions}
-            onChange={(key) => setPeriod(parsePeriodKey(key))}
-          />
-        </div>
-
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none px-6 pb-1">
-          <button type="button" onClick={() => setCategoryId(undefined)} className={`shrink-0 rounded-full border-[1.5px] px-3.5 py-2 text-[13px] font-semibold ${!categoryId ? 'border-[#0B683A4D] bg-[#E4F2EB] text-primary' : 'border-[#E8E5DE] bg-white text-[#1A1A1A]'}`}>All</button>
-          {categories.map((category) => {
-            const Icon = iconForCategory(reportQuery.data?.by_category.find((item) => item.category.id === category.id)?.category.icon ?? 'other')
-            return <button key={category.id} type="button" onClick={() => setCategoryId(category.id)} className={`flex shrink-0 items-center gap-1.5 rounded-full border-[1.5px] px-3.5 py-2 text-[13px] font-semibold ${categoryId === category.id ? 'border-[#0B683A4D] bg-[#E4F2EB] text-primary' : 'border-[#E8E5DE] bg-white text-[#1A1A1A]'}`}><Icon size={14} style={{ color: category.color }} strokeWidth={2} />{category.label}</button>
-          })}
-        </div>
-
-      </div>
-
-      {/* Only this region scrolls when expense rows exist. */}
-      <div className={items.length === 0 && !listQuery.isLoading
-        ? 'flex min-h-0 flex-1 items-center justify-center overflow-hidden px-6'
-        : 'min-h-0 flex-1 overflow-y-auto px-6 pb-16'
-      }>
-        {listQuery.isLoading ? (
-          <ExpenseListSkeleton />
-        ) : items.length === 0 ? (
-          <p className="pb-4 text-center text-[clamp(13px,3.6vw,15px)] text-muted-foreground">
-            No expenses this period.
-          </p>
-        ) : (
-          <>
-            <ExpenseList expenses={items} onItemClick={handleItemClick} />
-            <InfiniteScrollSentinel
-              onLoadMore={listQuery.fetchNextPage}
-              hasMore={listQuery.hasNextPage}
-              isLoading={listQuery.isFetchingNextPage}
+        {/* Period and category controls stay visible after reaching the viewport top. */}
+        <div className="sticky top-0 z-30 mt-6 bg-[#FEFAF1] pb-3 pt-3">
+          <div className="flex items-center justify-between px-6 pb-3">
+            <span className="text-sm font-medium text-[#6B6B6B]">{periodLabel(activePeriod)}</span>
+            <MonthFilterDropdown
+              value={periodKey(activePeriod)}
+              options={periodOptions}
+              onChange={(key) => setPeriod(parsePeriodKey(key))}
             />
-          </>
-        )}
+          </div>
+
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none px-6 pb-1">
+            <button type="button" onClick={() => setCategoryId(undefined)} className={`shrink-0 rounded-full border-[1.5px] px-3.5 py-2 text-[13px] font-semibold ${!categoryId ? 'border-[#0B683A4D] bg-[#E4F2EB] text-primary' : 'border-[#E8E5DE] bg-white text-[#1A1A1A]'}`}>All</button>
+            {categories.map((category) => {
+              const Icon = iconForCategory(reportQuery.data?.by_category.find((item) => item.category.id === category.id)?.category.icon ?? 'other')
+              return <button key={category.id} type="button" onClick={() => setCategoryId(category.id)} className={`flex shrink-0 items-center gap-1.5 rounded-full border-[1.5px] px-3.5 py-2 text-[13px] font-semibold ${categoryId === category.id ? 'border-[#0B683A4D] bg-[#E4F2EB] text-primary' : 'border-[#E8E5DE] bg-white text-[#1A1A1A]'}`}><Icon size={14} style={{ color: category.color }} strokeWidth={2} />{category.label}</button>
+            })}
+          </div>
+        </div>
+
+        <div className={items.length === 0 && !listQuery.isLoading
+          ? 'flex min-h-52 items-center justify-center px-6 pb-16'
+          : 'px-6 pb-16'
+        }>
+          {listQuery.isLoading ? (
+            <ExpenseListSkeleton />
+          ) : items.length === 0 ? (
+            <p className="pb-4 text-center text-[clamp(13px,3.6vw,15px)] text-muted-foreground">
+              No expenses this period.
+            </p>
+          ) : (
+            <>
+              <ExpenseList expenses={items} onItemClick={handleItemClick} />
+              <InfiniteScrollSentinel
+                onLoadMore={listQuery.fetchNextPage}
+                hasMore={listQuery.hasNextPage}
+                isLoading={listQuery.isFetchingNextPage}
+              />
+            </>
+          )}
+        </div>
       </div>
 
       <Button
