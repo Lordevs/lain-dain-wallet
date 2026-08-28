@@ -3,7 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { AlertTriangle } from 'lucide-react'
 import { useCategoryBudgetsQuery } from '@/features/expenses/api/use-category-budgets-query'
 import { iconForCategory } from '@/features/expenses/lib/category-icons'
-import { formatCurrency } from '@/lib/currency'
+import CompactAmount from '@/components/shared/compact-amount'
 import FlowHeader from '@/components/shared/flow-header'
 import { cn } from '@/lib/utils'
 import { Progress } from '@/components/ui/progress'
@@ -36,9 +36,12 @@ export default function CategoryBudgetsScreen() {
               <span className="text-[12px] font-semibold text-[#6B6B6B]">
                 Total category budgets
               </span>
-              <span className="text-[20px] font-extrabold text-[#1A1A1A]">
-                {formatCurrency(totalBudget, currency)}
-              </span>
+              <CompactAmount
+                amount={totalBudget}
+                currency={currency}
+                drawerTitle="Total Category Budgets"
+                className="text-[20px] font-extrabold text-[#1A1A1A]"
+              />
             </div>
 
             {/* Combined Progress Bar */}
@@ -48,8 +51,9 @@ export default function CategoryBudgetsScreen() {
               indicatorClassName="bg-positive"
             />
 
-            <span className="text-[12px] font-normal text-[#6B6B6B] mt-2.5">
-              {formatCurrency(totalSpent, currency)} spent across all categories
+            <span className="mt-2.5 flex items-center gap-1 text-[12px] font-normal text-[#6B6B6B]">
+              <CompactAmount amount={totalSpent} currency={currency} drawerTitle="Total Category Spending" />
+              <span>spent across all categories</span>
             </span>
           </div>
         )}
@@ -112,7 +116,17 @@ export default function CategoryBudgetsScreen() {
                             "text-[14px] font-bold leading-tight shrink-0",
                             isOverBudget ? "text-[#C0392B]" : isNearLimit ? "text-[#C96A1B]" : "text-positive"
                           )}>
-                            {formatCurrency(spent, currency)} / {formatCurrency(limit, currency)}
+                            <CompactAmount
+                              amount={spent}
+                              currency={currency}
+                              drawerTitle={`${row.category.name} Spending`}
+                            />
+                            {' / '}
+                            <CompactAmount
+                              amount={limit}
+                              currency={currency}
+                              drawerTitle={`${row.category.name} Budget`}
+                            />
                           </span>
                         ) : (
                           <span className="text-positive font-bold text-[14px]">
@@ -138,22 +152,38 @@ export default function CategoryBudgetsScreen() {
                           {isOverBudget ? (
                             <span className="text-[#C0392B] text-[12px] font-semibold flex items-center gap-1 leading-normal">
                               <AlertTriangle size={12} className="shrink-0" />
-                              {formatCurrency(spent - limit, currency)} over budget
+                              <CompactAmount
+                                amount={spent - limit}
+                                currency={currency}
+                                drawerTitle={`${row.category.name} Over Budget`}
+                              />
+                              <span>over budget</span>
                             </span>
                           ) : (
                             <span className={cn(
-                              "text-[12px] font-normal leading-normal",
+                              "text-[12px] font-normal leading-normal flex items-center gap-1",
                               isNearLimit ? "text-[#C96A1B]" : "text-[#6B6B6B]"
                             )}>
-                              {spentPercent}% used · {formatCurrency(limit - spent, currency)} left
+                              <span>{spentPercent}% used ·</span>
+                              <CompactAmount
+                                amount={limit - spent}
+                                currency={currency}
+                                drawerTitle={`${row.category.name} Remaining Budget`}
+                              />
+                              <span>left</span>
                             </span>
                           )}
                         </div>
                       )}
 
                       {!isLimitSet && (
-                        <span className="text-[12px] font-normal text-[#6B6B6B] mt-1 leading-normal">
-                          {formatCurrency(spent, currency)} spent · no limit
+                        <span className="mt-1 flex items-center gap-1 text-[12px] font-normal leading-normal text-[#6B6B6B]">
+                          <CompactAmount
+                            amount={spent}
+                            currency={currency}
+                            drawerTitle={`${row.category.name} Spending`}
+                          />
+                          <span>spent · no limit</span>
                         </span>
                       )}
                     </div>

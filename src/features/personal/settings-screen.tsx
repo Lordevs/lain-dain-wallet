@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
-import { ChevronRight, Download, AlertCircle, Trash2 } from 'lucide-react'
+import { ChevronRight, AlertCircle, Trash2 } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import { formatCurrency } from '@/lib/currency'
 import { getOrdinal } from '@/lib/utils'
@@ -195,13 +195,12 @@ export default function PersonalSettingsScreen() {
         </div>
 
         {/* DATA SECTION */}
-        <div className="flex flex-col text-left">
+        {/* <div className="flex flex-col text-left">
           <h4 className="text-[11px] font-semibold text-[#6B6B6B] tracking-[0.8px] mb-0.5 px-1 uppercase">
             Data
           </h4>
           <div className="bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] divide-y divide-[#EFE7DD] overflow-hidden text-left ">
 
-            {/* Export All Data */}
             <div className="p-5 flex items-center justify-between transition-colors hover:bg-muted/5 cursor-pointer">
               <div className="flex items-center gap-4 min-w-0">
                 <div className="w-10 h-10 rounded-[12px] bg-[#ECF6F0] text-positive flex items-center justify-center shrink-0">
@@ -217,7 +216,7 @@ export default function PersonalSettingsScreen() {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* DANGER ZONE SECTION */}
         <div className="flex flex-col text-left">

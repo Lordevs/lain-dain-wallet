@@ -7,6 +7,7 @@ import { useSetCategoryBudgetMutation } from '@/features/expenses/api/use-set-ca
 import { useRemoveCategoryBudgetMutation } from '@/features/expenses/api/use-remove-category-budget-mutation'
 import { iconForCategory } from '@/features/expenses/lib/category-icons'
 import { formatCurrency } from '@/lib/currency'
+import CompactAmount from '@/components/shared/compact-amount'
 import FlowHeader from '@/components/shared/flow-header'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -137,8 +138,13 @@ function SetCategoryLimitForm({
             <h3 className="text-base font-extrabold text-[#1A1A1A] leading-tight">
               {row.category.name}
             </h3>
-            <span className="text-[12px] font-normal text-[#6B6B6B] mt-1.5 leading-normal">
-              {formatCurrency(spent, currency)} spent this month
+            <span className="mt-1.5 flex items-center gap-1 text-[12px] font-normal leading-normal text-[#6B6B6B]">
+              <CompactAmount
+                amount={spent}
+                currency={currency}
+                drawerTitle={`${row.category.name} Spending`}
+              />
+              <span>spent this month</span>
             </span>
           </div>
         </div>

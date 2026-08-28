@@ -3,7 +3,7 @@ import { Info } from 'lucide-react'
 import { usePersonalExpenseSettingsQuery } from '@/features/expenses/api/use-personal-expense-settings-query'
 import { useUpdatePersonalExpenseSettingsMutation } from '@/features/expenses/api/use-update-personal-expense-settings-mutation'
 import { useMyExpensesSummaryQuery } from '@/features/expenses/api/use-my-expenses-summary-query'
-import { formatCurrency } from '@/lib/currency'
+import CompactAmount from '@/components/shared/compact-amount'
 import FlowHeader from '@/components/shared/flow-header'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
@@ -112,9 +112,12 @@ function BudgetLimitForm({
             {spentThisMonth === null ? (
               <Skeleton className="h-6 w-20 mt-2" />
             ) : (
-              <span className="text-[20px] font-extrabold text-[#1A1A1A] mt-2 leading-none tracking-tight">
-                {formatCurrency(spentThisMonth, currency)}
-              </span>
+              <CompactAmount
+                amount={spentThisMonth}
+                currency={currency}
+                drawerTitle="Spent This Month"
+                className="mt-2 text-[20px] font-extrabold leading-none tracking-tight text-[#1A1A1A]"
+              />
             )}
           </div>
 
@@ -123,9 +126,16 @@ function BudgetLimitForm({
             <span className="text-[12px] font-semibold text-[#6B6B6B]">
               Budget limit
             </span>
-            <span className="text-[20px] font-extrabold text-positive mt-2 leading-none tracking-tight">
-              {limitValue > 0 ? formatCurrency(limitValue, currency) : 'Not set'}
-            </span>
+            {limitValue > 0 ? (
+              <CompactAmount
+                amount={limitValue}
+                currency={currency}
+                drawerTitle="Monthly Budget Limit"
+                className="mt-2 text-[20px] font-extrabold leading-none tracking-tight text-positive"
+              />
+            ) : (
+              <span className="mt-2 text-[20px] font-extrabold leading-none tracking-tight text-positive">Not set</span>
+            )}
           </div>
         </div>
 
