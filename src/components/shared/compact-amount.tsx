@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Info, X } from 'lucide-react'
 import { formatCurrency, formatCompact, formatCompactNumber, getCurrency } from '@/lib/currency'
 import { Drawer, DrawerContent, DrawerHeader, DrawerClose } from '@/components/ui/drawer'
@@ -22,6 +22,21 @@ interface CompactAmountProps {
  */
 export default function CompactAmount({ amount, currency, className, drawerTitle = 'Exact Amount', stackCurrency = false }: CompactAmountProps) {
   const [exactAmountOpen, setExactAmountOpen] = useState(false)
+  const scrollPositionRef = useRef<{ element: HTMLElement | null; top: number; windowTop: number } | null>(null)
+
+  const restoreScrollPosition = () => {
+    const position = scrollPositionRef.current
+    if (!position) return
+
+    // Vaul restores focus to the trigger after closing. On nested scroll
+    // containers that focus restoration can implicitly scroll the page back
+    // to the trigger. Restore both the app scroller and window on the next
+    // frame, after Vaul has completed its focus/scroll work.
+    requestAnimationFrame(() => {
+      position.element?.scrollTo({ top: position.top, behavior: 'auto' })
+      window.scrollTo({ top: position.windowTop, behavior: 'auto' })
+    })
+  }
 
   const formatted = formatCurrency(amount, currency)
   const isLargeAmount = Math.abs(amount) >= 1_000
@@ -45,6 +60,18 @@ export default function CompactAmount({ amount, currency, className, drawerTitle
             type="button"
             onClick={(e) => {
               e.stopPropagation()
+              const trigger = e.currentTarget
+              let element: HTMLElement | null = trigger.parentElement
+              while (element && element !== document.body) {
+                const style = window.getComputedStyle(element)
+                if (/(auto|scroll|overlay)/.test(style.overflowY)) break
+                element = element.parentElement
+              }
+              scrollPositionRef.current = {
+                element: element && element !== document.body ? element : null,
+                top: element && element !== document.body ? element.scrollTop : 0,
+                windowTop: window.scrollY,
+              }
               setExactAmountOpen(true)
             }}
             className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-[#F5F5F5] text-muted-foreground cursor-pointer active:scale-90 transition-transform border-0"
@@ -56,7 +83,13 @@ export default function CompactAmount({ amount, currency, className, drawerTitle
       </span>
 
       {isLargeAmount && (
-        <Drawer open={exactAmountOpen} onOpenChange={setExactAmountOpen}>
+        <Drawer
+          open={exactAmountOpen}
+          onOpenChange={(open) => {
+            setExactAmountOpen(open)
+            if (!open) restoreScrollPosition()
+          }}
+        >
           <DrawerContent className="bg-white rounded-t-[32px] pb-8 border-t-0 text-foreground outline-none">
             <DrawerHeader className="relative flex items-center justify-center px-14 pt-4 pb-4 shrink-0 text-center">
               <h3 className="text-[17px] font-extrabold text-foreground leading-snug">{drawerTitle}</h3>

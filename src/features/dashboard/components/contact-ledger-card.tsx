@@ -32,9 +32,17 @@ function ContactLedgerCard({ contact, onSelect }: ContactLedgerCardProps) {
   const [imageFailed, setImageFailed] = useState(false)
 
   return (
-    <button
+    <div
       id={`contact-card-${contact.id}`}
+      role="button"
+      tabIndex={0}
       onClick={() => onSelect?.(contact)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onSelect?.(contact)
+        }
+      }}
       className="w-full shrink-0 overflow-hidden rounded-lg border-[1.08px] border-border-card bg-[linear-gradient(160deg,#FFFDF5_8.49%,#FFFFFF_58.3%)] text-left transition-all hover:shadow-md active:scale-[0.99]"
     >
       {/* Top Row */}
@@ -80,7 +88,11 @@ function ContactLedgerCard({ contact, onSelect }: ContactLedgerCardProps) {
         </div>
 
         {/* Amount + chevron */}
-        <div className="flex items-center gap-1 shrink-0">
+        <div
+          className="flex items-center gap-1 shrink-0"
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => event.stopPropagation()}
+        >
           <span className={cn(
             'text-[15px] font-extrabold',
             isSettled ? 'text-muted-foreground' : isReceivable ? 'text-primary' : 'text-orange-payable'
@@ -125,7 +137,7 @@ function ContactLedgerCard({ contact, onSelect }: ContactLedgerCardProps) {
           ))}
         </div>
       )}
-    </button>
+    </div>
   )
 }
 
