@@ -27,6 +27,10 @@ function initialsForName(name: string): string {
   )
 }
 
+function firstName(fullName: string): string {
+  return fullName.trim().split(/\s+/)[0] || fullName
+}
+
 function getDateCategory(dateStr: string): 'Today' | 'Yesterday' | 'Earlier' {
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -126,8 +130,8 @@ export default function ContactDetailScreen() {
         ? `${t.data.payer.full_name} paid you`
         : `You paid ${t.data.payee.full_name}`
       const adjustmentSummary = t.data.payer.id === otherUserId
-        ? `${t.data.payer.full_name} adjusted this with you`
-        : `You adjusted this with ${t.data.payee.full_name}`
+        ? `with ${t.data.payer.full_name}`
+        : `with ${firstName(t.data.payee.full_name)}`
 
       return {
         id: t.data.id,

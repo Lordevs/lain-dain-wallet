@@ -183,6 +183,24 @@ function AddRecurringForm({
   const { amount, formattedAmount, handleAmountChange: updateAmount, isTooLong: isAmountTooLong } = useFormattedAmountInput(
     editingPayment ? String(editingPayment.amount) : ''
   )
+
+  // Build the member shape used by both the paid-by and split drawers before
+  // initializing splitData below. Referencing it after that initializer
+  // caused the Add New recurring route to throw before the form mounted.
+  const drawerMembers = useMemo(() => {
+    return members.map((m) => {
+      const isMe = m.id === myId
+      return {
+        id: isMe ? 'you' : m.id,
+        name: isMe ? 'You' : m.full_name,
+        initials: initialsForName(m.full_name),
+        avatarColor: colorForName(m.full_name),
+        src: m.image ?? undefined,
+        isOrganizer: isMe,
+      }
+    })
+  }, [members, myId])
+
   const [description, setDescription] = useState(editingPayment?.description ?? '')
   const [selectedCategory, setSelectedCategory] = useState(editingPayment?.category?.icon ?? 'bills')
   const [frequency, setFrequency] = useState<RecurringFrequency>(
@@ -234,23 +252,6 @@ function AddRecurringForm({
       ))
     }
   }
-
-  // Build real member list for PaidByDrawer and SplitExpenseDrawer
-  const drawerMembers = useMemo(() => {
-    return members
-      .map((m) => {
-        const isMe = m.id === myId
-        const name = isMe ? 'You' : m.full_name
-        return {
-          id: isMe ? 'you' : m.id,
-          name,
-          initials: initialsForName(m.full_name),
-          avatarColor: colorForName(m.full_name),
-          src: m.image ?? undefined,
-          isOrganizer: isMe,
-        }
-      })
-  }, [members, myId])
 
   const defaultSelectedMembers = useMemo(() => {
     return drawerMembers.map((m) => m.id)

@@ -116,10 +116,10 @@ function SettlementDetailBody({ settlement }: { settlement: SettlementRead }) {
   const avatarColor = colorForName(counterpart.full_name)
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-[#FEFAF1] text-left select-none">
+    <div className="flex min-h-screen flex-1 flex-col bg-[#FEFAF1] text-left select-none">
       <FlowHeader title="Settlement" onBack={() => window.history.back()} backVariant="circle" />
 
-      <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-6 pb-4 pt-4">
+      <div className="flex flex-col gap-5 px-6 pb-10 pt-4">
         {/* Summary card */}
         <div className="bg-white rounded-[24px] border-[0.8px] border-[#EBEBEB] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-6 flex flex-col items-center text-center gap-3">
           <ContactAvatar initials={initials} avatarColor={avatarColor} src={counterpart.image ?? undefined} size="lg" />

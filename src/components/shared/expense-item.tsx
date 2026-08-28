@@ -145,7 +145,11 @@ function ExpenseItem({
       onPointerLeave={longPress.onPointerLeave}
       onClickCapture={longPress.onClickCapture}
       className={cn(
-        'relative flex items-center justify-between p-4 bg-white hover:bg-muted/5 transition-all',
+        'relative flex items-center justify-between p-2 bg-white hover:bg-muted/5 transition-all',
+        // Transaction feeds include reaction space and can contain wrapped
+        // adjustment labels. Keep every row in that feed on one shared
+        // vertical rhythm instead of letting only wrapped rows grow.
+        !!onReact && 'min-h-[106px]',
         // Extra bottom room so the reaction badge/default-face icon sits
         // inside this row's own box instead of spilling into the next
         // row below it.
@@ -155,7 +159,7 @@ function ExpenseItem({
       )}
     >
       {/* Left side details */}
-      <div className="min-w-0 flex items-center gap-3">
+      <div className="min-w-0 flex-1 flex items-center gap-3">
         {leftSlot ? (
           leftSlot
         ) : categoryIcon ? (
@@ -181,13 +185,13 @@ function ExpenseItem({
         )}
         <div className="min-w-0 flex-1">
           <p className={cn(
-            "font-bold text-[14px] leading-tight",
+            "font-bold leading-tight text-[13px] line-clamp-2",
             category === 'payment' ? "text-positive" : category === 'adjustment' ? "text-[#6C4FCE]" : "text-foreground"
           )}>
             {name}
           </p>
           {subtitle && (
-            <div className="text-[12px] text-muted-foreground mt-1 font-normal leading-normal whitespace-pre-line">
+            <div className="text-[11px] text-muted-foreground mt-1 font-normal leading-normal whitespace-pre-line">
               {subtitle}
             </div>
           )}
@@ -195,9 +199,9 @@ function ExpenseItem({
       </div>
 
       {/* Right side amount + chevron */}
-      <div className="w-[44%] min-w-0 shrink-0 flex items-center justify-end gap-1.5">
+      <div className="w-[40%] min-w-0 shrink-0 flex items-center justify-end gap-1">
         <div className="min-w-0 flex flex-col items-end text-right">
-          <span className={cn('text-base font-bold max-w-full', colorClass)}>
+          <span className={cn('text-[14px] font-bold max-w-full', colorClass)}>
             {amount < 0 && <span>-</span>}
             <CompactAmount
               amount={Math.abs(amount)}

@@ -142,7 +142,12 @@ export default function GroupBalanceCarousel({
                 You will receive
               </span>
               <span className="text-xl font-extrabold text-positive mt-2.5 leading-none tracking-tight">
-                <CompactAmount amount={receivable} currency={currency} drawerTitle="You Will Receive" />
+                <CompactAmount
+                  amount={receivable}
+                  currency={currency}
+                  drawerTitle="You Will Receive"
+                  compactThreshold={7}
+                />
               </span>
               <div className="mt-3.5 flex items-center justify-start">
                 <div className="w-8 h-8 rounded-full bg-[#E4F2EB] flex items-center justify-center text-positive">
@@ -157,7 +162,12 @@ export default function GroupBalanceCarousel({
                 You will pay
               </span>
               <span className="text-xl font-extrabold text-[#C96A1B] mt-2.5 leading-none tracking-tight">
-                <CompactAmount amount={payable} currency={currency} drawerTitle="You Will Pay" />
+                <CompactAmount
+                  amount={payable}
+                  currency={currency}
+                  drawerTitle="You Will Pay"
+                  compactThreshold={7}
+                />
               </span>
               <div className="mt-3.5 flex items-center justify-start">
                 <div className="w-8 h-8 rounded-full bg-[#FFF8E1] flex items-center justify-center text-[#C96A1B]">

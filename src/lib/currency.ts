@@ -53,16 +53,22 @@ export function formatCompactNumber(amount: number): string {
   // (the K-tier convention) hides amounts that are meaningfully different
   // for a financial figure (e.g. 5.05B vs 5.09B is a ~40M gap).
   if (abs >= 1_000_000_000_000) {
-    formatted = `${(abs / 1_000_000_000_000).toFixed(2)}T`
+    formatted = `${Number((abs / 1_000_000_000_000).toFixed(2))}T`
   } else if (abs >= 1_000_000_000) {
-    formatted = `${(abs / 1_000_000_000).toFixed(2)}B`
+    formatted = `${Number((abs / 1_000_000_000).toFixed(2))}B`
   } else if (abs >= 1_000_000) {
-    formatted = `${(abs / 1_000_000).toFixed(2)}M`
+    formatted = `${Number((abs / 1_000_000).toFixed(2))}M`
   } else if (abs >= 1_000) {
-    formatted = `${(abs / 1_000).toFixed(1)}K`
+    formatted = `${Number((abs / 1_000).toFixed(1))}K`
   } else {
     formatted = abs.toString()
   }
+
+  // A trailing zero adds no useful information in a compact amount:
+  // "6.0K" is the same value as "6K" but takes more room in list rows.
+  formatted = formatted
+    .replace(/(\.\d*?[1-9])0+(?=[KMBT])$/, '$1')
+    .replace(/\.0+(?=[KMBT])$/, '')
 
   return `${isNegative ? '-' : ''}${formatted}`
 }

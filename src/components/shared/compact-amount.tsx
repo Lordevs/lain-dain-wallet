@@ -36,7 +36,7 @@ export default function CompactAmount({ amount, currency, className, drawerTitle
 
   return (
     <>
-      <span className={cn('inline-flex items-center gap-1.5 min-w-0', className)}>
+      <span className={cn('inline-flex items-center gap-1 min-w-0', className)}>
         {stackCurrency ? (
           <span className="flex min-w-0 flex-col leading-none">
             <span className="text-[10px] leading-none">{currencySymbol}</span>
@@ -50,10 +50,10 @@ export default function CompactAmount({ amount, currency, className, drawerTitle
               e.stopPropagation()
               setExactAmountOpen(true)
             }}
-            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#F5F5F5] text-muted-foreground cursor-pointer active:scale-90 transition-transform border-0"
+            className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-[#F5F5F5] text-muted-foreground cursor-pointer active:scale-90 transition-transform border-0"
             aria-label="Show exact amount"
           >
-            <Info size={12} strokeWidth={2.5} />
+            <Info size={10} strokeWidth={1.75} />
           </button>
         )}
       </span>

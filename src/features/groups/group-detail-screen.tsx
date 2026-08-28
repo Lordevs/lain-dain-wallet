@@ -3,13 +3,13 @@ import { useParams, useNavigate } from '@tanstack/react-router'
 import { ChevronDown, ChevronUp, ListFilter, MoreVertical, WifiOff } from 'lucide-react'
 import { useNetworkStatus } from '@/hooks/use-network-status'
 import { ROUTES } from '@/constants/routes'
-import { formatCurrency } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import { colorForName, initialsForName } from '@/lib/avatar-visuals'
 import FlowHeader from '@/components/shared/flow-header'
 import ContactAvatar from '@/components/shared/contact-avatar'
 import ContactList from '@/components/shared/contact-list'
 import ContactListItem from '@/components/shared/contact-list-item'
+import CompactAmount from '@/components/shared/compact-amount'
 import ExpenseList, { type ExpenseListData } from '@/components/shared/expense-list'
 import EmptyState from '@/components/shared/empty-state'
 import ExpenseListSkeleton from '@/components/shared/expense-list-skeleton'
@@ -54,6 +54,10 @@ function formatTransactionDate(dateISO: string): string {
   }
 
   return date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+function firstName(fullName: string): string {
+  return fullName.trim().split(/\s+/)[0] || fullName
 }
 
 /**
@@ -104,7 +108,7 @@ export default function GroupDetailScreen() {
       const payerName = t.data.payer.id === myId ? 'You' : t.data.payer.full_name
       const payeeName = t.data.payee.id === myId ? 'you' : t.data.payee.full_name
       const paymentSummary = `${payerName} paid ${payeeName}`
-      const adjustmentSummary = `${payerName} adjusted this with ${payeeName}`
+      const adjustmentSummary = `with ${firstName(payeeName)}`
 
       return {
         id: t.data.id,
@@ -284,9 +288,16 @@ export default function GroupDetailScreen() {
                       </span>
                     }
                     rightSlot={
-                      <span className={cn('text-[13px] font-black', isReceivable ? 'text-positive' : 'text-[#C96A1B]')}>
-                        {formatCurrency(Math.abs(Number(b.net_amount)), b.currency)}
-                      </span>
+                      <CompactAmount
+                        amount={Math.abs(Number(b.net_amount))}
+                        currency={b.currency}
+                        drawerTitle="Exact Balance"
+                        compactThreshold={7}
+                        className={cn(
+                          'text-[13px] font-black',
+                          isReceivable ? 'text-positive' : 'text-[#C96A1B]',
+                        )}
+                      />
                     }
                     className="p-4 hover:bg-muted/5 transition-all bg-white"
                   />
