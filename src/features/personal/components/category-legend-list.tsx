@@ -23,7 +23,7 @@ export default function CategoryLegendList({ categories, currency, hoveredIndex,
             key={cat.id}
             onMouseEnter={() => onHoverIndex(idx)}
             onMouseLeave={() => onHoverIndex(null)}
-            className={`flex items-center justify-between transition-colors p-1 -mx-1 rounded-lg ${isHovered ? 'bg-[#F7F5F0]' : ''
+            className={`flex items-start justify-between transition-colors p-1 -mx-1 rounded-lg ${isHovered ? 'bg-[#F7F5F0]' : ''
               }`}
           >
             <div className="flex items-center gap-2">
