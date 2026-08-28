@@ -208,7 +208,7 @@ export default function GroupDetailScreen() {
   const netAmount = totalReceivable - totalPayable
 
   return (
-    <div className="flex flex-col flex-1 bg-[#FEFAF1] min-h-screen pb-24 relative select-none">
+    <div className="relative flex min-h-0 flex-1 touch-pan-y select-none flex-col overflow-y-auto overscroll-y-contain bg-[#FEFAF1] pb-24">
       <FlowHeader
         title={group.name}
         subtitle={`${activeMembers.length} member${activeMembers.length === 1 ? '' : 's'}`}
@@ -247,7 +247,7 @@ export default function GroupDetailScreen() {
         </Suspense>
       )}
 
-      <div className="flex-1 overflow-y-auto px-6 pb-12 flex flex-col gap-6">
+      <div className="flex flex-col gap-6 px-6 pb-12">
         {offlineNoBalanceData && (
           <div className="flex items-center gap-3 rounded-[20px] border-[0.8px] border-[#EBEBEB] bg-white p-4 mt-1">
             <WifiOff size={18} className="shrink-0 text-muted-foreground" />
@@ -308,61 +308,63 @@ export default function GroupDetailScreen() {
         )}
 
         {/* Transaction history */}
-        <div className="flex flex-col gap-3 text-left">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-[#1A1A1A]">
-              Expenses <span className="text-[#6B6B6B] font-medium">({items.length} items)</span>
-            </h3>
-            <GroupExpensesFilterDrawer sortBy={sortBy} onSortByChange={setSortBy}>
-              <Button
-                variant="outline"
-                className={cn(
-                  'w-9 h-9 rounded-full bg-white! border-[1.08px] border-border-card flex items-center justify-center text-muted-faint hover:text-foreground hover:bg-white transition-colors shadow-[0px_2px_8px_0px_#0000000A] p-0 shrink-0 cursor-pointer',
-                  sortBy !== 'newest' && 'border-primary text-primary bg-primary/5 hover:bg-primary/5',
-                )}
-                aria-label="Sort"
-              >
-                <ListFilter size={16} strokeWidth={2} />
-              </Button>
-            </GroupExpensesFilterDrawer>
-          </div>
-          <GroupCategoryFilterPills groupId={groupId} value={categoryFilter} onChange={setCategoryFilter} />
-          {transactionsQuery.isLoading && <ExpenseListSkeleton />}
-          {transactionsQuery.isError && (
-            <div className="flex flex-col items-center gap-3 py-8 text-center">
-              <p className="text-sm text-muted-foreground">Couldn’t load transactions.</p>
-              <button
-                type="button"
-                onClick={() => void transactionsQuery.refetch()}
-                className="border-0 bg-transparent text-sm font-bold text-primary cursor-pointer"
-              >
-                Try again
-              </button>
+        <div className="flex flex-col text-left">
+          <div className="sticky top-0 z-30 -mx-6 bg-[#FEFAF1] px-6 py-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-[#1A1A1A]">
+                Expenses <span className="text-[#6B6B6B] font-medium">({items.length} items)</span>
+              </h3>
+              <GroupExpensesFilterDrawer sortBy={sortBy} onSortByChange={setSortBy}>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    'w-9 h-9 rounded-full bg-white! border-[1.08px] border-border-card flex items-center justify-center text-muted-faint hover:text-foreground hover:bg-white transition-colors shadow-[0px_2px_8px_0px_#0000000A] p-0 shrink-0 cursor-pointer',
+                    sortBy !== 'newest' && 'border-primary text-primary bg-primary/5 hover:bg-primary/5',
+                  )}
+                  aria-label="Sort"
+                >
+                  <ListFilter size={16} strokeWidth={2} />
+                </Button>
+              </GroupExpensesFilterDrawer>
             </div>
-          )}
-          {!transactionsQuery.isLoading && !transactionsQuery.isError && items.length === 0 && (
-            <EmptyState
-              title="No transactions yet"
-              description="Add an expense to start tracking this group's spending."
-              // actionLabel="Add Expense"
-              // onAction={() => navigate({ to: ROUTES.GROUP_ADD_EXPENSE, params: { id: groupId } })}
-              className="py-6"
-            />
-          )}
-          {items.length > 0 && (
-            <>
-              <ExpenseList
-                expenses={items}
-                onItemClick={handleItemClick}
-                onItemReact={handleReact}
+            <div className="mt-3">
+              <GroupCategoryFilterPills groupId={groupId} value={categoryFilter} onChange={setCategoryFilter} />
+            </div>
+          </div>
+          <div className="flex flex-col gap-3">
+            {transactionsQuery.isLoading && <ExpenseListSkeleton />}
+            {transactionsQuery.isError && (
+              <div className="flex flex-col items-center gap-3 py-8 text-center">
+                <p className="text-sm text-muted-foreground">Couldn’t load transactions.</p>
+                <button
+                  type="button"
+                  onClick={() => void transactionsQuery.refetch()}
+                  className="border-0 bg-transparent text-sm font-bold text-primary cursor-pointer"
+                >
+                  Try again
+                </button>
+              </div>
+            )}
+            {!transactionsQuery.isLoading && !transactionsQuery.isError && items.length === 0 && (
+              <EmptyState
+                title="No transactions yet"
+                description="Add an expense to start tracking this group's spending."
+                // actionLabel="Add Expense"
+                // onAction={() => navigate({ to: ROUTES.GROUP_ADD_EXPENSE, params: { id: groupId } })}
+                className="py-6"
               />
-              <InfiniteScrollSentinel
-                onLoadMore={transactionsQuery.fetchNextPage}
-                hasMore={transactionsQuery.hasNextPage}
-                isLoading={transactionsQuery.isFetchingNextPage}
-              />
-            </>
-          )}
+            )}
+            {items.length > 0 && (
+              <>
+                <ExpenseList expenses={items} onItemClick={handleItemClick} onItemReact={handleReact} />
+                <InfiniteScrollSentinel
+                  onLoadMore={transactionsQuery.fetchNextPage}
+                  hasMore={transactionsQuery.hasNextPage}
+                  isLoading={transactionsQuery.isFetchingNextPage}
+                />
+              </>
+            )}
+          </div>
         </div>
       </div>
 

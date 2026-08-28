@@ -154,7 +154,10 @@ export default function DashboardScreen() {
 
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-[#FEFAF1]">
+    <div className={isSearchActive
+      ? 'flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-[#FEFAF1]'
+      : 'flex h-full min-h-0 flex-1 touch-pan-y flex-col overflow-y-auto overscroll-y-contain bg-[#FEFAF1]'
+    }>
       {/* App Header — Logo + Avatar (hidden when search is active) */}
       {!isSearchActive && <AppHeader />}
 
@@ -199,7 +202,7 @@ export default function DashboardScreen() {
         />
       ) : (
         /* Main Content */
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="flex flex-col">
           {/* Balance Summary Card */}
           {summaryQuery.isLoading ? (
             <div className="mx-6 mt-3 flex shrink-0 divide-x divide-border-card rounded-lg border-[1.08px] border-border-card bg-white shadow-[0px_2.69px_10.76px_0px_#0000000D]">
@@ -236,8 +239,8 @@ export default function DashboardScreen() {
 
           {/* Contact/Group Ledger Cards */}
           <div className={isWalletEmpty
-            ? 'flex min-h-0 flex-1 items-center justify-center overflow-hidden px-6 pb-4'
-            : 'flex min-h-0 flex-1 touch-pan-y flex-col gap-1.5 overflow-y-auto overscroll-y-contain px-6 pb-24'
+            ? 'flex min-h-72 items-center justify-center px-6 pb-24'
+            : 'flex flex-col gap-1.5 px-6 pb-24'
           }>
             {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
