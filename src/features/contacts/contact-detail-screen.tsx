@@ -2,8 +2,8 @@ import { useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from '@tanstack/react-router'
 import { Bell, MoreVertical } from 'lucide-react'
 import ContactAvatar from '@/components/shared/contact-avatar'
+import CompactAmount from '@/components/shared/compact-amount'
 import { ROUTES } from '@/constants/routes'
-import { formatCurrency } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
 import ExpenseList, { type ExpenseListData } from '@/components/shared/expense-list'
@@ -237,8 +237,6 @@ export default function ContactDetailScreen() {
   const isPositive = primaryBalance?.direction === 'owed_to_you'
   const isNegative = primaryBalance?.direction === 'you_owe'
   const currency = primaryBalance?.currency ?? 'PKR'
-  const formattedVal = formatCurrency(amount, currency)
-
   const statusLabel = isPositive ? 'You will receive' : isNegative ? 'You owe' : 'Settled up'
   const amountColorClass = isPositive ? 'text-positive' : isNegative ? 'text-[#C96A1B]' : 'text-[#1A1A1A]'
   const initials = initialsForName(otherUser.full_name)
@@ -279,9 +277,12 @@ export default function ContactDetailScreen() {
         <div className="bg-white rounded-[24px] border-[0.8px] border-[#EFE7DD] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-6 flex items-center justify-between">
           <div className="flex flex-col text-left">
             <span className="text-[#6B6B6B] text-[13px] font-semibold">{statusLabel}</span>
-            <span className={cn('text-3xl font-extrabold mt-2 leading-none tracking-tight', amountColorClass)}>
-              {formattedVal}
-            </span>
+            <CompactAmount
+              amount={amount}
+              currency={currency}
+              drawerTitle="Exact 1-to-1 Balance"
+              className={cn('mt-2 text-3xl font-extrabold leading-none tracking-tight', amountColorClass)}
+            />
           </div>
           {showRemindButton && (
             <button

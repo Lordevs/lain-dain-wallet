@@ -191,7 +191,7 @@ function ExpenseItem({
             {name}
           </p>
           {subtitle && (
-            <div className="text-[11px] text-muted-foreground mt-1 font-normal leading-normal whitespace-pre-line">
+            <div className="text-[11px] text-muted-foreground font-normal leading-normal whitespace-pre-line">
               {subtitle}
             </div>
           )}

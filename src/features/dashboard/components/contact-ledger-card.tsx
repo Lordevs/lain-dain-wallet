@@ -77,35 +77,40 @@ function ContactLedgerCard({ contact, onSelect }: ContactLedgerCardProps) {
           )}
         </div>
 
-        {/* Name + ledger count */}
-        <div className="flex-1 min-w-0">
-          <p className="font-bold text-[14px] text-foreground leading-tight">{name}</p>
+        <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+          <div className="flex items-center justify-between">
+            {/* Name + ledger count */}
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-[14px] text-foreground leading-tight">{name}</p>
+            </div>
+
+            {/* Amount + chevron */}
+            <div
+              className="flex items-center gap-1 shrink-0"
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <span className={cn(
+                'text-[15px] font-extrabold',
+                isSettled ? 'text-muted-foreground' : isReceivable ? 'text-primary' : 'text-orange-payable'
+              )}>
+                {netAmount < 0 && '-'}
+                <CompactAmount
+                  amount={Math.abs(netAmount)}
+                  currency={currency ?? 'PKR'}
+                  drawerTitle={`${name} Balance`}
+                  className="max-w-full"
+                />
+              </span>
+              <ChevronRight size={16} className="text-muted-foreground" />
+            </div>
+          </div>
+
           {type !== 'group' && (
             <p className="text-[11px] text-muted-foreground mt-0.5 font-medium leading-tight">
               Net across {ledgerCount} Balance{ledgerCount !== 1 ? 's' : ''}
             </p>
           )}
-        </div>
-
-        {/* Amount + chevron */}
-        <div
-          className="flex items-center gap-1 shrink-0"
-          onPointerDown={(event) => event.stopPropagation()}
-          onClick={(event) => event.stopPropagation()}
-        >
-          <span className={cn(
-            'text-[15px] font-extrabold',
-            isSettled ? 'text-muted-foreground' : isReceivable ? 'text-primary' : 'text-orange-payable'
-          )}>
-            {netAmount < 0 && '-'}
-            <CompactAmount
-              amount={Math.abs(netAmount)}
-              currency={currency ?? 'PKR'}
-              drawerTitle={`${name} Balance`}
-              className="max-w-full"
-            />
-          </span>
-          <ChevronRight size={16} className="text-muted-foreground" />
         </div>
       </div>
 
