@@ -35,7 +35,7 @@ export default function CategoryBreakdownCard({
               </g>
               <defs>
                 <clipPath id="clip0_275_3327">
-                  <rect width="22" height="22" fill="white" />
+                  <circle cx="11" cy="11" r="10" fill="white" />
                 </clipPath>
               </defs>
             </svg>
