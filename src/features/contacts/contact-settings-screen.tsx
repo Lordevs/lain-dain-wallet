@@ -341,7 +341,7 @@ export default function ContactSettingsScreen() {
           <SettingsRow
             icon={<Trash2 size={22} strokeWidth={2} />}
             title="Clear Ledger History"
-            description="Delete all entries — cannot be undone"
+            description="Remove settled entries from your view"
             action={<ChevronRight size={18} className="text-[#D7D4CF]" />}
             danger
             onClick={() => setShowClearConfirm(true)}
@@ -379,11 +379,13 @@ export default function ContactSettingsScreen() {
         isOpen={showClearConfirm}
         onClose={() => setShowClearConfirm(false)}
         title="Clear Ledger History?"
-        confirmTitle="This affects both people"
-        confirmDescription="All expenses, payments, and recurring entries in this 1-to-1 ledger will be permanently removed. This cannot be undone."
+        confirmTitle="Only your history will be cleared"
+        confirmDescription={`Past expenses and payments will disappear only from your view; ${friend.full_name.split(' ')[0]} will keep the full history. First settle every balance and resolve or cancel pending payments. Recurring entries stay active. This cannot be undone for your view.`}
         buttonText={clearMutation.isPending ? 'Clearing…' : 'Clear history'}
         variant="danger"
-        onConfirm={() => clearMutation.mutate()}
+        onConfirm={() => clearMutation.mutate(undefined, {
+          onSuccess: () => setShowClearConfirm(false),
+        })}
       />
     </div>
   )

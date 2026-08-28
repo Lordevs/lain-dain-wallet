@@ -1,9 +1,14 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { onlineManager, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ApiError } from '@/lib/api/errors'
+import { apiClient } from '@/lib/api/client'
+import { ApiError, toApiError } from '@/lib/api/errors'
 import type { components } from '@/lib/api/schema'
 import { queueMutation } from '@/lib/sync/mutation-outbox'
-import { getSnapshotRecord, upsertSnapshotRecord } from '@/lib/sqlite/resource-snapshot-store'
+import {
+  deleteResourceSnapshotScope,
+  getSnapshotRecord,
+  upsertSnapshotRecord,
+} from '@/lib/sqlite/resource-snapshot-store'
 import { useAuthStore } from '@/store/use-auth-store'
 import { clearLocalExpenseHistory } from '@/lib/sqlite/expenses-store'
 
@@ -108,26 +113,53 @@ export function useUpdateFriendshipAutoRemindMutation(friendshipId: string) {
 export function useClearFriendshipHistoryMutation(friendshipId: string) {
   const queryClient = useQueryClient()
 
-  return useMutation<void, ApiError, void>({
+  return useMutation<Friendship, ApiError, void>({
     mutationFn: async () => {
-      await queueMutation({
-        resource: 'history', method: 'POST',
-        path: `/api/expenses/friendships/${friendshipId}/clear-history/`, optimisticResult: undefined,
+      if (!onlineManager.isOnline()) {
+        throw new ApiError(
+          'Connect to the internet to verify this ledger is fully settled before clearing its history.',
+        )
+      }
+
+      const { error: clearError } = await apiClient.POST(
+        '/api/expenses/friendships/{friendship_id}/clear-history/',
+        { params: { path: { friendship_id: friendshipId } } },
+      )
+      if (clearError) {
+        throw toApiError(clearError)
+      }
+
+      // The clear endpoint correctly has no body. Fetching the updated
+      // friendship gives the client the server's exact cutoff rather than
+      // guessing with the device clock.
+      const { data: friendship, error: detailError } = await apiClient.GET('/api/ledger/friendships/{friendship_id}/', {
+        params: { path: { friendship_id: friendshipId } },
       })
+      if (detailError) {
+        throw toApiError(detailError)
+      }
+
       const ownerId = useAuthStore.getState().userProfile?.id
-      if (ownerId) await clearLocalExpenseHistory(ownerId, { context: 'friendship', id: friendshipId })
+      if (ownerId) {
+        await Promise.all([
+          clearLocalExpenseHistory(ownerId, { context: 'friendship', id: friendshipId }),
+          deleteResourceSnapshotScope(ownerId, 'settlements', friendshipId),
+          deleteResourceSnapshotScope(ownerId, 'settlement-ledger', friendshipId),
+          upsertSnapshotRecord(ownerId, 'friendships', {
+            id: friendshipId,
+            data: friendship,
+          }),
+        ])
+      }
+      return friendship
     },
-    onSuccess: () => {
-      // Read before the ['friendship', friendshipId] invalidation below so
-      // the still-fresh cached value is available to scope the ledgers
-      // invalidation — invalidate doesn't clear the cache synchronously.
-      const friendship = queryClient.getQueryData<Friendship>(['friendship', friendshipId])
-      queryClient.invalidateQueries({ queryKey: ['friendship', friendshipId] })
+    onSuccess: (friendship) => {
+      queryClient.setQueryData(['friendship', friendshipId], friendship)
+      queryClient.invalidateQueries({ queryKey: ['friendships'] })
       queryClient.invalidateQueries({ queryKey: ['friendship-balance', friendshipId] })
       queryClient.invalidateQueries({ queryKey: ['friendship-transactions', friendshipId] })
-      queryClient.invalidateQueries({ queryKey: friendship ? ['user-ledgers', friendship.friend.id] : ['user-ledgers'] })
-      queryClient.invalidateQueries({ queryKey: ['friendship-recurring', friendshipId] })
-      toast.success('Ledger history cleared')
+      queryClient.invalidateQueries({ queryKey: ['user-ledgers', friendship.friend.id] })
+      toast.success('Ledger history cleared from your view')
     },
     onError: (error) => toast.error(error.message),
   })

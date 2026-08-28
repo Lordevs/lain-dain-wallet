@@ -1366,14 +1366,11 @@ paths:
       operationId: expenses_friendships_clear_history_create
       description: |-
         POST /api/expenses/friendships/{friendship_id}/clear-history/ —
-        either party. "Delete all entries — cannot be undone," from the
-        user's perspective; see services.clear_friendship_ledger_history for
-        why this is soft-delete-plus-reversal under the hood, not a literal
-        hard delete of LedgerEntry (the observable result is identical
-        either way — nothing recoverable through this app — but the
-        mechanism preserves every invariant the rest of this app relies on).
-        No response body: there's nothing left to serialize once every
-        Expense/Settlement/RecurringExpense in the friendship is gone.
+        either party. Hides existing expenses and payments only for the
+        requester by advancing that party's private history cutoff. Shared
+        records, recurring templates, balances, and the other person's view
+        are untouched. The action is rejected until all outstanding balances
+        are zero and no payment is pending. No response body is returned.
       parameters:
       - in: path
         name: friendship_id
@@ -6111,6 +6108,11 @@ components:
           type: boolean
           nullable: true
           readOnly: true
+        my_history_cleared_at:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
       required:
       - blocked_by_me
       - created
@@ -6122,6 +6124,7 @@ components:
       - id
       - is_blocked
       - my_auto_remind_override
+      - my_history_cleared_at
       - total_entries
       - your_currency
     FriendshipSettlementCreate:

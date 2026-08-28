@@ -822,14 +822,11 @@ export interface paths {
         put?: never;
         /**
          * @description POST /api/expenses/friendships/{friendship_id}/clear-history/ —
-         *     either party. "Delete all entries — cannot be undone," from the
-         *     user's perspective; see services.clear_friendship_ledger_history for
-         *     why this is soft-delete-plus-reversal under the hood, not a literal
-         *     hard delete of LedgerEntry (the observable result is identical
-         *     either way — nothing recoverable through this app — but the
-         *     mechanism preserves every invariant the rest of this app relies on).
-         *     No response body: there's nothing left to serialize once every
-         *     Expense/Settlement/RecurringExpense in the friendship is gone.
+         *     either party. Hides existing expenses and payments only for the
+         *     requester by advancing that party's private history cutoff. Shared
+         *     records, recurring templates, balances, and the other person's view
+         *     are untouched. The action is rejected until all outstanding balances
+         *     are zero and no payment is pending. No response body is returned.
          */
         post: operations["expenses_friendships_clear_history_create"];
         delete?: never;
@@ -3392,6 +3389,8 @@ export interface components {
             readonly friend_currency: string;
             readonly total_entries: number;
             readonly my_auto_remind_override: boolean | null;
+            /** Format: date-time */
+            readonly my_history_cleared_at: string | null;
         };
         /**
          * @description For a 1:1 settlement — there's only ever one possible counterparty

@@ -59,7 +59,7 @@ export function useCreateFriendshipMutation() {
         exchange_rate: exchangeRate ?? null,
         your_currency: profile.defaultCurrency ?? currency ?? '',
         friend_currency: contact?.lain_dain_user_currency ?? currency ?? '',
-        total_entries: 0, my_auto_remind_override: null,
+        total_entries: 0, my_auto_remind_override: null, my_history_cleared_at: null,
       }
       const result = await queueMutation({
         resource: 'friendships', method: 'POST', path: '/api/ledger/friendships/',

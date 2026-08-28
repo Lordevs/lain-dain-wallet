@@ -83,6 +83,20 @@ export async function deleteSnapshotRecord(ownerId: string, resource: string, id
   )
 }
 
+/** Remove only one ledger/group's cached rows without disturbing the
+ * same resource cached for other scopes. */
+export async function deleteResourceSnapshotScope(
+  ownerId: string,
+  resource: string,
+  scopeId: string,
+): Promise<void> {
+  const db = await getDatabase()
+  await db.run(
+    `DELETE FROM resource_snapshots WHERE owner_id = ? AND resource = ? AND scope_id = ?`,
+    [ownerId, resource, scopeId],
+  )
+}
+
 export async function transformResourceSnapshot<T>(
   ownerId: string,
   resource: string,
