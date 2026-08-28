@@ -85,7 +85,9 @@ function ContactSettleUpFormBody({
   const currency = balance?.currency ?? 'PKR'
 
   const [mode, setMode] = useState<'pay' | 'receive'>(balance?.direction === 'owed_to_you' ? 'receive' : 'pay')
-  const [amount, setAmount] = useState(outstanding > 0 ? String(outstanding) : '')
+  // Settlement amounts must be intentional user input. Keep the field empty
+  // on first open instead of silently pre-filling the full outstanding balance.
+  const [amount, setAmount] = useState('')
   const [method, setMethod] = useState<PaymentMethodType>('cash')
   const [dateVal, setDateVal] = useState('today')
   const [dateISO, setDateISO] = useState<string | undefined>(undefined)
