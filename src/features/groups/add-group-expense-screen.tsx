@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from '@tanstack/react-router'
+import { useParams } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import AddExpenseBase, { type ConfirmExpenseData } from '@/components/shared/add-expense-base'
 import ExpenseFormSkeleton from '@/components/shared/expense-form-skeleton'
@@ -7,7 +7,6 @@ import { useCreateGroupExpenseMutation } from '@/features/groups/api/use-create-
 import { useCategoriesQuery } from '@/features/expenses/api/use-categories-query'
 import { useAuthStore } from '@/store/use-auth-store'
 import { initialsForName, colorForName } from '@/lib/avatar-visuals'
-import { ROUTES } from '@/constants/routes'
 import type {
   FriendshipExpensePayer as LedgerExpensePayer,
   FriendshipExpenseSplit as LedgerExpenseSplit,
@@ -49,7 +48,6 @@ function buildSplits(data: ConfirmExpenseData): LedgerExpenseSplit[] {
 
 export default function AddGroupExpenseScreen() {
   const { id: groupId } = useParams({ from: '/groups/$id/add-expense' })
-  const navigate = useNavigate()
   const userProfile = useAuthStore((s) => s.userProfile)
   const myId = userProfile?.id ?? ''
 
@@ -127,9 +125,10 @@ export default function AddGroupExpenseScreen() {
       showPaidByAndSplit={true}
       members={members}
       onConfirm={handleConfirm}
-      onSuccessComplete={() => {
-        navigate({ to: ROUTES.GROUP_DETAILS, params: { id: groupId }, replace: true })
-      }}
+      // Pop the form instead of replacing it with another copy of the group
+      // detail route. Replacing produced two consecutive group-detail entries,
+      // making the first Back press appear to do nothing on some devices.
+      onSuccessComplete={() => window.history.back()}
       onBack={() => window.history.back()}
     />
   )

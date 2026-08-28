@@ -1,10 +1,8 @@
-import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import type { components } from '@/lib/api/schema'
 import AddExpenseBase, { type ConfirmExpenseData, type InitialExpenseData } from '@/components/shared/add-expense-base'
 import { useUpdatePersonalExpenseMutation } from '@/features/expenses/api/use-update-personal-expense-mutation'
 import { useCategoriesQuery } from '@/features/expenses/api/use-categories-query'
-import { ROUTES } from '@/constants/routes'
 
 type ExpenseRead = components['schemas']['ExpenseRead']
 
@@ -22,7 +20,6 @@ function receiptFileName(url: string): string {
  * /transactions/$id/edit route once it's confirmed the expense's own
  * context is personal — see routes/transactions/$id.edit.tsx. */
 export default function EditPersonalExpenseScreen({ expense }: { expense: ExpenseRead }) {
-  const navigate = useNavigate()
   const categoriesQuery = useCategoriesQuery()
   const updateExpense = useUpdatePersonalExpenseMutation()
 
@@ -82,9 +79,7 @@ export default function EditPersonalExpenseScreen({ expense }: { expense: Expens
       showPaidByAndSplit={false}
       initialData={initialData}
       onConfirm={handleConfirm}
-      onSuccessComplete={() => {
-        navigate({ to: ROUTES.TRANSACTION_DETAILS, params: { id: expense.id }, replace: true })
-      }}
+      onSuccessComplete={() => window.history.back()}
       onBack={() => window.history.back()}
     />
   )

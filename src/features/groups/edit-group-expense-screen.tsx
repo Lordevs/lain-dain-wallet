@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from '@tanstack/react-router'
+import { useParams } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import AddExpenseBase, { type ConfirmExpenseData, type InitialExpenseData } from '@/components/shared/add-expense-base'
 import ExpenseFormSkeleton from '@/components/shared/expense-form-skeleton'
@@ -8,7 +8,6 @@ import { useCategoriesQuery } from '@/features/expenses/api/use-categories-query
 import { useGroupQuery } from '@/features/groups/api/use-group-query'
 import { useAuthStore } from '@/store/use-auth-store'
 import { initialsForName, colorForName } from '@/lib/avatar-visuals'
-import { ROUTES } from '@/constants/routes'
 import type {
   FriendshipExpensePayer as LedgerExpensePayer,
   FriendshipExpenseSplit as LedgerExpenseSplit,
@@ -59,7 +58,6 @@ function buildSplits(data: ConfirmExpenseData): LedgerExpenseSplit[] {
  * expense.context === 'group' before rendering this. */
 export default function EditGroupExpenseScreen() {
   const { id: txId } = useParams({ from: '/transactions/$id/edit' })
-  const navigate = useNavigate()
   const userProfile = useAuthStore((s) => s.userProfile)
   const myId = userProfile?.id ?? ''
 
@@ -178,13 +176,7 @@ export default function EditGroupExpenseScreen() {
       members={members}
       initialData={initialData}
       onConfirm={handleConfirm}
-      onSuccessComplete={() => {
-        navigate({
-          to: ROUTES.TRANSACTION_DETAILS,
-          params: { id: expense.id },
-          replace: true,
-        })
-      }}
+      onSuccessComplete={() => window.history.back()}
       onBack={() => window.history.back()}
     />
   )

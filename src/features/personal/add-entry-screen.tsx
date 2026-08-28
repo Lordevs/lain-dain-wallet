@@ -1,12 +1,9 @@
 import { toast } from 'sonner'
-import { useNavigate } from '@tanstack/react-router'
 import AddExpenseBase, { type ConfirmExpenseData } from '@/components/shared/add-expense-base'
 import { useCategoriesQuery } from '@/features/expenses/api/use-categories-query'
 import { useCreatePersonalExpenseMutation } from '@/features/expenses/api/use-create-personal-expense-mutation'
-import { ROUTES } from '@/constants/routes'
 
 export default function AddEntryScreen() {
-  const navigate = useNavigate()
   const categoriesQuery = useCategoriesQuery()
   const createExpense = useCreatePersonalExpenseMutation()
 
@@ -41,8 +38,8 @@ export default function AddEntryScreen() {
       title="Add Entry"
       showPaidByAndSplit={false}
       onConfirm={handleConfirm}
-      onSuccessComplete={() => navigate({ to: ROUTES.PERSONAL, replace: true })}
-      onBack={() => navigate({ to: ROUTES.PERSONAL, replace: true })}
+      onSuccessComplete={() => window.history.back()}
+      onBack={() => window.history.back()}
     />
   )
 }

@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import { useNavigate } from '@tanstack/react-router'
 import { FileText, ChevronRight, ChevronDown, Calendar, Users, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useFormattedAmountInput } from '@/hooks/use-formatted-amount-input'
@@ -30,14 +29,12 @@ import RecurringFormHeader from '@/features/groups/components/recurring-form-hea
 import FrequencyToggle, { type RecurringFrequency } from '@/features/groups/components/frequency-toggle'
 import RecurringAttachmentsStrip from '@/features/groups/components/recurring-attachments-strip'
 import type { components } from '@/lib/api/schema'
-import { ROUTES } from '@/constants/routes'
 
 type Category = components['schemas']['Category']
 
 interface AddRecurringScreenProps {
   groupId?: string
   friendshipId?: string
-  contactUserId?: string
   editPaymentId?: string
   onClose?: () => void
 }
@@ -63,7 +60,6 @@ function parseDateToIso(dateStr: string): string {
 export default function AddRecurringScreen({
   groupId,
   friendshipId,
-  contactUserId,
   editPaymentId,
   onClose = () => window.history.back(),
 }: AddRecurringScreenProps) {
@@ -132,7 +128,6 @@ export default function AddRecurringScreen({
     <AddRecurringForm
       ledgerId={(isFriendship ? friendshipId : groupId)!}
       scope={isFriendship ? 'friendship' : 'group'}
-      contactUserId={contactUserId}
       editPaymentId={editPaymentId}
       members={members}
       editingPayment={editingPayment}
@@ -145,7 +140,6 @@ export default function AddRecurringScreen({
 function AddRecurringForm({
   ledgerId,
   scope,
-  contactUserId,
   editPaymentId,
   members,
   editingPayment,
@@ -154,7 +148,6 @@ function AddRecurringForm({
 }: {
   ledgerId: string
   scope: 'group' | 'friendship'
-  contactUserId?: string
   editPaymentId?: string
   members: Array<{
     id: string
@@ -165,7 +158,6 @@ function AddRecurringForm({
   categories: Category[]
   onClose: () => void
 }) {
-  const navigate = useNavigate()
   const userProfile = useAuthStore((state) => state.userProfile)
   const myId = userProfile?.id ?? ''
 
@@ -334,11 +326,9 @@ function AddRecurringForm({
   }
 
   const handleSuccessComplete = () => {
-    if (scope === 'friendship' && contactUserId) {
-      navigate({ to: ROUTES.CONTACT_RECURRING, params: { id: contactUserId }, replace: true })
-    } else {
-      navigate({ to: ROUTES.GROUP_RECURRING, params: { id: ledgerId }, replace: true })
-    }
+    // The recurring list pushed this form onto history. Pop it after a
+    // successful create/edit so the form cannot be reached again by Back.
+    window.history.back()
   }
 
   if (showSuccess) {

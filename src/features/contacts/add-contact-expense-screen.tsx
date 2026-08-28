@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from '@tanstack/react-router'
+import { useParams } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import AddExpenseBase, { type ConfirmExpenseData } from '@/components/shared/add-expense-base'
 import ExpenseFormSkeleton from '@/components/shared/expense-form-skeleton'
@@ -7,7 +7,6 @@ import { useCategoriesQuery } from '@/features/expenses/api/use-categories-query
 import { useCreateFriendshipExpenseMutation } from '@/features/contacts/api/use-create-friendship-expense-mutation'
 import { useAuthStore } from '@/store/use-auth-store'
 import { colorForName, initialsForName } from '@/lib/avatar-visuals'
-import { ROUTES } from '@/constants/routes'
 import type {
   FriendshipExpensePayer,
   FriendshipExpenseSplit,
@@ -57,7 +56,6 @@ function buildSplits(data: ConfirmExpenseData, myId: string, otherId: string): F
 
 export default function AddContactExpenseScreen() {
   const { id: userId } = useParams({ from: '/contacts/$id/add-expense' })
-  const navigate = useNavigate()
   const userProfile = useAuthStore((s) => s.userProfile)
 
   const ensureFriendship = useEnsureFriendship(userId)
@@ -148,9 +146,9 @@ export default function AddContactExpenseScreen() {
       showPaidByAndSplit={true}
       contact={contactVisuals}
       onConfirm={handleConfirm}
-      onSuccessComplete={() => {
-        navigate({ to: ROUTES.CONTACT_DETAILS, params: { id: userId }, replace: true })
-      }}
+      // Return to the existing ledger entry in history. Do not replace the
+      // form with a duplicate detail route, otherwise Back can revisit it.
+      onSuccessComplete={() => window.history.back()}
       onBack={() => window.history.back()}
     />
   )

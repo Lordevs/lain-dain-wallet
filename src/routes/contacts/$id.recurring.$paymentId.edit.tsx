@@ -18,7 +18,6 @@ export const Route = createFileRoute('/contacts/$id/recurring/$paymentId/edit')(
     return (
       <AddRecurringScreen
         friendshipId={ledgers.friendshipId}
-        contactUserId={id}
         editPaymentId={paymentId}
       />
     )

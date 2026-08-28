@@ -15,6 +15,6 @@ export const Route = createFileRoute('/contacts/$id/recurring/new')({
       )
     }
 
-    return <AddRecurringScreen friendshipId={ledgers.friendshipId} contactUserId={id} />
+    return <AddRecurringScreen friendshipId={ledgers.friendshipId} />
   },
 })

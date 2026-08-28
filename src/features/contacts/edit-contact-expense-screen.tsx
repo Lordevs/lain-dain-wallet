@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from '@tanstack/react-router'
+import { useParams } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import AddExpenseBase, { type ConfirmExpenseData, type InitialExpenseData } from '@/components/shared/add-expense-base'
 import ExpenseFormSkeleton from '@/components/shared/expense-form-skeleton'
@@ -8,7 +8,6 @@ import { useCategoriesQuery } from '@/features/expenses/api/use-categories-query
 import { useFriendshipDetailQuery } from '@/features/contacts/api/use-friendship-detail-query'
 import { useAuthStore } from '@/store/use-auth-store'
 import { colorForName, initialsForName } from '@/lib/avatar-visuals'
-import { ROUTES } from '@/constants/routes'
 import type {
   FriendshipExpensePayer,
   FriendshipExpenseSplit,
@@ -60,7 +59,6 @@ function buildSplits(data: ConfirmExpenseData, myId: string, otherId: string): F
 
 export default function EditContactExpenseScreen() {
   const { id: txId } = useParams({ from: '/transactions/$id/edit' })
-  const navigate = useNavigate()
   const userProfile = useAuthStore((s) => s.userProfile)
   const myId = userProfile?.id ?? ''
 
@@ -249,13 +247,7 @@ export default function EditContactExpenseScreen() {
       contact={contactVisuals}
       initialData={initialData}
       onConfirm={handleConfirm}
-      onSuccessComplete={() => {
-        navigate({
-          to: ROUTES.TRANSACTION_DETAILS,
-          params: { id: expense.id },
-          replace: true,
-        })
-      }}
+      onSuccessComplete={() => window.history.back()}
       onBack={() => window.history.back()}
     />
   )
