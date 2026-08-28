@@ -36,6 +36,9 @@ interface ConfirmActionDrawerProps extends VariantProps<typeof confirmButtonVari
   /** @deprecated Pass `variant` instead of a raw className string */
   buttonClassName?: string
   onConfirm: () => void
+  /** Keep the drawer open while an async action is being verified. */
+  closeOnConfirm?: boolean
+  disabled?: boolean
 }
 
 export default function ConfirmActionDrawer({
@@ -48,6 +51,8 @@ export default function ConfirmActionDrawer({
   variant,
   buttonClassName,
   onConfirm,
+  closeOnConfirm = true,
+  disabled = false,
 }: ConfirmActionDrawerProps) {
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -84,12 +89,13 @@ export default function ConfirmActionDrawer({
           <div className="mt-10">
             <button
               type="button"
+              disabled={disabled}
               onClick={() => {
                 onConfirm()
-                onClose()
+                if (closeOnConfirm) onClose()
               }}
               // buttonClassName is kept for backward compat but variant is preferred
-              className={buttonClassName ?? confirmButtonVariants({ variant })}
+              className={buttonClassName ?? `${confirmButtonVariants({ variant })} disabled:opacity-60 disabled:cursor-not-allowed`}
               aria-label={buttonText}
             >
               {buttonText}

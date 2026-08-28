@@ -12,6 +12,7 @@ import {
 import FlowHeader from '@/components/shared/flow-header'
 import ContactAvatar from '@/components/shared/contact-avatar'
 import ConfirmActionDrawer from '@/components/shared/confirm-action-drawer'
+import OutstandingBalanceDrawer from '@/components/shared/outstanding-balance-drawer'
 import { Item, ItemActions, ItemContent, ItemDescription, ItemMedia, ItemTitle } from '@/components/ui/item'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
@@ -121,6 +122,7 @@ export default function ContactSettingsScreen() {
   const [showExchangeRate, setShowExchangeRate] = useState(false)
   const [showBlockConfirm, setShowBlockConfirm] = useState(false)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [clearBlockedMessage, setClearBlockedMessage] = useState<string | null>(null)
 
   const blockMutation = useBlockFriendshipMutation(friendshipId ?? '')
   const unblockMutation = useUnblockFriendshipMutation(friendshipId ?? '')
@@ -173,6 +175,7 @@ export default function ContactSettingsScreen() {
   }
 
   const balanceAmount = Number(balance?.net_amount ?? 0)
+  const hasOutstandingBalance = Math.abs(balanceAmount) > 0.005
   // const autoReminders = friendship.my_auto_remind_override ?? personalSettings.data?.auto_reminder_enabled ?? false
   const balanceLabel = balance?.direction === 'owed_to_you'
     ? `${friend.full_name.split(' ')[0]} owes you`
@@ -344,7 +347,15 @@ export default function ContactSettingsScreen() {
             description="Remove settled entries from your view"
             action={<ChevronRight size={18} className="text-[#D7D4CF]" />}
             danger
-            onClick={() => setShowClearConfirm(true)}
+            onClick={() => {
+              if (hasOutstandingBalance) {
+                setClearBlockedMessage(
+                  `${balanceLabel} ${formatCurrency(Math.abs(balanceAmount), balance?.currency ?? ledgerCurrency)}. Settle this balance before clearing your ledger history.`,
+                )
+                return
+              }
+              setShowClearConfirm(true)
+            }}
           />
         </Section>
       </main>
@@ -383,9 +394,29 @@ export default function ContactSettingsScreen() {
         confirmDescription={`Past expenses and payments will disappear only from your view; ${friend.full_name.split(' ')[0]} will keep the full history. First settle every balance and resolve or cancel pending payments. Recurring entries stay active. This cannot be undone for your view.`}
         buttonText={clearMutation.isPending ? 'Clearing…' : 'Clear history'}
         variant="danger"
+        closeOnConfirm={false}
+        disabled={clearMutation.isPending}
         onConfirm={() => clearMutation.mutate(undefined, {
           onSuccess: () => setShowClearConfirm(false),
+          onError: (error) => {
+            setShowClearConfirm(false)
+            setClearBlockedMessage(error.message)
+          },
         })}
+      />
+
+      <OutstandingBalanceDrawer
+        isOpen={clearBlockedMessage !== null}
+        onClose={() => setClearBlockedMessage(null)}
+        title="Clear Ledger History"
+        warningText={clearBlockedMessage ?? ''}
+        buttonText={hasOutstandingBalance ? 'Settle Balance' : 'Got it'}
+        onAction={() => {
+          setClearBlockedMessage(null)
+          if (hasOutstandingBalance) {
+            navigate({ to: ROUTES.SETTLE_UP, search: { contactId: userId } })
+          }
+        }}
       />
     </div>
   )

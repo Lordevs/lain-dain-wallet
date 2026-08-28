@@ -120,6 +120,13 @@ async function submitMutation<T>(row: MutationOutboxRow): Promise<T | undefined>
     token = await refreshAccessToken()
     if (token) response = await send()
   }
+  // Mark-read and delete are desired-state operations. A notification may
+  // already have disappeared on another device (or after a previous sync),
+  // so a 404 means these specific changes are already satisfied. Keeping the
+  // row failed would make the sync warning impossible to clear.
+  if (response.status === 404 && isSatisfiedMissingNotificationMutation(row)) {
+    return undefined
+  }
   if (!response.ok) {
     let message = 'The queued change could not be synced.'
     try {
@@ -130,6 +137,14 @@ async function submitMutation<T>(row: MutationOutboxRow): Promise<T | undefined>
   }
   if (response.status === 204) return undefined
   return await response.json() as T
+}
+
+function isSatisfiedMissingNotificationMutation(row: MutationOutboxRow): boolean {
+  if (row.resource !== 'notifications') return false
+  const notificationItemPath = /^\/api\/notifications\/[^/]+\/$/
+  const notificationReadPath = /^\/api\/notifications\/[^/]+\/read\/$/
+  return (row.method === 'DELETE' && notificationItemPath.test(row.path))
+    || (row.method === 'POST' && notificationReadPath.test(row.path))
 }
 
 function decodeStoredBody(value: string | null): StoredMutationBody | undefined {
