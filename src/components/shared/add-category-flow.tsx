@@ -25,7 +25,9 @@ export default function AddCategoryFlow({
   onSave,
   showHeader = true,
 }: AddCategoryFlowProps) {
-  const [categoryName, setCategoryName] = useState('Food')
+  // A suggested category name made it far too easy to save a duplicate
+  // accidentally (especially because Food is already a standard category).
+  const [categoryName, setCategoryName] = useState('')
   const [selectedIconIndex, setSelectedIconIndex] = useState(0) // Default to Coffee
   const [selectedColor, setSelectedColor] = useState(COLORS[0]) // Default to Green
 

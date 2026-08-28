@@ -18,6 +18,12 @@ export function useCreateCategoryMutation() {
     mutationFn: async (vars: CreateCategoryVariables) => {
       const ownerId = useAuthStore.getState().userProfile?.id
       if (!ownerId) throw new ApiError('Sign in before creating a category.')
+      const normalizedName = vars.name.trim().toLocaleLowerCase()
+      const existing = queryClient.getQueryData<components['schemas']['Category'][]>(['categories'])
+        ?.find((category) => category.name.trim().toLocaleLowerCase() === normalizedName)
+      // Category names are unique for a user. Returning the local match keeps
+      // a double-tap (or a stale open form) from adding a doomed outbox row.
+      if (existing) return existing
       const id = crypto.randomUUID()
       const optimistic = {
         id, ...vars, is_system: false, owner: ownerId, created_at: new Date().toISOString(),
@@ -27,7 +33,9 @@ export function useCreateCategoryMutation() {
         body: { id, ...vars }, optimisticResult: optimistic,
       })
       await upsertSnapshotRecord(ownerId, 'categories', { id, data: result.data })
-      queryClient.setQueryData<components['schemas']['Category'][]>(['categories'], (old = []) => [...old, result.data])
+      queryClient.setQueryData<components['schemas']['Category'][]>(['categories'], (old = []) => (
+        old.some((category) => category.id === result.data.id) ? old : [...old, result.data]
+      ))
       return result.data
     },
     onSuccess: () => {

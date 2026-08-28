@@ -2,6 +2,7 @@ import { onlineManager } from '@tanstack/react-query'
 import { env } from '@/lib/env'
 import { refreshAccessToken } from '@/lib/api/client'
 import { ApiError, isTransientApiError } from '@/lib/api/errors'
+import { queryClient } from '@/lib/query-client'
 import { useAuthStore } from '@/store/use-auth-store'
 import {
   deleteMutation,
@@ -10,6 +11,9 @@ import {
   setMutationStatus,
   type MutationOutboxRow,
 } from '@/lib/sqlite/mutation-outbox-store'
+import { runInTransaction } from '@/lib/sqlite/transaction'
+import { deleteSnapshotRecord, upsertSnapshotRecord } from '@/lib/sqlite/resource-snapshot-store'
+import type { components } from '@/lib/api/schema'
 import {
   deleteStagedFile,
   readStagedFile,
@@ -133,10 +137,116 @@ async function submitMutation<T>(row: MutationOutboxRow): Promise<T | undefined>
       const body = await response.json() as { detail?: string }
       if (body.detail) message = body.detail
     } catch { /* response has no JSON body */ }
+    const resolvedCategory = await resolveDuplicateCategoryCreate(row, response.status, message, token)
+    if (resolvedCategory) return resolvedCategory as T
     throw new ApiError(message, {}, response.status)
   }
   if (response.status === 204) return undefined
   return await response.json() as T
+}
+
+const DUPLICATE_CATEGORY_MESSAGE = /^You already have a category named ".+"\.$/
+
+/**
+ * A category may have reached the server even though the client never
+ * received its successful response (or another device created the same name).
+ * In that case the queued create is already satisfied. Repoint subsequent
+ * local work at the canonical server category before dropping the row.
+ */
+async function resolveDuplicateCategoryCreate(
+  row: MutationOutboxRow,
+  status: number,
+  message: string,
+  token: string | null,
+): Promise<components['schemas']['Category'] | null> {
+  if (
+    row.resource !== 'categories'
+    || row.method !== 'POST'
+    || row.path !== '/api/expenses/categories/'
+    || status !== 400
+    || !DUPLICATE_CATEGORY_MESSAGE.test(message)
+  ) return null
+
+  const body = decodeStoredBody(row.body_json)
+  if (body?.kind !== 'json' || !isCategoryCreateBody(body.value)) return null
+  const categoryCreate = body.value
+
+  let payload: { results?: components['schemas']['Category'][] }
+  try {
+    const response = await fetch(`${env.apiBaseUrl}/api/expenses/categories/?page_size=100`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    if (!response.ok) return null
+    payload = await response.json() as { results?: components['schemas']['Category'][] }
+  } catch {
+    // Preserve the original validation error if reconciliation itself cannot
+    // reach the server; it remains safely retryable from the sync panel.
+    return null
+  }
+  const category = payload.results?.find((item) => (
+    !item.is_system && normalizeCategoryName(item.name) === normalizeCategoryName(categoryCreate.name)
+  ))
+  if (!category) return null
+
+  await reconcileDuplicateCategory(row.owner_id, categoryCreate.id, category)
+  return category
+}
+
+function isCategoryCreateBody(value: unknown): value is { id: string; name: string } {
+  return typeof value === 'object' && value !== null
+    && typeof (value as { id?: unknown }).id === 'string'
+    && typeof (value as { name?: unknown }).name === 'string'
+}
+
+function normalizeCategoryName(value: string): string {
+  return value.trim().toLocaleLowerCase()
+}
+
+async function reconcileDuplicateCategory(
+  ownerId: string,
+  obsoleteCategoryId: string,
+  category: components['schemas']['Category'],
+): Promise<void> {
+  if (obsoleteCategoryId === category.id) return
+
+  await runInTransaction(async (db) => {
+    // Queued expenses and mutations may have been created after the category
+    // while offline. UUID replacement is safe here: it only replaces this
+    // exact client-generated identifier, never a display value.
+    await db.run(
+      `UPDATE expense_outbox SET payload_json = REPLACE(payload_json, ?, ?) WHERE owner_id = ?`,
+      [obsoleteCategoryId, category.id, ownerId],
+      false,
+    )
+    await db.run(
+      `UPDATE mutation_outbox SET body_json = REPLACE(body_json, ?, ?) WHERE owner_id = ?`,
+      [obsoleteCategoryId, category.id, ownerId],
+      false,
+    )
+
+    const result = await db.query(
+      `SELECT id, server_json FROM expenses WHERE owner_id = ? AND category_id = ?`,
+      [ownerId, obsoleteCategoryId],
+    )
+    for (const expense of result.values ?? []) {
+      const serverExpense = JSON.parse(expense.server_json as string) as { category?: unknown }
+      serverExpense.category = category
+      await db.run(
+        `UPDATE expenses SET category_id = ?, server_json = ?, updated_at = ? WHERE owner_id = ? AND id = ?`,
+        [category.id, JSON.stringify(serverExpense), new Date().toISOString(), ownerId, expense.id as string],
+        false,
+      )
+    }
+  })
+
+  await deleteSnapshotRecord(ownerId, 'categories', obsoleteCategoryId)
+  await upsertSnapshotRecord(ownerId, 'categories', { id: category.id, data: category })
+  queryClient.setQueryData<components['schemas']['Category'][]>(['categories'], (old = []) => {
+    const withoutObsolete = old.filter((item) => item.id !== obsoleteCategoryId)
+    return withoutObsolete.some((item) => item.id === category.id)
+      ? withoutObsolete
+      : [...withoutObsolete, category]
+  })
 }
 
 function isSatisfiedMissingNotificationMutation(row: MutationOutboxRow): boolean {
