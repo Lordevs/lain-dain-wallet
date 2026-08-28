@@ -90,7 +90,14 @@ export default function CompactAmount({ amount, currency, className, drawerTitle
             if (!open) restoreScrollPosition()
           }}
         >
-          <DrawerContent className="bg-white rounded-t-[32px] pb-8 border-t-0 text-foreground outline-none">
+          <DrawerContent
+            className="bg-white rounded-t-[32px] pb-8 border-t-0 text-foreground outline-none"
+            // Vaul renders through a portal, but React events still bubble
+            // through CompactAmount's original tree. Without this guard, the
+            // close-button click reaches a clickable list row and opens its
+            // options drawer immediately after this drawer closes.
+            onClick={(event) => event.stopPropagation()}
+          >
             <DrawerHeader className="relative flex items-center justify-center px-14 pt-4 pb-4 shrink-0 text-center">
               <h3 className="text-[17px] font-extrabold text-foreground leading-snug">{drawerTitle}</h3>
               <DrawerClose asChild>

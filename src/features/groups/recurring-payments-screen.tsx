@@ -106,21 +106,21 @@ export default function RecurringPaymentsScreen({
         {/* Summary Cards */}
         <div className="flex items-center gap-4">
           {/* Monthly Total Card */}
-          <div className="flex-1 bg-white border border-[#EBEBEB] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-5 flex flex-col">
+          <div className="flex-1 bg-white border border-[#EBEBEB] rounded-[20px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-3 flex flex-col">
             <span className="text-[12px] font-bold text-[#6B6B6B] tracking-wider uppercase">
               Monthly total
             </span>
-            <span className="text-[22px] font-extrabold text-positive mt-1.5 leading-none">
+            <span className="text-[18px] font-bold text-positive mt-1.5 leading-none">
               {formatCurrency(Math.round(monthlyTotal), currency)}
             </span>
           </div>
 
           {/* Active Payments Card */}
-          <div className="flex-1 bg-white border border-[#EBEBEB] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-5 flex flex-col">
+          <div className="flex-1 bg-white border border-[#EBEBEB] rounded-[20px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] p-3 flex flex-col">
             <span className="text-[12px] font-bold text-[#6B6B6B] tracking-wider uppercase">
               Active
             </span>
-            <span className="text-[22px] font-extrabold text-[#1A1A1A] mt-1.5 leading-none">
+            <span className="text-[18px] font-bold text-[#1A1A1A] mt-1.5 leading-none">
               {activeCount} {activeCount === 1 ? 'payment' : 'payments'}
             </span>
           </div>

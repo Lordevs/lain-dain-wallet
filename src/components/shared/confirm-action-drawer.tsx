@@ -39,6 +39,8 @@ interface ConfirmActionDrawerProps extends VariantProps<typeof confirmButtonVari
   /** Keep the drawer open while an async action is being verified. */
   closeOnConfirm?: boolean
   disabled?: boolean
+  /** Displays an action failure without dismissing the confirmation drawer. */
+  errorMessage?: string | null
 }
 
 export default function ConfirmActionDrawer({
@@ -53,6 +55,7 @@ export default function ConfirmActionDrawer({
   onConfirm,
   closeOnConfirm = true,
   disabled = false,
+  errorMessage,
 }: ConfirmActionDrawerProps) {
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -83,6 +86,11 @@ export default function ConfirmActionDrawer({
             <p className="text-[15px] text-[#555555] font-semibold leading-relaxed">
               {confirmDescription}
             </p>
+            {errorMessage && (
+              <p role="alert" className="rounded-lg bg-[#FFF0EA] px-4 py-3 text-[14px] font-semibold leading-relaxed text-[#C9551A]">
+                {errorMessage}
+              </p>
+            )}
           </div>
 
           {/* Confirm Button CTA */}

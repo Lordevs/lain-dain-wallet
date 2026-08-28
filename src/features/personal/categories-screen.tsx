@@ -25,7 +25,6 @@ import {
   ArrowUpDown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { formatCurrency } from '@/lib/currency'
 import FlowHeader from '@/components/shared/flow-header'
 import ConfirmActionDrawer from '@/components/shared/confirm-action-drawer'
 import CategoryOptionsDrawer from './components/category-options-drawer'
@@ -38,6 +37,7 @@ import { useCreateCategoryMutation } from '@/features/expenses/api/use-create-ca
 import { useDeleteCategoryMutation } from '@/features/expenses/api/use-delete-category-mutation'
 import { useReorderCategoriesMutation } from '@/features/expenses/api/use-reorder-categories-mutation'
 import type { components } from '@/lib/api/schema'
+import CompactAmount from '@/components/shared/compact-amount'
 
 type Category = components['schemas']['Category']
 
@@ -112,8 +112,9 @@ function SortableCategoryRow({
             {category.name}
           </span>
           {!isReordering && (
-            <span className="mt-0.5 text-[12.5px] leading-tight font-normal text-[#6B6B6B]">
-              {formatCurrency(spent, currency)} spent this period
+             <span className="mt-0.5 flex items-center gap-1 text-[12.5px] leading-tight font-normal text-[#6B6B6B]">
+              <CompactAmount amount={spent} currency={currency} drawerTitle={`${category.name} Spending`} />
+              <span>spent this period</span>
             </span>
           )}
         </div>
@@ -145,6 +146,7 @@ export default function PersonalCategoriesScreen() {
   const [draftOrder, setDraftOrder] = useState<Category[]>([])
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null)
+  const [deleteCategoryError, setDeleteCategoryError] = useState<string | null>(null)
   const [showAddCategory, setShowAddCategory] = useState(false)
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 4 } }),
@@ -322,29 +324,36 @@ export default function PersonalCategoriesScreen() {
           }
         }
         onReorderClick={handleStartReordering}
-        onDeleteClick={(cat) => setCategoryToDelete(categories.find((c) => c.id === cat.id) ?? null)}
+        onDeleteClick={(cat) => {
+          setDeleteCategoryError(null)
+          setCategoryToDelete(categories.find((c) => c.id === cat.id) ?? null)
+        }}
       />
 
       {/* Delete Category Confirmation Drawer */}
       {categoryToDelete && (
         <ConfirmActionDrawer
           isOpen={!!categoryToDelete}
-          onClose={() => setCategoryToDelete(null)}
+          onClose={() => {
+            setCategoryToDelete(null)
+            setDeleteCategoryError(null)
+          }}
           title="Delete Category"
           confirmTitle="Delete Category"
           confirmDescription={`Are you sure you want to delete the "${categoryToDelete.name}" category? This only works if no expense currently uses it.`}
           buttonText="Delete Category"
           variant="danger"
+          closeOnConfirm={false}
+          disabled={deleteCategory.isPending}
+          errorMessage={deleteCategoryError}
           onConfirm={() => {
-            const name = categoryToDelete.name
+            setDeleteCategoryError(null)
             deleteCategory.mutate(categoryToDelete.id, {
               onSuccess: () => {
                 setCategoryToDelete(null)
-                toast.success(`"${name}" deleted`)
               },
               onError: (err) => {
-                setCategoryToDelete(null)
-                toast.error(err.message)
+                setDeleteCategoryError(err.message)
               },
             })
           }}
