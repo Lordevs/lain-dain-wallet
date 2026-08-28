@@ -49,7 +49,7 @@ export default function ExpenseSummaryCard({ summary, label = 'You spent this mo
             ) : (
               <TrendingDown size={12} className="text-positive" strokeWidth={2.5} />
             )}
-            <span className="flex min-w-0 items-center gap-1 text-[10px] font-semibold leading-snug text-tertiary">
+            <span className="flex min-w-0 items-start gap-1 text-[9px] font-semibold leading-snug text-tertiary">
               <CompactAmount
                 amount={comparison.amount}
                 currency={currency}

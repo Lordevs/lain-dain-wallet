@@ -151,7 +151,7 @@ const NotificationListItem = memo(function NotificationListItem({
             onClick: (e) => {
               e.stopPropagation()
               markRead(notification.id)
-              navigate({ to: ROUTES.PERSONAL })
+              navigate({ to: ROUTES.PERSONAL_CATEGORY_BUDGETS })
             },
           },
           { label: 'Ignore', variant: 'amber', onClick: () => handleIgnore(notification.id) },
