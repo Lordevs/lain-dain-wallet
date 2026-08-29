@@ -40,6 +40,11 @@ export interface DrawerConfig {
   onAction?: () => void
 }
 
+export interface PendingMemberAction {
+  memberId: string
+  label: string
+}
+
 function buildOwesText(member: Omit<GroupMember, 'owesText'>): string {
   const roleLabel = member.role === 'member' ? 'Member' : 'Admin'
   if (member.id === 'you') return `${roleLabel} · Group creator`
@@ -123,6 +128,15 @@ export function useGroupSettings() {
     type: null,
     title: '',
   })
+  const [pendingMemberAction, setPendingMemberAction] = useState<PendingMemberAction | null>(null)
+
+  const beginMemberAction = (memberId: string, label: string) => {
+    setPendingMemberAction({ memberId, label })
+  }
+
+  const finishMemberAction = (memberId: string) => {
+    setPendingMemberAction((current) => (current?.memberId === memberId ? null : current))
+  }
 
   const selectedMember = useMemo(() => {
     return members.find((m) => m.id === selectedMemberId) || null
@@ -130,15 +144,18 @@ export function useGroupSettings() {
 
   const handleToggleAdmin = (memberId: string) => {
     const member = members.find((m) => m.id === memberId)
-    if (!member || !id) return
+    if (!member || !id || pendingMemberAction) return
     if (member.isAdmin) {
-      removeAdminMutation.mutate(memberId)
+      beginMemberAction(memberId, `Removing admin access from ${member.name}…`)
+      removeAdminMutation.mutate(memberId, { onSettled: () => finishMemberAction(memberId) })
     } else {
-      makeAdminMutation.mutate(memberId)
+      beginMemberAction(memberId, `Making ${member.name} an admin…`)
+      makeAdminMutation.mutate(memberId, { onSettled: () => finishMemberAction(memberId) })
     }
   }
 
   const handleRemoveMember = (memberId: string) => {
+    if (pendingMemberAction) return
     setSelectedMemberId(null)
     const member = members.find((m) => m.id === memberId)
     if (!member || !id) return
@@ -162,15 +179,18 @@ export function useGroupSettings() {
         confirmDescription: "They'll lose access to the group and its expenses. Their past contributions will remain visible to other members.",
         buttonText: 'Confirm',
         onAction: () => {
-          removeMemberMutation.mutate(memberId)
+          beginMemberAction(memberId, `Removing ${member.name} from the group…`)
+          removeMemberMutation.mutate(memberId, { onSettled: () => finishMemberAction(memberId) })
         },
       })
     }
   }
 
   const handleBlockReport = (memberId: string) => {
-    if (!id) return
-    removeMemberMutation.mutate(memberId)
+    const member = members.find((m) => m.id === memberId)
+    if (!id || !member || pendingMemberAction) return
+    beginMemberAction(memberId, `Removing ${member.name} from the group…`)
+    removeMemberMutation.mutate(memberId, { onSettled: () => finishMemberAction(memberId) })
   }
 
   const handleLeaveGroup = () => {
@@ -221,8 +241,10 @@ export function useGroupSettings() {
 
   const handleTransferOwnership = (memberId: string) => {
     const targetId = memberId === 'you' ? myId : memberId
-    if (!targetId || !id) return
-    transferOwnershipMutation.mutate(targetId)
+    const member = members.find((m) => m.id === memberId)
+    if (!targetId || !id || !member || pendingMemberAction) return
+    beginMemberAction(memberId, `Updating ${member.name}'s group access…`)
+    transferOwnershipMutation.mutate(targetId, { onSettled: () => finishMemberAction(memberId) })
   }
 
   const groupInitials = groupName
@@ -249,6 +271,7 @@ export function useGroupSettings() {
     drawerConfig,
     setDrawerConfig,
     selectedMember,
+    pendingMemberAction,
     handleToggleAdmin,
     handleTransferOwnership,
     handleRemoveMember,

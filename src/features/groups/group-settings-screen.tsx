@@ -1,6 +1,6 @@
 
 import { useState } from 'react'
-import { MoreVertical, Camera, Pencil, Plus, LogOut, Trash2, Banknote, ChevronRight } from 'lucide-react'
+import { MoreVertical, Camera, Pencil, Plus, LogOut, Trash2, Banknote, ChevronRight, LoaderCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
 import ContactListItem from '@/components/shared/contact-list-item'
@@ -37,6 +37,7 @@ export default function GroupSettingsScreen() {
     drawerConfig,
     setDrawerConfig,
     selectedMember,
+    pendingMemberAction,
     handleToggleAdmin,
     handleTransferOwnership,
     handleRemoveMember,
@@ -146,6 +147,13 @@ export default function GroupSettingsScreen() {
             Members ({members.length})
           </h3>
 
+          {pendingMemberAction ? (
+            <div role="status" aria-live="polite" className="mb-3 flex items-center gap-2 rounded-xl bg-[#E8F4EF] px-3.5 py-2.5 text-[12px] font-bold text-positive">
+              <LoaderCircle size={15} className="animate-spin shrink-0" />
+              <span>{pendingMemberAction.label}</span>
+            </div>
+          ) : null}
+
           <div className="bg-white border border-[#EFE7DD] rounded-[24px] shadow-[0px_4px_16px_rgba(0,0,0,0.02)] divide-y divide-[#EFE7DD] overflow-hidden">
             {/* Render You (static, no options trigger) */}
             {you && (
@@ -174,7 +182,10 @@ export default function GroupSettingsScreen() {
             )}
 
             {/* Render Other Members */}
-            {members.filter(m => m.id !== 'you').map((m) => (
+            {members.filter(m => m.id !== 'you').map((m) => {
+              const isActionPending = pendingMemberAction?.memberId === m.id
+
+              return (
               <ContactListItem
                 key={m.id}
                 contact={{
@@ -191,12 +202,15 @@ export default function GroupSettingsScreen() {
                 }
                 rightSlot={
                   <div className="flex items-center gap-2">
+                    {isActionPending ? (
+                      <LoaderCircle size={17} aria-label="Updating member" className="animate-spin text-positive shrink-0" />
+                    ) : null}
                     {m.role !== 'member' && (
                       <span className="bg-[#ECF6F0] text-positive text-[11px] font-bold px-3 py-1 rounded-full">
                         Admin
                       </span>
                     )}
-                    {isAdmin && (
+                    {isAdmin && !isActionPending && (
                       <button
                         type="button"
                         onClick={(e) => {
@@ -210,10 +224,11 @@ export default function GroupSettingsScreen() {
                     )}
                   </div>
                 }
-                onClick={() => isAdmin && setSelectedMemberId(m.id)}
-                className="py-4 px-5 bg-white hover:bg-muted/5 transition-colors"
+                onClick={() => isAdmin && !isActionPending && setSelectedMemberId(m.id)}
+                className={cn('py-4 px-5 bg-white hover:bg-muted/5 transition-colors', isActionPending && 'cursor-wait')}
               />
-            ))}
+              )
+            })}
 
             {/* Add Member Row */}
             {isAdmin && (
