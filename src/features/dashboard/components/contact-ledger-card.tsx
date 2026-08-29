@@ -94,7 +94,7 @@ function ContactLedgerCard({ contact, onSelect }: ContactLedgerCardProps) {
                 'text-[15px] font-extrabold',
                 isSettled ? 'text-muted-foreground' : isReceivable ? 'text-primary' : 'text-orange-payable'
               )}>
-                {netAmount < 0 && '-'}
+                {/* {netAmount < 0 && '-'} */}
                 <CompactAmount
                   amount={Math.abs(netAmount)}
                   currency={currency ?? 'PKR'}

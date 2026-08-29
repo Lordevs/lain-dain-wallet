@@ -45,7 +45,7 @@ export function getCurrency(code: string): Currency {
  * symbol) and any plain-number axis/label that needs the same
  * abbreviation without one (e.g. a chart's y-axis ticks). */
 export function formatCompactNumber(amount: number): string {
-  const isNegative = amount < 0
+  // const isNegative = amount < 0
   const abs = Math.abs(amount)
   let formatted: string
 
@@ -70,7 +70,8 @@ export function formatCompactNumber(amount: number): string {
     .replace(/(\.\d*?[1-9])0+(?=[KMBT])$/, '$1')
     .replace(/\.0+(?=[KMBT])$/, '')
 
-  return `${isNegative ? '-' : ''}${formatted}`
+  // return `${isNegative ? '-' : ''}${formatted}`
+  return `${formatted}`
 }
 
 /**
