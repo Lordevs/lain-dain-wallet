@@ -16,6 +16,7 @@ interface AddCategoryFlowProps {
   isOpen: boolean
   onClose: () => void
   showHeader?: boolean
+  isSaving?: boolean
   /** `icon` is the backend-facing icon name (see category-icons.ts), not a component */
   onSave: (name: string, icon: string, color: string) => void
 }
@@ -24,6 +25,7 @@ export default function AddCategoryFlow({
   onClose,
   onSave,
   showHeader = true,
+  isSaving = false,
 }: AddCategoryFlowProps) {
   // A suggested category name made it far too easy to save a duplicate
   // accidentally (especially because Food is already a standard category).
@@ -34,22 +36,23 @@ export default function AddCategoryFlow({
   const activeIcon = ICON_OPTIONS[selectedIconIndex].icon
 
   const handleSave = () => {
-    if (!categoryName.trim()) return
+    if (!categoryName.trim() || isSaving) return
     onSave(categoryName.trim(), ICON_OPTIONS[selectedIconIndex].name, selectedColor)
   }
 
   return (
-    <div className="h-full min-h-0 overflow-y-auto overscroll-y-contain pb-5 font-sans text-foreground select-none touch-pan-y">
-      {showHeader && (
-        <FlowHeader
-          title="Add Category"
-          onBack={onClose}
-          backVariant="circle"
-        />
-      )}
+    <div className="relative h-full min-h-0 font-sans text-foreground select-none">
+      <div className="h-full min-h-0 overflow-y-auto overscroll-y-contain pb-28 touch-pan-y">
+        {showHeader && (
+          <FlowHeader
+            title="Add Category"
+            onBack={onClose}
+            backVariant="circle"
+          />
+        )}
 
       {/* Main Form Fields */}
-      <div className={`flex flex-col gap-6 px-6 pb-4 text-left ${showHeader ? 'pt-4' : 'pt-20'}`}>
+        <div className={`flex flex-col gap-6 px-6 pb-4 text-left ${showHeader ? 'pt-4' : 'pt-20'}`}>
         {/* Category Name input */}
         <div className="flex flex-col">
           <span className="text-[11px] font-bold text-muted-faint uppercase tracking-wider mb-2">
@@ -142,14 +145,16 @@ export default function AddCategoryFlow({
           </div>
         </div>
 
-        {/* Big Save Button */}
+        </div>
+      </div>
+      <div className="absolute inset-x-0 bottom-0 z-10 bg-[#FEFAF1] px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3">
         <button
           type="button"
           onClick={handleSave}
-          disabled={!categoryName.trim()}
-          className="-mx-2 h-14 w-[calc(100%+1rem)] rounded-[20px] bg-positive text-white font-extrabold text-base cursor-pointer shadow-[0px_4px_16px_rgba(11,104,58,0.15)] hover:bg-positive/95 disabled:opacity-40 transition-all flex shrink-0 items-center justify-center outline-none border-0 mt-2"
+          disabled={!categoryName.trim() || isSaving}
+          className="h-14 w-full rounded-[20px] bg-positive text-white font-extrabold text-base cursor-pointer shadow-[0px_4px_16px_rgba(11,104,58,0.15)] hover:bg-positive/95 disabled:cursor-not-allowed disabled:opacity-40 transition-all flex shrink-0 items-center justify-center outline-none border-0"
         >
-          Save Category
+          {isSaving ? 'Saving…' : 'Save Category'}
         </button>
       </div>
     </div>

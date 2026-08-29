@@ -121,7 +121,8 @@ export default function CategoryPicker({
             isOpen={showAddCategory}
             onClose={closeAddCategory}
             onSave={handleSaveCategory}
-            showHeader={false}
+            showHeader={true}
+            isSaving={createCategory.isPending}
           />
         </div>
       )}

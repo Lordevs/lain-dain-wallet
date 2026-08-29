@@ -367,6 +367,7 @@ export default function PersonalCategoriesScreen() {
             isOpen={showAddCategory}
             onClose={closeAddCategory}
             onSave={handleSaveCategory}
+            isSaving={createCategory.isPending}
           />
         </div>
       )}
