@@ -85,11 +85,7 @@ function ContactLedgerCard({ contact, onSelect }: ContactLedgerCardProps) {
             </div>
 
             {/* Amount + chevron */}
-            <div
-              className="flex items-center gap-1 shrink-0"
-              onPointerDown={(event) => event.stopPropagation()}
-              onClick={(event) => event.stopPropagation()}
-            >
+            <div className="flex items-center gap-1 shrink-0">
               <span className={cn(
                 'text-[15px] font-extrabold',
                 isSettled ? 'text-muted-foreground' : isReceivable ? 'text-primary' : 'text-orange-payable'
@@ -102,7 +98,19 @@ function ContactLedgerCard({ contact, onSelect }: ContactLedgerCardProps) {
                   className="max-w-full"
                 />
               </span>
-              <ChevronRight size={16} className="text-muted-foreground" />
+              <button
+                type="button"
+                aria-label={`Open ${name}`}
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors active:bg-muted/60"
+                onClick={(event) => {
+                  // CompactAmount handles and stops its own click. The
+                  // chevron remains an explicit navigation target.
+                  event.stopPropagation()
+                  onSelect?.(contact)
+                }}
+              >
+                <ChevronRight size={16} />
+              </button>
             </div>
           </div>
 
