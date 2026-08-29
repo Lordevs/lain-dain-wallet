@@ -419,6 +419,9 @@ export default function GroupSettingsScreen() {
         buttonText={drawerConfig.buttonText}
         variant={drawerConfig.buttonVariant}
         onConfirm={drawerConfig.onAction || (() => { })}
+        closeOnConfirm={drawerConfig.closeOnConfirm}
+        disabled={drawerConfig.disabled}
+        errorMessage={drawerConfig.errorMessage}
       />
 
       {/* Add Member Drawer */}

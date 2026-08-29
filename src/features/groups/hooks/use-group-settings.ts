@@ -38,6 +38,9 @@ export interface DrawerConfig {
   buttonText?: string
   buttonVariant?: 'warning' | 'danger' | 'primary'
   onAction?: () => void
+  errorMessage?: string | null
+  closeOnConfirm?: boolean
+  disabled?: boolean
 }
 
 export interface PendingMemberAction {
@@ -232,9 +235,20 @@ export function useGroupSettings() {
       confirmDescription: 'This will permanently delete this group and all its expenses for all members. This action cannot be undone.',
       buttonText: 'Delete',
       buttonVariant: 'danger',
+      closeOnConfirm: false,
       onAction: async () => {
-        await deleteGroupMutation.mutateAsync()
-        navigate({ to: ROUTES.DASHBOARD })
+        setDrawerConfig((current) => ({ ...current, errorMessage: null, disabled: true }))
+        try {
+          await deleteGroupMutation.mutateAsync()
+          setDrawerConfig({ type: null, title: '' })
+          navigate({ to: ROUTES.DASHBOARD })
+        } catch (error) {
+          setDrawerConfig((current) => ({
+            ...current,
+            disabled: false,
+            errorMessage: error instanceof Error ? error.message : 'The group could not be deleted.',
+          }))
+        }
       },
     })
   }

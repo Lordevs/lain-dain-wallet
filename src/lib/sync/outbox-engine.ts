@@ -40,6 +40,10 @@ export interface OutboxEngineConfig<Row extends OutboxRowLike> {
    * reconciliation a terminal failure needs (e.g. flagging a materialized
    * local row as failed) happens here. */
   markFailed(row: Row, message: string): Promise<void>
+  /** Optional cleanup for validation/permission failures that cannot
+   * succeed when replayed unchanged. Outboxes with durable optimistic
+   * records may omit this and keep using markFailed for user recovery. */
+  discardPermanent?: (row: Row) => Promise<void>
   /** Submits one row and does whatever local reconciliation success
    * needs (removing the row, updating a materialized local cache,
    * invalidating queries, ...). Throws ApiError on failure —
@@ -76,7 +80,8 @@ export function createOutboxDrainer<Row extends OutboxRowLike>(config: OutboxEng
           await config.submitOne(row)
         } catch (error) {
           if (error instanceof ApiError && !isTransientApiError(error)) {
-            await config.markFailed(row, error.message)
+            if (config.discardPermanent) await config.discardPermanent(row)
+            else await config.markFailed(row, error.message)
             continue
           }
           if (row.attempt_count + 1 >= MAX_TRANSIENT_ATTEMPTS) {

@@ -86,15 +86,17 @@ export default function AppHeader() {
                 </PopoverDescription>
               </PopoverHeader>
               {syncStatus.failed > 0 && (
-                <button
-                  type="button"
-                  disabled={!isOnline || syncStatus.isRetrying}
-                  onClick={() => void syncStatus.retry()}
-                  className="mt-1 flex h-10 w-full items-center justify-center gap-2 rounded-full bg-primary px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <RefreshCw size={15} className={syncStatus.isRetrying ? 'animate-spin' : undefined} />
-                  {syncStatus.isRetrying ? 'Trying again…' : isOnline ? 'Try again' : 'Connect to retry'}
-                </button>
+                <div className="mt-1 grid gap-2">
+                  <button
+                    type="button"
+                    disabled={!isOnline || syncStatus.isRetrying}
+                    onClick={() => void syncStatus.retry()}
+                    className="flex h-10 w-full items-center justify-center gap-2 rounded-full bg-primary px-4 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <RefreshCw size={15} className={syncStatus.isRetrying ? 'animate-spin' : undefined} />
+                    {syncStatus.isRetrying ? 'Trying again…' : isOnline ? 'Try again' : 'Connect to retry'}
+                  </button>
+                </div>
               )}
             </PopoverContent>
           </Popover>

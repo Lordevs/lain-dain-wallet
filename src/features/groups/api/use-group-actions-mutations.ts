@@ -34,9 +34,6 @@ export function useMakeAdminMutation(groupId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['group', groupId] })
     },
-    onError: (error) => {
-      toast.error(error.message)
-    },
   })
 }
 
@@ -48,9 +45,6 @@ export function useRemoveAdminMutation(groupId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['group', groupId] })
-    },
-    onError: (error) => {
-      toast.error(error.message)
     },
   })
 }
@@ -110,9 +104,6 @@ export function useDeleteGroupMutation(groupId: string) {
       // isn't available here, broad invalidation is correct as-is.
       queryClient.invalidateQueries({ queryKey: ['user-ledgers'] })
       queryClient.invalidateQueries({ queryKey: ['wallet'] })
-    },
-    onError: (error) => {
-      toast.error(error.message)
     },
   })
 }

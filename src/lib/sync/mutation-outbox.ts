@@ -98,7 +98,11 @@ export async function queueMutation<T>(input: QueueMutationInput<T>): Promise<Qu
     return { data: data ?? input.optimisticResult, synced: true }
   } catch (error) {
     if (error instanceof ApiError && !isTransientApiError(error)) {
-      await setMutationStatus(row.id, 'failed', error.message)
+      // The request was made synchronously while the caller is still open,
+      // so the screen can show the validation/permission error directly.
+      // Keeping the same rejected operation in the outbox would create a
+      // permanent warning whose “Try again” action can only fail identically.
+      await removeSyncedMutation(row)
       throw error
     }
     return { data: input.optimisticResult, synced: false }
@@ -296,6 +300,10 @@ const drain = createOutboxDrainer<MutationOutboxRow>({
   markSyncing: (row) => setMutationStatus(row.id, 'syncing'),
   markPending: (row) => setMutationStatus(row.id, 'pending'),
   markFailed: (row, message) => setMutationStatus(row.id, 'failed', message),
+  // A 4xx validation/permission response will not become successful by
+  // replaying the identical generic mutation. Drop it instead of leaving
+  // an endless “Try again” warning. Transient failures still remain queued.
+  discardPermanent: removeSyncedMutation,
   submitOne: async (row) => {
     await submitMutation(row)
     await removeSyncedMutation(row)

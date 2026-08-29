@@ -60,6 +60,7 @@ export async function deleteMutation(id: string): Promise<void> {
 export async function getMutationOutboxSummary(ownerId: string): Promise<{
   pending: number
   failed: number
+  failedRejectedDeletes: number
   firstError: string | null
 }> {
   const db = await getDatabase()
@@ -67,6 +68,10 @@ export async function getMutationOutboxSummary(ownerId: string): Promise<{
     `SELECT
        SUM(CASE WHEN status IN ('pending', 'syncing') THEN 1 ELSE 0 END) AS pending,
        SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed,
+       SUM(CASE WHEN status = 'failed'
+         AND resource IN ('categories', 'groups') AND method = 'DELETE'
+         AND COALESCE(last_error, '') NOT LIKE 'Giving up after repeated attempts%'
+       THEN 1 ELSE 0 END) AS failed_rejected_deletes,
        MIN(CASE WHEN status = 'failed' THEN last_error END) AS first_error
      FROM mutation_outbox WHERE owner_id = ?`,
     [ownerId],
@@ -75,8 +80,26 @@ export async function getMutationOutboxSummary(ownerId: string): Promise<{
   return {
     pending: Number(row.pending ?? 0),
     failed: Number(row.failed ?? 0),
+    failedRejectedDeletes: Number(row.failed_rejected_deletes ?? 0),
     firstError: (row.first_error as string | null | undefined) ?? null,
   }
+}
+
+/**
+ * Clears deletion requests that the server permanently rejected. These
+ * rows cannot succeed by being replayed unchanged (for example, while an
+ * expense still references the category), so the app abandons them without
+ * deleting unrelated failed changes.
+ */
+export async function discardFailedRejectedDeletes(ownerId: string): Promise<void> {
+  const db = await getDatabase()
+  await db.run(
+    `DELETE FROM mutation_outbox
+     WHERE owner_id = ? AND status = 'failed'
+       AND resource IN ('categories', 'groups') AND method = 'DELETE'
+       AND COALESCE(last_error, '') NOT LIKE 'Giving up after repeated attempts%'`,
+    [ownerId],
+  )
 }
 
 export async function retryFailedMutations(ownerId: string): Promise<void> {
