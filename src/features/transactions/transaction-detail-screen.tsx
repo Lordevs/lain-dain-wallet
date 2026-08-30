@@ -7,8 +7,6 @@ import { useAuthStore } from '@/store/use-auth-store'
 import { useExpenseQuery } from '@/features/expenses/api/use-expense-query'
 import { useDeleteExpenseMutation } from '@/features/expenses/api/use-delete-expense-mutation'
 import { useGroupQuery } from '@/features/groups/api/use-group-query'
-import { useGroupBalanceQuery } from '@/features/groups/api/use-group-balance-query'
-import { useFriendshipBalanceQuery } from '@/features/contacts/api/use-friendship-balance-query'
 import { resolveGroupRole } from '@/features/groups/lib/group-roles'
 import { iconForCategory } from '@/features/expenses/lib/category-icons'
 import { formatCurrency } from '@/lib/currency'
@@ -22,8 +20,6 @@ export default function TransactionDetailScreen() {
 
   const expenseQuery = useExpenseQuery(id)
   const groupQuery = useGroupQuery(expenseQuery.data?.group ?? undefined)
-  const groupBalanceQuery = useGroupBalanceQuery(expenseQuery.data?.group ?? undefined)
-  const friendshipBalanceQuery = useFriendshipBalanceQuery(expenseQuery.data?.friendship ?? undefined)
   const deleteExpense = useDeleteExpenseMutation()
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false)
 
@@ -98,17 +94,6 @@ export default function TransactionDetailScreen() {
     : expense.context === 'friendship'
       ? isOwnEntry
       : true
-  const hasOutstandingBalance = expense.context === 'group'
-    ? (groupBalanceQuery.data ?? []).some((balance) => Number(balance.net_amount) !== 0)
-    : expense.context === 'friendship'
-      ? (friendshipBalanceQuery.data ?? []).some((balance) => Number(balance.net_amount) !== 0)
-      : false
-  const canSettleUp = expense.context === 'group'
-    ? Boolean(expense.group)
-    : expense.context === 'friendship'
-      ? Boolean(expense.friendship && otherParticipant)
-      : false
-
   const payerNames = expense.payers
     .map((p) => (p.id === myId ? 'You' : p.full_name))
     .join(', ')
@@ -309,23 +294,6 @@ export default function TransactionDetailScreen() {
         </div>
         )}
       </div>
-
-      {canSettleUp && hasOutstandingBalance && (
-        <div className="z-10 shrink-0 px-3 pb-3 pt-3">
-          <button
-            type="button"
-            onClick={() => navigate({
-              to: ROUTES.SETTLE_UP,
-              search: expense.context === 'group'
-                ? { groupId: expense.group! }
-                : { contactId: otherParticipant!.id },
-            })}
-            className="flex h-12 w-full items-center justify-center rounded-full border-0 bg-[#FDB105] text-base font-extrabold text-[#1A1A1A] transition-opacity active:opacity-90 cursor-pointer"
-          >
-            Settle Up
-          </button>
-        </div>
-      )}
 
       {canManageExpense && <ConfirmActionDrawer
         isOpen={isConfirmDeleteOpen}
