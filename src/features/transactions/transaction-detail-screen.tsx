@@ -103,6 +103,11 @@ export default function TransactionDetailScreen() {
     : expense.context === 'friendship'
       ? (friendshipBalanceQuery.data ?? []).some((balance) => Number(balance.net_amount) !== 0)
       : false
+  const canSettleUp = expense.context === 'group'
+    ? Boolean(expense.group)
+    : expense.context === 'friendship'
+      ? Boolean(expense.friendship && otherParticipant)
+      : false
 
   const payerNames = expense.payers
     .map((p) => (p.id === myId ? 'You' : p.full_name))
@@ -305,7 +310,7 @@ export default function TransactionDetailScreen() {
         )}
       </div>
 
-      {hasOutstandingBalance && (
+      {canSettleUp && hasOutstandingBalance && (
         <div className="z-10 shrink-0 px-3 pb-3 pt-3">
           <button
             type="button"
