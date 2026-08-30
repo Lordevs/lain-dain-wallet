@@ -88,7 +88,8 @@ export default function AddGroupExpenseScreen() {
 
   const handleConfirm = async (data: ConfirmExpenseData) => {
     const paidBy = data.paidBy || myId
-    const category = categoriesQuery.data?.find((c) => c.icon === data.category)
+    const category = categoriesQuery.data?.find((c) => c.id === data.category)
+      ?? categoriesQuery.data?.find((c) => c.icon === data.category)
       ?? categoriesQuery.data?.find((c) => c.icon === 'other')
 
     if (!category) {

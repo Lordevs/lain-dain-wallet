@@ -10,14 +10,9 @@ import { iconForCategory } from '@/features/expenses/lib/category-icons'
 // shared expense components and the groups feature too, not just
 // personal, so it belongs in shared, not scoped to one feature.
 //
-// Re-exported so existing lookups elsewhere (add-expense-base.tsx,
-// add-receipt-flow.tsx, add-note-flow.tsx, transaction-detail-screen.tsx)
-// keep working unchanged — `id` here is a Category.icon string, the same
-// space `selectedCategoryId` below already operates in, so this stays a
-// valid label/color/icon lookup for every system category. Only a
-// user-added custom category (a real backend row with no entry here)
-// falls back to those callers' own 'Other' default — a cosmetic gap in
-// a couple of secondary previews, not a functional one.
+// Re-exported for static icon metadata used by a few secondary previews.
+// Actual category selection uses the backend category UUID, because icons
+// are presentation values and are not unique.
 export interface CategoryOption {
   id: string
   label: string
@@ -38,11 +33,9 @@ export const CATEGORIES: CategoryOption[] = [
 ]
 
 interface CategoryPickerProps {
-  /** A Category.icon string (e.g. "food"), not the category's own UUID —
-   * see build-friendship-expense-form-data.ts / add-contact-expense-screen.tsx
-   * for where that gets resolved to a real category_id at submit time. */
+  /** The category's unique backend UUID. */
   selectedCategoryId: string
-  onSelectCategory: (icon: string) => void
+  onSelectCategory: (categoryId: string) => void
   onAddCategoryOpenChange?: (isOpen: boolean) => void
 }
 
@@ -70,7 +63,7 @@ export default function CategoryPicker({
       { name, icon, color },
       {
         onSuccess: (category) => {
-          onSelectCategory(category.icon)
+          onSelectCategory(category.id)
           closeAddCategory()
         },
       },
@@ -86,13 +79,13 @@ export default function CategoryPicker({
       )}
       {categories.map((cat) => {
         const IconComponent = iconForCategory(cat.icon)
-        const isSelected = selectedCategoryId === cat.icon
+        const isSelected = selectedCategoryId === cat.id
 
         return (
           <button
             key={cat.id}
             type="button"
-            onClick={() => onSelectCategory(cat.icon)}
+            onClick={() => onSelectCategory(cat.id)}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-medium transition-all cursor-pointer border-[1.5px] ${isSelected
               ? 'bg-[#E4F2EB] border-[#0B683A4D] text-primary'
               : 'bg-white border-[#E8E5DE] text-[#1A1A1A] hover:bg-[#F7F5F0]'

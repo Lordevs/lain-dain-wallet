@@ -11,6 +11,8 @@ import SuccessCheck from '@/components/shared/success-check'
 import type { PaidByMember } from '@/components/shared/paid-by-drawer'
 import type { SplitData } from '@/components/shared/split-expense-drawer'
 import { useDrawerBackHandler } from '@/hooks/use-drawer-back-handler'
+import { useCategoriesQuery } from '@/features/expenses/api/use-categories-query'
+import { iconForCategory } from '@/features/expenses/lib/category-icons'
 
 // All five are closed on every mount (isOpen only flips true once the user
 // taps to open one) — lazy-loading keeps their combined weight (receipt/note
@@ -91,6 +93,7 @@ export default function AddExpenseBase({
   onSuccessComplete,
   onBack,
 }: AddExpenseBaseProps) {
+  const categoriesQuery = useCategoriesQuery()
   // State management
   const { amount, handleAmountChange: updateAmount, formattedAmount, isTooLong: isAmountTooLong } = useFormattedAmountInput(initialData?.amount || '')
   const [description, setDescription] = useState(initialData?.description || '')
@@ -111,6 +114,15 @@ export default function AddExpenseBase({
   const [showSuccess, setShowSuccess] = useState(false)
   const [isAddingCategory, setIsAddingCategory] = useState(false)
   const [showDateDrawer, setShowDateDrawer] = useState(false)
+
+  const selectedCategoryDetails = categoriesQuery.data?.find((category) => category.id === selectedCategory)
+  const selectedCategoryFallback = CATEGORIES.find((category) => category.id === selectedCategory)
+  const selectedCategoryLabel = selectedCategoryDetails?.name ?? selectedCategoryFallback?.label ?? 'Other'
+  const selectedCategoryColor = selectedCategoryDetails?.color ?? selectedCategoryFallback?.color ?? '#7F8C8D'
+  const SelectedCategoryIcon = selectedCategoryDetails
+    ? iconForCategory(selectedCategoryDetails.icon)
+    : selectedCategoryFallback?.icon ?? iconForCategory('other')
+  const selectedCategoryIcon = selectedCategoryDetails?.icon ?? selectedCategoryFallback?.id ?? 'other'
 
   // Shared Expense Specific State
   const [expenseMode, setExpenseMode] = useState<'split' | 'owes_me'>(initialData?.expenseMode || 'split')
@@ -456,7 +468,7 @@ export default function AddExpenseBase({
           isOpen={showReceiptOverlay}
           amount={Number(amount) || 0}
           description={description}
-          category={selectedCategory}
+          category={selectedCategoryIcon}
           onClose={closeReceiptOverlay}
           onSave={(file) => {
             setReceiptFile(file)
@@ -471,7 +483,7 @@ export default function AddExpenseBase({
           isOpen={showNoteOverlay}
           amount={Number(amount) || 0}
           description={description}
-          category={selectedCategory}
+          category={selectedCategoryIcon}
           initialNote={noteText}
           onClose={closeNoteOverlay}
           onSave={(text) => {
@@ -514,9 +526,9 @@ export default function AddExpenseBase({
             isOpen={showSplit}
             amount={Number(amount) || 0}
             description={description}
-            categoryLabel={CATEGORIES.find((cat) => cat.id === selectedCategory)?.label || 'Other'}
-            categoryColor={CATEGORIES.find((cat) => cat.id === selectedCategory)?.color || '#7F8C8D'}
-            CategoryIcon={CATEGORIES.find((cat) => cat.id === selectedCategory)?.icon || CATEGORIES[7].icon}
+            categoryLabel={selectedCategoryLabel}
+            categoryColor={selectedCategoryColor}
+            CategoryIcon={SelectedCategoryIcon}
             onClose={closeSplit}
             onSave={(data) => {
               setSplitData(data)

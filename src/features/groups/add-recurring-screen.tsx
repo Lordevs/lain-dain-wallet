@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { FileText, ChevronRight, ChevronDown, Calendar, Users, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useFormattedAmountInput } from '@/hooks/use-formatted-amount-input'
-import CategoryPicker, { CATEGORIES } from '@/components/shared/category-picker'
+import CategoryPicker from '@/components/shared/category-picker'
 import PaidByDrawer from '@/components/shared/paid-by-drawer'
 import SplitExpenseDrawer, { type SplitData } from '@/components/shared/split-expense-drawer'
 import SelectDateDrawer from '@/components/shared/select-date-drawer'
@@ -29,6 +29,7 @@ import RecurringFormHeader from '@/features/groups/components/recurring-form-hea
 import FrequencyToggle, { type RecurringFrequency } from '@/features/groups/components/frequency-toggle'
 import RecurringAttachmentsStrip from '@/features/groups/components/recurring-attachments-strip'
 import type { components } from '@/lib/api/schema'
+import { iconForCategory } from '@/features/expenses/lib/category-icons'
 
 type Category = components['schemas']['Category']
 
@@ -194,7 +195,14 @@ function AddRecurringForm({
   }, [members, myId])
 
   const [description, setDescription] = useState(editingPayment?.description ?? '')
-  const [selectedCategory, setSelectedCategory] = useState(editingPayment?.category?.icon ?? 'bills')
+  const [selectedCategory, setSelectedCategory] = useState(
+    editingPayment?.category?.id
+      ?? categories.find((category) => category.icon === 'bills')?.id
+      ?? categories[0]?.id
+    ?? '',
+  )
+  const selectedCategoryDetails = categories.find((category) => category.id === selectedCategory)
+  const selectedCategoryIcon = selectedCategoryDetails?.icon ?? 'other'
   const [frequency, setFrequency] = useState<RecurringFrequency>(
     editingPayment?.frequency?.toLowerCase() === 'weekly' ? 'Weekly' : 'Monthly'
   )
@@ -270,7 +278,9 @@ function AddRecurringForm({
     if (parsedAmount <= 0) return
 
     const matchedCategory =
-      categories.find((c) => c.icon === selectedCategory || c.id === selectedCategory) ?? categories[0]
+      categories.find((c) => c.id === selectedCategory)
+      ?? categories.find((c) => c.icon === selectedCategory)
+      ?? categories[0]
     const categoryId = matchedCategory?.id ?? ''
 
     const payers = paidBy === 'multiple'
@@ -538,7 +548,7 @@ function AddRecurringForm({
         isOpen={showReceiptOverlay}
         amount={Number(amount) || 0}
         description={description}
-        category={selectedCategory}
+        category={selectedCategoryIcon}
         onClose={() => setShowReceiptOverlay(false)}
         onSave={(file) => {
           setReceiptFile(file)
@@ -551,7 +561,7 @@ function AddRecurringForm({
         isOpen={showNoteOverlay}
         amount={Number(amount) || 0}
         description={description}
-        category={selectedCategory}
+        category={selectedCategoryIcon}
         initialNote={noteText}
         onClose={() => setShowNoteOverlay(false)}
         onSave={(text) => {
@@ -584,9 +594,9 @@ function AddRecurringForm({
         isOpen={showSplit}
         amount={Number(amount) || 0}
         description={description}
-        categoryLabel={CATEGORIES.find((cat) => cat.id === selectedCategory)?.label || 'Other'}
-        categoryColor={CATEGORIES.find((cat) => cat.id === selectedCategory)?.color || '#7F8C8D'}
-        CategoryIcon={CATEGORIES.find((cat) => cat.id === selectedCategory)?.icon || CATEGORIES[7].icon}
+        categoryLabel={selectedCategoryDetails?.name || 'Other'}
+        categoryColor={selectedCategoryDetails?.color || '#7F8C8D'}
+        CategoryIcon={iconForCategory(selectedCategoryIcon)}
         onClose={() => setShowSplit(false)}
         onSave={(data) => {
           setSplitData(data)

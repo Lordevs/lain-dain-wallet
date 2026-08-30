@@ -116,7 +116,7 @@ export default function EditGroupExpenseScreen() {
   const initialData: InitialExpenseData = {
     amount: expense.amount,
     description: expense.description,
-    category: expense.category.icon,
+    category: expense.category.id,
     dateValue: new Date(expense.date + 'T00:00:00').toLocaleDateString('en-US', {
       day: 'numeric',
       month: 'short',
@@ -134,7 +134,8 @@ export default function EditGroupExpenseScreen() {
 
   const handleConfirm = async (data: ConfirmExpenseData) => {
     const paidByValue = data.paidBy || myId
-    const category = categoriesQuery.data?.find((c) => c.icon === data.category)
+    const category = categoriesQuery.data?.find((c) => c.id === data.category)
+      ?? categoriesQuery.data?.find((c) => c.icon === data.category)
       ?? categoriesQuery.data?.find((c) => c.icon === 'other')
 
     if (!category) {
