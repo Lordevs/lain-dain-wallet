@@ -17,6 +17,7 @@
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		7908602C753F5591F868AE2B /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = E3E22D6833DC8545640C611F /* GoogleService-Info.plist */; };
 		A11DA1002F3B000100000001 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11DA1012F3B000100000001 /* SceneDelegate.swift */; };
+		A11DA1022F3B000100000001 /* notification-effect.caf in Resources */ = {isa = PBXBuildFile; fileRef = A11DA1032F3B000100000001 /* notification-effect.caf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +33,7 @@
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 		A11DA1012F3B000100000001 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		A11DA1032F3B000100000001 /* notification-effect.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "notification-effect.caf"; sourceTree = "<group>"; };
 		E3E22D6833DC8545640C611F /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -71,6 +73,7 @@
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				A11DA1012F3B000100000001 /* SceneDelegate.swift */,
+				A11DA1032F3B000100000001 /* notification-effect.caf */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
@@ -154,6 +157,7 @@
 				504EC30D1FED79650016851F /* Main.storyboard in Resources */,
 				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
 				7908602C753F5591F868AE2B /* GoogleService-Info.plist in Resources */,
+				A11DA1022F3B000100000001 /* notification-effect.caf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

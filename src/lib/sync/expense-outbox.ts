@@ -1,4 +1,5 @@
 import { onlineManager } from '@tanstack/react-query'
+import { Capacitor } from '@capacitor/core'
 import { queryClient } from '@/lib/query-client'
 import { apiClient } from '@/lib/api/client'
 import { ApiError, isTransientApiError, toApiError } from '@/lib/api/errors'
@@ -12,6 +13,7 @@ import {
 } from '@/lib/sqlite/outbox-store'
 import { insertLocalExpense, markLocalExpenseSynced, markLocalExpenseFailed } from '@/lib/sqlite/expenses-store'
 import { runInTransaction } from '@/lib/sqlite/transaction'
+import { isLocalDatabaseAvailable } from '@/lib/sqlite/init'
 import { stageReceiptForOffline, readStagedReceipt, deleteStagedReceipt } from './receipt-staging'
 import { createOutboxDrainer } from './outbox-engine'
 
@@ -54,6 +56,20 @@ type ExpenseCreateResponse = components['schemas']['ExpenseRead']
 
 export async function queueExpenseCreate(payload: QueuedExpensePayload): Promise<QueueExpenseCreateResult> {
   const id = crypto.randomUUID()
+
+  // Compatibility path for an older native shell loading a newer web
+  // bundle (for example during live reload). That shell cannot use the
+  // offline outbox because CapacitorSQLite is not compiled into it, but it
+  // can still save online through the same API without crashing the screen.
+  if (Capacitor.isNativePlatform() && !isLocalDatabaseAvailable()) {
+    if (!onlineManager.isOnline()) {
+      throw new ApiError('Update the app to save expenses while offline.')
+    }
+    await submitExpenseDirect(payload, id)
+    invalidateQueriesFor(payload)
+    return { id, synced: true }
+  }
+
   const now = new Date().toISOString()
   const myId = useAuthStore.getState().userProfile?.id ?? ''
   if (!myId) throw new ApiError('Sign in before saving an expense.')
@@ -170,6 +186,37 @@ export async function queueExpenseCreate(payload: QueuedExpensePayload): Promise
     // outcome to having been offline from the start.
     return { id, synced: false }
   }
+}
+
+async function submitExpenseDirect(
+  payload: QueuedExpensePayload,
+  idempotencyKey: string,
+): Promise<ExpenseCreateResponse> {
+  const formData = payload.kind === 'personal'
+    ? await buildPersonalExpenseFormData(payload.values)
+    : await buildFriendshipExpenseFormData(payload.values)
+  formData.append('id', idempotencyKey)
+
+  const headers = { 'Idempotency-Key': idempotencyKey }
+  const { data, error, response } = payload.kind === 'personal'
+    ? await apiClient.POST('/api/expenses/personal/', {
+        body: formData as unknown as components['schemas']['PersonalExpenseCreateRequest'],
+        headers,
+      })
+    : payload.kind === 'friendship'
+      ? await apiClient.POST('/api/expenses/friendships/{friendship_id}/', {
+          params: { path: { friendship_id: payload.friendshipId } },
+          body: formData as unknown as components['schemas']['ExpenseCreateRequest'],
+          headers,
+        })
+      : await apiClient.POST('/api/expenses/groups/{group_id}/', {
+          params: { path: { group_id: payload.groupId } },
+          body: formData as unknown as components['schemas']['ExpenseCreateRequest'],
+          headers,
+        })
+
+  if (error) throw toApiError(error, (response as unknown as Response).status)
+  return data as unknown as ExpenseCreateResponse
 }
 
 /** Rebuilds the multipart request from a queued row's payload and posts

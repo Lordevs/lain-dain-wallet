@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Capacitor } from '@capacitor/core'
-import { FirebaseMessaging } from '@capacitor-firebase/messaging'
+import { FirebaseMessaging, Importance, Visibility } from '@capacitor-firebase/messaging'
 import { App } from '@capacitor/app'
 import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
@@ -10,8 +10,16 @@ import { useRegisterFcmDeviceMutation } from '../api/use-register-fcm-device-mut
 import { toast } from 'sonner'
 import { clearRefreshToken } from '@/lib/secure-storage'
 import { apiClient } from '@/lib/api/client'
+import notificationSoundUrl from '../../../../assets/sounds/notification-effect.mp3'
 
 let isHandlingSessionRevocation = false
+let notificationSound: HTMLAudioElement | undefined
+
+function playNotificationSound() {
+  notificationSound ??= new Audio(notificationSoundUrl)
+  notificationSound.currentTime = 0
+  void notificationSound.play().catch(() => undefined)
+}
 
 async function handleSessionRevoked(router: ReturnType<typeof useRouter>, queryClient: ReturnType<typeof useQueryClient>) {
   if (isHandlingSessionRevocation) return
@@ -32,6 +40,8 @@ const GROUP_ACTIVITY_TYPES = new Set([
   'group_member_joined',
   'group_expense_added',
 ])
+
+const ANDROID_NOTIFICATION_CHANNEL_ID = 'lain_dain_notifications_v1'
 
 /**
  * Registers this device for FCM push once the user is fully signed in, and
@@ -75,6 +85,18 @@ export function usePushNotifications() {
       }
       if (status.receive !== 'granted' || cancelled) return
 
+      if (Capacitor.getPlatform() === 'android') {
+        await FirebaseMessaging.createChannel({
+          id: ANDROID_NOTIFICATION_CHANNEL_ID,
+          name: 'Lain Dain notifications',
+          description: 'Payment alerts, reminders, and group invitations',
+          importance: Importance.High,
+          sound: 'notification_effect.mp3',
+          vibration: true,
+          visibility: Visibility.Private,
+        })
+      }
+
       const { token } = await FirebaseMessaging.getToken()
       if (cancelled) return
       await registerToken(token)
@@ -106,6 +128,7 @@ export function usePushNotifications() {
           handleSessionRevoked(router, queryClient)
           return
         }
+        playNotificationSound()
         toast.info(event.notification.title || 'Lain Dain', {
           description: event.notification.body,
         })

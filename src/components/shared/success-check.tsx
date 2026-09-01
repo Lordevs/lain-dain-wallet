@@ -1,66 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Check } from 'lucide-react'
-
-interface WebKitAudioWindow extends Window {
-  webkitAudioContext?: typeof AudioContext
-}
-
-let successAudioContext: AudioContext | null = null
-
-function getSuccessAudioContext(): AudioContext | null {
-  if (typeof window === 'undefined') return null
-  if (successAudioContext) return successAudioContext
-
-  const AudioContextClass = window.AudioContext || (window as WebKitAudioWindow).webkitAudioContext
-  if (!AudioContextClass) return null
-
-  successAudioContext = new AudioContextClass()
-  return successAudioContext
-}
-
-function unlockSuccessAudio() {
-  const audioContext = getSuccessAudioContext()
-  if (!audioContext || audioContext.state === 'running') return
-  void audioContext.resume().catch(() => undefined)
-}
-
-// Mobile WebViews require audio to be unlocked during a user gesture. This
-// module is loaded with the form, so the first tap primes the shared context
-// before the async save finishes and SuccessCheck is mounted.
-if (typeof document !== 'undefined') {
-  document.addEventListener('pointerdown', unlockSuccessAudio, { once: true, passive: true })
-  document.addEventListener('keydown', unlockSuccessAudio, { once: true })
-}
-
-async function playSuccessChime() {
-  const audioContext = getSuccessAudioContext()
-  if (!audioContext) return
-
-  if (audioContext.state !== 'running') {
-    await audioContext.resume()
-  }
-
-  const startAt = audioContext.currentTime
-  const notes = [
-    { frequency: 659.25, delay: 0, duration: 0.24 },
-    { frequency: 783.99, delay: 0.12, duration: 0.32 },
-  ]
-
-  notes.forEach(({ frequency, delay, duration }) => {
-    const oscillator = audioContext.createOscillator()
-    const gain = audioContext.createGain()
-    const noteStart = startAt + delay
-
-    oscillator.type = 'triangle'
-    oscillator.frequency.setValueAtTime(frequency, noteStart)
-    gain.gain.setValueAtTime(0.28, noteStart)
-    gain.gain.exponentialRampToValueAtTime(0.01, noteStart + duration)
-    oscillator.connect(gain)
-    gain.connect(audioContext.destination)
-    oscillator.start(noteStart)
-    oscillator.stop(noteStart + duration)
-  })
-}
+import { useSuccessSound } from '@/hooks/use-success-sound'
 
 interface SuccessCheckProps {
   onComplete: () => void
@@ -94,16 +34,7 @@ export default function SuccessCheck({
   showConfetti = false,
 }: SuccessCheckProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-
-  const soundPlayedRef = useRef(false)
-
-  useEffect(() => {
-    // The success sound is independent of the optional confetti animation.
-    if (!soundPlayedRef.current) {
-      soundPlayedRef.current = true
-      void playSuccessChime().catch(() => undefined)
-    }
-  }, [])
+  useSuccessSound(showConfetti ? 'confetti' : 'default')
 
   useEffect(() => {
     const duration = showConfetti ? 2800 : 500

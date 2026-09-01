@@ -4,6 +4,7 @@ import { toApiError } from '@/lib/api/errors'
 import { useAuthStore } from '@/store/use-auth-store'
 import { buildLocalWalletInput } from '@/lib/wallet-local-input'
 import { computeLocalUserLedgers } from '@/lib/wallet-local'
+import { isLocalDatabaseAvailable } from '@/lib/sqlite/init'
 
 // GET /api/expenses/with/{user_id}/ — the combined balance with this one
 // person (`overall`, summed across the direct friendship + every shared
@@ -17,7 +18,7 @@ export function useUserLedgersQuery(userId: string | undefined) {
     queryKey: ['user-ledgers', userId],
     queryFn: async () => {
       const ownerId = useAuthStore.getState().userProfile?.id
-      if (!onlineManager.isOnline() && ownerId && userId) {
+      if (!onlineManager.isOnline() && isLocalDatabaseAvailable() && ownerId && userId) {
         const input = await buildLocalWalletInput(ownerId)
         const local = input ? computeLocalUserLedgers(input, userId) : null
         if (local) return local

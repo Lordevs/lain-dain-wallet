@@ -4,6 +4,7 @@ import { toApiError } from '@/lib/api/errors'
 import { onlineManager } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/use-auth-store'
 import { getSnapshotRecord } from '@/lib/sqlite/resource-snapshot-store'
+import { isLocalDatabaseAvailable } from '@/lib/sqlite/init'
 import type { components } from '@/lib/api/schema'
 
 /** One direct ledger's settings/read model. */
@@ -12,7 +13,7 @@ export function useFriendshipDetailQuery(friendshipId: string | undefined) {
     queryKey: ['friendship', friendshipId],
     queryFn: async () => {
       const ownerId = useAuthStore.getState().userProfile?.id
-      if (!onlineManager.isOnline() && ownerId) {
+      if (!onlineManager.isOnline() && isLocalDatabaseAvailable() && ownerId) {
         const local = await getSnapshotRecord<components['schemas']['Friendship']>(
           ownerId, 'friendships', friendshipId!,
         )

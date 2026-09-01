@@ -4,6 +4,7 @@ import { toApiError } from '@/lib/api/errors'
 import { useAuthStore } from '@/store/use-auth-store'
 import { getLocalExpenses } from '@/lib/sqlite/expenses-store'
 import { getResourceSnapshot } from '@/lib/sqlite/resource-snapshot-store'
+import { isLocalDatabaseAvailable } from '@/lib/sqlite/init'
 import { computeUnsimplifiedBalances, resolveUserSummaries, toPersonBalances } from '@/lib/ledger-math'
 import type { components } from '@/lib/api/schema'
 
@@ -15,7 +16,7 @@ export function useFriendshipBalanceQuery(friendshipId: string | undefined) {
     queryKey: ['friendship-balance', friendshipId],
     queryFn: async () => {
       const ownerId = useAuthStore.getState().userProfile?.id
-      if (!onlineManager.isOnline() && ownerId && friendshipId) {
+      if (!onlineManager.isOnline() && isLocalDatabaseAvailable() && ownerId && friendshipId) {
         const [expenses, settlements] = await Promise.all([
           getLocalExpenses(ownerId, { friendshipId }),
           getResourceSnapshot<SettlementRead>(ownerId, 'settlement-ledger', friendshipId),

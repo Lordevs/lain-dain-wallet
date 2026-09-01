@@ -7,6 +7,7 @@ import { onlineManager } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/use-auth-store'
 import { getLocalExpenses, upsertServerExpenses } from '@/lib/sqlite/expenses-store'
 import { getResourceSnapshot } from '@/lib/sqlite/resource-snapshot-store'
+import { isLocalDatabaseAvailable } from '@/lib/sqlite/init'
 
 export type FriendshipTransaction =
   | { kind: 'expense'; date: string; data: components['schemas']['ExpenseRead'] }
@@ -58,7 +59,7 @@ async function fetchExpenses(
   cursor: string | undefined,
 ): Promise<{ items: FriendshipTransaction[]; nextCursor: string | null }> {
   const ownerId = useAuthStore.getState().userProfile?.id
-  if (!onlineManager.isOnline() && ownerId) {
+  if (!onlineManager.isOnline() && isLocalDatabaseAvailable() && ownerId) {
     const expenses = await getLocalExpenses(ownerId, { friendshipId })
     return {
       items: expenses.map((expense) => ({ kind: 'expense' as const, date: expense.date, data: expense })),
@@ -93,7 +94,7 @@ async function fetchSettlements(
   friendshipId: string,
   cursor: string | undefined,
 ): Promise<{ items: FriendshipTransaction[]; nextCursor: string | null }> {
-  if (!onlineManager.isOnline()) {
+  if (!onlineManager.isOnline() && isLocalDatabaseAvailable()) {
     // No real pagination offline — settlement-pull.ts already replicates
     // full history into 'settlement-ledger', scoped by friendship/group id
     // (see ledger-math.ts's own header for why), so this returns everything

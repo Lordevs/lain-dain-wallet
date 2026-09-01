@@ -11,6 +11,12 @@ const sqlite = new SQLiteConnection(CapacitorSQLite)
 // connection rather than each racing to open their own.
 let dbPromise: Promise<SQLiteDBConnection> | null = null
 
+/** False only when a native shell predates the SQLite plugin. Web uses the
+ * jeep-sqlite implementation and current native builds expose the plugin. */
+export function isLocalDatabaseAvailable(): boolean {
+  return !Capacitor.isNativePlatform() || Capacitor.isPluginAvailable('CapacitorSQLite')
+}
+
 /**
  * Web has no native SQLite — @capacitor-community/sqlite backs it with
  * jeep-sqlite, a web component that stores the database in IndexedDB via

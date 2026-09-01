@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { useNavigate } from '@tanstack/react-router'
 import { ROUTES } from '@/constants/routes'
 import ContactAvatar from '@/components/shared/contact-avatar'
+import { useSuccessSound } from '@/hooks/use-success-sound'
 import type { NewContactFlowState } from '../hooks/use-new-contact-flow'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -21,6 +22,7 @@ interface GroupSuccessStepProps {
  */
 export default function GroupSuccessStep({ flow }: GroupSuccessStepProps) {
   const navigate = useNavigate()
+  useSuccessSound()
 
   const isGroupFlow = flow.selectedContacts.length > 1 || !!flow.groupName.trim()
   const singleContact = flow.selectedList[0]
