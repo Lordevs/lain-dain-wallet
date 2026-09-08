@@ -80,9 +80,9 @@ export default function OtpForm({
     await finishLogin(await takeover.mutateAsync(deviceConflict.takeoverToken))
   }
 
-  const handleResend = () => {
+  const handleResend = async () => {
     if (requestOtp.isPending) return
-    requestOtp.mutate(phoneNumber)
+    await requestOtp.mutateAsync(phoneNumber)
   }
 
   return (
@@ -90,8 +90,10 @@ export default function OtpForm({
       <form onSubmit={handleVerify} className="flex-1 flex flex-col justify-between">
         <div>
           <div className="mb-6 text-left">
-            <h2 className="text-xl font-bold text-foreground leading-tight">Verify your Phone Number</h2>
-            <p className="text-muted-foreground mt-0.5 text-base">We sent a 6-digit code to</p>
+            <h2 className="text-xl font-bold text-foreground leading-tight">Verify your phone number</h2>
+            <p className="text-muted-foreground mt-0.5 text-base">
+              Your WhatsApp verification code should arrive shortly.
+            </p>
           </div>
 
           {/* Details Card using Alert component */}
@@ -102,7 +104,7 @@ export default function OtpForm({
                 {countryCallingCode} {nationalNumber}
               </AlertTitle>
               <AlertDescription className="text-xs text-muted-foreground mt-0.5">
-                Check your message
+                Check WhatsApp for your verification code
               </AlertDescription>
             </div>
           </Alert>
@@ -110,7 +112,7 @@ export default function OtpForm({
           {/* Inputs */}
           <div className="text-left">
             <Label className="block text-xs font-bold text-muted-foreground tracking-wider mb-4">
-              ENTER 6-DIGIT CODE
+              ENTER SIX-DIGIT WHATSAPP VERIFICATION CODE
             </Label>
 
             <div className="flex justify-center w-full">
@@ -133,7 +135,12 @@ export default function OtpForm({
             </div>
 
             {/* Reusable Countdown Timer Component */}
-            <CountdownTimer onResend={handleResend} />
+            <CountdownTimer
+              isResending={requestOtp.isPending}
+              onResend={handleResend}
+            />
+
+            <FormError message={requestOtp.error?.message} className="mt-4 justify-center" />
 
             {deviceConflict ? (
               <Alert className="mt-5 border-tertiary/30 bg-orange-soft-bg text-left">
@@ -158,7 +165,7 @@ export default function OtpForm({
           >
             {deviceConflict
               ? (takeover.isPending ? 'Switching device...' : 'Log out old device and continue')
-              : (verifyOtp.isPending ? 'Verifying...' : 'Verify Phone Number')}
+              : (verifyOtp.isPending ? 'Verifying…' : 'Verify phone number')}
           </Button>
 
           {deviceConflict && (

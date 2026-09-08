@@ -75,7 +75,7 @@ export default function PhoneForm({
                 <Check size={12} strokeWidth={3} />
               </div>
               <p className="text-sm text-[#6B6B6B] leading-tight">
-                We'll send you an <span className="text-primary font-semibold">OTP</span> to verify your number
+                We’ll send you a <span className="text-primary font-semibold">WhatsApp verification code</span> to verify your number.
               </p>
             </div>
 
@@ -88,7 +88,7 @@ export default function PhoneForm({
           <p className="text-sm text-muted-foreground text-center">
             {isSignIn ? (
               <>
-                Don't have an account?{' '}
+                Don’t have an account?{' '}
                 <button
                   type="button"
                   onClick={onToggleMode}
@@ -116,7 +116,7 @@ export default function PhoneForm({
             disabled={requestOtp.isPending}
             className="w-full h-14 bg-primary text-white rounded-full font-bold text-base hover:bg-primary/95 disabled:opacity-70 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
           >
-            {requestOtp.isPending ? 'Sending...' : 'Continue'}
+            {requestOtp.isPending ? 'Sending…' : 'Continue'}
             {!requestOtp.isPending && (
               <ChevronLeft size={16} strokeWidth={2.5} className="rotate-180 ml-1" />
             )}
