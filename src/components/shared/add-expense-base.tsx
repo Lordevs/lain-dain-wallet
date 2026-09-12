@@ -13,6 +13,7 @@ import type { SplitData } from '@/components/shared/split-expense-drawer'
 import { useDrawerBackHandler } from '@/hooks/use-drawer-back-handler'
 import { useCategoriesQuery } from '@/features/expenses/api/use-categories-query'
 import { iconForCategory } from '@/features/expenses/lib/category-icons'
+import { getCurrency } from '@/lib/currency'
 
 // All five are closed on every mount (isOpen only flips true once the user
 // taps to open one) — lazy-loading keeps their combined weight (receipt/note
@@ -65,6 +66,9 @@ export interface InitialExpenseData {
 interface AddExpenseBaseProps {
   title: string
   showPaidByAndSplit: boolean
+  /** Currency used by this expense scope. Group callers pass the group's
+   * default currency so the amount field never falls back to a PKR label. */
+  currency?: string
   contact?: {
     id: string
     name: string
@@ -86,6 +90,7 @@ interface AddExpenseBaseProps {
 export default function AddExpenseBase({
   title,
   showPaidByAndSplit,
+  currency,
   contact,
   members,
   initialData,
@@ -150,6 +155,8 @@ export default function AddExpenseBase({
   }
 
   const userProfile = useAuthStore((state) => state.userProfile)
+  const currencyCode = currency ?? userProfile?.default_currency ?? 'PKR'
+  const currencySymbol = getCurrency(currencyCode).symbol
   const youInitials = getInitials(userProfile?.name || 'You')
 
   const allMembers: PaidByMember[] = members ?? [
@@ -286,7 +293,7 @@ export default function AddExpenseBase({
             >
               <div className="flex items-center justify-center bg-[#FFF9E6] px-5 border-r border-divider select-none shrink-0">
                 <span className="text-base font-extrabold text-secondary leading-none">
-                  Rs.
+                  {currencySymbol}
                 </span>
               </div>
               <div className="flex-1 flex items-center px-4">

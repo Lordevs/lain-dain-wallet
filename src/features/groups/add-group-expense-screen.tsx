@@ -124,6 +124,7 @@ export default function AddGroupExpenseScreen() {
     <AddExpenseBase
       title="Add Group Expense"
       showPaidByAndSplit={true}
+      currency={group.default_currency}
       members={members}
       onConfirm={handleConfirm}
       // Pop the form instead of replacing it with another copy of the group

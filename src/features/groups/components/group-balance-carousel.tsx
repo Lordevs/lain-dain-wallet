@@ -23,6 +23,12 @@ export default function GroupBalanceCarousel({
   hasReceivable,
   onRemind,
 }: GroupBalanceCarouselProps) {
+  // A zero net does not mean the group is settled: receivables and
+  // payables can cancel each other (for example +875 and -875). In that
+  // edge case, surface the gross outstanding amount instead of a
+  // misleading zero while the second card retains the directional split.
+  const hasOffsettingBalances = netAmount === 0 && (receivable > 0 || payable > 0)
+  const headlineAmount = hasOffsettingBalances ? receivable + payable : Math.abs(netAmount)
   const [activeCardIndex, setActiveCardIndex] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -83,10 +89,14 @@ export default function GroupBalanceCarousel({
         >
           <div className="flex flex-col text-left">
             <span className="text-[#6B6B6B] text-[13px] font-semibold">
-              Net Balance
+              {hasOffsettingBalances ? 'Total Outstanding' : 'Net Balance'}
             </span>
-            <span className={cn('text-3xl font-extrabold mt-2 leading-none tracking-tight', isReceivable ? 'text-positive' : 'text-[#C96A1B]')}>
-              <CompactAmount amount={Math.abs(netAmount)} currency={currency} drawerTitle="Net Balance" />
+            <span className={cn('text-3xl font-extrabold mt-2 leading-none tracking-tight', hasOffsettingBalances ? 'text-[#C96A1B]' : isReceivable ? 'text-positive' : 'text-[#C96A1B]')}>
+              <CompactAmount
+                amount={headlineAmount}
+                currency={currency}
+                drawerTitle={hasOffsettingBalances ? 'Total Outstanding' : 'Net Balance'}
+              />
             </span>
           </div>
 

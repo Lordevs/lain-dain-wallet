@@ -174,6 +174,7 @@ export default function EditGroupExpenseScreen() {
     <AddExpenseBase
       title="Edit Expense"
       showPaidByAndSplit={true}
+      currency={group.default_currency}
       members={members}
       initialData={initialData}
       onConfirm={handleConfirm}
