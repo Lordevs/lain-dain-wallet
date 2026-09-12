@@ -155,7 +155,7 @@ export default function AddExpenseBase({
   }
 
   const userProfile = useAuthStore((state) => state.userProfile)
-  const currencyCode = currency ?? userProfile?.default_currency ?? 'PKR'
+  const currencyCode = currency ?? userProfile?.defaultCurrency ?? 'PKR'
   const currencySymbol = getCurrency(currencyCode).symbol
   const youInitials = getInitials(userProfile?.name || 'You')
 
