@@ -310,7 +310,7 @@ export default function AddExpenseBase({
             </div>
             {isAmountTooLong && (
               <span className="text-xs font-semibold text-destructive mt-1.5">
-                Amount cannot be more than 10 digits
+                Amount cannot be more than 7 digits
               </span>
             )}
           </div>

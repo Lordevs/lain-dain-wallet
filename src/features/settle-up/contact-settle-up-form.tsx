@@ -114,7 +114,8 @@ function ContactSettleUpFormBody({
     const [whole = '', ...decimalParts] = withoutSeparators.split('.')
     const hasDecimalPoint = withoutSeparators.includes('.')
     const decimal = decimalParts.join('').slice(0, 2)
-    const normalized = hasDecimalPoint ? `${whole || '0'}.${decimal}` : whole
+    const limitedWhole = whole.slice(0, 7)
+    const normalized = hasDecimalPoint ? `${limitedWhole || '0'}.${decimal}` : limitedWhole
     setAmount(normalized && Number(normalized) > outstanding ? outstanding.toFixed(2) : normalized)
   }
 

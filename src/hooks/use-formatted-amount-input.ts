@@ -5,19 +5,15 @@ import { useState } from 'react'
  * expense-style form (AddExpenseBase, recurring payments) to avoid each one
  * reimplementing the same parsing/formatting logic.
  *
- * maxDigits defaults to 10, not the backend's max_digits=12 — every caller
- * submits the amount via .toFixed(2), and DecimalField's max_digits counts
- * ALL significant digits including those two decimal places, so a 12-digit
- * integer + ".00" is 14 digits total and gets rejected ("Ensure that there
- * are no more than 12 digits in total."). isTooLong is computed reactively
- * (not just capped on keystroke) to also catch a pre-filled edit-mode value
- * that already exceeds it.
+ * Amounts are capped while typing so mobile users cannot enter more than the
+ * supported number of digits. isTooLong still catches an oversized value
+ * loaded into an edit form from older data.
  */
-export function useFormattedAmountInput(initialValue = '', maxDigits = 10) {
+export function useFormattedAmountInput(initialValue = '', maxDigits = 7) {
   const [amount, setAmount] = useState(initialValue)
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawVal = e.target.value.replace(/\D/g, '')
+    const rawVal = e.target.value.replace(/\D/g, '').slice(0, maxDigits)
     setAmount(rawVal)
   }
 
