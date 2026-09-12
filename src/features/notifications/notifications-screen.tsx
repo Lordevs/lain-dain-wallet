@@ -183,7 +183,11 @@ const NotificationListItem = memo(function NotificationListItem({
             variant: 'green',
             onClick: (e) => {
               goToSettlement(notification.id)(e)
-              navigate({ to: ROUTES.SETTLEMENT_DETAILS, params: { id: p.settlement_id } })
+              navigate({
+                to: ROUTES.SETTLEMENT_DETAILS,
+                params: { id: p.settlement_id },
+                search: { fromNotification: true },
+              })
             },
           },
           {

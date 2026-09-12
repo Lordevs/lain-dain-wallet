@@ -31,7 +31,16 @@ const METHOD_ICON: Record<PaymentMethodType, typeof Banknote> = {
 }
 
 function outstandingOf(balance: PersonBalance): number {
-  return Math.abs(Math.round(Number(balance.net_amount)))
+  return Math.abs(Math.round(Number(balance.net_amount) * 100) / 100)
+}
+
+function sanitizeSettlementAmount(value: string, max: number): string {
+  const withoutSeparators = value.replace(/,/g, '').replace(/[^\d.]/g, '')
+  const [whole = '', ...decimalParts] = withoutSeparators.split('.')
+  const hasDecimalPoint = withoutSeparators.includes('.')
+  const decimal = decimalParts.join('').slice(0, 2)
+  const normalized = hasDecimalPoint ? `${whole || '0'}.${decimal}` : whole
+  return normalized && Number(normalized) > max ? max.toFixed(2) : normalized
 }
 
 function buildDefaultAmounts(balances: PersonBalance[]): Record<string, string> {
@@ -105,8 +114,7 @@ function GroupSettleUpFormBody({
   const currency = relevantBalances[0]?.currency ?? group.default_currency
 
   const setMemberAmount = (memberId: string, val: string, max: number) => {
-    const raw = val.replace(/\D/g, '')
-    const capped = raw && Number(raw) > max ? String(max) : raw
+    const capped = sanitizeSettlementAmount(val, max)
     setAmountsByMode((prev) => ({ ...prev, [mode]: { ...prev[mode], [memberId]: capped } }))
   }
 
@@ -129,7 +137,10 @@ function GroupSettleUpFormBody({
   const closeNoteFlow = useDrawerBackHandler(isNoteFlowOpen, () => setIsNoteFlowOpen(false))
 
   const totalOwed = relevantBalances.reduce((sum, b) => sum + outstandingOf(b), 0)
-  const totalAssigned = relevantBalances.reduce((sum, b) => sum + (Number(amounts[b.other_user.id]) || 0), 0)
+  const totalAssigned = Math.round(relevantBalances.reduce(
+    (sum, b) => sum + (Number(amounts[b.other_user.id]) || 0),
+    0,
+  ) * 100) / 100
 
   const entries = relevantBalances
     .map((b) => ({ user_id: b.other_user.id, amount: Number(amounts[b.other_user.id]) || 0 }))
@@ -275,7 +286,7 @@ function GroupSettleUpFormBody({
           relevantBalances.map((b, i) => {
             const max = outstandingOf(b)
             const value = amounts[b.other_user.id] ?? ''
-            const remaining = Math.max(0, max - (Number(value) || 0))
+            const remaining = Math.max(0, Math.round((max - (Number(value) || 0)) * 100) / 100)
             const initials = initialsForName(b.other_user.full_name)
             const avatarColor = colorForName(b.other_user.full_name)
 
@@ -296,9 +307,8 @@ function GroupSettleUpFormBody({
                   </div>
                   <input
                     type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    value={value ? Number(value).toLocaleString('en-US') : ''}
+                    inputMode="decimal"
+                    value={value}
                     onChange={(e) => setMemberAmount(b.other_user.id, e.target.value, max)}
                     placeholder="0"
                     className={cn(

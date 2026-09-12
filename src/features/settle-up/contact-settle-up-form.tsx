@@ -15,7 +15,7 @@ import { useDrawerBackHandler } from '@/hooks/use-drawer-back-handler'
 import { useContactLedgers } from '@/features/contacts/hooks/use-contact-ledgers'
 import { useCreateFriendshipSettlementMutation } from './api/use-create-friendship-settlement-mutation'
 import { initialsForName, colorForName } from '@/lib/avatar-visuals'
-import { formatCurrency } from '@/lib/currency'
+import { formatCurrency, getCurrency } from '@/lib/currency'
 import { ROUTES } from '@/constants/routes'
 import type { components } from '@/lib/api/schema'
 
@@ -81,8 +81,9 @@ function ContactSettleUpFormBody({
   const navigate = useNavigate()
   const createSettlement = useCreateFriendshipSettlementMutation(friendshipId)
 
-  const outstanding = balance ? Math.abs(Math.round(Number(balance.net_amount))) : 0
+  const outstanding = balance ? Math.abs(Math.round(Number(balance.net_amount) * 100) / 100) : 0
   const currency = balance?.currency ?? 'PKR'
+  const currencySymbol = getCurrency(currency).symbol
 
   const [mode, setMode] = useState<'pay' | 'receive'>(balance?.direction === 'owed_to_you' ? 'receive' : 'pay')
   // Settlement amounts must be intentional user input. Keep the field empty
@@ -108,6 +109,14 @@ function ContactSettleUpFormBody({
 
   const parsedAmount = Number(amount) || 0
   const isValid = parsedAmount > 0
+  const handleAmountChange = (value: string) => {
+    const withoutSeparators = value.replace(/,/g, '').replace(/[^\d.]/g, '')
+    const [whole = '', ...decimalParts] = withoutSeparators.split('.')
+    const hasDecimalPoint = withoutSeparators.includes('.')
+    const decimal = decimalParts.join('').slice(0, 2)
+    const normalized = hasDecimalPoint ? `${whole || '0'}.${decimal}` : whole
+    setAmount(normalized && Number(normalized) > outstanding ? outstanding.toFixed(2) : normalized)
+  }
 
   const handleConfirm = async () => {
     if (!isValid || isSubmitting) return
@@ -215,14 +224,14 @@ function ContactSettleUpFormBody({
         <span className="text-sm font-medium text-muted-foreground tracking-wider mb-2 block">AMOUNT</span>
         <div className="flex rounded-[18px] border-[0.8px] border-divider overflow-hidden bg-white shadow-[0px_2px_10px_0px_#0000000D] h-18 items-stretch">
           <div className="flex items-center justify-center bg-[#FFF9E6] px-5 border-r border-divider select-none shrink-0">
-            <span className="text-base font-extrabold text-secondary leading-none">Rs.</span>
+            <span className="text-base font-extrabold text-secondary leading-none">{currencySymbol}</span>
           </div>
           <div className="flex-1 flex items-center px-4">
             <input
               type="text"
               inputMode="decimal"
-              value={amount ? Number(amount).toLocaleString('en-US') : ''}
-              onChange={(e) => setAmount(e.target.value.replace(/\D/g, ''))}
+              value={amount}
+              onChange={(e) => handleAmountChange(e.target.value)}
               className="w-full bg-transparent border-0 outline-none text-[32px] font-extrabold text-foreground placeholder:text-divider font-sans leading-none py-1"
               placeholder="0"
             />

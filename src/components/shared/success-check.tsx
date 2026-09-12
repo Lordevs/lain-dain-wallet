@@ -34,15 +34,32 @@ export default function SuccessCheck({
   showConfetti = false,
 }: SuccessCheckProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const onCompleteRef = useRef(onComplete)
+  const completedRef = useRef(false)
+  onCompleteRef.current = onComplete
   useSuccessSound(showConfetti ? 'confetti' : 'default')
 
   useEffect(() => {
-    const duration = showConfetti ? 2800 : 500
-    const timer = setTimeout(() => {
-      onComplete()
-    }, duration)
-    return () => clearTimeout(timer)
-  }, [onComplete, showConfetti])
+    const duration = showConfetti ? 1800 : 300
+    const deadline = Date.now() + duration
+    const completeOnce = () => {
+      if (completedRef.current) return
+      completedRef.current = true
+      onCompleteRef.current()
+    }
+    const timer = window.setTimeout(completeOnce, duration)
+    // iOS can suspend a WebView while a timer is pending. If the app
+    // resumes after the deadline, complete immediately instead of leaving
+    // the user parked indefinitely on the success screen.
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && Date.now() >= deadline) completeOnce()
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      window.clearTimeout(timer)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [showConfetti])
 
   useEffect(() => {
     if (!showConfetti) return
@@ -132,7 +149,11 @@ export default function SuccessCheck({
         {/* Animated Check Bubble */}
         <div
           className="w-28 h-28 rounded-full bg-[#E4F2EB] shadow-[0px_6px_24px_0px_#0B683A33] flex items-center justify-center active:scale-95 transition-transform cursor-pointer"
-          onClick={onComplete}
+          onClick={() => {
+            if (completedRef.current) return
+            completedRef.current = true
+            onCompleteRef.current()
+          }}
         >
           <Check size={44} className="text-positive" strokeWidth={3} />
         </div>

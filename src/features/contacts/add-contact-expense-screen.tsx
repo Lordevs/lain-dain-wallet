@@ -1,4 +1,4 @@
-import { useParams } from '@tanstack/react-router'
+import { useNavigate, useParams } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import AddExpenseBase, { type ConfirmExpenseData } from '@/components/shared/add-expense-base'
 import ExpenseFormSkeleton from '@/components/shared/expense-form-skeleton'
@@ -56,6 +56,7 @@ function buildSplits(data: ConfirmExpenseData, myId: string, otherId: string): F
 
 export default function AddContactExpenseScreen() {
   const { id: userId } = useParams({ from: '/contacts/$id/add-expense' })
+  const navigate = useNavigate()
   const userProfile = useAuthStore((s) => s.userProfile)
 
   const ensureFriendship = useEnsureFriendship(userId)
@@ -149,7 +150,7 @@ export default function AddContactExpenseScreen() {
       onConfirm={handleConfirm}
       // Return to the existing ledger entry in history. Do not replace the
       // form with a duplicate detail route, otherwise Back can revisit it.
-      onSuccessComplete={() => window.history.back()}
+      onSuccessComplete={() => navigate({ to: '/contacts/$id', params: { id: userId }, replace: true })}
       onBack={() => window.history.back()}
     />
   )

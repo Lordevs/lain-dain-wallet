@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { useParams } from '@tanstack/react-router'
+import { useParams, useSearch } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { Check, X as XIcon, Clock, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import FlowHeader from '@/components/shared/flow-header'
 import ContactAvatar from '@/components/shared/contact-avatar'
 import ConfirmActionDrawer from '@/components/shared/confirm-action-drawer'
+import SuccessCheck from '@/components/shared/success-check'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuthStore } from '@/store/use-auth-store'
 import { useSettlementQuery } from './api/use-settlement-query'
@@ -33,6 +34,7 @@ const STATUS_STYLE: Record<SettlementRead['status'] & string, { label: string; c
 
 export default function SettlementDetailScreen() {
   const { id } = useParams({ from: '/settlements/$id' })
+  const { fromNotification } = useSearch({ from: '/settlements/$id' })
   const settlementQuery = useSettlementQuery(id)
 
   if (settlementQuery.isLoading) {
@@ -63,10 +65,13 @@ export default function SettlementDetailScreen() {
     )
   }
 
-  return <SettlementDetailBody settlement={settlement} />
+  return <SettlementDetailBody settlement={settlement} fromNotification={fromNotification === true} />
 }
 
-function SettlementDetailBody({ settlement }: { settlement: SettlementRead }) {
+function SettlementDetailBody({ settlement, fromNotification }: {
+  settlement: SettlementRead
+  fromNotification: boolean
+}) {
   const userProfile = useAuthStore((state) => state.userProfile)
   const myId = userProfile?.id ?? ''
 
@@ -76,6 +81,7 @@ function SettlementDetailBody({ settlement }: { settlement: SettlementRead }) {
 
   const [confirmError, setConfirmError] = useState<string | null>(null)
   const [actionToConfirm, setActionToConfirm] = useState<'dispute' | 'cancel' | null>(null)
+  const [showConfirmationSuccess, setShowConfirmationSuccess] = useState(false)
 
   const isPayer = settlement.payer.id === myId
   const counterpart = isPayer ? settlement.payee : settlement.payer
@@ -91,10 +97,18 @@ function SettlementDetailBody({ settlement }: { settlement: SettlementRead }) {
 
   const isBusy = confirmMutation.isPending || disputeMutation.isPending || cancelMutation.isPending
 
-  const runAction = async (action: () => Promise<unknown>, successMessage: string) => {
+  const runAction = async (
+    action: () => Promise<unknown>,
+    successMessage: string,
+    onSuccess?: () => void,
+  ) => {
     setConfirmError(null)
     try {
       await action()
+      if (onSuccess) {
+        onSuccess()
+        return
+      }
       toast.success(successMessage)
       window.history.back()
     } catch (err) {
@@ -104,7 +118,11 @@ function SettlementDetailBody({ settlement }: { settlement: SettlementRead }) {
     }
   }
 
-  const handleConfirm = () => runAction(() => confirmMutation.mutateAsync(settlement.id), 'Payment confirmed')
+  const handleConfirm = () => runAction(
+    () => confirmMutation.mutateAsync(settlement.id),
+    'Payment confirmed',
+    fromNotification ? () => setShowConfirmationSuccess(true) : undefined,
+  )
   const handleDispute = () => runAction(() => disputeMutation.mutateAsync(settlement.id), 'Settlement disputed')
   const handleCancel = () =>
     runAction(
@@ -114,6 +132,18 @@ function SettlementDetailBody({ settlement }: { settlement: SettlementRead }) {
 
   const initials = initialsForName(counterpart.full_name)
   const avatarColor = colorForName(counterpart.full_name)
+
+  if (showConfirmationSuccess) {
+    return (
+      <div className="flex min-h-screen flex-1 flex-col bg-[#FEFAF1]">
+        <SuccessCheck
+          text="Payment Received"
+          showConfetti
+          onComplete={() => window.history.back()}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-screen flex-1 flex-col bg-[#FEFAF1] text-left select-none">

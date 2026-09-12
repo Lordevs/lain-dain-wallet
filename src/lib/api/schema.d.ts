@@ -825,8 +825,8 @@ export interface paths {
          *     either party. Hides existing expenses and payments only for the
          *     requester by advancing that party's private history cutoff. Shared
          *     records, recurring templates, balances, and the other person's view
-         *     are untouched. The action is rejected until all outstanding balances
-         *     are zero and no payment is pending. No response body is returned.
+         *     are untouched. The service rejects the action until all outstanding
+         *     balances are zero and no payment is pending.
          */
         post: operations["expenses_friendships_clear_history_create"];
         delete?: never;
@@ -1509,6 +1509,23 @@ export interface paths {
         get: operations["expenses_wallet_list"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/expenses/wallet/hide/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description POST /api/expenses/wallet/hide/ — privately archive a settled row. */
+        post: operations["expenses_wallet_hide_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2341,6 +2358,9 @@ export interface paths {
          *     that's a display preference for one aggregate screen, not an access
          *     boundary; a hidden group's own detail screen still needs its
          *     expenses once that screen is reading from the local synced store.
+         *     A friendship entry on or before this viewer's private clear-history
+         *     cutoff is excluded. Clear is only allowed at a zero balance, so the
+         *     cutoff is a safe new baseline for that user's offline reconstruction.
          */
         get: operations["sync_expenses_list"];
         put?: never;
@@ -2370,12 +2390,15 @@ export interface paths {
          *     No is_deleted/deleted_at, unlike ExpenseDeltaSerializer — see
          *     SettlementDeltaSerializer's own docstring for why that's safe here.
          *
-         *     Deliberately NOT filtered by cleared_at — "cleared" only hides a
+         *     Deliberately NOT filtered by the shared `cleared_at` — that flag only hides a
          *     settlement from the user-visible ledger *history*, it never reverses
          *     the settlement's already-applied effect on the balance (see
          *     Settlement.cleared_at's own docstring), so a client recomputing a
          *     balance from scratch needs every confirmed settlement regardless of
-         *     whether it's since been cleared.
+         *     whether it's since been cleared. Viewer-specific friendship history
+         *     cutoffs are different: they are only created at a verified zero balance,
+         *     so entries before that private baseline are safely excluded for that
+         *     viewer while remaining available to the other party.
          */
         get: operations["sync_settlements_list"];
         put?: never;
@@ -2684,6 +2707,7 @@ export interface components {
          */
         ApplyLedgerAdjustmentRequestRequest: {
             currency: string;
+            ledger_keys: string[];
         };
         /**
          * @description * `7` - 7
@@ -4606,6 +4630,12 @@ export interface components {
             group_id?: string | null;
         };
         /**
+         * @description * `person` - person
+         *     * `group` - group
+         * @enum {string}
+         */
+        RowTypeEnum: "person" | "group";
+        /**
          * @description * `friendship` - Friendship
          *     * `group` - Group
          * @enum {string}
@@ -4806,6 +4836,11 @@ export interface components {
             readonly other_user: components["schemas"]["UserSummary"] | null;
             readonly net_amount: string;
             currency: string;
+        };
+        WalletHideRequestRequest: {
+            row_type: components["schemas"]["RowTypeEnum"];
+            /** Format: uuid */
+            target_id: string;
         };
         /**
          * @description One row of GET /api/expenses/wallet/ — either a person
@@ -6665,6 +6700,30 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["WalletRow"][];
                 };
+            };
+        };
+    };
+    expenses_wallet_hide_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WalletHideRequestRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["WalletHideRequestRequest"];
+                "multipart/form-data": components["schemas"]["WalletHideRequestRequest"];
+            };
+        };
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

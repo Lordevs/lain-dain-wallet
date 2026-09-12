@@ -1369,8 +1369,8 @@ paths:
         either party. Hides existing expenses and payments only for the
         requester by advancing that party's private history cutoff. Shared
         records, recurring templates, balances, and the other person's view
-        are untouched. The action is rejected until all outstanding balances
-        are zero and no payment is pending. No response body is returned.
+        are untouched. The service rejects the action until all outstanding
+        balances are zero and no payment is pending.
       parameters:
       - in: path
         name: friendship_id
@@ -2593,6 +2593,29 @@ paths:
                 items:
                   $ref: '#/components/schemas/WalletRow'
           description: ''
+  /api/expenses/wallet/hide/:
+    post:
+      operationId: expenses_wallet_hide_create
+      description: POST /api/expenses/wallet/hide/ — privately archive a settled row.
+      tags:
+      - expenses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WalletHideRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WalletHideRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WalletHideRequestRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/expenses/wallet/summary/:
     get:
       operationId: expenses_wallet_summary_retrieve
@@ -3863,6 +3886,9 @@ paths:
         that's a display preference for one aggregate screen, not an access
         boundary; a hidden group's own detail screen still needs its
         expenses once that screen is reading from the local synced store.
+        A friendship entry on or before this viewer's private clear-history
+        cutoff is excluded. Clear is only allowed at a zero balance, so the
+        cutoff is a safe new baseline for that user's offline reconstruction.
       parameters:
       - name: since
         required: false
@@ -3896,12 +3922,15 @@ paths:
         No is_deleted/deleted_at, unlike ExpenseDeltaSerializer — see
         SettlementDeltaSerializer's own docstring for why that's safe here.
 
-        Deliberately NOT filtered by cleared_at — "cleared" only hides a
+        Deliberately NOT filtered by the shared `cleared_at` — that flag only hides a
         settlement from the user-visible ledger *history*, it never reverses
         the settlement's already-applied effect on the balance (see
         Settlement.cleared_at's own docstring), so a client recomputing a
         balance from scratch needs every confirmed settlement regardless of
-        whether it's since been cleared.
+        whether it's since been cleared. Viewer-specific friendship history
+        cutoffs are different: they are only created at a verified zero balance,
+        so entries before that private baseline are safely excluded for that
+        viewer while remaining available to the other party.
       parameters:
       - name: since
         required: false
@@ -4627,8 +4656,15 @@ components:
           type: string
           minLength: 1
           maxLength: 3
+        ledger_keys:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 100
       required:
       - currency
+      - ledger_keys
     AutoReminderIntervalDaysEnum:
       enum:
       - 7
@@ -8325,6 +8361,14 @@ components:
           nullable: true
       required:
       - other_user_id
+    RowTypeEnum:
+      enum:
+      - person
+      - group
+      type: string
+      description: |-
+        * `person` - person
+        * `group` - group
     ScopeContextEnum:
       enum:
       - friendship
@@ -8790,6 +8834,17 @@ components:
       - group
       - net_amount
       - other_user
+    WalletHideRequestRequest:
+      type: object
+      properties:
+        row_type:
+          $ref: '#/components/schemas/RowTypeEnum'
+        target_id:
+          type: string
+          format: uuid
+      required:
+      - row_type
+      - target_id
     WalletRow:
       type: object
       description: |-

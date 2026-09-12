@@ -17,6 +17,9 @@ import { useWalletSummaryQuery } from './api/use-wallet-summary-query'
 import { mapWalletRow } from './lib/map-wallet-row'
 import { useNetworkStatus } from '@/hooks/use-network-status'
 import { WifiOff } from 'lucide-react'
+import { toast } from 'sonner'
+import SwipeableLedgerCard from './components/swipeable-ledger-card'
+import { useHideWalletItemMutation } from './api/use-hide-wallet-item-mutation'
 
 
 /**
@@ -42,6 +45,7 @@ export default function DashboardScreen() {
   // see SearchResultsOverlay — this pair is unrelated to it.)
   const receivablesQuery = useWalletListQuery('receivables')
   const payablesQuery = useWalletListQuery('payables')
+  const hideWalletItem = useHideWalletItemMutation()
 
   const balanceSummary = useMemo(() => {
     const s = summaryQuery.data
@@ -258,11 +262,27 @@ export default function DashboardScreen() {
               ))
             ) : filteredContacts.length > 0 ? (
               filteredContacts.map((contact) => (
-                <ContactLedgerCard
+                <SwipeableLedgerCard
                   key={contact.id}
-                  contact={contact}
-                  onSelect={handleContactSelect}
-                />
+                  name={contact.name}
+                  disabled={
+                    hideWalletItem.isPending
+                    || Math.abs(contact.netAmount) > 0.005
+                    || contact.tags.some((tag) => Math.abs(tag.amount) > 0.005)
+                  }
+                  onHide={() => hideWalletItem.mutate(
+                    { rowType: contact.type, targetId: contact.id },
+                    {
+                      onError: (error) => toast.error(error.message),
+                      onSuccess: () => toast.success(`${contact.name} hidden from your dashboard.`),
+                    },
+                  )}
+                >
+                  <ContactLedgerCard
+                    contact={contact}
+                    onSelect={handleContactSelect}
+                  />
+                </SwipeableLedgerCard>
               ))
             ) : offlineNoWalletData ? (
               <EmptyState
