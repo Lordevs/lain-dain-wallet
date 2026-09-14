@@ -54,7 +54,18 @@ async function ensureWebStore(): Promise<void> {
 async function openDatabase(): Promise<SQLiteDBConnection> {
   await ensureWebStore()
   await sqlite.addUpgradeStatement(DB_NAME, upgradeStatements)
-  const db = await sqlite.createConnection(DB_NAME, false, 'no-encryption', DB_VERSION, false)
+
+  // Android may keep the native connection alive while recreating the
+  // WebView/JS runtime. Reconcile the wrapper's JS registry with native first,
+  // then reuse an existing connection instead of blindly creating a duplicate.
+  // checkConnectionsConsistency removes stale native entries when the two
+  // registries cannot be reconciled.
+  const connectionsAreConsistent = (await sqlite.checkConnectionsConsistency()).result
+  const connectionExists = connectionsAreConsistent && (await sqlite.isConnection(DB_NAME, false)).result
+  const db = connectionExists
+    ? await sqlite.retrieveConnection(DB_NAME, false)
+    : await sqlite.createConnection(DB_NAME, false, 'no-encryption', DB_VERSION, false)
+
   await db.open()
   return db
 }

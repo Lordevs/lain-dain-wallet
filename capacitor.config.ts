@@ -40,6 +40,14 @@ const config: CapacitorConfig = {
     androidScheme: 'http',
   },
   plugins: {
+    CapacitorSQLite: {
+      // This app always opens its local database with `no-encryption`.
+      // Explicitly disable the plugin's default Android encryption setup so
+      // it does not initialize EncryptedSharedPreferences/Android Keystore.
+      // Restored encrypted preferences without their device-bound key are a
+      // known cause of the unhelpful `CapacitorSQLitePlugin: null` load error.
+      androidIsEncryption: false,
+    },
     StatusBar: {
       style: 'LIGHT',
       backgroundColor: '#FEFAF1',
