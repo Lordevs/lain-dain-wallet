@@ -23,8 +23,8 @@ export type ContactsSyncStatus = 'unavailable' | 'checking' | 'prompt' | 'denied
  * added to the phone since the last visit — including one who's already
  * on Lain Dain — gets picked up without the user doing anything. Not yet
  * decided (`prompt`) surfaces a status the screen can render an explicit
- * "Allow access" CTA for, matching the OS's own consent-first expectation
- * rather than silently prompting behind the scenes.
+ * "Continue" CTA for. The system dialog remains the actual permission
+ * request.
  */
 export function useDeviceContactsSync() {
   const [status, setStatus] = useState<ContactsSyncStatus>(() =>

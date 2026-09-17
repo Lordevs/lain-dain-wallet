@@ -78,7 +78,7 @@ export default function ChoiceStep({ flow }: ChoiceStepProps) {
             <p className="text-xs text-muted-foreground mt-0.5">See which contacts are already using the app.</p>
           </div>
           <Button onClick={flow.requestContactsAccess} className="h-9 rounded-full px-4 text-xs font-bold shrink-0">
-            Allow
+            Continue
           </Button>
         </div>
       )}
