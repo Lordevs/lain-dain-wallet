@@ -11,6 +11,7 @@ import CurrencyMismatchDrawer from '@/features/contacts/components/currency-mism
 import { shareInvite } from '@/lib/share-invite'
 import type { NewContactFlowState } from '../hooks/use-new-contact-flow'
 import { Button } from '@/components/ui/button'
+import { createPortal } from 'react-dom'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -67,20 +68,40 @@ export default function ChoiceStep({ flow }: ChoiceStepProps) {
         />
       </div>
 
-      {/* Contacts permission prompt */}
-      {flow.syncStatus === 'prompt' && (
-        <div className="bg-white border-[1.26px] border-border-card rounded-xl shadow-[0px_2px_8px_0px_#00000005] mb-5 p-4 flex items-center gap-3 shrink-0">
-          <div className="w-11 h-11 rounded-full bg-[#E4F2EB] flex items-center justify-center text-primary shrink-0">
-            <ContactIcon size={20} strokeWidth={2.2} />
+      {flow.syncStatus === 'declined' && (
+        <Button type="button" variant="ghost" onClick={flow.showContactsConsent} className="mb-5 self-start text-xs font-bold text-primary">
+          Enable contact syncing
+        </Button>
+      )}
+      {flow.syncStatus === 'prompt' && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-6" onClick={flow.declineContactsAccess}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="contacts-consent-title"
+            aria-describedby="contacts-consent-description"
+            className="w-full max-w-sm rounded-[24px] bg-white px-6 py-7 text-center shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-[#E4F2EB] text-primary">
+              <ContactIcon size={26} strokeWidth={2} />
+            </div>
+            <h2 id="contacts-consent-title" className="text-lg font-bold text-foreground">Find friends on Lain Dain?</h2>
+            <p id="contacts-consent-description" className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Allow Lain Dain to upload your contacts’ names and phone numbers to our server to find friends and show people you can invite.
+              Contacts will be used once they have been uploaded to a server.
+            </p>
+            <div className="mt-6 flex flex-col gap-2">
+              <Button type="button" onClick={() => void flow.requestContactsAccess()} className="h-11 w-full rounded-full font-bold">
+                Allow contact sync
+              </Button>
+              <Button type="button" variant="ghost" onClick={flow.declineContactsAccess} className="h-10 w-full rounded-full font-semibold">
+                Not now
+              </Button>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-foreground">Find Friends on Lain Dain</p>
-            <p className="text-xs text-muted-foreground mt-0.5">See which contacts are already using the app.</p>
-          </div>
-          <Button onClick={flow.requestContactsAccess} className="h-9 rounded-full px-4 text-xs font-bold shrink-0">
-            Continue
-          </Button>
-        </div>
+        </div>,
+        document.body,
       )}
       {flow.syncStatus === 'denied' && (
         <p className="text-xs text-muted-foreground mb-5 px-1 shrink-0">

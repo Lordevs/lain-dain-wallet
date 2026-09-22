@@ -29,7 +29,7 @@
 	<key>NSCameraUsageDescription</key>
 	<string>Lain Dain uses your camera to scan and attach receipts to expenses.</string>
 	<key>NSContactsUsageDescription</key>
-	<string>Lain Dain checks your contacts against the app so you can see who's already on Lain Dain and split expenses with them.</string>
+	<string>If you agree, Lain Dain uploads your contacts' names and phone numbers to our server to find people already using the app and show others you can invite.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Lain Dain saves receipt photos to your library when requested.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

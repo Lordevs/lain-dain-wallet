@@ -93,6 +93,7 @@ function RootComponent() {
 // phone/OTP screens, and stops an incomplete profile from reaching the
 // rest of the app, regardless of how they try to get there (back button,
 // direct URL, deep link).
+
 export const Route = createRootRoute({
   beforeLoad: ({ location }) => {
     const { isAuthenticated, userProfile } = useAuthStore.getState()
