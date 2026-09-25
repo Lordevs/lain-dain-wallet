@@ -34,8 +34,6 @@ export interface NewContactFlowState {
   isSyncing: boolean
   syncError: string | null
   requestContactsAccess: () => Promise<boolean>
-  declineContactsAccess: () => void
-  showContactsConsent: () => void
   resyncContacts: () => Promise<void>
 
   // ── Contact selection ────────────────────────────────────────────────────────
@@ -294,8 +292,6 @@ export function useNewContactFlow(): NewContactFlowState {
     isSyncing: deviceSync.isSyncing,
     syncError: deviceSync.syncError,
     requestContactsAccess: deviceSync.requestAccess,
-    declineContactsAccess: deviceSync.declineAccess,
-    showContactsConsent: deviceSync.showConsent,
     resyncContacts: deviceSync.resync,
     selectedContacts,
     selectedList,

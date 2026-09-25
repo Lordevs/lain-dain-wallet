@@ -13,7 +13,7 @@ import { useContactSyncMutation } from '@/features/contacts/api/use-contact-sync
 import { useAuthStore } from '@/store/use-auth-store'
 import { logError } from '@/lib/log-error'
 
-export type ContactsSyncStatus = 'unavailable' | 'checking' | 'prompt' | 'declined' | 'denied' | 'granted'
+export type ContactsSyncStatus = 'unavailable' | 'checking' | 'prompt' | 'denied' | 'granted'
 
 /**
  * A separate, account-scoped upload consent gates every device read and sync,
@@ -28,11 +28,11 @@ export function useDeviceContactsSync() {
   const [deviceContacts, setDeviceContacts] = useState<DeviceContact[]>([])
   const [isReadingContacts, setIsReadingContacts] = useState(false)
   const activeSync = useRef<Promise<void> | null>(null)
+  const initialPermissionRequest = useRef<Promise<boolean> | null>(null)
   const syncMutation = useContactSyncMutation()
   const userProfile = useAuthStore((s) => s.userProfile)
   const consentKey = userProfile?.id ? `contacts-upload-consent-v1:${userProfile.id}` : null
   const consentGranted = useRef(false)
-  const declinedThisVisit = useRef(false)
 
   const runSync = useCallback(async () => {
     if (!consentGranted.current) return
@@ -69,22 +69,35 @@ export function useDeviceContactsSync() {
   useEffect(() => {
     if (!isDeviceContactsAvailable()) return
     let disposed = false
-    const syncWhenAllowed = async () => {
+    const continueAfterPermission = async (granted: boolean) => {
+      if (disposed) return
+      if (!granted) {
+        setStatus('denied')
+        return
+      }
       if (!consentKey) return
       const { value } = await Preferences.get({ key: consentKey })
       if (disposed) return
       consentGranted.current = value === 'granted'
       if (!consentGranted.current) {
-        setStatus(declinedThisVisit.current ? 'declined' : 'prompt')
+        setStatus('prompt')
         return
       }
-      const granted = await checkContactsPermission()
-      if (disposed) return
-      setStatus(granted ? 'granted' : 'denied')
-      if (granted) await runSync()
+      setStatus('granted')
+      await runSync()
+    }
+    const requestInitialPermission = async () => {
+      // The system prompt is the first permission UI shown on this route.
+      // Reuse the promise because React Strict Mode may run this effect twice
+      // during development while the native request is still in flight.
+      initialPermissionRequest.current ??= requestContactsPermission()
+      await continueAfterPermission(await initialPermissionRequest.current)
+    }
+    const syncWhenAllowed = async () => {
+      await continueAfterPermission(await checkContactsPermission())
     }
 
-    void syncWhenAllowed()
+    void requestInitialPermission()
 
     // Adding a contact takes the user to the system Contacts app. This route
     // remains mounted while Lain Dain is backgrounded, so a mount-only effect
@@ -109,25 +122,15 @@ export function useDeviceContactsSync() {
 
   const requestAccess = useCallback(async () => {
     if (!consentKey) return false
-    const granted = await requestContactsPermission()
-    setStatus(granted ? 'granted' : 'denied')
-    if (granted) {
-      await Preferences.set({ key: consentKey, value: 'granted' })
-      consentGranted.current = true
-      await runSync()
-    }
-    return granted
+    // Native contacts access has already been granted before this consent
+    // dialog is shown. This action records consent to upload contacts for
+    // matching, then starts the first sync.
+    await Preferences.set({ key: consentKey, value: 'granted' })
+    consentGranted.current = true
+    setStatus('granted')
+    await runSync()
+    return true
   }, [consentKey, runSync])
-
-  const declineAccess = useCallback(() => {
-    consentGranted.current = false
-    declinedThisVisit.current = true
-    setStatus('declined')
-  }, [])
-  const showConsent = useCallback(() => {
-    declinedThisVisit.current = false
-    setStatus('prompt')
-  }, [])
 
   return {
     status,
@@ -135,8 +138,6 @@ export function useDeviceContactsSync() {
     syncError,
     deviceContacts,
     requestAccess,
-    declineAccess,
-    showConsent,
     resync: runSync,
   }
 }

@@ -68,13 +68,8 @@ export default function ChoiceStep({ flow }: ChoiceStepProps) {
         />
       </div>
 
-      {flow.syncStatus === 'declined' && (
-        <Button type="button" variant="ghost" onClick={flow.showContactsConsent} className="mb-5 self-start text-xs font-bold text-primary">
-          Enable contact syncing
-        </Button>
-      )}
       {flow.syncStatus === 'prompt' && createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-6" onClick={flow.declineContactsAccess}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-6">
           <div
             role="dialog"
             aria-modal="true"
@@ -91,12 +86,9 @@ export default function ChoiceStep({ flow }: ChoiceStepProps) {
               Allow Lain Dain to upload your contacts’ names and phone numbers to our server to find friends and show people you can invite.
               Contacts will be used once they have been uploaded to a server.
             </p>
-            <div className="mt-6 flex flex-col gap-2">
+            <div className="mt-6">
               <Button type="button" onClick={() => void flow.requestContactsAccess()} className="h-11 w-full rounded-full font-bold">
-                Allow contact sync
-              </Button>
-              <Button type="button" variant="ghost" onClick={flow.declineContactsAccess} className="h-10 w-full rounded-full font-semibold">
-                Not now
+                Continue
               </Button>
             </div>
           </div>
@@ -108,7 +100,7 @@ export default function ChoiceStep({ flow }: ChoiceStepProps) {
           Contacts access is off — enable it in your device settings to see who's already on Lain Dain.
         </p>
       )}
-      {(flow.syncStatus === 'checking' || flow.isSyncing) && (
+      {flow.isSyncing && (
         <div
           role="status"
           aria-live="polite"
