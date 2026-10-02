@@ -1,5 +1,5 @@
 import { Capacitor } from '@capacitor/core'
-import { Camera } from '@capacitor/camera'
+import { Camera, MediaTypeSelection } from '@capacitor/camera'
 import type { MediaResult } from '@capacitor/camera'
 
 /**
@@ -54,6 +54,7 @@ export async function pickFromGallery(): Promise<MediaResult | null> {
   try {
     // chooseFromGallery returns MediaResults with a `results` array (v8)
     const { results } = await Camera.chooseFromGallery({
+      mediaType: MediaTypeSelection.Photo,
       quality: 85,
       allowMultipleSelection: false,
     })
@@ -69,6 +70,7 @@ export async function pickFromGallery(): Promise<MediaResult | null> {
 export async function pickMultipleFromGallery(limit = 5): Promise<MediaResult[]> {
   try {
     const { results } = await Camera.chooseFromGallery({
+      mediaType: MediaTypeSelection.Photo,
       quality: 85,
       allowMultipleSelection: true,
       limit,
@@ -84,13 +86,13 @@ export async function pickMultipleFromGallery(limit = 5): Promise<MediaResult[]>
 // ─── Permissions ─────────────────────────────────────────────────────────────
 
 /**
- * Request camera + photo library permissions.
- * Call before showing camera UI so the prompt appears at a natural moment.
+ * Request camera permission.
+ * Gallery selection uses the system picker and does not need broad photo access.
  */
 export async function requestCameraPermissions(): Promise<boolean> {
   try {
-    const status = await Camera.requestPermissions({ permissions: ['camera', 'photos'] })
-    return status.camera === 'granted' && status.photos !== 'denied'
+    const status = await Camera.requestPermissions({ permissions: ['camera'] })
+    return status.camera === 'granted'
   } catch {
     return false
   }

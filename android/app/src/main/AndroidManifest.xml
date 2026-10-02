@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <!-- SQLite is the offline cache/outbox and authentication uses
          device-bound secure storage. Restoring app-private data onto a
          different device can restore data without its Android Keystore
@@ -34,6 +35,21 @@
             android:grantUriPermissions="true">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- Make Android's backported Photo Picker available on eligible older
+             devices. Capacitor falls back to ACTION_OPEN_DOCUMENT when the
+             Photo Picker is unavailable, so broad media access is unnecessary. -->
+        <!--suppress AndroidDomInspection -->
+        <service
+            android:name="com.google.android.gms.metadata.ModuleDependencies"
+            android:enabled="false"
+            android:exported="false"
+            tools:ignore="MissingClass">
+            <intent-filter>
+                <action android:name="com.google.android.gms.metadata.MODULE_DEPENDENCIES" />
+            </intent-filter>
+            <meta-data android:name="photopicker_activity:0:required" android:value="" />
+        </service>
     </application>
 
     <!-- Permissions -->
@@ -43,8 +59,6 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <!-- Vibration: for haptic feedback via @capacitor/haptics -->
     <uses-permission android:name="android.permission.VIBRATE" />
-    <!-- Photo library access (Android 13+) -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <!-- Contacts: to detect which device contacts are already on Lain Dain.
          WRITE_CONTACTS is never actually used (this app only reads the
          address book) but @capacitor-community/contacts groups both under
